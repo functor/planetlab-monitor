@@ -87,14 +87,23 @@ def open_rt_db():
 
 def rt_tickets(hostname):
 	db = open_rt_db()
+#	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
+#			 FROM Tickets AS Tk
+#			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId
+#			 JOIN Attachments AS At ON Tr.id=At.TransactionID
+#			 WHERE (At.Content LIKE '%%%s%%' OR
+#				At.Subject LIKE '%%%s%%') AND
+#				(Tk.Status = 'new' OR Tk.Status = 'open') AND
+#				Tk.Queue = 3 OR Tk.Queue = 19 
+#			 ORDER BY Tk.Status, Tk.LastUpdated DESC""" \
+#			 % (hostname,hostname)
 	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
 			 FROM Tickets AS Tk
 			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId
 			 JOIN Attachments AS At ON Tr.id=At.TransactionID
 			 WHERE (At.Content LIKE '%%%s%%' OR
 				At.Subject LIKE '%%%s%%') AND
-				(Tk.Status = 'new' OR Tk.Status = 'open') AND
-				Tk.Queue = 3
+				(Tk.Status = 'new' OR Tk.Status = 'open')
 			 ORDER BY Tk.Status, Tk.LastUpdated DESC""" \
 			 % (hostname,hostname)
 
@@ -136,27 +145,33 @@ Remove nodes that have come backup. Don't care of ticket is closed after first q
 Another thread refresh tickets of nodes already in dict and remove nodes that have come up. 
 '''
 class RT(Thread):
-	def __init__(self, tickets, bucket, target = None): 
+	def __init__(self, tickets, toCheck, sickNoTicket, target = None): 
 		# Time of last update of ticket DB
 		self.lastupdated = 0
-		# Queue() is MP/MC self locking 
-		self.bucket = bucket 
+		# Queue() is MP/MC self locking.
+		# Check host in queue.  Queue populated from comon data of sick. 
+		self.toCheck = toCheck
+		# Result of rt db query.  Nodes without tickets that are sick.
+		self.sickNoTicket = sickNoTicket 
 		#DB of tickets.  Name -> ticket
 		self.tickets = tickets
 		Thread.__init__(self,target = self.getTickets)
 
-	# Takes node from alldownq, gets tickets.  
+	# Takes node from toCheck, gets tickets.  
 	# Thread that actually gets the tickets.
 	def getTickets(self):
 		while 1:
-			host = self.bucket.get(block = True)
+			host = self.toCheck.get(block = True)
 			if host == "None": break
 			#if self.tickets.has_key(host) == False:
-			logger.debug("Popping from q - %s" %host)
+			#logger.debug("Popping from q - %s" %host)
 			tmp = rt_tickets(host)
 			if tmp:
-				logger.debug("Found tickets for %s" %host)
-				self.tickets[host] = tmp 
+				#logger.debug("RT: tickets for %s" %host)
+				self.tickets[host] = tmp
+			else:
+				logger.debug("RT: no tix for %s - policy" %host)
+				self.sickNoTicket.put(host) 
 
 	# Removes hosts that are no longer down.
 	def remTickets(self):
@@ -176,14 +191,14 @@ class RT(Thread):
 		for host in prevdown:
 			if host not in currdown:
 				del self.tickets[host]
-				logger.info("%s no longer down" % host)
+				logger.info("RT: %s no longer down." % host)
 
 	# Update Tickets
 	def updateTickets(self):
 		logger.info("Refreshing DB.")
 		for host in self.tickets.keys():
 			# Put back in Q to refresh
-			self.bucket.put(host)
+			self.toCheck.put(host)
 
 	def cleanTickets(self):
 		while 1:
@@ -210,7 +225,7 @@ def main():
 	b.start()
 	c.start()
 	d.start()
-	tmp = ('planetlab-2.vuse.vanderbilt.edu', 'planetlab-11.cs.princeton.edu', 'planet03.csc.ncsu.edu', 'planetlab1.pop-rj.rnp.br', 'planet1.halifax.canet4.nodes.planet-lab.org', 'planet1.cavite.nodes.planet-lab.org', 'ds-pl3.technion.ac.il', 'planetlab2.cs.purdue.edu', 'planetlab3.millennium.berkeley.edu', 'planetlab1.unl.edu', 'planetlab1.cs.colorado.edu', 'planetlab02.cs.washington.edu', 'orbpl2.rutgers.edu', 'planetlab2.informatik.uni-erlangen.de', 'pl2.ernet.in', 'neu2.6planetlab.edu.cn', 'planetlab-2.cs.uni-paderborn.de', 'planetlab1.elet.polimi.it', 'planetlab2.iiitb.ac.in', 'server1.planetlab.iit-tech.net', 'planetlab2.iitb.ac.in', 'planetlab1.ece.ucdavis.edu', 'planetlab02.dis.unina.it', 'planetlab-1.dis.uniroma1.it', 'planetlab1.iitb.ac.in', 'pku1.6planetlab.edu.cn', 'planetlab1.warsaw.rd.tp.pl', 'planetlab2.cs.unc.edu', 'csu2.6planetlab.edu.cn', 'pl1.ernet.in', 'planetlab2.georgetown.edu', 'planetlab1.cs.uchicago.edu') 
+	tmp = ('planetlab-1.cs.ucy.ac.cy','planetlab-2.vuse.vanderbilt.edu', 'planetlab-11.cs.princeton.edu', 'planet03.csc.ncsu.edu', 'planetlab1.pop-rj.rnp.br', 'planet1.halifax.canet4.nodes.planet-lab.org', 'planet1.cavite.nodes.planet-lab.org', 'ds-pl3.technion.ac.il', 'planetlab2.cs.purdue.edu', 'planetlab3.millennium.berkeley.edu', 'planetlab1.unl.edu', 'planetlab1.cs.colorado.edu', 'planetlab02.cs.washington.edu', 'orbpl2.rutgers.edu', 'planetlab2.informatik.uni-erlangen.de', 'pl2.ernet.in', 'neu2.6planetlab.edu.cn', 'planetlab-2.cs.uni-paderborn.de', 'planetlab1.elet.polimi.it', 'planetlab2.iiitb.ac.in', 'server1.planetlab.iit-tech.net', 'planetlab2.iitb.ac.in', 'planetlab1.ece.ucdavis.edu', 'planetlab02.dis.unina.it', 'planetlab-1.dis.uniroma1.it', 'planetlab1.iitb.ac.in', 'pku1.6planetlab.edu.cn', 'planetlab1.warsaw.rd.tp.pl', 'planetlab2.cs.unc.edu', 'csu2.6planetlab.edu.cn', 'pl1.ernet.in', 'planetlab2.georgetown.edu', 'planetlab1.cs.uchicago.edu') 
 	for host in tmp:
 		bucket.put(host)
 	#et = Thread(target=e.pushHosts)	

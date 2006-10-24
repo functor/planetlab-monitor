@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #
 # Copyright (c) 2004  The Trustees of Princeton University (Trustees).
 # 
@@ -31,11 +32,16 @@ debug = False
 # Log to what 
 LOG="./monitor.log"
 
+# DAT
+DAT="./monitor.dat"
+
 # Email defaults
 MTA="localhost"
 FROM="support@planet-lab.org"
+
 # API
 XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
+
 # Time between comon refresh
 COSLEEP=300 #5mins
 # Time to refresh DB and remove unused entries
@@ -148,26 +154,38 @@ def main():
 	startThread(ThreadWatcher(), "Watcher")
 	# The meat of it.
 
-	# Nodes to check
-        bucket = Queue.Queue()
+	# Nodes to check. Queue of all sick nodes.
+        toCheck = Queue.Queue()
+	# Nodes that are sick w/o tickets
+	sickNoTicket = Queue.Queue()
 	# Comon DB of all nodes
 	cdb = {}
 	# Nodes that are down.  Use this to maintain DB;  cleanup.
-        alldown = Queue.Queue()
+        #alldown = Queue.Queue()
 	# RT DB
         tickets = {}
+	# Nodes we've emailed.
+	# host - > (type of email, time)
+	emailed = {}
+
 
 	# Get RT Tickets.
-	# Event based.  Add to queue(bucket) and hosts are queried.
-	rt1 = rt.RT(tickets, bucket)
-	rt2 = rt.RT(tickets, bucket)
-	rt3 = rt.RT(tickets, bucket)
-	rt4 = rt.RT(tickets, bucket)
-	rt5 = rt.RT(tickets, bucket)
+	# Event based.  Add to queue(toCheck) and hosts are queried.
+	rt1 = rt.RT(tickets, toCheck, sickNoTicket)
+	rt2 = rt.RT(tickets, toCheck, sickNoTicket)
+	rt3 = rt.RT(tickets, toCheck, sickNoTicket)
+	rt4 = rt.RT(tickets, toCheck, sickNoTicket)
+	rt5 = rt.RT(tickets, toCheck, sickNoTicket)
 	# Kind of a hack. Cleans the DB for stale entries and updates db.
 	clean = Thread(target=rt5.cleanTickets)
 	# Poll Comon.  Refreshes Comon data every COSLEEP seconds
-	cm1 = comon.Comon(cdb, bucket)
+	cm1 = comon.Comon(cdb, toCheck)
+
+	# Actually digest the info and do something with it.
+	pol = policy.Policy(cm1, sickNoTicket, emailed)
+
+	# Load emailed sites from last run.
+	pol.emailedStore("LOAD")
 
 	# Start Threads
 	startThread(rt1,"rt1")
@@ -176,20 +194,21 @@ def main():
 	startThread(rt4,"rt4")
 	startThread(rt5,"rt5")
 	startThread(clean,"cleanrt5")
-	startThread(cm1,"rt5")
+
+	# Start Comon Thread	
+	startThread(cm1,"comon")
+
+	# Wait for threads to init.  Probably should join, but work on that later.
 	time.sleep(10)
-
-	# Actually digest the info and do something with it.
-	pol = policy.Policy(cm1, tickets)
-
-	while bucket.empty() == False:
-		time.sleep(3)
-
+	# Start Sending Emails
 	startThread(pol, "policy")
-	time.sleep(3600)	
-	
-	#print runningthreads["RT"].ssh 
 
+	# Wait to finish
+	while (sickNoTicket.empty() == False) or (toCheck.empty() == False):
+		time.sleep(15)
+
+
+	pol.emailedStore("WRITE")
 	logger.info('Monitor Exitted')
 	#if not debug:
 	#	removepid("monitor")

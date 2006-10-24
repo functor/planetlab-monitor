@@ -12,9 +12,9 @@
 #
 
 class mailtxt:
-   STANDARD="""As part of the monitoring of PlanetLab nodes, we have noticed that the node %(hostname)s is not responding to pings and is not available for ssh.
+   DOWN="""As part of PlanetLab node monitoring, we noticed node %(hostname)s has been down for some time.
 
-Please check the machine's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the machines's failure, please pass those to the PlanetLab-support mailing list so we can resolve any problems.
+Please check the node's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the node's failure, please pass those to the PlanetLab-support mailing list so we can resolve the issue.
 
 
 Thanks.
@@ -22,7 +22,33 @@ Thanks.
   -- PlanetLab Central (support@planet-lab.org)
 """
 
-   STANDARD_PI="""As part of the monitoring of PlanetLab nodes, we have noticed that the node %(hostname)s is not responding to pings and is not available for ssh. We have made several attempts to contact the techinical contacts for this site (they are CCed) to help us bring the node back online. If there should be a different technical contact appointed, you may add the 'tech' role to any user registered for your site via the website. (Manage Users off the left nav bar on the PI tab, then click the user)
+   SSH="""As part of PlanetLab node monitoring, we noticed node %(hostname)s is not available for ssh.
+
+Please check the node's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the node's failure, please pass those to the PlanetLab-support mailing list so we can resolve the issue.
+
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+"""
+   DNS="""As part of PlanetLab node monitoring, we noticed the DNS servers used by  %(hostname)s are not responding to queries.
+
+Please verify the DNS information used by the node is correct.  You can find directions on how to update the node's network information on the PlanetLab Technical Contacts Guid (http://www.planet-lab.org/doc/TechsGuide.php#id268898).
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+"""
+   HDRO="""As part of PlanetLab node monitoring, we noticed %(hostname)s has a read-only filesystem.
+
+Please verify the disk is damaged and email the site if a replacement is needed. 
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+"""
+
+   STANDARD_PI="""As part of PlanetLab nodes monitoring, we noticed the node %(hostname)s is not available for ssh. We have made several attempts to contact the techinical contacts for this site (they are CCed) to help us bring the node back online. If there should be a different technical contact appointed, you may add the 'tech' role to any user registered for your site via the website. (Manage Users off the left nav bar on the PI tab, then click the user)
 
 Our records indicate that there is no remote power control unit connected to this node. If this is not the case, please log into the PlanetLab Website and update the PCU information.
 

@@ -28,16 +28,21 @@ COMONURL = "http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_node
 
 class Comon(Thread): 
 	"""
+	cdb is the comon database (dictionary)
+	all buckets is a queue of all problem nodes. This gets sent to rt to find
+	tickets open for host. 
 	"""
 	def __init__(self, cdb, allbuckets):
 		self.codata = cdb 
 		self.updated = time.time()
 		self.allbuckets = allbuckets
-		self.comonbkts = {"ssh": "sshstatus%20%3E%202h",
+		self.comonbkts = {"down" : "resptime%20==%200%20&&%20keyok==null",
+			"ssh": "sshstatus%20%3E%202h",
 			"clock_drift": "drift%20%3E%201m",
 			"dns": "dns1udp%20%3E%2080%20&&%20dns2udp%20%3E%2080",
 			"disk": "resptime%20%3E%200%20&&%20gbfree%20%3C%205",
-			"filerw": "filerw%3E0"}
+			"filerw": "filerw%3E0",
+			"dbg" : "keyok==0"}
 		Thread.__init__(self)
 
 	def __tohash(self,rawdata):
@@ -69,7 +74,7 @@ class Comon(Thread):
 		# Get time of update
 		self.updated = time.time()
 		# Make a Hash, put in self.
-		self.codata = self.coget(COMONURL + "&format=formatcsv")
+		self.codata.update(self.coget(COMONURL + "&format=formatcsv"))
 
 	def coget(self,url):
 		rawdata = None
@@ -115,13 +120,21 @@ def main():
 	t = Queue.Queue()
 	cdb = {}
 	a = Comon(cdb,t)
+	print a.comonbkts
 	a.start()
-	time.sleep(3)
-	print a.ssh
+
+	time.sleep(5)
+	print a.down
+
+	time.sleep(5)
+	#print cdb
+	for host in cdb.keys():
+		if cdb[host]['keyok'] == "0":
+			print("%s \t Bootstate %s nodetype %s kernver %s keyok %s" %(host, cdb[host]['bootstate'], cdb[host]['nodetype'], cdb[host]['kernver'], cdb[host]['keyok']))
 	#time.sleep(3)
 	#a.push()
 	#print a.filerw
-	print a.coget(COMONURL + "&format=formatcsv&select='" + a.comonbkts['filerw'])
+	#print a.coget(COMONURL + "&format=formatcsv&select='" + a.comonbkts['filerw'])
 
 	os._exit(0)
 if __name__ == '__main__':

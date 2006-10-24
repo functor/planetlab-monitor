@@ -21,8 +21,6 @@ def siteId(hostname):
 	if len(site_id) == 1:  
 		loginbase = api.AnonAdmGetSites (anon, site_id, ["login_base"])
 		return loginbase[0]['login_base']
-	else:
-		raise "Unknown host" 
 
 def email (subject, text, to, cc = None):
 	"""Create a mime-message that will render HTML in popular
@@ -67,12 +65,15 @@ def email (subject, text, to, cc = None):
 	msg = out.getvalue()
 	out.close()
 
-   	server = smtplib.SMTP(MTA)
-   	server.sendmail(FROM, (to,cc), msg)
-	server.quit()
+   	#server = smtplib.SMTP(MTA)
+   	#server.sendmail(FROM, (to,cc), msg)
+	#server.quit()
 
 if __name__=="__main__":
-   import smtplib
-   import emailTxt
-
-   email('DISREGARD', emailTxt.mailtxt.STANDARD % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + siteId("alice.cs.princeton.edu") + "@sites.planet-lab.org")
+	import smtplib
+	import emailTxt
+	id = siteId("alice.cs.princeeton.edu")
+	if id:
+   		email('TEST', emailTxt.mailtxt.STANDARD % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")
+	else:
+		print "No dice."
