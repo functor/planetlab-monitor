@@ -17,6 +17,8 @@ import pickle
 import xml, xmlrpclib
 import Queue
 
+#Hack to auth structure
+import auth 
 DAT="./monitor.dat"
 
 logger = logging.getLogger("monitor")
@@ -26,6 +28,18 @@ POLSLEEP = 7200
 
 # Days between emails (enforce 'squeeze' after this time).
 SQUEEZE = 3
+
+# Where to email the summary
+SUMTO = "faiyaza@cs.princeton.edu"
+TECHEMAIL="tech-%s@sites.planet-lab.org"
+PIEMAIL="pi-%s@sites.planet-lab.org"
+SLICEMAIL="%s@slices.planet-lab.org"
+PLCEMAIL="support@planet-lab.org"
+
+#Thresholds
+PITHRESH = 3
+SLICETHRESH = 5
+
 # IF:
 #  no SSH, down.
 #  bad disk, down
@@ -55,54 +69,78 @@ class Policy(Thread):
 	'''
 	Acts on sick nodes
 	'''
-	def emailsick(self):
+	def actOnSick(self):
 		# Get list of nodes in debug from PLC
 		#dbgNodes = NodesDebug()
-
+		global TECHEMAIL, PIEMAIL
 		node = self.sickNoTicket.get(block = True)
 		# Get the login base	
 		id = mailer.siteId(node)
 
+ 		# Send appropriate message for node if in appropriate bucket.
+		# If we know where to send a message
 		if not id: 
 			logger.info("loginbase for %s not found" %node)
-		elif node not in self.emailed.keys():
-			# Email about Down.
-			if node in self.cmn.down:
-				logger.debug("POLICY: Emailing (down) " + node)
-				self.emailed[node] = ("down", time.localtime())
-				msg = emailTxt.mailtxt.DOWN \
-					% {'hostname': node}
-				mailer.email(node + " down", msg, 
-				"tech-" + id + "@sites.planet-lab.org")
-				return	
+		# And we didn't email already.
+		else:
+			# If first email, send to Tech
+			target = [TECHEMAIL % id]
+			
+			# If disk is foobarred, PLC should check it.
+			if (node in self.cmn.filerw) and \
+			(node not in self.emailed.keys()):
+				target = [PLCEMAIL]	
+				logger.info("Emailing PLC for " + node)
 
-			# Email about no SSH.
-			if node in self.cmn.ssh:
-				logger.debug("POLICY: Emailing (ssh) " + node)
-				self.emailed[node] = ("ssh", time.localtime())
-				msg = emailTxt.mailtxt.SSH \
-					% {'hostname': node}
-				mailer.email(node + " down", msg, 
-				"tech-" + id + "@sites.planet-lab.org")
-				return 
+			# If in dbg, set to rins, then reboot.  Inform PLC.
+			if (node in self.cmn.dbg):
+				logger.info("Node in dbg - " + node)
+				return
 
-			# Email about DNS
-			if node in self.cmn.dns:
-				logger.debug("POLICY: Emailing (dns)" + node)
-				self.emailed[node] = ("dns", time.localtime())
-				msg = emailTxt.mailtxt.DNS \
-					% {'hostname': node}
-				mailer.email("Please update DNS used by " \
-				+ node, msg, 
-				"tech-" + id + "@sites.planet-lab.org")
-				return 
-	
+			# If its a disk, email PLC;  dont bother going through this loop.
+			if (node in self.emailed.keys()) and \
+			(node not in self.cmn.filerw):
+				# If we emailed before, how long ago?	
+				delta = time.localtime()[2] - self.emailed[node][1][2]
+				# If more than PI thresh, but less than slicethresh
+				if (delta >= PITHRESH) and (delta < SLICETHRESH): 
+					logger.info("Emailing PI for " + node)
+					target.append(PIEMAIL % id)
+				# If more than PI thresh and slicethresh
+				if (delta >= PITHRESH) and (delta > SLICETHRESH):
+					logger.info("Emailing slices for " + node)
+					# Email slices at site.
+					slices = mailer.slices(id)
+					if len(slices) >= 1:
+						for slice in slices:
+							target.append(SLICEMAIL % slice)
+
+			# Find the bucket the node is in and send appropriate email
+			# to approriate list of people.
+			for bkt in self.cmn.comonbkts.keys():
+				if (node in getattr(self.cmn, bkt)):
+					# Send predefined message for that bucket.
+					logger.info("POLICY: Emailing (%s) %s - %s"\
+						%(bkt, node, target))
+					tmp = getattr(emailTxt.mailtxt, bkt)
+					sbj = tmp[0] % {'hostname': node}
+					msg = tmp[1] % {'hostname': node}
+					mailer.email(sbj, msg, target)	
+					self.emailed[node] = (bkt , time.localtime())
+					return
+
 
 	'''
 	Prints, logs, and emails status of up nodes, down nodes, and buckets.
 	'''
 	def status(self):
-		return 0
+		sub = "Monitor Summary"
+		msg = "\nThe following nodes were acted upon:  \n\n"
+		for (node, (type, date)) in self.emailed.items():
+			msg +="%s\t(%s)\t%s:%s:%s\n" %(node,type,date[3],date[4],date[5])
+		mailer.email(sub, msg, [SUMTO])
+		logger.info(msg)
+		return 
 
 	'''
 	Store/Load state of emails.  When, where, what.
@@ -115,7 +153,7 @@ class Policy(Thread):
 				self.emailed.update(pickle.load(f))
 			if action == "WRITE":
 				f = open(DAT, "w")
-				logger.info("Writing " + DAT)
+				logger.debug("Writing " + DAT)
 				pickle.dump(self.emailed, f)
 			f.close()
 		except Exception, err:
@@ -123,8 +161,8 @@ class Policy(Thread):
 
 	def run(self):
 		while 1:
-			self.emailsick()
-
+			self.actOnSick()
+			self.emailedStore("WRITE")
 '''
 Returns list of nodes in dbg as reported by PLC
 '''
@@ -150,10 +188,11 @@ def main():
 	logger.addHandler(ch)
 
 	#print NodesDebug()
-	tmp = Queue.Queue()
-	a = Policy(None, tmp) 
-	a.emailedStore("LOAD")
-	print a.emailed
+	#tmp = Queue.Queue()
+	#a = Policy(None, tmp) 
+	#a.emailedStore("LOAD")
+	#print a.emailed
+	print siteId("princetoan")
 
 	os._exit(0)
 if __name__ == '__main__':

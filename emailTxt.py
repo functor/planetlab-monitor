@@ -12,7 +12,7 @@
 #
 
 class mailtxt:
-   DOWN="""As part of PlanetLab node monitoring, we noticed node %(hostname)s has been down for some time.
+   dbg=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed node %(hostname)s has been down for some time.
 
 Please check the node's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the node's failure, please pass those to the PlanetLab-support mailing list so we can resolve the issue.
 
@@ -20,9 +20,9 @@ Please check the node's connectivity and, if properly networked, power cycle the
 Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
-"""
+""")
 
-   SSH="""As part of PlanetLab node monitoring, we noticed node %(hostname)s is not available for ssh.
+   down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed node %(hostname)s has been down for some time.
 
 Please check the node's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the node's failure, please pass those to the PlanetLab-support mailing list so we can resolve the issue.
 
@@ -30,23 +30,35 @@ Please check the node's connectivity and, if properly networked, power cycle the
 Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
-"""
-   DNS="""As part of PlanetLab node monitoring, we noticed the DNS servers used by  %(hostname)s are not responding to queries.
+""")
+
+   ssh=("""Planetlab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed node %(hostname)s is not available for ssh.
+
+Please check the node's connectivity and, if properly networked, power cycle the machine. If there are any console messages relating to the node's failure, please pass those to the PlanetLab-support mailing list so we can resolve the issue.
+
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+   dns=("""Planetlab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed the DNS servers used by  %(hostname)s are not responding to queries.
 
 Please verify the DNS information used by the node is correct.  You can find directions on how to update the node's network information on the PlanetLab Technical Contacts Guid (http://www.planet-lab.org/doc/TechsGuide.php#id268898).
 
 Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
-"""
-   HDRO="""As part of PlanetLab node monitoring, we noticed %(hostname)s has a read-only filesystem.
+""")
 
-Please verify the disk is damaged and email the site if a replacement is needed. 
+   filerw=("""Planetlab node %(hostname)s has a bad disk.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has a read-only filesystem.
+
+Please verify the integrity of the disk and email the site if a replacement is needed. 
 
 Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
-"""
+""")
 
    STANDARD_PI="""As part of PlanetLab nodes monitoring, we noticed the node %(hostname)s is not available for ssh. We have made several attempts to contact the techinical contacts for this site (they are CCed) to help us bring the node back online. If there should be a different technical contact appointed, you may add the 'tech' role to any user registered for your site via the website. (Manage Users off the left nav bar on the PI tab, then click the user)
 
@@ -68,23 +80,13 @@ IMPORTANT: PLC has recently upgraded their monitoring system. One significant ch
 128.112.154.64/26
 If you have source IP filtering on your PCU please add this subnet.
 
-We have attempted to reboot some nodes at your site that appear to be down and found that we were unable to connect to the power control unit. Could you please bring it back online? Certain units benefit from a power cycle. Occasionally the problem is that our information for the PCU is incorrect. If the unit seems fine, please verify that the information is correct by logging into the website and clicking the 'power control units' link in the lefthand nav bar. Please let us know if you run into problems.
+We attempted to reboot nodes at your site that appear to be down and were unable to connect to the power control unit. Could you please check and verify its network connectivity? Certain units benefit from a power cycle. Occasionally the problem is that othe network information for the PCU is incorrect on the PL website. If the unit seems fine, please verify that the information is correct by logging into the website and clicking the 'power control units' link in the lefthand navigation bar. Please let us know if experience any problems.
 
 Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
 """
 
-   PCU_DOWN_PI="""Hello,
-
-We have made several attempts to contact the techinical contacts for this site (they are CCed) to help us bring the node back online. If there should be a different technical contact appointed, you may add the 'tech' role to any user registered for your site via the website. (Manage Users off the left nav bar on the PI tab, then click the user)
-
-We have attempted to reboot some nodes at your site that appear to be down and found that we were unable to connect to the power control unit. Could you please bring it back online? Certain units benefit from a power cycle. Occasionally the problem is that our information for the PCU is incorrect. If the unit seems fine, please verify that the information is correct by logging into the website and clicking the 'power control units' link in the lefthand nav bar. Please let us know if you run into problems.
-
-Thanks.
-
-  -- PlanetLab Central (support@planet-lab.org)
-"""
 
    PCU_INEFFECTIVE="""Hello,
 

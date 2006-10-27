@@ -66,6 +66,7 @@ class Comon(Thread):
 	# Update individual buckekts.  Hostnames only.
 	def updatebkts(self):
 		for (bkt,url) in self.comonbkts.items():
+			logger.debug("COMON:  Updating bucket %s" % bkt)
 			tmp = self.coget(COMONURL + "&format=formatcsv&select='" + url + "'").keys()
 			setattr(self, bkt, tmp)
 
@@ -79,7 +80,6 @@ class Comon(Thread):
 	def coget(self,url):
 		rawdata = None
 		try:
-			logger.debug("Trying - " + url)
 			coserv = urllib2.Request(url)
 			coserv.add_header('User-Agent',
                 		'PL_Monitor +http://monitor.planet-lab.org/')

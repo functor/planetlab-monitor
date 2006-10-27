@@ -38,6 +38,8 @@ DAT="./monitor.dat"
 # Email defaults
 MTA="localhost"
 FROM="support@planet-lab.org"
+TECHEMAIL="tech-%s@sites.planet-lab.org"
+PIEMAIL="pi-%s@sites.planet-lab.org"
 
 # API
 XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
@@ -200,6 +202,7 @@ def main():
 
 	# Wait for threads to init.  Probably should join, but work on that later.
 	time.sleep(10)
+
 	# Start Sending Emails
 	startThread(pol, "policy")
 
@@ -208,7 +211,15 @@ def main():
 		time.sleep(15)
 
 
+
+	pol.status()
+
+	# Store state of emails
 	pol.emailedStore("WRITE")
+
+	# Email what we did.
+	pol.status()
+
 	logger.info('Monitor Exitted')
 	#if not debug:
 	#	removepid("monitor")

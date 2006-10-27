@@ -22,7 +22,13 @@ def siteId(hostname):
 		loginbase = api.AnonAdmGetSites (anon, site_id, ["login_base"])
 		return loginbase[0]['login_base']
 
-def email (subject, text, to, cc = None):
+
+def slices(loginbase):
+        api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+        return api.SliceListNames (auth.auth, loginbase)
+
+
+def email (subject, text, to):
 	"""Create a mime-message that will render HTML in popular
 	MUAs, text in better ones"""
 	import MimeWriter
@@ -39,8 +45,16 @@ def email (subject, text, to, cc = None):
 	# message body
 	#
 	writer.addheader("Subject", subject)
-	writer.addheader("To", to)
-	if cc: writer.addheader("CC", cc)
+	if to.__class__ == [].__class__ :	
+		writer.addheader("To", to[0])
+		cc = ""
+		for dest in to[1:len(to)]:
+			cc +="%s, " % dest
+		cc = cc.rstrip(", ") 
+		writer.addheader("CC", cc)
+	else:
+		writer.addheader("To", to)
+		
 	writer.addheader("MIME-Version", "1.0")
 	#
 	# start the multipart section of the message
@@ -64,16 +78,17 @@ def email (subject, text, to, cc = None):
 	writer.lastpart()
 	msg = out.getvalue()
 	out.close()
-
-   	#server = smtplib.SMTP(MTA)
-   	#server.sendmail(FROM, (to,cc), msg)
-	#server.quit()
+   	server = smtplib.SMTP(MTA)
+   	server.sendmail(FROM, to,  msg)
+	server.quit()
 
 if __name__=="__main__":
 	import smtplib
 	import emailTxt
-	id = siteId("alice.cs.princeeton.edu")
-	if id:
-   		email('TEST', emailTxt.mailtxt.STANDARD % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")
-	else:
-		print "No dice."
+	id = siteId("alice.cs.princeton.edu")
+	print id
+	#if id:
+   		#email('TEST', emailTxt.mailtxt.ssh % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")
+	#else:
+	#	print "No dice."
+	#email("TEST109", "THIS IS A TEST", ["faiyaza@cs.princeton.edu", "faiyaz@winlab.rutgers.edu", "faiyaza@gmail.com"])
