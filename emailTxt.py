@@ -60,6 +60,27 @@ Thanks.
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
+   clock_drift=("""Planetlab node %(hostname)s and NTP.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s cannot reach our NTP server.
+
+Please verify that the NTP port (tcp/123) is not blocked by your site. 
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+
+   dbg=("""Planetlab node %(hostname)s requires reboot.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s is in debug mode.  This usually implies the node was rebooted unexpectedly and could not come up cleanly.  
+
+We have set the node to reinstall upon reboot.  Please reboot the machine.  It would be helpful if you could forward any error messages on the console to support@planet-lab.org.
+
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+
    STANDARD_PI="""As part of PlanetLab nodes monitoring, we noticed the node %(hostname)s is not available for ssh. We have made several attempts to contact the techinical contacts for this site (they are CCed) to help us bring the node back online. If there should be a different technical contact appointed, you may add the 'tech' role to any user registered for your site via the website. (Manage Users off the left nav bar on the PI tab, then click the user)
 
 Our records indicate that there is no remote power control unit connected to this node. If this is not the case, please log into the PlanetLab Website and update the PCU information.

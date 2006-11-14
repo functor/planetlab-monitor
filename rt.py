@@ -8,6 +8,7 @@ import Queue
 import time 
 import comon
 from threading import *
+import config
 
 # RT database access constants file
 RT_DB_CONSTANTS_PATH='/etc/planetlab/rt_db'
@@ -170,7 +171,7 @@ class RT(Thread):
 				#logger.debug("RT: tickets for %s" %host)
 				self.tickets[host] = tmp
 			else:
-				logger.debug("RT: no tix for %s - policy" %host)
+				logger.debug("RT: no tix for %s" %host)
 				self.sickNoTicket.put(host) 
 
 	# Removes hosts that are no longer down.

@@ -40,7 +40,6 @@ class Comon(Thread):
 			"ssh": "sshstatus%20%3E%202h",
 			"clock_drift": "drift%20%3E%201m",
 			"dns": "dns1udp%20%3E%2080%20&&%20dns2udp%20%3E%2080",
-			"disk": "resptime%20%3E%200%20&&%20gbfree%20%3C%205",
 			"filerw": "filerw%3E0",
 			"dbg" : "keyok==0"}
 		Thread.__init__(self)

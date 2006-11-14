@@ -6,27 +6,11 @@
 #
 # $Id: $
 from emailTxt import *
-import xml, xmlrpclib
 import smtplib
+import config
 
 MTA="localhost"
 FROM="support@planet-lab.org"
-
-XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
-
-def siteId(hostname):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
-	anon = {'AuthMethod': "anonymous"}
-	site_id = api.AnonAdmQuerySite (anon, {"node_hostname": hostname})
-	if len(site_id) == 1:  
-		loginbase = api.AnonAdmGetSites (anon, site_id, ["login_base"])
-		return loginbase[0]['login_base']
-
-
-def slices(loginbase):
-        api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
-        return api.SliceListNames (auth.auth, loginbase)
-
 
 def email (subject, text, to):
 	"""Create a mime-message that will render HTML in popular
@@ -78,14 +62,16 @@ def email (subject, text, to):
 	writer.lastpart()
 	msg = out.getvalue()
 	out.close()
-   	server = smtplib.SMTP(MTA)
-   	server.sendmail(FROM, to,  msg)
-	server.quit()
+	if not config.debug:
+   		server = smtplib.SMTP(MTA)
+   		server.sendmail(FROM, to,  msg)
+		server.quit()
 
 if __name__=="__main__":
 	import smtplib
 	import emailTxt
-	id = siteId("alice.cs.princeton.edu")
+	import plc 
+	id = plc.siteId("alice.cs.princeton.edu")
 	print id
 	#if id:
    		#email('TEST', emailTxt.mailtxt.ssh % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")

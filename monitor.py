@@ -14,6 +14,8 @@ from threading import *
 import time
 import logging
 import Queue
+# Global config options
+import config
 # daemonize and *pid
 from util.process import * 
 
@@ -26,8 +28,6 @@ import policy
 # Email
 import mailer
 import emailTxt
-# Defaults
-debug = False 
 
 # Log to what 
 LOG="./monitor.log"
@@ -110,7 +110,7 @@ class ThreadWatcher(Thread):
 	 	for thread in runningthreads.keys():
 			# If thread found dead, remove from queue
 			if not runningthreads[thread].isAlive():
-				logger.error("Thread Died: %s" %(thread))
+				logger.error("***********Thread died: %s**********" %(thread))
 				del runningthreads[thread]
 
 
@@ -127,7 +127,7 @@ Start threads, do some housekeeping, then daemonize.
 """
 def main():
 	# Defaults
-	global debug, status, logger
+	global status, logger
 
 	try:
 		longopts = ["debug", "status", "help"]
@@ -139,7 +139,8 @@ def main():
 
 	for (opt, optval) in opts:
 		if opt == "-d" or opt == "--debug":
-			debug = True
+			config.debug = True
+			print "Running in DEBUG mode:  NO EMAILS SENT AND NO SLICES SQUEEZED."
 		elif opt == "--status":
 			#print summary(names)
 			sys.exit(0)
@@ -211,8 +212,6 @@ def main():
 		time.sleep(15)
 
 
-
-	pol.status()
 
 	# Store state of emails
 	pol.emailedStore("WRITE")
