@@ -77,8 +77,8 @@ def open_rt_db():
 				user=rt_db_constants['RT_DB_USER'],
 		   		passwd=rt_db_constants['RT_DB_PASSWORD'],
 				db=rt_db_constants['RT_DB_NAME'])
-	except Error:
-		print "Failed to connect to RT database"
+	except Exception, err:
+		print "Failed to connect to RT database: %s" %err
 		return -1
 
 	return rt_db

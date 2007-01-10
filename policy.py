@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: $
+# $Id: policy.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -27,7 +27,8 @@ logger = logging.getLogger("monitor")
 POLSLEEP = 7200
 
 # Where to email the summary
-SUMTO = "pupadm@lists.planet-lab.org"
+#SUMTO = "pupadm@lists.planet-lab.org"
+SUMTO = "faiyaza@cs.princeton.edu"
 TECHEMAIL="tech-%s@sites.planet-lab.org"
 PIEMAIL="pi-%s@sites.planet-lab.org"
 SLICEMAIL="%s@slices.planet-lab.org"
