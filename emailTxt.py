@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: $
+# $Id: emailTxt.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
 
 
 # 
@@ -76,6 +76,23 @@ We have set the node to reinstall upon reboot.  Please reboot the machine.  It w
 
 
 Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+   
+
+   removedSliceCreation=("""PlanetLab slice creation/renewal suspension.""","""As part of PlanetLab node monitoring, we noticed the %(loginbase)s site has less than 2 nodes up.  We have attempted to contact the PI and Technical contacts multiple times and have not received a response.  
+
+Slice creation and renewal are now suspended for the %(loginbase)s site.  Please be aware that failure to respond will result in the automatic suspension of all running slices on PlanetLab.
+
+
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+   suspendSlices=("""PlanetLab slices suspended.""","""As part of PlanetLab node monitoring, we noticed the %(loginbase)s site has less than 2 nodes up.  We have attempted to contact the PI and Technical contacts multiple times and have not received a response.  
+
+All %(loginbase)s slices are now suspended.  
+
 
   -- PlanetLab Central (support@planet-lab.org)
 """)

@@ -27,8 +27,7 @@ logger = logging.getLogger("monitor")
 POLSLEEP = 7200
 
 # Where to email the summary
-#SUMTO = "pupadm@lists.planet-lab.org"
-SUMTO = "faiyaza@cs.princeton.edu"
+SUMTO = "pupadm@lists.planet-lab.org"
 TECHEMAIL="tech-%s@sites.planet-lab.org"
 PIEMAIL="pi-%s@sites.planet-lab.org"
 SLICEMAIL="%s@slices.planet-lab.org"
@@ -148,20 +147,37 @@ class Policy(Thread):
 					target.append(PIEMAIL % loginbase)
 					#remove slice creation if enough nodes arent up
 					if not self.enoughUp(loginbase):
+						slices = plc.slices(loginbase)
+						if len(slices) >= 1:
+							for slice in slices:
+								target.append(SLICEMAIL % slice)
 						logger.info("POLICY:  Removing slice creation from %s" % loginbase)
+						tmp = emailTxt.mailtxt.removedSliceCreation
+						sbj = tmp[0] 
+						msg = tmp[1] % {'loginbase': loginbase}
 						plc.removeSliceCreation(node)
+						mailer.email(sbj, msg, target)	
 						self.squeezed[loginbase] = (time.time(), "creation")
+						return
+
 				# If more than PI thresh and slicethresh
 				if (delta >= PITHRESH) and (delta > SLICETHRESH):
+					target.append(PIEMAIL % loginbase)
 					# Email slices at site.
 					slices = plc.slices(loginbase)
 					if len(slices) >= 1:
 						for slice in slices:
 							target.append(SLICEMAIL % slice)
-						if not self.enoughUp(loginbase):
-							plc.suspendSlices(node)
-							self.squeezed[loginbase] = (time.time(),
-								 "freeze")
+					# If not enough up, freeze slices and email everyone.
+					if not self.enoughUp(loginbase):
+						logger.info("POLICY:  Suspending %s slices." % loginbase)
+						tmp = emailTxt.mailtxt.suspendSlices
+						sbj = tmp[0] 
+						msg = tmp[1] % {'loginbase': loginbase}
+						plc.suspendSlices(node)
+						self.squeezed[loginbase] = (time.time(), "freeze")
+						mailer.email(sbj, msg, target)	
+						return
 
 			# Find the bucket the node is in and send appropriate email
 			# to approriate list of people.
