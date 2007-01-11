@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
+# $Id: policy.py,v 1.6 2007/01/10 20:08:44 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -27,7 +27,7 @@ logger = logging.getLogger("monitor")
 POLSLEEP = 7200
 
 # Where to email the summary
-SUMTO = "pupadm@lists.planet-lab.org"
+SUMTO = "faiyaza@cs.princeton.edu"
 TECHEMAIL="tech-%s@sites.planet-lab.org"
 PIEMAIL="pi-%s@sites.planet-lab.org"
 SLICEMAIL="%s@slices.planet-lab.org"
@@ -35,7 +35,7 @@ PLCEMAIL="support@planet-lab.org"
 
 #Thresholds (DAYS)
 SPERDAY = 86400
-PITHRESH = 1 * SPERDAY
+PITHRESH = 2 * SPERDAY
 SLICETHRESH = 5 * SPERDAY
 # Days before attempting rins again
 RINSTHRESH = 5 * SPERDAY
@@ -141,10 +141,13 @@ class Policy(Thread):
 
 				logger.info("POLICY:  acted %s on %s days ago" % (node, 
 				delta // SPERDAY))
+			
+				# If no luck with tech, email PI
+				if (delta >= 1):
+					target.append(PIEMAIL % loginbase)
 
 				# If more than PI thresh, but less than slicethresh
 				if (delta >= PITHRESH) and (delta < SLICETHRESH): 
-					target.append(PIEMAIL % loginbase)
 					#remove slice creation if enough nodes arent up
 					if not self.enoughUp(loginbase):
 						slices = plc.slices(loginbase)
