@@ -4,7 +4,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: $
+# $Id: mailer.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
 from emailTxt import *
 import smtplib
 import config
@@ -63,9 +63,12 @@ def email (subject, text, to):
 	msg = out.getvalue()
 	out.close()
 	if not config.debug:
-   		server = smtplib.SMTP(MTA)
-   		server.sendmail(FROM, to,  msg)
-		server.quit()
+		try:
+   			server = smtplib.SMTP(MTA)
+   			server.sendmail(FROM, to,  msg)
+			server.quit()
+		except Exception, err:
+			print "Mailer error: %s" % err
 
 if __name__=="__main__":
 	import smtplib
