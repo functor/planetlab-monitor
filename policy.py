@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.7 2007/01/11 21:39:07 faiyaza Exp $
+# $Id: policy.py,v 1.8 2007/01/17 19:33:04 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -165,6 +165,8 @@ class Policy(Thread):
 						mailer.email(sbj, msg, target)	
 						self.squeezed[loginbase] = (time.time(), "creation")
 						self.emailed[node] = ("creation", time.time())	
+						logger.info("POLICY: Emailing (%s) %s - %s"\
+							%("creation", node, target))
 						return
 
 				# If more than PI thresh and slicethresh
@@ -184,7 +186,10 @@ class Policy(Thread):
 						plc.suspendSlices(node)
 						self.squeezed[loginbase] = (time.time(), "freeze")
 						mailer.email(sbj, msg, target)	
-						self.emailed[node] = ("freeze", time.time())	
+						self.emailed[node] = ("freeze", time.time())
+						logger.info("POLICY: Emailing (%s) %s - %s"\
+							%("freeze", node, target))
+
 						return
 
 			# Find the bucket the node is in and send appropriate email
