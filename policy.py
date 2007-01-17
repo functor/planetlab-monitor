@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.6 2007/01/10 20:08:44 faiyaza Exp $
+# $Id: policy.py,v 1.7 2007/01/11 21:39:07 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -108,6 +108,9 @@ class Policy(Thread):
 		node = self.sickNoTicket.get(block = True)
 		# Get the login base	
 		loginbase = plc.siteId(node)
+		
+		# Princeton Backdoor
+		if loginbase == "princeton": return
 
  		# Send appropriate message for node if in appropriate bucket.
 		# If we know where to send a message
@@ -161,6 +164,7 @@ class Policy(Thread):
 						plc.removeSliceCreation(node)
 						mailer.email(sbj, msg, target)	
 						self.squeezed[loginbase] = (time.time(), "creation")
+						self.emailed[node] = ("creation", time.time())	
 						return
 
 				# If more than PI thresh and slicethresh
@@ -180,6 +184,7 @@ class Policy(Thread):
 						plc.suspendSlices(node)
 						self.squeezed[loginbase] = (time.time(), "freeze")
 						mailer.email(sbj, msg, target)	
+						self.emailed[node] = ("freeze", time.time())	
 						return
 
 			# Find the bucket the node is in and send appropriate email
