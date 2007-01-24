@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.8 2007/01/17 19:33:04 faiyaza Exp $
+# $Id: policy.py,v 1.9 2007/01/17 19:46:40 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -80,7 +80,7 @@ class Policy(Thread):
 					logger.info("POLICY:  %s in dbg, but acted on %s days ago" % (node, delta // SPERDAY))
 					return
 			logger.info("POLICY:  Node in dbg - " + node)
-			plc.nodeBootState(node, "rins")	
+			plc.nodeBootState([node, "rins"])	
 			# If it has a PCU
 			return reboot.reboot(node)
 	
@@ -107,7 +107,7 @@ class Policy(Thread):
 		# Grab a node from the queue (pushed by rt thread).
 		node = self.sickNoTicket.get(block = True)
 		# Get the login base	
-		loginbase = plc.siteId(node)
+		loginbase = plc.siteId([node])
 		
 		# Princeton Backdoor
 		if loginbase == "princeton": return
@@ -153,7 +153,7 @@ class Policy(Thread):
 				if (delta >= PITHRESH) and (delta < SLICETHRESH): 
 					#remove slice creation if enough nodes arent up
 					if not self.enoughUp(loginbase):
-						slices = plc.slices(loginbase)
+						slices = plc.slices([loginbase])
 						if len(slices) >= 1:
 							for slice in slices:
 								target.append(SLICEMAIL % slice)
@@ -161,7 +161,7 @@ class Policy(Thread):
 						tmp = emailTxt.mailtxt.removedSliceCreation
 						sbj = tmp[0] 
 						msg = tmp[1] % {'loginbase': loginbase}
-						plc.removeSliceCreation(node)
+						plc.removeSliceCreation([node])
 						mailer.email(sbj, msg, target)	
 						self.squeezed[loginbase] = (time.time(), "creation")
 						self.emailed[node] = ("creation", time.time())	
@@ -173,7 +173,7 @@ class Policy(Thread):
 				if (delta >= PITHRESH) and (delta > SLICETHRESH):
 					target.append(PIEMAIL % loginbase)
 					# Email slices at site.
-					slices = plc.slices(loginbase)
+					slices = plc.slices([loginbase])
 					if len(slices) >= 1:
 						for slice in slices:
 							target.append(SLICEMAIL % slice)
@@ -183,7 +183,7 @@ class Policy(Thread):
 						tmp = emailTxt.mailtxt.suspendSlices
 						sbj = tmp[0] 
 						msg = tmp[1] % {'loginbase': loginbase}
-						plc.suspendSlices(node)
+						plc.suspendSlices([node])
 						self.squeezed[loginbase] = (time.time(), "freeze")
 						mailer.email(sbj, msg, target)	
 						self.emailed[node] = ("freeze", time.time())
@@ -247,7 +247,7 @@ class Policy(Thread):
 	Returns True if more than MINUP nodes are up at a site.
 	'''
 	def enoughUp(self, loginbase):
-		allsitenodes = plc.getSiteNodes(loginbase)
+		allsitenodes = plc.getSiteNodes([loginbase])
 		if len(allsitenodes) == 0:
 			logger.info("Node not in db")
 			return
@@ -293,7 +293,7 @@ def main():
 	#a.emailedStore("LOAD")
 	#print a.emailed
 
-	print plc.slices(plc.siteId("alice.cs.princeton.edu"))
+	print plc.slices([plc.siteId(["alice.cs.princeton.edu"])])
 	os._exit(0)
 if __name__ == '__main__':
 	import os

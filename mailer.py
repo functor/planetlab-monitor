@@ -4,7 +4,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: mailer.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
+# $Id: mailer.py,v 1.5 2007/01/17 16:03:30 faiyaza Exp $
 from emailTxt import *
 import smtplib
 import config
@@ -74,7 +74,7 @@ if __name__=="__main__":
 	import smtplib
 	import emailTxt
 	import plc 
-	id = plc.siteId("alice.cs.princeton.edu")
+	id = plc.siteId(["alice.cs.princeton.edu"])
 	print id
 	#if id:
    		#email('TEST', emailTxt.mailtxt.ssh % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")

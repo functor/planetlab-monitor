@@ -384,9 +384,9 @@ def racadm_reboot(ip, username, password, port):
 
 # Returns true if rebooted via PCU
 def reboot(nodename):
-	pcu = plc.getpcu(nodename)
+	pcu = plc.getpcu([nodename])
 	if not pcu:
-		plc.nodePOD(nodename)
+		plc.nodePOD([nodename])
 		return False
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
