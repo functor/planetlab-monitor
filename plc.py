@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.2 2007/01/24 19:29:44 mef Exp $
+# $Id: plc.py,v 1.3 2007/02/01 14:20:19 mef Exp $
 #
 
 from emailTxt import *
@@ -224,7 +224,7 @@ def enableSliceCreation(argv):
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	if len(argv) <= 2:
+	if len(argv) < 2:
 		printUsage("requires maxslice arg")
 		sys.exit(1)
 
