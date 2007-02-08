@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.4 2007/02/01 14:25:56 mef Exp $
+# $Id: plc.py,v 1.5 2007/02/08 19:43:09 mef Exp $
 #
 
 from emailTxt import *
@@ -36,11 +36,12 @@ def nodesDbg(argv):
 def siteId(argv):
 	"""Returns loginbase for given nodename"""
 
-	global api, anon, auth
+	global api, auth
 	nodename = argv[0]
-	site_id = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
-	if len(site_id) == 1:
-		loginbase = api.AnonAdmGetSites (anon, site_id, ["login_base"])
+	site_ids = api.GetNodes(auth, [nodename], ['site_id'])
+	if len(site_ids) == 1:
+		site_id = [site_ids[0]['site_id']]
+		loginbase = api.GetSites (auth, site_id, ["login_base"])
 		return loginbase[0]['login_base']
 
 def slices(argv):
