@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.3 2007/02/01 14:20:19 mef Exp $
+# $Id: plc.py,v 1.4 2007/02/01 14:25:56 mef Exp $
 #
 
 from emailTxt import *
@@ -18,19 +18,18 @@ import sys
 
 logger = logging.getLogger("monitor")
 XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
-api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
-anon = None
+api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none = True)
 auth = None
 
 def nodesDbg(argv):
 	"""Returns list of nodes in dbg as reported by PLC"""
 
-	global api, anon, auth
+	global api, auth
 	dbgNodes = []
-	allnodes = api.AnonAdmGetNodes(anon, [], ['hostname','boot_state'])
+	allnodes = api.GetNodes(auth, None, ['hostname','boot_state'])
 	for node in allnodes:
 		if node['boot_state'] == 'dbg': dbgNodes.append(node['hostname'])
-	logger.info("%s nodes in debug according to PLC." %len(dbgNodes))
+	logger.info("%d nodes in debug according to PLC." %len(dbgNodes))
 	return dbgNodes
 
 
@@ -102,6 +101,37 @@ def getSiteNodes(argv):
 		logger.info("getSiteNodes:  %s" % exc)
 	nodelist.sort()
 	return nodelist
+
+def renewAllSlices (argv):
+	"""Sets the expiration date of all slices to given date"""
+	global api, anon, auth
+
+	newexp = argv[0]
+	# convert time string using fmt "%B %d %Y" to epoch integer
+	try:
+		newexp = int(time.mktime(time.strptime(newexp,"%B %d %Y")))
+	except ValueError, e:
+		errormsg = """Expecting date to be in Month Day Year
+  e.g., April 7 2007
+  new expiration date provided %s""" % newexp
+		printUsage(errormsg)
+		sys.exit(1)
+		
+	slices = api.GetSlices(auth)
+	for slice in slices:
+		name = slice['name']
+		exp = int(slice['expires'])
+		olddate = time.asctime(time.localtime(exp))
+		slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
+		for slice_attribute in slice_attributes:
+			if slice_attribute['name'] == "enabled":
+				print "%s is suspended" % name
+		continue
+		if exp < newexp:
+			newdate = time.asctime(time.localtime(newexp))
+			ret = api.SliceRenew(auth,name,newexp)
+			if ret == 0:
+				print "failed to renew %s" %name
 
 def nodeBootState(argv):
 	"""Sets boot state of a node."""
@@ -177,8 +207,6 @@ def enableSlices(argv):
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
-
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 
 	if argv[0].find(".") <> -1: siteslices = slices([siteId(argv)])
 	else: siteslices = slices(argv)
@@ -318,7 +346,8 @@ def main():
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
 	result = cmd(argv[1:])
-	print result
+	if result <> None:
+		print result
 
 funclist = (("nodesDbg",nodesDbg),
 	    ("siteId", siteId),
@@ -330,7 +359,8 @@ funclist = (("nodesDbg",nodesDbg),
 	    ("freezeSlices", suspendSlices),
 	    ("unfreezeSlices", enableSlices),
 	    ("disableSliceCreation",removeSliceCreation),
-	    ("enableSliceCreation", enableSliceCreation))
+	    ("enableSliceCreation", enableSliceCreation),
+	    ("renewAllSlices", renewAllSlices))
 
 functbl = {}
 for f in funclist:
