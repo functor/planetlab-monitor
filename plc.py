@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.5 2007/02/08 19:43:09 mef Exp $
+# $Id: plc.py,v 1.6 2007/02/08 19:59:03 mef Exp $
 #
 
 from emailTxt import *
@@ -17,7 +17,7 @@ import getpass, getopt
 import sys
 
 logger = logging.getLogger("monitor")
-XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
+XMLRPC_SERVER = 'https://www2.planet-lab.org/PLCAPI/'
 api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none = True)
 auth = None
 
@@ -48,11 +48,30 @@ def slices(argv):
 	"""Returns list of slices for a site."""
 
 	global api, anon, auth
+	if len(argv) < 1:
+		printUsage("not enough arguments; please provide loginbase")
+		sys.exit(1)
+
 	loginbase = argv[0]
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
-	return api.SliceListNames (auth, loginbase)
+
+	def fast():
+		slices = api.GetSlices (auth, {'name':"%s_*"%loginbase})
+		return slices
+
+	def slow():
+		results = []
+		slice_ids = api.GetSites(auth,{'login_base':loginbase},['slice_ids'])
+		if len(slice_ids)==1:
+			slice_ids=slice_ids[0]
+			slice_ids=slice_ids['slice_ids']
+			slices = api.GetSlices(auth,slice_ids,['name'])
+			results = map(lambda x: x['name'],slices)
+		return results
+
+	return slow()
 
 def getpcu(argv):
 	"""Returns dict of PCU info of a given node."""
@@ -63,49 +82,37 @@ def getpcu(argv):
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	nodes = []
-	site_id = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
-	if len(site_id) == 1:
-		try:
-			sitepcus = api.AdmGetSitePowerControlUnits(auth, site_id[0])
-			for sitepcu in sitepcus:
-				sitepcuports = api.AdmGetPowerControlUnitNodes(auth, sitepcu['pcu_id'])
-				for sitepcuport in sitepcuports:
-					node_id = [sitepcuport['node_id']]
-					node = api.AnonAdmGetNodes(anon,node_id,["hostname"])
-					if len(node)==0:
-						continue
-					node = node[0]
-					hostname = node['hostname'].lower()
-					if hostname == nodename:
-						sitepcu['port_number']=sitepcuport['port_number']
-						return sitepcu
-
-		except Exception, err:
-			logger.debug("getpcu: %s" % err)
-			return
+	pcus = api.GetNodes(auth, [nodename], ['pcu_ids'])
+	if len(pcus):
+		pcus = map(lambda x: x['pcu_ids'],pcus)[0]
+		nodepcus = api.GetPCUs(auth,pcus)
 	else:
-		logger.info("Cant find site for %s" % nodename)
+		nodepcus = []
+	return nodepcus
 
 
 def getSiteNodes(argv):
 	"""Returns all site nodes for site id (loginbase)."""
-	global api, anon, auth
+	global api, auth
+	if len(argv) < 1:
+		printUsage("not enough arguments; please provide loginbase")
+		sys.exit(1)
+
 	loginbase = argv[0]
 	nodelist = []
-	try:
-		site_id = api.AnonAdmQuerySite(anon, {'site_loginbase': "%s" % loginbase})
-		node_ids = api.AnonAdmGetSiteNodes(anon, site_id)
-		for node in api.AnonAdmGetNodes(anon, node_ids["%s" % site_id[0]], ["hostname"]):
-			nodelist.append(node['hostname'])
-	except Exception, exc:
-		logger.info("getSiteNodes:  %s" % exc)
+	site_ids = api.GetSites(auth, {'login_base': "%s" % loginbase}, ['node_ids'])
+	if len(site_ids) == 1:
+		node_ids = site_ids[0]['node_ids']
+		nodes = api.GetNodes(auth,node_ids,['hostname'])
+		nodelist = map(lambda x: x['hostname'], nodes)
+	elif len(site_ids) == 0:
+		logger.info("getSiteNodes: can't find site %s" %loginbase)	      
 	nodelist.sort()
 	return nodelist
 
 def renewAllSlices (argv):
 	"""Sets the expiration date of all slices to given date"""
-	global api, anon, auth
+	global api, auth
 
 	newexp = argv[0]
 	# convert time string using fmt "%B %d %Y" to epoch integer
@@ -138,23 +145,28 @@ def nodeBootState(argv):
 	"""Sets boot state of a node."""
 
 	global api, anon, auth
-	if len(argv) <> 2:
+	if len(argv) < 1:
 		printUsage("not enough arguments")
 		sys.exit(1)
 		
-	nodename = argv[0]
-	state = argv[1]
-	
+	if len(argv) >=1:
+		nodename = argv[0]
+	if len(argv) >=2:
+		state = argv[1]
+
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	node_id = api.AnonAdmQueryNode(anon, {'node_hostname' : nodename})
-	if len(node_id) == 1:
-		logger.info("Setting node %s to %s" %(nodename, state))
+	node = api.GetNodes(auth, [nodename], ['node_id','boot_state'])
+	if len(node) == 1:
+		node = node[0]
 		try:
-			if not config.debug:
-				api.AdmUpdateNode(auth, node_id[0], {'boot_state': state})
+			logger.info("%s boot_state=%s" %(nodename, node['boot_state']))
+			if len(argv) >=2 and not config.debug:
+				logger.info("Setting node %s boot_state=%s" %(nodename, state))
+				node_id = node['node_id']
+				api.UpdateNode(auth, node_id, {'boot_state': state})
 		except Exception, exc:
 			logger.info("nodeBootState:  %s" % exc)
 	else:
@@ -163,18 +175,23 @@ def nodeBootState(argv):
 def nodePOD(argv):
 	"""Sends Ping Of Death to node."""
 
-	global api, anon, auth
+	global api, auth
+	if len(argv) < 1:
+		printUsage("not enough arguments")
+		sys.exit(1)
+		
 	nodename = argv[0]
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	node_id = api.AnonAdmQueryNode(anon, {'node_hostname' : nodename})
-	if len(node_id) == 1:
+	node = api.GetNodes(auth, [nodename], ['node_id'])
+	if len(node) == 1:
+		node = node[0]
 		logger.info("Sending POD to %s" % nodename)
 		try:
 			if not config.debug:
-				api.AdmRebootNode(auth, node_id[0])
+				api.RebootNode(auth, node['node_id'])
 		except Exception, exc:
 			logger.info("nodePOD:  %s" % exc)
 	else:
