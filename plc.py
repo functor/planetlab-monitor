@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.8 2007/02/12 19:15:08 mef Exp $
+# $Id: plc.py,v 1.9 2007/02/12 19:54:56 mef Exp $
 #
 
 from emailTxt import *
@@ -226,7 +226,8 @@ def enableSlices(argv):
 			if slice_attribute['name'] == "plc_slice_state":
 				api.DeleteSliceAttribute(auth, slice_attribute['slice_attribute_id'])
 
-def _SetSliceMax(argv):
+def setSliceMax(argv):
+	"""Set max_slices for Slice. Returns previous max_slices"""
 	global api, auth
 	if auth is None:
 		printUsage("requires admin privs")
@@ -255,15 +256,6 @@ def _SetSliceMax(argv):
 		return numslices
 	except Exception, exc:
 		logger.info("_SetSliceMax:  %s" % exc)
-
-def removeSliceCreation(argv):
-	"""Removes ability to create slices. Returns previous max_slices"""
-	argv.append(0)
-	_SetSliceMax(argv)
-
-def enableSliceCreation(argv):
-	"""QED"""
-	_SetSliceMax(argv)
 
 
 USAGE = """
@@ -346,8 +338,7 @@ funclist = (("nodesDbg",nodesDbg),
 	    ("nodePOD", nodePOD),
 	    ("freezeSlices", suspendSlices),
 	    ("unfreezeSlices", enableSlices),
-	    ("disableSliceCreation",removeSliceCreation),
-	    ("enableSliceCreation", enableSliceCreation),
+	    ("setSliceMax", setSliceMax),
 	    ("renewAllSlices", renewAllSlices))
 
 functbl = {}
