@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.6 2007/02/08 19:59:03 mef Exp $
+# $Id: plc.py,v 1.7 2007/02/08 22:43:11 mef Exp $
 #
 
 from emailTxt import *
@@ -57,21 +57,9 @@ def slices(argv):
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	def fast():
-		slices = api.GetSlices (auth, {'name':"%s_*"%loginbase})
-		return slices
-
-	def slow():
-		results = []
-		slice_ids = api.GetSites(auth,{'login_base':loginbase},['slice_ids'])
-		if len(slice_ids)==1:
-			slice_ids=slice_ids[0]
-			slice_ids=slice_ids['slice_ids']
-			slices = api.GetSlices(auth,slice_ids,['name'])
-			results = map(lambda x: x['name'],slices)
-		return results
-
-	return slow()
+	slices = api.GetSlices (auth, {'name':"%s_*"%loginbase},['name'])
+	slices = map(lambda x: x['name'],slices)
+	return slices
 
 def getpcu(argv):
 	"""Returns dict of PCU info of a given node."""
