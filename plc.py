@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.7 2007/02/08 22:43:11 mef Exp $
+# $Id: plc.py,v 1.8 2007/02/12 19:15:08 mef Exp $
 #
 
 from emailTxt import *
@@ -47,7 +47,7 @@ def siteId(argv):
 def slices(argv):
 	"""Returns list of slices for a site."""
 
-	global api, anon, auth
+	global api, auth
 	if len(argv) < 1:
 		printUsage("not enough arguments; please provide loginbase")
 		sys.exit(1)
@@ -64,7 +64,7 @@ def slices(argv):
 def getpcu(argv):
 	"""Returns dict of PCU info of a given node."""
 
-	global api, anon, auth
+	global api, auth
 	nodename = argv[0].lower()
 	if auth is None:
 		printUsage("requires admin privs")
@@ -122,7 +122,6 @@ def renewAllSlices (argv):
 		for slice_attribute in slice_attributes:
 			if slice_attribute['name'] == "enabled":
 				print "%s is suspended" % name
-		continue
 		if exp < newexp:
 			newdate = time.asctime(time.localtime(newexp))
 			ret = api.SliceRenew(auth,name,newexp)
@@ -132,7 +131,7 @@ def renewAllSlices (argv):
 def nodeBootState(argv):
 	"""Sets boot state of a node."""
 
-	global api, anon, auth
+	global api, auth
 	if len(argv) < 1:
 		printUsage("not enough arguments")
 		sys.exit(1)
@@ -159,6 +158,7 @@ def nodeBootState(argv):
 			logger.info("nodeBootState:  %s" % exc)
 	else:
 		logger.info("Cant find node %s to toggle boot state" % nodename)
+
 
 def nodePOD(argv):
 	"""Sends Ping Of Death to node."""
@@ -188,7 +188,7 @@ def nodePOD(argv):
 def suspendSlices(argv):
 	"""Freeze all site slices."""
 
-	global api, anon, auth
+	global api, auth
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
@@ -200,8 +200,7 @@ def suspendSlices(argv):
 		logger.info("Suspending slice %s" % slice)
 		try:
 			if not config.debug:
-				api.SliceAttributeAdd(auth, slice, "plc_slice_state", 
-				{"state" : "suspended"})
+				api.AddSliceAttribute(auth, slice, "plc_slice_state", "suspended")
 		except Exception, exc:
 			logger.info("suspendSlices:  %s" % exc)
 
@@ -209,78 +208,62 @@ def suspendSlices(argv):
 def enableSlices(argv):
 	"""Enable suspended site slices."""
 
-	global api, anon, auth
+	global api, auth
 	if auth is None:
 		printUsage("requires admin privs")
 		sys.exit(1)
 
-	if argv[0].find(".") <> -1: siteslices = slices([siteId(argv)])
-	else: siteslices = slices(argv)
+	if argv[0].find(".") <> -1:
+		slices = api.GetSlices(auth,[siteId(argv)])
+	else:
+		gSlices = {'name':"%s_*"%argv[0]}
+		slices = api.GetSlices(auth,gSlices)
 
-	for slice in siteslices:
-		logger.info("unfreezing slice %s" % slice)
-		api.SliceAttributeDelete(auth, slice, "plc_slice_state")
+	for slice in slices:
+		logger.info("unfreezing slice %s" % slice['name'])
+		slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
+		for slice_attribute in slice_attributes:
+			if slice_attribute['name'] == "plc_slice_state":
+				api.DeleteSliceAttribute(auth, slice_attribute['slice_attribute_id'])
 
+def _SetSliceMax(argv):
+	global api, auth
+	if auth is None:
+		printUsage("requires admin privs")
+		sys.exit(1)
+
+	name = argv[0]
+	val = int(argv[1])
+	if name.find(".") <> -1:
+		site_ids = api.GetNodes(auth, [name], ['site_id'])
+		if len(site_ids) == 1:
+			site_id = [site_ids[0]['site_id']]
+			loginbase = api.GetSites (auth, site_id, ["login_base"])
+		else:
+			printUsage("invalid hostname %s" % name)
+			sys.exit(1)
+	else:
+		site_ids = api.GetSites(auth, {'login_base': "%s" % name}, ['site_id'])
+		if len(site_ids) == 1:
+			siteid = site_ids[0]['site_id']
+		loginbase = name
+
+	numslices = api.GetSites(auth, [siteid], ["max_slices"])[0]['max_slices']
+	try:
+		api.UpdateSite(auth, siteid, {'max_slices': val})
+		logger.info("_SetSliceMax:  %s max_slices was %d set to %d" % (loginbase,numslices,val))
+		return numslices
+	except Exception, exc:
+		logger.info("_SetSliceMax:  %s" % exc)
 
 def removeSliceCreation(argv):
 	"""Removes ability to create slices. Returns previous max_slices"""
-
-	global api, anon, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	name = argv[0]
-	if name.find(".") <> -1:
-		siteid = api.AnonAdmQuerySite (anon, {"node_hostname": name})
-		loginbase = siteId(name)
-	else:
-		siteid = api.AnonAdmQuerySite (anon, {"site_loginbase": name})		
-		loginbase = name
-
-	numslices = api.AdmGetSites(auth, siteid, ["max_slices"])[0]['max_slices']
-	if len(siteid) == 1:
-		logger.info("Removing slice creation for site %s" % loginbase)
-		try:
-			if not config.debug:
-				api.AdmUpdateSite(auth, siteid[0], {'max_slices': 0})
-			return numslices
-		except Exception, exc:
-			logger.info("removeSliceCreation:  %s" % exc)
-	else:
-		logger.debug("Cant find site for %s.  Cannot revoke creation." % loginbase)
+	argv.append(0)
+	_SetSliceMax(argv)
 
 def enableSliceCreation(argv):
 	"""QED"""
-
-	global api, anon, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	if len(argv) < 2:
-		printUsage("requires maxslice arg")
-		sys.exit(1)
-
-	maxslices = int(argv[1])
-	name = argv[0]
-	if name.find(".") <> -1:
-		siteid = api.AnonAdmQuerySite (anon, {"node_hostname": name})
-		loginbase = siteId(name)
-	else:
-		siteid = api.AnonAdmQuerySite (anon, {"site_loginbase": name})		
-		loginbase = name
-
-	if len(siteid) == 1:
-		logger.info("Enabling slice creation for site %s" % loginbase)
-		try:
-			if not config.debug:
-				api.AdmUpdateSite(auth, siteid[0], {"max_slices" : maxslices})
-		except Exception, exc:
-			logger.info("API:  %s" % exc)
-	else:
-		logger.debug("Cant find site for %s.  Cannot enable creation." % loginbase)
-
+	_SetSliceMax(argv)
 
 
 USAGE = """
@@ -303,9 +286,8 @@ def printUsage(error = None):
 		print "%20s\t%20s" % (name, function.__doc__)
 	
 def main():
-	global api, auth, anon
+	global api, auth
 
-	anon = {"AuthMethod":"anonymous"}
 	auth = None
 	user = None
 	password = None
