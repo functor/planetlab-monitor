@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.9 2007/02/12 19:54:56 mef Exp $
+# $Id: plc.py,v 1.10 2007/02/12 19:59:00 mef Exp $
 #
 
 from emailTxt import *
@@ -185,9 +185,23 @@ def nodePOD(argv):
 	else:
 		logger.info("Cant find node %s to send POD." % nodename)
 
+def suspendSlice(argv):
+	"""Freeze specific slice."""
+	global api, auth
+	if auth is None:
+		printUsage("requires admin privs")
+		sys.exit(1)
+
+	slice = argv[0]
+	logger.info("Suspending slice %s" % slice)
+	try:
+		if not config.debug:
+			api.AddSliceAttribute(auth, slice, "enabled", "0")
+	except Exception, exc:
+		logger.info("suspendSlices:  %s" % exc)
+
 def suspendSlices(argv):
 	"""Freeze all site slices."""
-
 	global api, auth
 	if auth is None:
 		printUsage("requires admin privs")
@@ -197,13 +211,29 @@ def suspendSlices(argv):
 	else: siteslices = slices(argv)
 
 	for slice in siteslices:
-		logger.info("Suspending slice %s" % slice)
-		try:
-			if not config.debug:
-				api.AddSliceAttribute(auth, slice, "plc_slice_state", "suspended")
-		except Exception, exc:
-			logger.info("suspendSlices:  %s" % exc)
+		suspendSlice([slice])
 
+def __enableSlice(slice):
+	logger.info("unfreezing slice %s" % slice['name'])
+	slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
+	for slice_attribute in slice_attributes:
+		if slice_attribute['name'] == "enabled":
+			api.DeleteSliceAttribute(auth, slice_attribute['slice_attribute_id'])
+	
+def enableSlice(arg):
+	"""Enable suspended slice."""
+	global api, auth
+	if auth is None:
+		printUsage("requires admin privs")
+		sys.exit(1)
+
+	slicename = arg[0]
+	gSlices = {'name':slicename}
+	slice = api.GetSlices(auth,gSlices)
+	if len(slice) == 1:
+		__enableSlice(slice[0])
+	else:
+		logger.info("slice %s not found" % slicename)
 
 def enableSlices(argv):
 	"""Enable suspended site slices."""
@@ -220,11 +250,7 @@ def enableSlices(argv):
 		slices = api.GetSlices(auth,gSlices)
 
 	for slice in slices:
-		logger.info("unfreezing slice %s" % slice['name'])
-		slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
-		for slice_attribute in slice_attributes:
-			if slice_attribute['name'] == "plc_slice_state":
-				api.DeleteSliceAttribute(auth, slice_attribute['slice_attribute_id'])
+		__enableSlice(slice)
 
 def setSliceMax(argv):
 	"""Set max_slices for Slice. Returns previous max_slices"""
@@ -336,6 +362,8 @@ funclist = (("nodesDbg",nodesDbg),
 	    ("siteNodes", getSiteNodes),
 	    ("nodeBootState", nodeBootState),
 	    ("nodePOD", nodePOD),
+	    ("freezeSlice", suspendSlice),
+	    ("unfreezeSlice", enableSlice),
 	    ("freezeSlices", suspendSlices),
 	    ("unfreezeSlices", enableSlices),
 	    ("setSliceMax", setSliceMax),
