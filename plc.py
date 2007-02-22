@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.10 2007/02/12 19:59:00 mef Exp $
+# $Id: plc.py,v 1.11 2007/02/19 17:42:21 mef Exp $
 #
 
 from emailTxt import *
@@ -17,7 +17,7 @@ import getpass, getopt
 import sys
 
 logger = logging.getLogger("monitor")
-XMLRPC_SERVER = 'https://www2.planet-lab.org/PLCAPI/'
+XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
 api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none = True)
 auth = None
 
@@ -284,6 +284,30 @@ def setSliceMax(argv):
 		logger.info("_SetSliceMax:  %s" % exc)
 
 
+def authCheck(arg):
+	"""Enable suspended slice."""
+	global api, auth
+	if auth is None:
+		printUsage("requires admin privs")
+		sys.exit(1)
+
+	if len(arg) != 2:
+		printUsage("incorrect arguments")
+		sys.exit(1)
+	user= arg[0]
+	pwd = arg[1]
+	
+	check = {}
+	check['Username'] = user
+	check['AuthMethod'] = "password"
+	check['AuthString'] = pwd
+	for role in ['user','tech','pi','admin']:
+		check['Role'] = role
+		res = api.AdmAuthCheck(check)
+		print "%s -> %s %d" % (user,role,res)
+
+
+
 USAGE = """
 Usage: %s [-u user] [-p password] [-r role] CMD
 
@@ -367,6 +391,7 @@ funclist = (("nodesDbg",nodesDbg),
 	    ("freezeSlices", suspendSlices),
 	    ("unfreezeSlices", enableSlices),
 	    ("setSliceMax", setSliceMax),
+	    ("authCheck", authCheck),
 	    ("renewAllSlices", renewAllSlices))
 
 functbl = {}
