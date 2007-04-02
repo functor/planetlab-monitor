@@ -1,402 +1,189 @@
-#!/bin/env python
+#
+# plc.py
 #
 # Helper functions that minipulate the PLC api.
 # 
-# Faiyaz Ahmed <faiyaza@cs.princeton.edu>
-# Copyright (C) 2006, 2007 The Trustees of Princeton University
+# Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.11 2007/02/19 17:42:21 mef Exp $
+# $Id: plc.py,v 1.1 2006/11/14 19:27:09 faiyaza Exp $
 #
 
 from emailTxt import *
 import xml, xmlrpclib
 import logging
+import auth
 import time
 import config
-import getpass, getopt
-import sys
 
 logger = logging.getLogger("monitor")
+
 XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
-api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none = True)
-auth = None
 
-def nodesDbg(argv):
-	"""Returns list of nodes in dbg as reported by PLC"""
-
-	global api, auth
+'''
+Returns list of nodes in dbg as reported by PLC
+'''
+def nodesDbg():
 	dbgNodes = []
-	allnodes = api.GetNodes(auth, None, ['hostname','boot_state'])
-	for node in allnodes:
-		if node['boot_state'] == 'dbg': dbgNodes.append(node['hostname'])
-	logger.info("%d nodes in debug according to PLC." %len(dbgNodes))
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	anon = {'AuthMethod': "anonymous"}
+	for node in api.GetNodes(anon, {"boot_state":"dbg"},["hostname"]):
+		dbgNodes.append(node['hostname'])
+	logger.info("%s nodes in debug according to PLC." %len(dbgNodes))
 	return dbgNodes
 
 
-def siteId(argv):
-	"""Returns loginbase for given nodename"""
-
-	global api, auth
-	nodename = argv[0]
-	site_ids = api.GetNodes(auth, [nodename], ['site_id'])
-	if len(site_ids) == 1:
-		site_id = [site_ids[0]['site_id']]
-		loginbase = api.GetSites (auth, site_id, ["login_base"])
+'''
+Returns loginbase for given nodename
+'''
+def siteId(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	anon = {'AuthMethod': "anonymous"}
+	site_id = api.GetNodes (anon, {"hostname": nodename}, ['site_id'])
+	if len(site_id) == 1:
+		loginbase = api.GetSites (anon, site_id[0], ["login_base"])
 		return loginbase[0]['login_base']
 
-def slices(argv):
-	"""Returns list of slices for a site."""
+'''
+Returns list of slices for a site.
+'''
+def slices(loginbase):
+	siteslices = []
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	sliceids = api.GetSites (auth.auth, {"login_base" : loginbase}, ["slice_ids"])[0]['slice_ids']
+	for slice in api.GetSlices(auth.auth, {"slice_id" : sliceids}, ["name"]):
+		siteslices.append(slice['name'])
+	return siteslices
 
-	global api, auth
-	if len(argv) < 1:
-		printUsage("not enough arguments; please provide loginbase")
-		sys.exit(1)
-
-	loginbase = argv[0]
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	slices = api.GetSlices (auth, {'name':"%s_*"%loginbase},['name'])
-	slices = map(lambda x: x['name'],slices)
-	return slices
-
-def getpcu(argv):
-	"""Returns dict of PCU info of a given node."""
-
-	global api, auth
-	nodename = argv[0].lower()
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	pcus = api.GetNodes(auth, [nodename], ['pcu_ids'])
-	if len(pcus):
-		pcus = map(lambda x: x['pcu_ids'],pcus)[0]
-		nodepcus = api.GetPCUs(auth,pcus)
+'''
+Returns dict of PCU info of a given node.
+'''
+def getpcu(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	anon = {'AuthMethod': "anonymous"}
+	nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
+	if nodeinfo['pcu_ids']:
+		sitepcu = api.GetPCUs(auth.auth, nodeinfo['pcu_ids'])[0]
+		sitepcu[nodename] = nodeinfo["ports"][0]
+		return False
 	else:
-		nodepcus = []
-	return nodepcus
+		logger.info("%s doesn't have PCU" % nodename)
+	return sitepcu
 
 
-def getSiteNodes(argv):
-	"""Returns all site nodes for site id (loginbase)."""
-	global api, auth
-	if len(argv) < 1:
-		printUsage("not enough arguments; please provide loginbase")
-		sys.exit(1)
-
-	loginbase = argv[0]
+'''
+Returns all site nodes for site id (loginbase).
+'''
+def getSiteNodes(loginbase):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	nodelist = []
-	site_ids = api.GetSites(auth, {'login_base': "%s" % loginbase}, ['node_ids'])
-	if len(site_ids) == 1:
-		node_ids = site_ids[0]['node_ids']
-		nodes = api.GetNodes(auth,node_ids,['hostname'])
-		nodelist = map(lambda x: x['hostname'], nodes)
-	elif len(site_ids) == 0:
-		logger.info("getSiteNodes: can't find site %s" %loginbase)	      
-	nodelist.sort()
+	anon = {'AuthMethod': "anonymous"}
+	try:
+		nodeids = api.GetSites(anon, {"login_base": loginbase})[0]['node_ids']
+		for node in api.GetNodes(anon, {"node_id": nodeids}):
+			nodelist.append(node['hostname'])
+	except Exception, exc:
+		logger.info("getSiteNodes:  %s" % exc)
 	return nodelist
 
-def renewAllSlices (argv):
-	"""Sets the expiration date of all slices to given date"""
-	global api, auth
 
-	newexp = argv[0]
-	# convert time string using fmt "%B %d %Y" to epoch integer
+'''
+Sets boot state of a node.
+'''
+def nodeBootState(nodename, state):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	try:
-		newexp = int(time.mktime(time.strptime(newexp,"%B %d %Y")))
-	except ValueError, e:
-		errormsg = """Expecting date to be in Month Day Year
-  e.g., April 7 2007
-  new expiration date provided %s""" % newexp
-		printUsage(errormsg)
-		sys.exit(1)
-		
-	slices = api.GetSlices(auth)
-	for slice in slices:
-		name = slice['name']
-		exp = int(slice['expires'])
-		olddate = time.asctime(time.localtime(exp))
-		slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
-		for slice_attribute in slice_attributes:
-			if slice_attribute['name'] == "enabled":
-				print "%s is suspended" % name
-		if exp < newexp:
-			newdate = time.asctime(time.localtime(newexp))
-			ret = api.SliceRenew(auth,name,newexp)
-			if ret == 0:
-				print "failed to renew %s" %name
+		return api.UpdateNode(auth.auth, nodename, {'boot_state': state})
+	except Exception, exc:
+		logger.info("nodeBootState:  %s" % exc)
 
-def nodeBootState(argv):
-	"""Sets boot state of a node."""
-
-	global api, auth
-	if len(argv) < 1:
-		printUsage("not enough arguments")
-		sys.exit(1)
-		
-	if len(argv) >=1:
-		nodename = argv[0]
-	if len(argv) >=2:
-		state = argv[1]
-
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	node = api.GetNodes(auth, [nodename], ['node_id','boot_state'])
-	if len(node) == 1:
-		node = node[0]
-		try:
-			logger.info("%s boot_state=%s" %(nodename, node['boot_state']))
-			if len(argv) >=2 and not config.debug:
-				logger.info("Setting node %s boot_state=%s" %(nodename, state))
-				node_id = node['node_id']
-				api.UpdateNode(auth, node_id, {'boot_state': state})
-		except Exception, exc:
-			logger.info("nodeBootState:  %s" % exc)
-	else:
-		logger.info("Cant find node %s to toggle boot state" % nodename)
-
-
-def nodePOD(argv):
-	"""Sends Ping Of Death to node."""
-
-	global api, auth
-	if len(argv) < 1:
-		printUsage("not enough arguments")
-		sys.exit(1)
-		
-	nodename = argv[0]
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	node = api.GetNodes(auth, [nodename], ['node_id'])
-	if len(node) == 1:
-		node = node[0]
-		logger.info("Sending POD to %s" % nodename)
-		try:
-			if not config.debug:
-				api.RebootNode(auth, node['node_id'])
-		except Exception, exc:
-			logger.info("nodePOD:  %s" % exc)
-	else:
-		logger.info("Cant find node %s to send POD." % nodename)
-
-def suspendSlice(argv):
-	"""Freeze specific slice."""
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	slice = argv[0]
-	logger.info("Suspending slice %s" % slice)
+'''
+Sends Ping Of Death to node.
+'''
+def nodePOD(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	logger.info("Sending POD to %s" % nodename)
 	try:
 		if not config.debug:
-			api.AddSliceAttribute(auth, slice, "enabled", "0")
+			return api.RebootNode(auth.auth, nodename)
 	except Exception, exc:
-		logger.info("suspendSlices:  %s" % exc)
+			logger.info("nodePOD:  %s" % exc)
 
-def suspendSlices(argv):
-	"""Freeze all site slices."""
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
+'''
+Freeze all site slices.
+'''
+def suspendSlices(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	for slice in slices(siteId(nodename)):
+		logger.info("Suspending slice %s" % slice)
+		try:
+			if not config.debug:
+				api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
+		except Exception, exc:
+			logger.info("suspendSlices:  %s" % exc)
 
-	if argv[0].find(".") <> -1: siteslices = slices([siteId(argv)])
-	else: siteslices = slices(argv)
 
-	for slice in siteslices:
-		suspendSlice([slice])
+#I'm commenting this because this really should be a manual process.  
+#'''
+#Enable suspended site slices.
+#'''
+#def enableSlices(nodename, slicelist):
+#	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+#	for slice in  slices(siteId(nodename)):
+#		logger.info("Suspending slice %s" % slice)
+#		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
+#
 
-def __enableSlice(slice):
-	logger.info("unfreezing slice %s" % slice['name'])
-	slice_attributes = api.GetSliceAttributes(auth,slice['slice_attribute_ids'])
-	for slice_attribute in slice_attributes:
-		if slice_attribute['name'] == "enabled":
-			api.DeleteSliceAttribute(auth, slice_attribute['slice_attribute_id'])
-	
-def enableSlice(arg):
-	"""Enable suspended slice."""
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	slicename = arg[0]
-	gSlices = {'name':slicename}
-	slice = api.GetSlices(auth,gSlices)
-	if len(slice) == 1:
-		__enableSlice(slice[0])
-	else:
-		logger.info("slice %s not found" % slicename)
-
-def enableSlices(argv):
-	"""Enable suspended site slices."""
-
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	if argv[0].find(".") <> -1:
-		slices = api.GetSlices(auth,[siteId(argv)])
-	else:
-		gSlices = {'name':"%s_*"%argv[0]}
-		slices = api.GetSlices(auth,gSlices)
-
-	for slice in slices:
-		__enableSlice(slice)
-
-def setSliceMax(argv):
-	"""Set max_slices for Slice. Returns previous max_slices"""
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	name = argv[0]
-	val = int(argv[1])
-	if name.find(".") <> -1:
-		site_ids = api.GetNodes(auth, [name], ['site_id'])
-		if len(site_ids) == 1:
-			site_id = [site_ids[0]['site_id']]
-			loginbase = api.GetSites (auth, site_id, ["login_base"])
-		else:
-			printUsage("invalid hostname %s" % name)
-			sys.exit(1)
-	else:
-		site_ids = api.GetSites(auth, {'login_base': "%s" % name}, ['site_id'])
-		if len(site_ids) == 1:
-			siteid = site_ids[0]['site_id']
-		loginbase = name
-
-	numslices = api.GetSites(auth, [siteid], ["max_slices"])[0]['max_slices']
+'''
+Removes ability to create slices. Returns previous max_slices
+'''
+def removeSliceCreation(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	try:
-		api.UpdateSite(auth, siteid, {'max_slices': val})
-		logger.info("_SetSliceMax:  %s max_slices was %d set to %d" % (loginbase,numslices,val))
-		return numslices
+		loginbase = siteId(nodename)
+		numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
+				["max_slices"])[0]['max_slices']
+		logger.info("Removing slice creation for site %s" % loginbase)
+		if not config.debug:
+			api.UpdateSite(auth.auth, siteid, {'max_slices': 0})
 	except Exception, exc:
-		logger.info("_SetSliceMax:  %s" % exc)
+		logger.info("removeSliceCreation:  %s" % exc)
 
+'''
+QED
+'''
+def enableSliceCreation(nodename, maxslices):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	anon = {'AuthMethod': "anonymous"}
+	siteid = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
+	if len(siteid) == 1:
+		logger.info("Enabling slice creation for site %s" % siteId(nodename))
+		try:
+			if not config.debug:
+				api.AdmUpdateSite(auth.auth, siteid[0], {"max_slices" : maxslices})
+		except Exception, exc:
+			logger.info("API:  %s" % exc)
+	else:
+		logger.debug("Cant find site for %s.  Cannot enable creation." % nodename)
 
-def authCheck(arg):
-	"""Enable suspended slice."""
-	global api, auth
-	if auth is None:
-		printUsage("requires admin privs")
-		sys.exit(1)
-
-	if len(arg) != 2:
-		printUsage("incorrect arguments")
-		sys.exit(1)
-	user= arg[0]
-	pwd = arg[1]
-	
-	check = {}
-	check['Username'] = user
-	check['AuthMethod'] = "password"
-	check['AuthString'] = pwd
-	for role in ['user','tech','pi','admin']:
-		check['Role'] = role
-		res = api.AdmAuthCheck(check)
-		print "%s -> %s %d" % (user,role,res)
-
-
-
-USAGE = """
-Usage: %s [-u user] [-p password] [-r role] CMD
-
-Options:
--u      PLC account username
--p      PLC account password
--r      PLC account role
--h      This message
-""" % sys.argv[0]
-
-def printUsage(error = None):
-	global funclist
-	if error <> None:
-		print "%s %s" %(sys.argv[0],error)
-	print USAGE
-	print "CMD:"
-	for name,function in funclist:
-		print "%20s\t%20s" % (name, function.__doc__)
-	
 def main():
-	global api, auth
-
-	auth = None
-	user = None
-	password = None
-	role = 'admin'
-
-	(opts, argv) = getopt.getopt(sys.argv[1:], "u:p:r:h")
-	if len(argv)==0:
-		printUsage()
-		sys.exit(1)
-
-	for (opt, optval) in opts:
-		if opt == '-u':
-			user = optval
-		elif opt == '-p':
-			password = optval
-		elif opt == '-r':
-			role = optval
-		elif opt == '-h':
-			print USAGE
-			sys.exit(0)
-
-	if user <> None:
-		if password is None:
-			try:
-				password = getpass.getpass()
-			except (EOFError, KeyboardInterrupt):
-				print( "" )
-				sys.exit(1)
-		auth = {}
-		auth['Username'] = user
-		auth['AuthMethod'] = "password"
-		auth['AuthString'] = password
-		auth['Role'] = role
-
-	cmd = functbl.get(argv[0], None)
-	if cmd is None:
-		printUsage()
-		sys.exit(1)
-
 	logger.setLevel(logging.DEBUG)
 	ch = logging.StreamHandler()
 	ch.setLevel(logging.DEBUG)
 	formatter = logging.Formatter('logger - %(message)s')
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
-	result = cmd(argv[1:])
-	if result <> None:
-		print result
-
-funclist = (("nodesDbg",nodesDbg),
-	    ("siteId", siteId),
-	    ("slices", slices),
-	    ("pcu", getpcu),
-	    ("siteNodes", getSiteNodes),
-	    ("nodeBootState", nodeBootState),
-	    ("nodePOD", nodePOD),
-	    ("freezeSlice", suspendSlice),
-	    ("unfreezeSlice", enableSlice),
-	    ("freezeSlices", suspendSlices),
-	    ("unfreezeSlices", enableSlices),
-	    ("setSliceMax", setSliceMax),
-	    ("authCheck", authCheck),
-	    ("renewAllSlices", renewAllSlices))
-
-functbl = {}
-for f in funclist:
-	functbl[f[0]]=f[1]
+	#print getpcu("kupl2.ittc.ku.edu")
+	#print getpcu("planetlab1.cse.msu.edu")
+	#print getpcu("alice.cs.princeton.edu")
+	#print nodesDbg()
+	#nodeBootState("alice.cs.princeton.edu", "boot")
+	#freezeSite("alice.cs.princeton.edu")
+	print removeSliceCreation("alice.cs.princeton.edu")
+	#enableSliceCreation("alice.cs.princeton.edu", 1024)
+	#print getSiteNodes("princeton")
+	#print siteId("alice.cs.princeton.edu")
+	#print nodePOD("alice.cs.princeton.edu")
+	#print slices("princeton")
 
 if __name__=="__main__":
 	import reboot
