@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.10 2007/01/24 19:29:44 mef Exp $
+# $Id: policy.py,v 1.11 2007/04/06 16:16:54 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -35,8 +35,8 @@ PLCEMAIL="support@planet-lab.org"
 
 #Thresholds (DAYS)
 SPERDAY = 86400
-PITHRESH = 2 * SPERDAY
-SLICETHRESH = 5 * SPERDAY
+PITHRESH = 7 * SPERDAY
+SLICETHRESH = 14 * SPERDAY
 # Days before attempting rins again
 RINSTHRESH = 5 * SPERDAY
 
