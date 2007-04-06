@@ -4,7 +4,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: mailer.py,v 1.5 2007/01/17 16:03:30 faiyaza Exp $
+# $Id: mailer.py,v 1.6 2007/01/24 19:29:44 mef Exp $
 from emailTxt import *
 import smtplib
 import config
@@ -64,6 +64,7 @@ def email (subject, text, to):
 	out.close()
 	if not config.debug:
 		try:
+			print "Mailing %s" %to
    			server = smtplib.SMTP(MTA)
    			server.sendmail(FROM, to,  msg)
 			server.quit()

@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.1 2006/11/14 19:27:09 faiyaza Exp $
+# $Id: plc.py,v 1.13 2007/04/02 20:57:57 faiyaza Exp $
 #
 
 from emailTxt import *
@@ -64,11 +64,10 @@ def getpcu(nodename):
 	if nodeinfo['pcu_ids']:
 		sitepcu = api.GetPCUs(auth.auth, nodeinfo['pcu_ids'])[0]
 		sitepcu[nodename] = nodeinfo["ports"][0]
-		return False
+		return sitepcu
 	else:
 		logger.info("%s doesn't have PCU" % nodename)
-	return sitepcu
-
+		return False
 
 '''
 Returns all site nodes for site id (loginbase).
@@ -144,7 +143,7 @@ def removeSliceCreation(nodename):
 				["max_slices"])[0]['max_slices']
 		logger.info("Removing slice creation for site %s" % loginbase)
 		if not config.debug:
-			api.UpdateSite(auth.auth, siteid, {'max_slices': 0})
+			api.UpdateSite(auth.auth, loginbase, {'max_slices': 0})
 	except Exception, exc:
 		logger.info("removeSliceCreation:  %s" % exc)
 

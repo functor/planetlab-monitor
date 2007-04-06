@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.9 2007/01/17 19:46:40 faiyaza Exp $
+# $Id: policy.py,v 1.10 2007/01/24 19:29:44 mef Exp $
 #
 # Policy Engine.
 
@@ -80,7 +80,7 @@ class Policy(Thread):
 					logger.info("POLICY:  %s in dbg, but acted on %s days ago" % (node, delta // SPERDAY))
 					return
 			logger.info("POLICY:  Node in dbg - " + node)
-			plc.nodeBootState([node, "rins"])	
+			plc.nodeBootState(node, "rins")	
 			# If it has a PCU
 			return reboot.reboot(node)
 	
