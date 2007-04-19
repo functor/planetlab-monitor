@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plc.py,v 1.12 2007/02/22 17:09:33 mef Exp $
+# $Id: plctool.py,v 1.1 2007/04/02 20:59:37 faiyaza Exp $
 #
 
 from emailTxt import *
@@ -307,6 +307,19 @@ def authCheck(arg):
 		print "%s -> %s %d" % (user,role,res)
 
 
+def cleanSlices(arg):
+	"""Remove all disabled/deleted users from all slices."""
+	disabledUsers = {'enabled':False}
+	persons = api.GetPersons(auth,disabledUsers,['enabled','slice_ids','email','person_id'])
+	for person in persons:
+		assert (person['enabled']==False)
+		person_id = person['person_id']
+		if len(person['slice_ids'])>0:
+			for slice_id in person['slice_ids']:
+				print "deleting slice %d from %s" % (slice_id,person['email'])
+				api.DeletePersonFromSlice(auth,person_id,slice_id)
+
+
 
 USAGE = """
 Usage: %s [-u user] [-p password] [-r role] CMD
@@ -392,6 +405,7 @@ funclist = (("nodesDbg",nodesDbg),
 	    ("unfreezeSlices", enableSlices),
 	    ("setSliceMax", setSliceMax),
 	    ("authCheck", authCheck),
+	    ("cleanSlices", cleanSlices),
 	    ("renewAllSlices", renewAllSlices))
 
 functbl = {}
