@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.11 2007/04/06 16:16:54 faiyaza Exp $
+# $Id: policy.py,v 1.12 2007/04/06 17:38:14 faiyaza Exp $
 #
 # Policy Engine.
 
@@ -36,10 +36,12 @@ PLCEMAIL="support@planet-lab.org"
 #Thresholds (DAYS)
 SPERDAY = 86400
 PITHRESH = 7 * SPERDAY
-SLICETHRESH = 14 * SPERDAY
+SLICETHRESH = 7 * SPERDAY
 # Days before attempting rins again
 RINSTHRESH = 5 * SPERDAY
 
+# Days before calling the node dead.
+DEADTHRESH = 30 * SPERDAY
 # Minimum number of nodes up before squeezing
 MINUP = 2
 
@@ -54,65 +56,101 @@ MINUP = 2
 #  Email
 #  suspend slice creation
 #  kill slices
+
+
 class Policy(Thread):
 	def __init__(self, comonthread, sickNoTicket, emailed):
 		self.cmn = comonthread
 		# host - > (time of email, type of email)
 		self.emailed = emailed 
 		# all sick nodes w/o tickets
+		# from thread 
 		self.sickNoTicket = sickNoTicket
-		# Sitess we've Squeezed.
-		self.squeezed = {}
+		# Actions taken on nodes.
+		# actionlogdb{node: [action, date]} 
+		self.actionlogdb = {}
+		# Actions taken on sites.
+		# sitelogdb{site: [action, daysdown, date]} 
+		self.sitelogdb = {}
+		# sick nodes with no tickets 
+		# sickdb{loginbase: [{hostname1: [buckets]}, {...}]}
+		self.sickdb = {}
 		Thread.__init__(self)
-	
 
-	'''
-	What to do when node is in dbg (as reported by CoMon).
-	'''
+
+	def accumSickSites(self):
+		"""
+		Take all sick nodes, find their sites, and put in 
+		sickdb{loginbase: [{hostname1: [buckets]}, {...}]}
+		"""
+		while self.sickNoTicket.empty() == False:
+			node = self.sickNoTicket.get(block = True)
+			bkts= []
+			for bkt in self.cmn.comonbkts.keys():
+				if (node in getattr(self.cmn, bkt)):
+					bkts.append("%s" % bkt)
+			self.sickdb[plc.siteId(node)] = {node: bkts}
+
+
 	def __actOnDebug(self, node):
-		# Check to see if we've done this before
-		if (node in self.emailed.keys()):
-			if (self.emailed[node][0] == "dbg"):
-				delta = time.time() - self.emailed[node][1]
-				if (delta <= RINSTHRESH ):
-					# Don't mess with node if under Thresh. 
-					# Return, move on.
-					logger.info("POLICY:  %s in dbg, but acted on %s days ago" % (node, delta // SPERDAY))
-					return
-			logger.info("POLICY:  Node in dbg - " + node)
-			plc.nodeBootState(node, "rins")	
-			# If it has a PCU
-			return reboot.reboot(node)
-	
-	'''
-	What to do when node is in dbg (as reported by CoMon).
-	'''
+		"""
+		If in debug, set the node to rins, reboot via PCU/POD
+		"""
+		daysdown = self.cmn.codata[node]['sshstatus'] // (60*60*24)
+		logger.info("POLICY:  Node %s in dbg.  down for %s" %(node,daysdown))
+		plc.nodeBootState(node, "rins")	
+		# If it has a PCU
+		reboot.reboot(node)
+		# Log it 
+		self.actionlogdb[node] = ['rins', daysdown, time.time()] 
+
+
+	def __actOnDown(self, node):
+		"""
+		If down (not debug), do the same as actOnDebug for now
+		"""
+		self.__actOnDebug(node)	
+
+
 	def __actOnFilerw(self, node):
+		"""
+		Report to PLC when node needs disk checked.	
+		"""
 		target = [PLCEMAIL]	
 		logger.info("POLICY:  Emailing PLC for " + node)
 		tmp = emailTxt.mailtxt.filerw
 		sbj = tmp[0] % {'hostname': node}
 		msg = tmp[1] % {'hostname': node}
 		mailer.email(sbj, msg, target)	
-		self.emailed[node] = ("filerw", time.time())
+		self.actionlogdb[node] = ["filerw", None, time.time()]
 
 
-	'''
-	Acts on sick nodes.
-	'''
+	def __actOnDNS(self, node):
+		"""
+		"""
+
+
+	def __policy(self, node, loginbase, bkt):
+		# ...and spam 'em
+		target = [TECHEMAIL % loginbase]
+		tmp = emailTxt.mailtxt.down
+		sbj = tmp[0] % {'hostname': node}
+		msg = tmp[1] % {'hostname': node, 'days': daysdown}
+		mailer.email(sbj, msg, target)	
+
+
+
+
 	def actOnSick(self):
-		# Get list of nodes in debug from PLC
-		#dbgNodes = NodesDebug()
+		"""
+		Acts on sick nodes.
+		"""
 		global TECHEMAIL, PIEMAIL
-		# Grab a node from the queue (pushed by rt thread).
-		node = self.sickNoTicket.get(block = True)
-		# Get the login base	
-		loginbase = plc.siteId([node])
 		
 		# Princeton Backdoor
 		if loginbase == "princeton": return
 
- 		# Send appropriate message for node if in appropriate bucket.
+		# Send appropriate message for node if in appropriate bucket.
 		# If we know where to send a message
 		if not loginbase: 
 			logger.info("POLICY:  loginbase for %s not found" %node)
@@ -129,9 +167,7 @@ class Policy(Thread):
 
 			# If in dbg, set to rins, then reboot.  Inform PLC.
 			if (node in self.cmn.dbg):
-			# If reboot failure via PCU, POD and send email
-			# if contacted PCU, return
-				if self.__actOnDebug(node):  return
+				self.__actOnDebug(node)
 
 			if (node in self.emailed.keys()) and \
 			(node not in self.cmn.filerw)    and \
@@ -146,14 +182,13 @@ class Policy(Thread):
 				delta // SPERDAY))
 			
 				# If no luck with tech, email PI
-				if (delta >= 1):
+				if (delta >= SPERDAY):
 					target.append(PIEMAIL % loginbase)
 
-				# If more than PI thresh, but less than slicethresh
-				if (delta >= PITHRESH) and (delta < SLICETHRESH): 
+				if (delta >= 7 * SPERDAY): 
 					#remove slice creation if enough nodes arent up
 					if not self.enoughUp(loginbase):
-						slices = plc.slices([loginbase])
+						slices = plc.slices(loginbase)
 						if len(slices) >= 1:
 							for slice in slices:
 								target.append(SLICEMAIL % slice)
@@ -161,7 +196,7 @@ class Policy(Thread):
 						tmp = emailTxt.mailtxt.removedSliceCreation
 						sbj = tmp[0] 
 						msg = tmp[1] % {'loginbase': loginbase}
-						plc.removeSliceCreation([node])
+						plc.removeSliceCreation(node)
 						mailer.email(sbj, msg, target)	
 						self.squeezed[loginbase] = (time.time(), "creation")
 						self.emailed[node] = ("creation", time.time())	
@@ -169,8 +204,7 @@ class Policy(Thread):
 							%("creation", node, target))
 						return
 
-				# If more than PI thresh and slicethresh
-				if (delta >= PITHRESH) and (delta > SLICETHRESH):
+				if (delta >= 14 * SPERDAY):
 					target.append(PIEMAIL % loginbase)
 					# Email slices at site.
 					slices = plc.slices([loginbase])
@@ -207,9 +241,9 @@ class Policy(Thread):
 					return
 
 
-	'''
+	"""
 	Prints, logs, and emails status of up nodes, down nodes, and buckets.
-	'''
+	"""
 	def status(self):
 		sub = "Monitor Summary"
 		msg = "\nThe following nodes were acted upon:  \n\n"
@@ -226,9 +260,9 @@ class Policy(Thread):
 		logger.info(msg)
 		return 
 
-	'''
+	"""
 	Store/Load state of emails.  When, where, what.
-	'''
+	"""
 	def emailedStore(self, action):
 		try:
 			if action == "LOAD":
@@ -243,9 +277,9 @@ class Policy(Thread):
 		except Exception, err:
 			logger.info("POLICY:  Problem with DAT, %s" %err)
 
-	'''
+	"""
 	Returns True if more than MINUP nodes are up at a site.
-	'''
+	"""
 	def enoughUp(self, loginbase):
 		allsitenodes = plc.getSiteNodes([loginbase])
 		if len(allsitenodes) == 0:
@@ -274,9 +308,11 @@ class Policy(Thread):
 
 
 	def run(self):
-		while 1:
-			self.actOnSick()
-			self.emailedStore("WRITE")
+		self.accumSickSites()
+		#self.actOnSick()
+		#self.emailedStore("WRITE")
+		print self.sickdb
+	
 
 
 def main():
@@ -293,7 +329,7 @@ def main():
 	#a.emailedStore("LOAD")
 	#print a.emailed
 
-	print plc.slices([plc.siteId(["alice.cs.princeton.edu"])])
+	#print plc.slices([plc.siteId(["alice.cs.princeton.edu"])])
 	os._exit(0)
 if __name__ == '__main__':
 	import os

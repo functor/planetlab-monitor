@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: $
+# $Id: comon.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
 #
 # Get CoMon data, unsorted, in CSV, and create a huge hash.
 #
@@ -98,11 +98,9 @@ class Comon(Thread):
 				self.allbuckets.put(host)
 
 	def run(self):
-		while 1:
-			self.updatedb()
-			self.updatebkts()
-			self.push()
-			time.sleep(COSLEEP)
+		self.updatedb()
+		self.updatebkts()
+		self.push()
  
 	def __repr__(self):
 	    return self
@@ -130,6 +128,7 @@ def main():
 	for host in cdb.keys():
 		if cdb[host]['keyok'] == "0":
 			print("%s \t Bootstate %s nodetype %s kernver %s keyok %s" %(host, cdb[host]['bootstate'], cdb[host]['nodetype'], cdb[host]['kernver'], cdb[host]['keyok']))
+	print a.codata['michelangelo.ani.univie.ac.at']
 	#time.sleep(3)
 	#a.push()
 	#print a.filerw

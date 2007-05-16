@@ -4,7 +4,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: $
+# $Id: monitor.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
 
 import sys
 import os
@@ -158,7 +158,7 @@ def main():
 	# The meat of it.
 
 	# Nodes to check. Queue of all sick nodes.
-        toCheck = Queue.Queue()
+	toCheck = Queue.Queue()
 	# Nodes that are sick w/o tickets
 	sickNoTicket = Queue.Queue()
 	# Comon DB of all nodes
@@ -166,7 +166,7 @@ def main():
 	# Nodes that are down.  Use this to maintain DB;  cleanup.
         #alldown = Queue.Queue()
 	# RT DB
-        tickets = {}
+	tickets = {}
 	# Nodes we've emailed.
 	# host - > (type of email, time)
 	emailed = {}
@@ -202,22 +202,21 @@ def main():
 	startThread(cm1,"comon")
 
 	# Wait for threads to init.  Probably should join, but work on that later.
+	time.sleep(15)
+
+#	while toCheck.empty() == false:
+#		time.sleep(10)
+#		
+	# Start Sending Emails
+	time.sleep(30)
+	startThread(pol, "policy")
 	time.sleep(10)
 
-	# Start Sending Emails
-	startThread(pol, "policy")
-
-	# Wait to finish
-	while (sickNoTicket.empty() == False) or (toCheck.empty() == False):
-		time.sleep(15)
-
-
-
 	# Store state of emails
-	pol.emailedStore("WRITE")
+#	pol.emailedStore("WRITE")
 
 	# Email what we did.
-	pol.status()
+#	pol.status()
 
 	logger.info('Monitor Exitted')
 	#if not debug:
