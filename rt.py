@@ -6,7 +6,9 @@ import string
 import logging
 import Queue
 import time 
+import re
 import comon
+import soltesz
 from threading import *
 import config
 
@@ -86,7 +88,7 @@ def open_rt_db():
 
 
 
-def rt_tickets(hostname):
+def rt_tickets():
 	db = open_rt_db()
 #	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
 #			 FROM Tickets AS Tk
@@ -98,15 +100,22 @@ def rt_tickets(hostname):
 #				Tk.Queue = 3 OR Tk.Queue = 19 
 #			 ORDER BY Tk.Status, Tk.LastUpdated DESC""" \
 #			 % (hostname,hostname)
-	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
-			 FROM Tickets AS Tk
-			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId
-			 JOIN Attachments AS At ON Tr.id=At.TransactionID
-			 WHERE (At.Content LIKE '%%%s%%' OR
-				At.Subject LIKE '%%%s%%') AND
-				(Tk.Status = 'new' OR Tk.Status = 'open')
-			 ORDER BY Tk.Status, Tk.LastUpdated DESC""" \
-			 % (hostname,hostname)
+#	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
+#			 FROM Tickets AS Tk
+#			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId
+#			 JOIN Attachments AS At ON Tr.id=At.TransactionID
+#			 WHERE (At.Content LIKE '%%%s%%' OR
+#				At.Subject LIKE '%%%s%%') AND
+#				(Tk.Status = 'new' OR Tk.Status = 'open')
+#			 ORDER BY Tk.Status, Tk.LastUpdated DESC""" \
+#			 % (hostname,hostname)
+
+	# Queue == 10 is the spam Queue in RT.
+	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject, At.Content
+			 FROM Tickets AS Tk, Attachments AS At 
+			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId  
+			 WHERE Tk.Queue != 10 AND Tk.id > 10000 AND 
+			 	   Tr.id=At.TransactionID AND (Tk.Status = 'new' OR Tk.Status = 'open')"""
 
 	try:
 		# create a 'cursor' (required by MySQLdb)
@@ -124,11 +133,42 @@ def rt_tickets(hostname):
 	# prevent overflow .. convert back
 	tickets = map(lambda x: {"ticket_id":int(x[0]),
 				"status":x[1],
-				"subj":x[2]},
+				"subj":str(x[2]),
+				"content":str(x[3])},
 				raw)
 	db.close()
 
 	return tickets
+
+def is_host_in_rt_tickets(host, ad_rt_tickets):
+	# ad_rt_tickets is an array of dicts, defined above.
+	if len(ad_rt_tickets) == 0:
+		return (False, None)
+	
+	d_ticket = ad_rt_tickets[0]
+	if not ('ticket_id' in d_ticket and 'status' in d_ticket and 
+			'subj' in d_ticket and 'content' in d_ticket):
+		logger.debug("RT_tickets array has wrong fields!!!")
+		return (False, None)
+
+	#logger.debug("Searching all tickets for %s" % host)
+	def search_tickets(host, ad_rt_tickets):
+		# compile once for more efficiency
+		re_host = re.compile(host)
+		for x in ad_rt_tickets:
+			if re_host.search(x['subj'], re.MULTILINE|re.IGNORECASE) or \
+			   re_host.search(x['content'], re.MULTILINE|re.IGNORECASE):
+				logger.debug("\t ticket %d has %s" % (x['ticket_id'], host))
+				return (True, x)
+		logger.debug("\t noticket -- has %s" % host)
+		return (False, None)
+
+	# This search, while O(tickets), takes less than a millisecond, 05-25-07
+	#t = soltesz.MyTimer()
+	ret = search_tickets(host, ad_rt_tickets)
+	#del t
+
+	return ret
 
 
 '''
@@ -146,33 +186,44 @@ Remove nodes that have come backup. Don't care of ticket is closed after first q
 Another thread refresh tickets of nodes already in dict and remove nodes that have come up. 
 '''
 class RT(Thread):
-	def __init__(self, tickets, toCheck, sickNoTicket, target = None): 
+	def __init__(self, dbTickets, tickets, qin_toCheck, qout_sickNoTicket, target = None): 
 		# Time of last update of ticket DB
+		self.dbTickets = dbTickets
 		self.lastupdated = 0
-		# Queue() is MP/MC self locking.
 		# Check host in queue.  Queue populated from comon data of sick. 
-		self.toCheck = toCheck
+		self.qin_toCheck = qin_toCheck
 		# Result of rt db query.  Nodes without tickets that are sick.
-		self.sickNoTicket = sickNoTicket 
+		self.qout_sickNoTicket = qout_sickNoTicket 
 		#DB of tickets.  Name -> ticket
 		self.tickets = tickets
 		Thread.__init__(self,target = self.getTickets)
 
-	# Takes node from toCheck, gets tickets.  
+	# Takes node from qin_toCheck, gets tickets.  
 	# Thread that actually gets the tickets.
 	def getTickets(self):
+		self.count = 0
 		while 1:
-			host = self.toCheck.get(block = True)
-			if host == "None": break
-			#if self.tickets.has_key(host) == False:
-			#logger.debug("Popping from q - %s" %host)
-			tmp = rt_tickets(host)
-			if tmp:
-				#logger.debug("RT: tickets for %s" %host)
-				self.tickets[host] = tmp
+			diag_node = self.qin_toCheck.get(block = True)
+			if diag_node == "None": 
+				print "RT processed %d nodes with noticket" % self.count
+				logger.debug("RT filtered %d noticket nodes" % self.count)
+				self.qout_sickNoTicket.put("None")
+				break
 			else:
-				logger.debug("RT: no tix for %s" %host)
-				self.sickNoTicket.put(host) 
+				host = diag_node['nodename']
+				(b_host_inticket, r_ticket) = is_host_in_rt_tickets(host, self.dbTickets)
+				if b_host_inticket:
+					logger.debug("RT: found tickets for %s" %host)
+					diag_node['stage'] = 'stage_rt_working'
+					diag_node['ticket_id'] = r_ticket['ticket_id']
+					self.tickets[host] = r_ticket
+				else:
+					#logger.debug("RT: no tix for %s" %host)
+					#print "no tix for %s" % host
+					self.count = self.count + 1
+
+				# process diag_node for either case
+				self.qout_sickNoTicket.put(diag_node) 
 
 	# Removes hosts that are no longer down.
 	def remTickets(self):
@@ -199,7 +250,7 @@ class RT(Thread):
 		logger.info("Refreshing DB.")
 		for host in self.tickets.keys():
 			# Put back in Q to refresh
-			self.toCheck.put(host)
+			self.qin_toCheck.put(host)
 
 	def cleanTickets(self):
 		while 1:

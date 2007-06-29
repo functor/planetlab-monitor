@@ -4,20 +4,27 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: mailer.py,v 1.6 2007/01/24 19:29:44 mef Exp $
+# $Id: mailer.py,v 1.7 2007/04/06 16:16:53 faiyaza Exp $
 from emailTxt import *
 import smtplib
-import config
+from config import config
+import logging
+
+config = config()
+logger = logging.getLogger("monitor")
 
 MTA="localhost"
-FROM="support@planet-lab.org"
+FROM="monitor@planet-lab.org"
 
-def email (subject, text, to):
+def email(subject, text, to):
 	"""Create a mime-message that will render HTML in popular
 	MUAs, text in better ones"""
 	import MimeWriter
 	import mimetools
 	import cStringIO
+
+	if config.mail and config.debug:
+   		to = [config.email]
 
 	out = cStringIO.StringIO() # output buffer for our message 
 	txtin = cStringIO.StringIO(text)
@@ -35,9 +42,15 @@ def email (subject, text, to):
 		for dest in to[1:len(to)]:
 			cc +="%s, " % dest
 		cc = cc.rstrip(", ") 
-		writer.addheader("CC", cc)
+		writer.addheader("Cc", cc)
 	else:
 		writer.addheader("To", to)
+
+	if config.bcc:
+		print "Adding bcc"
+		writer.addheader("Bcc", config.email)
+
+	writer.addheader("Reply-To", 'monitor@planet-lab.org')
 		
 	writer.addheader("MIME-Version", "1.0")
 	#
@@ -62,23 +75,34 @@ def email (subject, text, to):
 	writer.lastpart()
 	msg = out.getvalue()
 	out.close()
-	if not config.debug:
+	# three cases:
+	# 	mail but no-debug
+	#	mail and debug, 'to' changed at the beginning'
+	#   nomail, but report who I'd send to.
+	if config.mail:
 		try:
-			print "Mailing %s" %to
-   			server = smtplib.SMTP(MTA)
-   			server.sendmail(FROM, to,  msg)
+			# This is normal operation
+			server = smtplib.SMTP(MTA)
+			server.sendmail(FROM, to,  msg)
 			server.quit()
 		except Exception, err:
 			print "Mailer error: %s" % err
+	else:
+		#print "Would mail %s" %to
+		logger.debug("Would send mail to %s" % to)
 
 if __name__=="__main__":
 	import smtplib
 	import emailTxt
 	import plc 
-	id = plc.siteId(["alice.cs.princeton.edu"])
-	print id
+	email("[spam] This is a mail-test from golf.cs.princeton.edu", 
+		  "I'm concerned that emails aren't leaving golf.  Sorry for the spam", 
+		  "princetondsl@sites.planet-lab.org")
+	#id = plc.siteId(["alice.cs.princeton.edu"])
+	#print id
 	#if id:
    		#email('TEST', emailTxt.mailtxt.ssh % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")
 	#else:
 	#	print "No dice."
-	#email("TEST109", "THIS IS A TEST", ["faiyaza@cs.princeton.edu", "faiyaz@winlab.rutgers.edu", "faiyaza@gmail.com"])
+	#email("TEST111", "I'd like to see if this works anywhere", ["soltesz@cs.princeton.edu", "soltesz@cs.utk.edu"])
+	#print "mailer does nothing in main()"

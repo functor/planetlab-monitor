@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.13 2007/04/02 20:57:57 faiyaza Exp $
+# $Id: plc.py,v 1.14 2007/04/06 16:16:54 faiyaza Exp $
 #
 
 from emailTxt import *
@@ -13,7 +13,9 @@ import xml, xmlrpclib
 import logging
 import auth
 import time
-import config
+from config import config
+
+config = config()
 
 logger = logging.getLogger("monitor")
 
@@ -84,6 +86,39 @@ def getSiteNodes(loginbase):
 		logger.info("getSiteNodes:  %s" % exc)
 	return nodelist
 
+def getSites(filter=None):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	sites = []
+	anon = {'AuthMethod': "anonymous"}
+	try:
+		sites = api.GetSites(anon, filter, None)
+	except Exception, exc:
+		print "getSiteNodes2:  %s" % exc
+		logger.info("getSiteNodes2:  %s" % exc)
+	return sites
+
+def getSiteNodes2(loginbase):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	nodelist = []
+	anon = {'AuthMethod': "anonymous"}
+	try:
+		nodeids = api.GetSites(anon, {"login_base": loginbase})[0]['node_ids']
+		nodelist += getNodes({'node_id':nodeids})
+	except Exception, exc:
+		logger.info("getSiteNodes2:  %s" % exc)
+	return nodelist
+
+def getNodeNetworks(filter=None):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	nodenetworks = api.GetNodeNetworks(auth.auth, filter, None)
+	return nodenetworks
+
+def getNodes(filter=None):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	nodes = api.GetNodes(auth.auth, filter, ['boot_state', 'hostname', 
+			'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
+			'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
+	return nodes
 
 '''
 Sets boot state of a node.
@@ -139,11 +174,12 @@ def removeSliceCreation(nodename):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	try:
 		loginbase = siteId(nodename)
-		numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
-				["max_slices"])[0]['max_slices']
+		#numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
+		#		["max_slices"])[0]['max_slices']
 		logger.info("Removing slice creation for site %s" % loginbase)
 		if not config.debug:
-			api.UpdateSite(auth.auth, loginbase, {'max_slices': 0})
+			#api.UpdateSite(auth.auth, loginbase, {'max_slices': 0})
+			api.UpdateSite(auth.auth, loginbase, {'enabled': False})
 	except Exception, exc:
 		logger.info("removeSliceCreation:  %s" % exc)
 

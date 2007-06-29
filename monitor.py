@@ -3,8 +3,9 @@
 # Copyright (c) 2004  The Trustees of Princeton University (Trustees).
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
+# Stephen Soltesz <soltesz@cs.princeton.edu>
 #
-# $Id: monitor.py,v 1.4 2006/11/14 19:20:13 faiyaza Exp $
+# $Id: monitor.py,v 1.5 2007/05/16 01:53:46 faiyaza Exp $
 
 import sys
 import os
@@ -15,7 +16,8 @@ import time
 import logging
 import Queue
 # Global config options
-import config
+from config import config
+config = config()
 # daemonize and *pid
 from util.process import * 
 
@@ -25,9 +27,8 @@ import comon
 import rt
 # Correlates input with policy to form actions
 import policy
-# Email
-import mailer
-import emailTxt
+import soltesz
+import plc
 
 # Log to what 
 LOG="./monitor.log"
@@ -67,16 +68,6 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
-def usage():
-    print """
-Usage: %s [OPTIONS]...
-
-Options:
-        -d, --debug             Enable debugging (default: %s)
-        --status                Print memory usage statistics and exit
-        -h, --help              This message
-""".lstrip() % (sys.argv[0], debug)
-
 
 """
 Launches threads and adds them to the runningthreads global list.
@@ -109,9 +100,11 @@ class ThreadWatcher(Thread):
 		# Iterate through treads, compare with last running.
 	 	for thread in runningthreads.keys():
 			# If thread found dead, remove from queue
+			#print "found %s" % thread
 			if not runningthreads[thread].isAlive():
 				logger.error("***********Thread died: %s**********" %(thread))
 				del runningthreads[thread]
+		return len(runningthreads.keys())
 
 
 class Dummy(Thread):
@@ -122,6 +115,13 @@ class Dummy(Thread):
 		time.sleep(5)
 
 
+def dict_from_nodelist(nl):
+	d = {}
+	for host in nl:
+		h = host['hostname']
+		d[h] = host
+	return d
+
 """
 Start threads, do some housekeeping, then daemonize.
 """
@@ -129,99 +129,89 @@ def main():
 	# Defaults
 	global status, logger
 
-	try:
-		longopts = ["debug", "status", "help"]
-		(opts, argv) = getopt.getopt(sys.argv[1:], "dvf:s:ph", longopts)
-	except getopt.GetoptError, err:
-		print "Error: " + err.msg
-		usage()
-		sys.exit(1)
-
-	for (opt, optval) in opts:
-		if opt == "-d" or opt == "--debug":
-			config.debug = True
-			print "Running in DEBUG mode:  NO EMAILS SENT AND NO SLICES SQUEEZED."
-		elif opt == "--status":
-			#print summary(names)
-			sys.exit(0)
-		else:
-			usage()
-			sys.exit(0)
-
 	#if not debug:
         #	daemonize()
         #	writepid("monitor")
 
-	# Init stuff.  Watch Threads to see if they die.  Perhaps send email?
 	logger.info('Monitor Started')
-	startThread(ThreadWatcher(), "Watcher")
-	# The meat of it.
 
+	##########  VARIABLES   ########################################
 	# Nodes to check. Queue of all sick nodes.
 	toCheck = Queue.Queue()
 	# Nodes that are sick w/o tickets
 	sickNoTicket = Queue.Queue()
 	# Comon DB of all nodes
 	cdb = {}
-	# Nodes that are down.  Use this to maintain DB;  cleanup.
-        #alldown = Queue.Queue()
 	# RT DB
 	tickets = {}
 	# Nodes we've emailed.
 	# host - > (type of email, time)
 	emailed = {}
 
+	#########  GET NODES    ########################################
+	# TODO: get authoritative node list from PLC every PLCSLEEP seconds,
+	# 		feed this into Comon.
 
-	# Get RT Tickets.
-	# Event based.  Add to queue(toCheck) and hosts are queried.
-	rt1 = rt.RT(tickets, toCheck, sickNoTicket)
-	rt2 = rt.RT(tickets, toCheck, sickNoTicket)
-	rt3 = rt.RT(tickets, toCheck, sickNoTicket)
-	rt4 = rt.RT(tickets, toCheck, sickNoTicket)
-	rt5 = rt.RT(tickets, toCheck, sickNoTicket)
-	# Kind of a hack. Cleans the DB for stale entries and updates db.
-	clean = Thread(target=rt5.cleanTickets)
-	# Poll Comon.  Refreshes Comon data every COSLEEP seconds
-	cm1 = comon.Comon(cdb, toCheck)
+	# List of nodes from a user-provided file.
+	if config.userlist:
+		file = config.userlist
+		nodelist = config.getListFromFile(file)
+		l_nodes = []
+		print "Getting node info for hosts in: %s" % file
+		for nodename in nodelist:
+			l_nodes += plc.getNodes({'hostname': nodename})
+	else:
+		# Authoritative list of nodes from PLC
+		l_nodes = soltesz.if_cached_else(config.cachenodes, "l_nodes", plc.getNodes)
+
+	# Minus blacklisted ones..
+	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
+	l_wl_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
+	# A handy dict of hostname-to-nodestruct mapping
+	d_allplc_nodes = dict_from_nodelist(l_wl_nodes)
+
+	#######  RT tickets    #########################################
+	t = soltesz.MyTimer()
+	ad_dbTickets = soltesz.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
+	print "Getting tickets from RT took: %f sec" % t.diff() ; del t
+
+	# TODO: Refreshes Comon data every COSLEEP seconds
+	cm1 = comon.Comon(cdb, d_allplc_nodes, toCheck)
+	startThread(cm1,"comon")
+
+	# TODO: make queues event based, not node based. 
+	# From the RT db, add hosts to q(toCheck) for filtering the comon nodes.
+	rt1 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket)
+	# 	Kind of a hack. Cleans the DB for stale entries and updates db.
+	#   (UNTESTED)
+	#	rt5 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket)
+	#	clean = Thread(target=rt5.cleanTickets)
+
+	startThread(rt1,"rt1")
+	#	startThread(rt5,"rt5")
+	#	startThread(clean,"cleanrt5")
 
 	# Actually digest the info and do something with it.
 	pol = policy.Policy(cm1, sickNoTicket, emailed)
-
-	# Load emailed sites from last run.
-	pol.emailedStore("LOAD")
-
-	# Start Threads
-	startThread(rt1,"rt1")
-	startThread(rt2,"rt2")
-	startThread(rt3,"rt3")
-	startThread(rt4,"rt4")
-	startThread(rt5,"rt5")
-	startThread(clean,"cleanrt5")
-
-	# Start Comon Thread	
-	startThread(cm1,"comon")
-
-	# Wait for threads to init.  Probably should join, but work on that later.
-	time.sleep(15)
-
-#	while toCheck.empty() == false:
-#		time.sleep(10)
-#		
 	# Start Sending Emails
-	time.sleep(30)
 	startThread(pol, "policy")
-	time.sleep(10)
 
-	# Store state of emails
-#	pol.emailedStore("WRITE")
 
-	# Email what we did.
-#	pol.status()
+	tw = ThreadWatcher()
+	while True:
+		if tw.checkThreads() == 0:
+			break
+		time.sleep(WATCHSLEEP)
 
-	logger.info('Monitor Exitted')
+	logger.info('Monitor Exitting')
 	#if not debug:
 	#	removepid("monitor")
-	os._exit(0)
+
+	# Store state of emails
+	#pol.emailedStore("WRITE")
+	soltesz.dbDump("l_blacklist")
+	soltesz.dbDump("ad_dbTickets")
+	sys.exit(0)
 	
 if __name__ == '__main__':
 	try:
@@ -229,4 +219,6 @@ if __name__ == '__main__':
 	except KeyboardInterrupt:
 		print "Killed.  Exitting."
 		logger.info('Monitor Killed')
-		os._exit(0)
+		#soltesz.dbDump("l_blacklist")
+		#soltesz.dbDump("ad_dbTickets")
+		sys.exit(0)

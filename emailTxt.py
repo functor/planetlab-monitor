@@ -3,19 +3,168 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: emailTxt.py,v 1.5 2007/01/10 20:08:44 faiyaza Exp $
+# $Id: emailTxt.py,v 1.6 2007/05/16 01:53:46 faiyaza Exp $
 
 
 # 
-# Tis file contains the texts of the automatically generated
+# This file contains the texts of the automatically generated
 # emails sent to techs and PIs
 #
 
 class mailtxt:
 
+	newdown_one=("""PlanetLab node(s) down: %(loginbase)s""", 
+"""
+Hello,
+
+As part of PlanetLab node monitoring, we noticed the following nodes were down at your site:
+
+%(hostname_list)s 
+We're writing because we need your help returning them to their regular operation.
+
+To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+
+	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
+
+If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
+
+    sudo /usr/local/planetlab/bin/pl-ps
+
+If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	newdown_two=("""PlanetLab node(s) down: %(loginbase)s""", 
+"""
+Hello,
+
+As part of PlanetLab node monitoring, we noticed the following nodes were down at your site:
+
+%(hostname_list)s 
+We're writing again because our previous correspondence has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
+
+To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+
+	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
+
+If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
+
+    sudo /usr/local/planetlab/bin/pl-ps
+
+If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	newdown_three=("""PlanetLab node(s) down: %(loginbase)s""", 
+"""
+Hello,
+
+As part of PlanetLab node monitoring, we noticed the following nodes were down at your site:
+
+%(hostname_list)s 
+We understand that machine maintenance can take time.  We're writing again because our previous correspondence has gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
+
+To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+
+	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
+
+If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
+
+    sudo /usr/local/planetlab/bin/pl-ps
+
+If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	newbootcd_one=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", # : %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+
+%(hostname_list)s  
+This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+
+To check the status of these and any other machines that you manage please visit:
+
+    http://comon.cs.princeton.edu/status
+
+Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	newbootcd_two=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", # : %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+
+%(hostname_list)s  
+This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+
+We're writing again because our previous correspondence has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation, slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
+
+To check the status of these and any other machines that you manage please visit:
+
+    http://comon.cs.princeton.edu/status
+
+Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	newbootcd_three=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", # : %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+
+%(hostname_list)s  
+This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+
+We understand that machine maintenance can take time.  We're writing again because our previous correspondence has gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
+
+To check the status of these and any other machines that you manage please visit:
+
+    http://comon.cs.princeton.edu/status
+
+Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
+
+    https://www.planet-lab.org/doc/guides/tech
+
+If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	newdown=[newdown_one, newdown_two, newdown_three]
+	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
+
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 
-Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page (http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s') to verify that your node is accessible from the network.
+Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.
+
+http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s'
+
+http://www.planet-lab.org/db/sites/index.php?id=%(site_id)d
 
 There's no need to respond to this message if CoMon reports that your machine is accessible. However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can resolve the issue. 
 
@@ -24,24 +173,48 @@ Thanks.
 
   -- PlanetLab Central (support@planet-lab.org)
 """)
-
 
 	dbg=("""Planetlab node %(hostname)s requires reboot.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s is in debug mode.  This usually implies the node was rebooted unexpectedly and could not come up cleanly.  
 
-Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page (http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s') to verify that your node is accessible from the network.
+Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.
+
+http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s'
 
 There's no need to respond to this message if CoMon reports that your machine is accessible. However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can resolve the issue. 
 
-Thanks.
-
-
+Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
+	planet_cnf=(""" Planetlab node %(hostname)s needs an updated configuration file""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated planet.cnf file with no NODE_ID.  This can happen after an upgrade and requires your assistance in correcting.  All that is needed is to visit:
+
+	https://www.planet-lab.org/db/nodes/index.php?id=%(node_id)d
+
+And follow the "Download conf file" link to generate a new configuration file for each node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machines.
+
+There's no need to respond to this message if you're able to update the configuration files without difficulty and your node returns to normal operation.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue. 
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	bootcd=(""" Planetlab node %(hostname)s needs a new BootCD""", 
+"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated BootCD: "%(version)".  This usually implies that you need to update both the BootCD and regenerate the planet.cnf file stored on the read-only floppy (Or read-only USB stick that stores the content of BootCD and planet.cnf).
+
+Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact Guide.
+https://www.planet-lab.org/doc/guides/tech
+
+There's no need to respond to this message if you're able to follow the directions without difficulty and your node returns to normal operation. However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue. 
+
+Thanks you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
 
 	ssh=("""Planetlab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed node %(hostname)s is not available for ssh.
 
-Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page (http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s') to verify that your node is accessible from the network.
+Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.
+
+http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&select='address==%(hostbyteorder)s'
 
 There's no need to respond to this message if CoMon reports that your machine is accessible. However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can resolve the issue. 
 

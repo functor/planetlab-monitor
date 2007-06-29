@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Copyright (C) 2006, 2007 The Trustees of Princeton University
 #
-# $Id: plctool.py,v 1.1 2007/04/02 20:59:37 faiyaza Exp $
+# $Id: plctool.py,v 1.2 2007/04/19 20:43:00 mef Exp $
 #
 
 from emailTxt import *
@@ -390,7 +390,11 @@ def main():
 	logger.addHandler(ch)
 	result = cmd(argv[1:])
 	if result <> None:
-		print result
+		if argv[0] == "nodesDbg":
+			for n in result:
+				print n
+		else:
+			print result
 
 funclist = (("nodesDbg",nodesDbg),
 	    ("siteId", siteId),
