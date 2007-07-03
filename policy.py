@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.13 2007/05/16 01:53:46 faiyaza Exp $
+# $Id: policy.py,v 1.14 2007/06/29 12:42:22 soltesz Exp $
 #
 # Policy Engine.
 
@@ -243,7 +243,7 @@ class Policy(Thread):
 		try:
 			subject = message[0] % args
 			body = message[1] % args
-			mailer.email(subject, body, contacts)	
+			mailer.emailViaRT(subject, body, contacts)	
 		except Exception, err:
 			print "exception on message:"
 			print message
@@ -464,7 +464,7 @@ class Policy(Thread):
 			# err, this can be used as a counter of some kind..
 			# but otherwise, no diagnosis is necessary, return None, implies that
 			# it gets skipped.
-			print "DIAG: %20s : %-40s ticket %d" % \
+			print "DIAG: %20s : %-40s ticket %s" % \
 					(loginbase, nodename, rec_node['ticket_id'])
 			
 		elif   "down" in buckets:
