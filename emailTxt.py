@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: emailTxt.py,v 1.6 2007/05/16 01:53:46 faiyaza Exp $
+# $Id: emailTxt.py,v 1.7 2007/06/29 12:42:22 soltesz Exp $
 
 
 # 
@@ -32,7 +32,7 @@ If the machine has booted successfully, you may check it more quickly by logging
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
@@ -59,7 +59,7 @@ If the machine has booted successfully, you may check it more quickly by logging
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
@@ -86,7 +86,7 @@ If the machine has booted successfully, you may check it more quickly by logging
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
@@ -106,7 +106,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
@@ -127,7 +127,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
@@ -148,7 +148,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
@@ -202,7 +202,7 @@ Thank you for your help,
 """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated BootCD: "%(version)".  This usually implies that you need to update both the BootCD and regenerate the planet.cnf file stored on the read-only floppy (Or read-only USB stick that stores the content of BootCD and planet.cnf).
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact Guide.
-https://www.planet-lab.org/doc/guides/tech
+    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 There's no need to respond to this message if you're able to follow the directions without difficulty and your node returns to normal operation. However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue. 
 
