@@ -131,7 +131,8 @@ def rt_tickets():
 	# map list of lists (raw) to list of dicts (tickets) 
 	# when int gets pulls from SQL into python ints are converted to LONG to
 	# prevent overflow .. convert back
-	tickets = map(lambda x: {"ticket_id":int(x[0]),
+	#tickets = map(lambda x: {"ticket_id":int(x[0]),
+	tickets = map(lambda x: {"ticket_id":str(x[0]),
 				"status":x[1],
 				"subj":str(x[2]),
 				"content":str(x[3])},
@@ -140,7 +141,7 @@ def rt_tickets():
 
 	return tickets
 
-def is_host_in_rt_tickets(host, ad_rt_tickets):
+def is_host_in_rt_tickets(host, ticket_blacklist, ad_rt_tickets):
 	# ad_rt_tickets is an array of dicts, defined above.
 	if len(ad_rt_tickets) == 0:
 		return (False, None)
@@ -158,8 +159,13 @@ def is_host_in_rt_tickets(host, ad_rt_tickets):
 		for x in ad_rt_tickets:
 			if re_host.search(x['subj'], re.MULTILINE|re.IGNORECASE) or \
 			   re_host.search(x['content'], re.MULTILINE|re.IGNORECASE):
-				logger.debug("\t ticket %d has %s" % (x['ticket_id'], host))
-				return (True, x)
+				logger.debug("\t ticket %s has %s" % (x['ticket_id'], host))
+				print x['ticket_id']
+				print ticket_blacklist
+				if x['ticket_id'] in ticket_blacklist:
+					return (False, x)
+				else:
+					return (True, x)
 		logger.debug("\t noticket -- has %s" % host)
 		return (False, None)
 
@@ -186,10 +192,11 @@ Remove nodes that have come backup. Don't care of ticket is closed after first q
 Another thread refresh tickets of nodes already in dict and remove nodes that have come up. 
 '''
 class RT(Thread):
-	def __init__(self, dbTickets, tickets, qin_toCheck, qout_sickNoTicket, target = None): 
+	def __init__(self, dbTickets, tickets, qin_toCheck, qout_sickNoTicket, l_ticket_blacklist, target = None): 
 		# Time of last update of ticket DB
 		self.dbTickets = dbTickets
 		self.lastupdated = 0
+		self.l_ticket_blacklist = l_ticket_blacklist
 		# Check host in queue.  Queue populated from comon data of sick. 
 		self.qin_toCheck = qin_toCheck
 		# Result of rt db query.  Nodes without tickets that are sick.
@@ -211,7 +218,9 @@ class RT(Thread):
 				break
 			else:
 				host = diag_node['nodename']
-				(b_host_inticket, r_ticket) = is_host_in_rt_tickets(host, self.dbTickets)
+				(b_host_inticket, r_ticket) = is_host_in_rt_tickets(host, \
+													self.l_ticket_blacklist, \
+													self.dbTickets)
 				if b_host_inticket:
 					logger.debug("RT: found tickets for %s" %host)
 					diag_node['stage'] = 'stage_rt_working'
@@ -220,6 +229,8 @@ class RT(Thread):
 				else:
 					#logger.debug("RT: no tix for %s" %host)
 					#print "no tix for %s" % host
+					if r_ticket is not None:
+						print "Ignoring ticket %s" % r_ticket['ticket_id']
 					self.count = self.count + 1
 
 				# process diag_node for either case
