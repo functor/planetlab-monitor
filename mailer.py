@@ -4,17 +4,81 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: mailer.py,v 1.7 2007/04/06 16:16:53 faiyaza Exp $
+# $Id: mailer.py,v 1.8 2007/06/29 12:42:22 soltesz Exp $
 from emailTxt import *
 import smtplib
 from config import config
 import logging
+import os
+import time
 
 config = config()
 logger = logging.getLogger("monitor")
 
 MTA="localhost"
 FROM="monitor@planet-lab.org"
+
+def reformat_for_rt(text):
+	lines = text.split("\n")
+	spaced_text = ""
+	for line in lines:
+		spaced_text += " %s\n" %line
+	return spaced_text
+		
+
+def emailViaRT(subject, text, to):
+	"""Use RT command line tools to send email.
+		return the generated RT ticket ID number.
+	"""
+	i_ticket = 0
+
+	if config.mail and config.debug:
+   		to = [config.email]
+
+	os.environ['PATH'] = os.environ['PATH'] + ":/home/soltesz/rpm/opt/rt3/bin/"
+	os.environ['RTSERVER'] = "https://rt.planet-lab.org/"
+	os.environ['RTUSER']   = "monitor"
+	os.environ['RTPASSWD'] = "ssorcmor"
+	os.environ['RTDEBUG'] = "0"
+	# NOTE: AdminCc: (in PLC's RT configuration) gets an email sent.
+	# This is not the case (surprisingly) for Cc:
+	input_text  = "Subject: %s\n"
+	input_text += "Requestor: monitor@planet-lab.org\n"
+	input_text += "id: ticket/new\n"
+	input_text += "Queue: Monitor\n"
+	for recipient in to:
+		input_text += "AdminCc: %s\n" % recipient
+	input_text += "Text: %s"
+
+	spaced_text = reformat_for_rt(text)
+	#if config.debug:
+	#	print input_text % (subject, "") 
+
+	if config.mail and not config.debug:
+		cmd = "rt create -i -t ticket"
+		(f_in, f_out, f_err) = os.popen3(cmd)
+		f_in.write(input_text % (subject, spaced_text))
+		f_in.flush()
+		f_in.close()
+		value = f_out.read()
+
+		# TODO: rt doesn't write to stderr on error!!!
+		if value == "":
+			raise Exception, f_err.read()
+
+		i_ticket = int(value.split()[2])
+		# clean up the child process.
+		f_in.close();  del f_in
+		f_out.close(); del f_out
+		f_err.close(); del f_err
+		os.wait()
+	elif config.mail and config.debug:
+		email(subject, spaced_text, to)
+		i_ticket = 0
+	else:
+		i_ticket = 0
+
+	return i_ticket
 
 def email(subject, text, to):
 	"""Create a mime-message that will render HTML in popular
@@ -46,8 +110,7 @@ def email(subject, text, to):
 	else:
 		writer.addheader("To", to)
 
-	if config.bcc:
-		print "Adding bcc"
+	if config.bcc and not config.debug:
 		writer.addheader("Bcc", config.email)
 
 	writer.addheader("Reply-To", 'monitor@planet-lab.org')
@@ -75,6 +138,7 @@ def email(subject, text, to):
 	writer.lastpart()
 	msg = out.getvalue()
 	out.close()
+
 	# three cases:
 	# 	mail but no-debug
 	#	mail and debug, 'to' changed at the beginning'
@@ -84,6 +148,8 @@ def email(subject, text, to):
 			# This is normal operation
 			server = smtplib.SMTP(MTA)
 			server.sendmail(FROM, to,  msg)
+			if config.bcc and not config.debug:
+				server.sendmail(FROM, config.email,  msg)
 			server.quit()
 		except Exception, err:
 			print "Mailer error: %s" % err
@@ -95,9 +161,16 @@ if __name__=="__main__":
 	import smtplib
 	import emailTxt
 	import plc 
-	email("[spam] This is a mail-test from golf.cs.princeton.edu", 
-		  "I'm concerned that emails aren't leaving golf.  Sorry for the spam", 
-		  "princetondsl@sites.planet-lab.org")
+	#email("[spam] bcc test from golf.cs.princeton.edu", 
+	#	  "It gets to both recipients", 
+	#	  "soltesz@cs.utk.edu")
+	#emailViaRT("rt via golf", 
+	#	  "It gets to both recipients", 
+	#	  "soltesz@cs.utk.edu")
+	id = emailViaRT("TEST 7", 
+			   mailtxt.newbootcd_one[1] % {'hostname_list':"hostname list..."},
+			   ["soltesz@cs.utk.edu", "soltesz@romcross.org", "soltesz@cs.princeton.edu"])
+	print "ticketid: %d" % id
 	#id = plc.siteId(["alice.cs.princeton.edu"])
 	#print id
 	#if id:
