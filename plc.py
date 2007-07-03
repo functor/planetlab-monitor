@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.14 2007/04/06 16:16:54 faiyaza Exp $
+# $Id: plc.py,v 1.15 2007/06/29 12:42:22 soltesz Exp $
 #
 
 from emailTxt import *
@@ -13,13 +13,13 @@ import xml, xmlrpclib
 import logging
 import auth
 import time
-from config import config
-
-config = config()
+from config import config,XMLRPC_SERVER
 
 logger = logging.getLogger("monitor")
 
-XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
+#XMLRPC_SERVER = config.XMLRPC_SERVER
+
+config = config()
 
 '''
 Returns list of nodes in dbg as reported by PLC

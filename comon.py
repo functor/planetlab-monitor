@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: comon.py,v 1.5 2007/05/16 01:53:46 faiyaza Exp $
+# $Id: comon.py,v 1.6 2007/06/29 12:42:22 soltesz Exp $
 #
 # Get CoMon data, unsorted, in CSV, and create a huge hash.
 #
@@ -64,7 +64,8 @@ class Comon(Thread):
 			#"clock_drift": "drift > 1m",
 			#"dns": "dns1udp>80 && dns2udp>80",
 			#"filerw": "filerw > 0",
-			"dbg" : "keyok==0"
+			#"all" : ""
+			"dbg" : "keyok==0",
 			}
 		Thread.__init__(self)
 

@@ -5,6 +5,8 @@ import getopt
 import sys
 import __main__
 
+XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
+
 class config:
 	debug = True
 	mail = False

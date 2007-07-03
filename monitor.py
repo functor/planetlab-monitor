@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Stephen Soltesz <soltesz@cs.princeton.edu>
 #
-# $Id: monitor.py,v 1.5 2007/05/16 01:53:46 faiyaza Exp $
+# $Id: monitor.py,v 1.6 2007/06/29 12:42:22 soltesz Exp $
 
 import sys
 import os
@@ -114,6 +114,18 @@ class Dummy(Thread):
 	def run(self):
 		time.sleep(5)
 
+def preComon(l_nodes, toCheck):
+	for host in l_nodes:
+		diag_node = {}
+		diag_node['nodename'] = host
+		diag_node['message'] = None
+		diag_node['bucket'] = ["dbg"]
+		diag_node['stage'] = ""
+		diag_node['args'] = None
+		diag_node['info'] = None
+		diag_node['time'] = time.time()
+		toCheck.put(diag_node)
+	return 
 
 def dict_from_nodelist(nl):
 	d = {}
@@ -159,13 +171,16 @@ def main():
 		l_nodes = []
 		print "Getting node info for hosts in: %s" % file
 		for nodename in nodelist:
+			if config.debug: print ".", ; sys.stdout.flush()
 			l_nodes += plc.getNodes({'hostname': nodename})
+		print ""
 	else:
 		# Authoritative list of nodes from PLC
 		l_nodes = soltesz.if_cached_else(config.cachenodes, "l_nodes", plc.getNodes)
 
 	# Minus blacklisted ones..
 	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
+	l_ticket_blacklist = soltesz.if_cached_else(1,"l_ticket_blacklist",lambda : [])
 	l_wl_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 	# A handy dict of hostname-to-nodestruct mapping
 	d_allplc_nodes = dict_from_nodelist(l_wl_nodes)
@@ -175,13 +190,22 @@ def main():
 	ad_dbTickets = soltesz.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
 	print "Getting tickets from RT took: %f sec" % t.diff() ; del t
 
+	if os.path.isfile("precomon.txt"): 
+		nodelist = config.getListFromFile("precomon.txt")
+		print "PreComon node info"
+		preComon(nodelist, toCheck)
+		for nodename in nodelist:
+			# TODO: temporary hack.
+			if nodename not in d_allplc_nodes:
+				d_allplc_nodes[nodename] = {}
+
 	# TODO: Refreshes Comon data every COSLEEP seconds
 	cm1 = comon.Comon(cdb, d_allplc_nodes, toCheck)
 	startThread(cm1,"comon")
 
 	# TODO: make queues event based, not node based. 
 	# From the RT db, add hosts to q(toCheck) for filtering the comon nodes.
-	rt1 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket)
+	rt1 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket, l_ticket_blacklist)
 	# 	Kind of a hack. Cleans the DB for stale entries and updates db.
 	#   (UNTESTED)
 	#	rt5 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket)
