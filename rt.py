@@ -10,7 +10,8 @@ import re
 import comon
 import soltesz
 from threading import *
-import config
+
+# TODO: merge the RT mailer from mailer.py into this file.
 
 # RT database access constants file
 RT_DB_CONSTANTS_PATH='/etc/planetlab/rt_db'
@@ -115,7 +116,8 @@ def rt_tickets():
 			 FROM Tickets AS Tk, Attachments AS At 
 			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId  
 			 WHERE Tk.Queue != 10 AND Tk.id > 10000 AND 
-			 	   Tr.id=At.TransactionID AND (Tk.Status = 'new' OR Tk.Status = 'open')"""
+			 	   Tr.id=At.TransactionID AND Tk.Status = 'open'"""
+			 	   #Tr.id=At.TransactionID AND (Tk.Status = 'new' OR Tk.Status = 'open')"""
 
 	try:
 		# create a 'cursor' (required by MySQLdb)
@@ -160,13 +162,13 @@ def is_host_in_rt_tickets(host, ticket_blacklist, ad_rt_tickets):
 			if re_host.search(x['subj'], re.MULTILINE|re.IGNORECASE) or \
 			   re_host.search(x['content'], re.MULTILINE|re.IGNORECASE):
 				logger.debug("\t ticket %s has %s" % (x['ticket_id'], host))
-				print x['ticket_id']
-				print ticket_blacklist
+				print "\t ticket %s has %s" % (x['ticket_id'], host)
 				if x['ticket_id'] in ticket_blacklist:
 					return (False, x)
 				else:
 					return (True, x)
-		logger.debug("\t noticket -- has %s" % host)
+		print "\t noticket -- has %s" % host
+		#logger.debug("\t noticket -- has %s" % host)
 		return (False, None)
 
 	# This search, while O(tickets), takes less than a millisecond, 05-25-07
@@ -192,49 +194,47 @@ Remove nodes that have come backup. Don't care of ticket is closed after first q
 Another thread refresh tickets of nodes already in dict and remove nodes that have come up. 
 '''
 class RT(Thread):
-	def __init__(self, dbTickets, tickets, qin_toCheck, qout_sickNoTicket, l_ticket_blacklist, target = None): 
+	def __init__(self, dbTickets, q_toRT, q_fromRT, l_ticket_blacklist, target = None): 
 		# Time of last update of ticket DB
 		self.dbTickets = dbTickets
 		self.lastupdated = 0
 		self.l_ticket_blacklist = l_ticket_blacklist
-		# Check host in queue.  Queue populated from comon data of sick. 
-		self.qin_toCheck = qin_toCheck
-		# Result of rt db query.  Nodes without tickets that are sick.
-		self.qout_sickNoTicket = qout_sickNoTicket 
-		#DB of tickets.  Name -> ticket
-		self.tickets = tickets
+		self.q_toRT = q_toRT
+		self.q_fromRT = q_fromRT 
+		self.tickets = {}
 		Thread.__init__(self,target = self.getTickets)
 
-	# Takes node from qin_toCheck, gets tickets.  
+	# Takes node from q_toRT, gets tickets.  
 	# Thread that actually gets the tickets.
 	def getTickets(self):
 		self.count = 0
 		while 1:
-			diag_node = self.qin_toCheck.get(block = True)
-			if diag_node == "None": 
-				print "RT processed %d nodes with noticket" % self.count
-				logger.debug("RT filtered %d noticket nodes" % self.count)
-				self.qout_sickNoTicket.put("None")
-				break
-			else:
+			diag_node = self.q_toRT.get(block = True)
+			if diag_node != None: 
 				host = diag_node['nodename']
 				(b_host_inticket, r_ticket) = is_host_in_rt_tickets(host, \
 													self.l_ticket_blacklist, \
 													self.dbTickets)
+				diag_node['found_rt_ticket'] = None
 				if b_host_inticket:
 					logger.debug("RT: found tickets for %s" %host)
-					diag_node['stage'] = 'stage_rt_working'
-					diag_node['ticket_id'] = r_ticket['ticket_id']
-					self.tickets[host] = r_ticket
+					diag_node['found_rt_ticket'] = r_ticket['ticket_id']
+
 				else:
-					#logger.debug("RT: no tix for %s" %host)
-					#print "no tix for %s" % host
 					if r_ticket is not None:
 						print "Ignoring ticket %s" % r_ticket['ticket_id']
+						# TODO: why do i return the ticket id for a
+						# 		blacklisted ticket id?
+						#diag_node['found_rt_ticket'] = r_ticket['ticket_id']
 					self.count = self.count + 1
 
-				# process diag_node for either case
-				self.qout_sickNoTicket.put(diag_node) 
+				self.q_fromRT.put(diag_node) 
+			else:
+				print "RT processed %d nodes with noticket" % self.count
+				logger.debug("RT filtered %d noticket nodes" % self.count)
+				self.q_fromRT.put(None)
+
+				break
 
 	# Removes hosts that are no longer down.
 	def remTickets(self):
@@ -242,26 +242,26 @@ class RT(Thread):
 		prevdown = self.tickets.keys()
 
 		currdown = []
-		#BEGIN HACK.  This should be outside of this file. passed to class.
-		cmn = comon.Comon(None, None)
-        	cmn.updatebkts()
-		for bucket in cmn.comonbkts.keys():
-			for host in getattr(cmn,bucket):
-				if host not in currdown: currdown.append(host)
-		#END HACK
+		##BEGIN HACK.  This should be outside of this file. passed to class.
+		#cmn = comon.Comon(None, None)
+        #	cmn.updatebkts()
+		#for bucket in cmn.comonbkts.keys():
+		#	for host in getattr(cmn,bucket):
+		#		if host not in currdown: currdown.append(host)
+		##END HACK
 
 		# Actually do the comparison
-		for host in prevdown:
-			if host not in currdown:
-				del self.tickets[host]
-				logger.info("RT: %s no longer down." % host)
+		#for host in prevdown:
+		#	if host not in currdown:
+		#		del self.tickets[host]
+		#		logger.info("RT: %s no longer down." % host)
 
 	# Update Tickets
 	def updateTickets(self):
 		logger.info("Refreshing DB.")
 		for host in self.tickets.keys():
 			# Put back in Q to refresh
-			self.qin_toCheck.put(host)
+			self.q_toRT.put(host)
 
 	def cleanTickets(self):
 		while 1:
