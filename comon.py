@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: comon.py,v 1.6 2007/06/29 12:42:22 soltesz Exp $
+# $Id: comon.py,v 1.7 2007/07/03 19:59:02 soltesz Exp $
 #
 # Get CoMon data, unsorted, in CSV, and create a huge hash.
 #
@@ -47,7 +47,15 @@ class Comon(Thread):
 	all buckets is a queue of all problem nodes. This gets sent to rt to find
 	tickets open for host. 
 	"""
-	def __init__(self, cdb, d_allplc_nodes, q_allbuckets):
+	def __init__(self, cdb=None, d_allplc_nodes=None, q_allbuckets=None):
+
+		self.accept_all_nodes = False
+
+		if cdb == None:
+			cdb = {}
+		if d_allplc_nodes == None:
+			self.accept_all_nodes = True # TODO :get from plc.
+
 		self.codata = cdb 
 		self.d_allplc_nodes = d_allplc_nodes
 		self.updated = time.time()
@@ -59,7 +67,7 @@ class Comon(Thread):
 		#	"filerw": "filerw%3E0",
 		#	"dbg" : "keyok==0"}
 		self.comon_buckets = {
-			#"down" : "resptime==0 && keyok==null",
+			#"down" : "resptime==0&&keyok==null",
 			#"ssh": "sshstatus > 2h",
 			#"clock_drift": "drift > 1m",
 			#"dns": "dns1udp>80 && dns2udp>80",
@@ -79,7 +87,14 @@ class Comon(Thread):
 			for line in rawdata.readlines():
 				l_host = line.rstrip().split(", ")		# split the line on ', '
 				hostname = l_host[0]
-				if hostname in self.d_allplc_nodes:		# then we'll track it
+				add = False
+				if self.accept_all_nodes:
+					add=True
+				else:
+					if hostname in self.d_allplc_nodes:		# then we'll track it
+						add = True
+
+				if add:
 					hash[hostname] = {}
 					for i in range(1,len(keys)):
 						hash[hostname][keys[i]]=l_host[i]
@@ -150,6 +165,7 @@ class Comon(Thread):
 				diag_node['message'] = None
 				diag_node['bucket'] = [bucket]
 				diag_node['stage'] = ""
+				#diag_node['ticket_id'] = ""
 				diag_node['args'] = None
 				diag_node['info'] = None
 				diag_node['time'] = time.time()
