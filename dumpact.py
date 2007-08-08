@@ -18,10 +18,11 @@ def main():
 	sorted_keys.sort()
 	for nodename in sorted_keys:
 		diag_nodelist = act_all[nodename]
-		lb = plcdb_hn2lb[nodename]
-		if lb not in sickdb:
-			sickdb[lb] = {}
-		sickdb[lb][nodename] = diag_nodelist
+		if nodename in plcdb_hn2lb:
+			lb = plcdb_hn2lb[nodename]
+			if lb not in sickdb:
+				sickdb[lb] = {}
+			sickdb[lb][nodename] = diag_nodelist
 
 	sorted_keys = sickdb.keys()
 	sorted_keys.sort()
@@ -37,12 +38,16 @@ def main():
 				l_ev = act_all[nodename]
 				print "    %s" % nodename
 				for diag_node in l_ev:
-					#s_time=time.strftime("%Y/%m/%d %H:%M:%S",time.gmtime(ev[1]))
 					keys = diag_node.keys()
 					keys.sort()
 					for k in keys:
 						if "message" not in k and "msg" not in k:
-							print "\t'%s' : %s" % (k, diag_node[k])
+							if 'time' in k:
+								s_time=time.strftime("%Y/%m/%d %H:%M:%S",
+														time.gmtime(diag_node[k]))
+								print "\t'%s' : %s" % (k, s_time)
+							else:
+								print "\t'%s' : %s" % (k, diag_node[k])
 					print "\t--"
 
 	print s_nodenames
