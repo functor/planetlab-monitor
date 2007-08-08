@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: emailTxt.py,v 1.7 2007/06/29 12:42:22 soltesz Exp $
+# $Id: emailTxt.py,v 1.8 2007/07/03 19:56:45 soltesz Exp $
 
 
 # 
@@ -22,19 +22,21 @@ As part of PlanetLab node monitoring, we noticed the following nodes were down a
 %(hostname_list)s 
 We're writing because we need your help returning them to their regular operation.
 
-To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.  Until that time, visiting the link below will return an 'Internal Server Error'.
 
 	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
 
 If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
 
-    sudo /usr/local/planetlab/bin/pl-ps
+    sudo /usr/sbin/vps ax
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
     https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+
+After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
@@ -47,7 +49,7 @@ Hello,
 As part of PlanetLab node monitoring, we noticed the following nodes were down at your site:
 
 %(hostname_list)s 
-We're writing again because our previous correspondence has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
+We're writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
 
 To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
 
@@ -55,13 +57,15 @@ To help, please confirm that a recent BootCD is installed in the machine (Versio
 
 If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
 
-    sudo /usr/local/planetlab/bin/pl-ps
+    sudo /usr/sbin/vps ax
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
     https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+
+After another week, we will disable all slices currently running on PlanetLab.  Because this action will directly affect all users of these slices, these users will also be notified at that time.
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
@@ -74,7 +78,7 @@ Hello,
 As part of PlanetLab node monitoring, we noticed the following nodes were down at your site:
 
 %(hostname_list)s 
-We understand that machine maintenance can take time.  We're writing again because our previous correspondence has gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
+We understand that machine maintenance can take time.  We're writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
 
 To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
 
@@ -82,7 +86,7 @@ To help, please confirm that a recent BootCD is installed in the machine (Versio
 
 If the machine has booted successfully, you may check it more quickly by logging in with your site_admin account, and running:
 
-    sudo /usr/local/planetlab/bin/pl-ps
+    sudo /usr/sbin/vps ax
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
@@ -110,6 +114,8 @@ Instructions to perform the steps necessary for a BootCD upgrade are available i
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
+After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
+
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
@@ -119,7 +125,7 @@ Thank you for your help,
 %(hostname_list)s  
 This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
 
-We're writing again because our previous correspondence has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation, slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
+We're writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation, slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
 
 To check the status of these and any other machines that you manage please visit:
 
@@ -130,6 +136,8 @@ Instructions to perform the steps necessary for a BootCD upgrade are available i
     https://www.planet-lab.org/doc/guides/tech#NodeInstallation
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+
+After another week, we will disable all slices currently running on PlanetLab.  Because this action will directly affect all users of these slices, these users will also be notified at that time.
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
@@ -140,7 +148,7 @@ Thank you for your help,
 %(hostname_list)s  
 This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
 
-We understand that machine maintenance can take time.  We're writing again because our previous correspondence has gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
+We understand that machine maintenance can take time.  We're writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
 
 To check the status of these and any other machines that you manage please visit:
 
@@ -155,8 +163,30 @@ If your node returns to normal operation after following these directions, then 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+	thankyou=("""Thank you for helping maintain your PlanetLab nodes: %(loginbase)s""",
+	"""
+While monitoring your site, we noticed that the following nodes *improved*
+their states:
+
+%(hostname_list)s  
+Often, system administration is a thankless job, but not today. :-)
+
+Thank you!
+  -- PlanetLab Central (support@planet-lab.org)
+
+Legend:
+PROD-      This state is the production state where the node can contact PlanetLab, 
+           and install slices from users.
+DEBUG-     This state designates a node that could not boot successfully.
+OLDBOOTCD- This state corresponds to the situation where an oldbootcd prevented 
+           the normal operation of the node.
+ERROR- 	   This is an error state, where there is absolutely no contact 
+           with PlanetLab.
+	""")
+	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
+	newthankyou=[thankyou,thankyou,thankyou]
 
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 
