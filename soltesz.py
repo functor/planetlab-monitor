@@ -23,7 +23,7 @@ def dbDump(name, obj=None):
 
 def if_cached_else(cond, name, function):
 	s = SPickle()
-	if (cond and s.exists(name)) or \
+	if (cond and s.exists("production.%s" % name)) or \
 	   (cond and config.debug and s.exists("debug.%s" % name)):
 		o = s.load(name)
 	else:
@@ -37,7 +37,7 @@ class SPickle:
 		self.config = config
 
 	def if_cached_else(self, cond, name, function):
-		if cond and self.exists(name):
+		if cond and self.exists("production.%s" % name):
 			o = self.load(name)
 		else:
 			o = function()
@@ -64,16 +64,18 @@ class SPickle:
 		if self.config.debug:
 			if self.exists("debug.%s" % name):
 				name = "debug.%s" % name
-			elif self.exists(name):
+			elif self.exists("production.%s" % name):
 				debugname = "debug.%s" % name
 				if not self.exists(debugname):
+					name = "production.%s" % name
 					shutil.copyfile(self.__file(name), self.__file(debugname))
 				name = debugname
 			else:	# neither exist
-				raise Exception, "No such pickle based on %s" % self.__file(name)
+				raise Exception, "No such pickle based on %s" % self.__file("debug.%s" % name)
 		else:
-			if not self.exists(name):
+			if not self.exists("production.%s" % name):
 				raise Exception, "No such file %s" % name
+			name = "production.%s" % name
 
 		print "loading %s" % self.__file(name)
 		f = open(self.__file(name), 'r')
@@ -95,18 +97,62 @@ class SPickle:
 			os.mkdir("%s" % PICKLE_PATH)
 		if self.config.debug:
 			name = "debug.%s" % name
+		else:
+			name = "production.%s" % name
 		f = open(self.__file(name), 'w')
 		pickle.dump(obj, f)
 		f.close()
 		return
 
 
+COMMAND_TIMEOUT = 60
 ssh_options = { 'StrictHostKeyChecking':'no', 
 				'BatchMode':'yes', 
 				'PasswordAuthentication':'no',
-				'ConnectTimeout':'20'}
+				'ConnectTimeout':'%s' % COMMAND_TIMEOUT}
+from select import select 
+class CMD:
+	def __init__(self):
+		pass
 
-class SSH:
+	def run_noexcept(self, cmd):
+
+		(f_in, f_out, f_err) = os.popen3(cmd)
+		lout, lin, lerr = select([f_out,f_err], [], [], COMMAND_TIMEOUT*2)
+		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
+			# Reached a timeout!
+			print "TODO: kill subprocess: '%s'" % cmd
+			# TODO: kill subprocess??
+			return ("", "TIMEOUT")
+		o_value = f_out.read()
+		e_value = ""
+		if o_value == "":	# An error has occured
+			e_value = f_err.read()
+
+		o_value = o_value.strip()
+		e_value = e_value.strip()
+
+		f_out.close()
+		f_in.close()
+		f_err.close()
+		return (o_value, e_value)
+
+	def run(self, cmd):
+
+		(f_in, f_out, f_err) = os.popen3(cmd)
+		value = f_out.read()
+		if value == "":
+			raise Exception, f_err.read()
+		value = value.strip()
+
+		f_out.close()
+		f_in.close()
+		f_err.close()
+		return value
+
+		
+
+class SSH(CMD):
 	def __init__(self, user, host, options = ssh_options):
 		self.options = options
 		self.user = user
@@ -122,18 +168,23 @@ class SSH:
 	def run(self, cmd):
 		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
 									self.user, self.host, cmd)
-		if ( DEBUG == 1 ):
-			print cmd,
-		(f_in, f_out, f_err) = os.popen3(cmd)
-		value = f_out.read()
-		if value == "":
-			raise Exception, f_err.read()
-		if ( DEBUG == 1 ):
-			print " == %s" % value
-		f_out.close()
-		f_in.close()
-		f_err.close()
-		return value
+		return CMD.run(self, cmd)
+
+	def get_file(self, rmt_filename, local_filename=None):
+		if local_filename == None:
+			local_filename = "./"
+		cmd = "scp -B %s %s@%s:%s %s" % (self.__options_to_str(), 
+									self.user, self.host, 
+									rmt_filename, local_filename)
+		# output :
+		# 	errors will be on stderr,
+		#   success will have a blank stderr...
+		return CMD.run_noexcept(self, cmd)
+
+	def run_noexcept(self, cmd):
+		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
+									self.user, self.host, cmd)
+		return CMD.run_noexcept(self, cmd)
 
 	def runE(self, cmd):
 		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
@@ -145,6 +196,7 @@ class SSH:
 		value = f_out.read()
 		if value == "":	# An error has occured
 			value = f_err.read()
+			value = value.strip()
 
 		if ( DEBUG == 1 ):
 			print " == %s" % value
