@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.15 2007/06/29 12:42:22 soltesz Exp $
+# $Id: plc.py,v 1.16 2007/07/03 19:59:02 soltesz Exp $
 #
 
 from emailTxt import *
@@ -115,9 +115,9 @@ def getNodeNetworks(filter=None):
 
 def getNodes(filter=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
-	nodes = api.GetNodes(auth.auth, filter, ['boot_state', 'hostname', 
-			'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
-			'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
+	nodes = api.GetNodes(auth.auth, filter, None) #['boot_state', 'hostname', 
+			#'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
+			#'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
 	return nodes
 
 '''
@@ -155,6 +155,24 @@ def suspendSlices(nodename):
 		except Exception, exc:
 			logger.info("suspendSlices:  %s" % exc)
 
+def enableSlices(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	for slice in slices(siteId(nodename)):
+		logger.info("Enabling slices %s" % slice)
+		try:
+			if not config.debug:
+				slice_list = api.GetSlices(auth.auth, {'name': slice}, None)
+				if len(slice_list) == 0:
+					return
+				slice_id = slice_list[0]['slice_id']
+				l_attr = api.GetSliceAttributes(auth.auth, {'slice_id': slice_id}, None)
+				for attr in l_attr:
+					if "enabled" == attr['name'] and attr['value'] == "0":
+						logger.info("Deleted enable=0 attribute from slice %s" % slice)
+						api.DeleteSliceAttribute(auth.auth, attr['slice_attribute_id'])
+		except Exception, exc:
+			logger.info("enableSlices: %s" % exc)
+			print "exception: %s" % exc
 
 #I'm commenting this because this really should be a manual process.  
 #'''
@@ -166,6 +184,17 @@ def suspendSlices(nodename):
 #		logger.info("Suspending slice %s" % slice)
 #		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
 #
+def enableSliceCreation(nodename):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	try:
+		loginbase = siteId(nodename)
+		logger.info("Enabling slice creation for site %s" % loginbase)
+		if not config.debug:
+			logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
+			api.UpdateSite(auth.auth, loginbase, {'enabled': True})
+	except Exception, exc:
+		print "ERROR: enableSliceCreation:  %s" % exc
+		logger.info("ERROR: enableSliceCreation:  %s" % exc)
 
 '''
 Removes ability to create slices. Returns previous max_slices
@@ -186,19 +215,19 @@ def removeSliceCreation(nodename):
 '''
 QED
 '''
-def enableSliceCreation(nodename, maxslices):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
-	anon = {'AuthMethod': "anonymous"}
-	siteid = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
-	if len(siteid) == 1:
-		logger.info("Enabling slice creation for site %s" % siteId(nodename))
-		try:
-			if not config.debug:
-				api.AdmUpdateSite(auth.auth, siteid[0], {"max_slices" : maxslices})
-		except Exception, exc:
-			logger.info("API:  %s" % exc)
-	else:
-		logger.debug("Cant find site for %s.  Cannot enable creation." % nodename)
+#def enableSliceCreation(nodename, maxslices):
+#	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+#	anon = {'AuthMethod': "anonymous"}
+#	siteid = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
+#	if len(siteid) == 1:
+#		logger.info("Enabling slice creation for site %s" % siteId(nodename))
+#		try:
+#			if not config.debug:
+#				api.AdmUpdateSite(auth.auth, siteid[0], {"max_slices" : maxslices})
+#		except Exception, exc:
+#			logger.info("API:  %s" % exc)
+#	else:
+#		logger.debug("Cant find site for %s.  Cannot enable creation." % nodename)
 
 def main():
 	logger.setLevel(logging.DEBUG)
