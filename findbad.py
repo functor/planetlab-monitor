@@ -4,17 +4,15 @@ import os
 import sys
 import string
 import time
-import soltesz
-import plc
-import comon
-import threadpool
 
 from config import config
 from optparse import OptionParser
 parser = OptionParser()
-parser.set_defaults(filename="", increment=False, dbname="findbadnodes")
+parser.set_defaults(filename="", increment=False, dbname="findbadnodes", cachenodes=False)
 parser.add_option("-f", "--nodes", dest="filename", metavar="FILE", 
 					help="Provide the input file for the node list")
+parser.add_option("", "--cachenodes", action="store_true",
+					help="Cache node lookup from PLC")
 parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 					help="Specify the name of the database to which the information is saved")
 parser.add_option("-i", "--increment", action="store_true", dest="increment", 
@@ -30,9 +28,18 @@ COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
 				    #"formatcsv&" + \
 					#"select='lastcotop!=0'"
 
+import threading
+plc_lock = threading.Lock()
 round = 1
 externalState = {'round': round, 'nodes': {}}
 count = 0
+
+
+import soltesz
+import plc
+import comon
+import threadpool
+import syncplcdb
 
 def collectPingAndSSH(nodename, cohash):
 	### RUN PING ######################
@@ -107,10 +114,28 @@ def collectPingAndSSH(nodename, cohash):
 	# TODO: get bm.log for debug nodes.
 	# 'zcat /tmp/bm.log'
 		
-	values['comonstats'] = cohash[nodename]
+	if nodename in cohash: 
+		values['comonstats'] = cohash[nodename]
+	else:
+		values['comonstats'] = {'resptime':  '-1', 
+								'uptime':    '-1',
+								'sshstatus': '-1', 
+								'lastcotop': '-1'}
 	# include output value
 	### GET PLC NODE ######################
-	d_node = plc.getNodes({'hostname': nodename})
+	b_except = False
+	plc_lock.acquire()
+
+	try:
+		d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 'last_contact'])
+	except:
+		b_except = True
+		import traceback
+		traceback.print_exc()
+
+	plc_lock.release()
+	if b_except: return (None, None)
+
 	site_id = -1
 	if d_node and len(d_node) > 0:
 		pcu = d_node[0]['pcu_ids']
@@ -119,14 +144,31 @@ def collectPingAndSSH(nodename, cohash):
 		else:
 			values['pcu'] = "NOPCU"
 		site_id = d_node[0]['site_id']
-		values['plcnode'] = {'status' : 'SUCCESS', 'pcu_ids': pcu, 'site_id': site_id}
+		last_contact = d_node[0]['last_contact']
+		values['plcnode'] = {'status' : 'SUCCESS', 
+							'pcu_ids': pcu, 
+							'site_id': site_id,
+							'last_contact': last_contact}
 	else:
 		values['pcu']     = "UNKNOWN"
 		values['plcnode'] = {'status' : "GN_FAILED"}
 		
 
 	### GET PLC SITE ######################
-	d_site = plc.getSites({'site_id': site_id})
+	b_except = False
+	plc_lock.acquire()
+
+	try:
+		d_site = plc.getSites({'site_id': site_id}, 
+							['max_slices', 'slice_ids', 'node_ids', 'login_base'])
+	except:
+		b_except = True
+		import traceback
+		traceback.print_exc()
+
+	plc_lock.release()
+	if b_except: return (None, None)
+
 	if d_site and len(d_site) > 0:
 		max_slices = d_site[0]['max_slices']
 		num_slices = len(d_site[0]['slice_ids'])
@@ -147,13 +189,14 @@ def recordPingAndSSH(request, result):
 	global count
 	(nodename, values) = result
 
-	global_round = externalState['round']
-	externalState['nodes'][nodename]['values'] = values
-	externalState['nodes'][nodename]['round'] = global_round
+	if values is not None:
+		global_round = externalState['round']
+		externalState['nodes'][nodename]['values'] = values
+		externalState['nodes'][nodename]['round'] = global_round
 
-	count += 1
-	print "%d %s %s" % (count, nodename, externalState['nodes'][nodename]['values'])
-	soltesz.dbDump(config.dbname, externalState)
+		count += 1
+		print "%d %s %s" % (count, nodename, externalState['nodes'][nodename]['values'])
+		soltesz.dbDump(config.dbname, externalState)
 
 # this will be called when an exception occurs within a thread
 def handle_exception(request, result):
@@ -215,10 +258,13 @@ def main():
 	# metric than sshstatus, or other values from CoMon
 	cotop_url = COMON_COTOPURL
 
+	# history information for all nodes
 	cohash = cotop.coget(cotop_url)
 
 	if config.filename == "":
-		l_nodes = cohash.keys()
+		l_nodes = syncplcdb.create_plcdb()
+		l_nodes = [node['hostname'] for node in l_nodes]
+		#l_nodes = cohash.keys()
 	else:
 		l_nodes = config.getListFromFile(config.filename)
 

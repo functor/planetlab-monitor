@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: emailTxt.py,v 1.8 2007/07/03 19:56:45 soltesz Exp $
+# $Id: emailTxt.py,v 1.9 2007/08/08 13:26:46 soltesz Exp $
 
 
 # 
@@ -102,7 +102,7 @@ Thank you for your help,
 """As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
 
 %(hostname_list)s  
-This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (Either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
 
 To check the status of these and any other machines that you manage please visit:
 
@@ -123,7 +123,7 @@ Thank you for your help,
 """As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
 
 %(hostname_list)s  
-This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (Either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
 
 We're writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation, slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
 
@@ -146,7 +146,7 @@ Thank you for your help,
 """As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
 
 %(hostname_list)s  
-This usually implies that you need to update both the BootCD and regenerate the plnode.txt file stored on the read-only media (Either floppy disk or write-protected USB stick).
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (Either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
 
 We understand that machine maintenance can take time.  We're writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
 
@@ -163,7 +163,7 @@ If your node returns to normal operation after following these directions, then 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
-	thankyou=("""Thank you for helping maintain your PlanetLab nodes: %(loginbase)s""",
+	thankyou=("""Thank you for helping maintain your PlanetLab nodes - %(loginbase)s""",
 	"""
 While monitoring your site, we noticed that the following nodes *improved*
 their states:

@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.15 2007/07/03 19:58:34 soltesz Exp $
+# $Id: policy.py,v 1.16 2007/08/08 13:30:42 soltesz Exp $
 #
 # Policy Engine.
 
@@ -81,6 +81,9 @@ def array_to_priority_map(array):
 def getdebug():
 	return config.debug
 
+def print_stats(key, stats):
+	if key in stats: print "%20s : %d" % (key, stats[key])
+
 class Merge(Thread):
 	def __init__(self, l_merge, toRT):
 		self.toRT = toRT
@@ -128,6 +131,7 @@ class Merge(Thread):
 			fb_record['category'] = values['category']
 			fb_record['state'] = values['state']
 			fb_record['comonstats'] = values['comonstats']
+			fb_record['plcnode'] = values['plcnode']
 			fb_record['kernel'] = self.getKernel(values['kernel'])
 			fb_record['stage'] = "findbad"
 			fb_record['message'] = None
@@ -243,6 +247,7 @@ class Merge(Thread):
 					self.mergedb[loginbase][nodename]['state'] = x['state']
 					self.mergedb[loginbase][nodename]['kernel']=x['kernel']
 					self.mergedb[loginbase][nodename]['bootcd']=x['bootcd']
+					self.mergedb[loginbase][nodename]['plcnode']=x['plcnode']
 					# delete the entry from cache_all to keep it out of case 3)
 					del self.cache_all[nodename]
 
@@ -283,13 +288,12 @@ class Diagnose(Thread):
 	def __init__(self, fromRT):
 		self.fromRT = fromRT
 		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+		self.findbad = soltesz.if_cached_else(1, "findbad", lambda : {})
 
 		self.diagnose_in = {}
 		self.diagnose_out = {}
 		Thread.__init__(self)
 
-	def print_stats(self, key, stats):
-		print "%20s : %d" % (key, stats[key])
 
 	def run(self):
 		self.accumSickSites()
@@ -307,9 +311,9 @@ class Diagnose(Thread):
 			#if config.policysavedb:
 			sys.exit(1)
 
-		self.print_stats("sites", stats)
-		self.print_stats("sites_diagnosed", stats)
-		self.print_stats("nodes_diagnosed", stats)
+		print_stats("sites_observed", stats)
+		print_stats("sites_diagnosed", stats)
+		print_stats("nodes_diagnosed", stats)
 
 		if config.policysavedb:
 			print "Saving Databases... diagnose_out"
@@ -338,7 +342,7 @@ class Diagnose(Thread):
 		return
 
 	def diagnoseAll(self):
-		i_sites = 0
+		i_sites_observed = 0
 		i_sites_diagnosed = 0
 		i_nodes_diagnosed = 0
 		i_nodes_actedon = 0
@@ -347,30 +351,21 @@ class Diagnose(Thread):
 
 		sorted_sites = self.diagnose_in.keys()
 		sorted_sites.sort()
-		l_diagnosed_all = []
+		self.diagnose_out= {}
 		for loginbase in sorted_sites:
 			l_allsites += [loginbase]
 
 			d_diag_nodes = self.diagnose_in[loginbase]
-			l_diag_records = self.__diagnoseSite(loginbase, d_diag_nodes)
-			l_diagnosed_all += l_diag_records
+			d_act_records = self.__diagnoseSite(loginbase, d_diag_nodes)
+			# store records in diagnose_out, for saving later.
+			self.diagnose_out.update(d_act_records)
 			
-			if len(l_diag_records) > 0:
-				i_nodes_diagnosed += len(l_diag_records)
+			if len(d_act_records[loginbase]['nodes'].keys()) > 0:
+				i_nodes_diagnosed += (len(d_act_records[loginbase]['nodes'].keys()))
 				i_sites_diagnosed += 1
-			i_sites += 1
+			i_sites_observed += 1
 
-		self.diagnose_out= {}
-		for diag_record in l_diagnosed_all:
-			nodename = diag_record['nodename']
-			loginbase = self.plcdb_hn2lb[nodename]
-
-			if loginbase not in self.diagnose_out:
-				self.diagnose_out[loginbase] = {}
-
-			self.diagnose_out[loginbase][nodename] = diag_record
-
-		return {'sites': i_sites, 
+		return {'sites_observed': i_sites_observed, 
 				'sites_diagnosed': i_sites_diagnosed, 
 				'nodes_diagnosed': i_nodes_diagnosed, 
 				'allsites':l_allsites}
@@ -384,7 +379,14 @@ class Diagnose(Thread):
 		elif diag_record['comonstats']['lastcotop'] != "null":
 			daysdown = int(diag_record['comonstats']['lastcotop']) // (60*60*24)
 		else:
-			daysdown = -1
+			now = time.time()
+			last_contact = diag_record['plcnode']['last_contact']
+			if last_contact == None:
+				# the node has never been up, so give it a break
+				daysdown = -1
+			else:
+				diff = now - last_contact
+				daysdown = diff // (60*60*24)
 		return daysdown
 
 	def __getStrDaysDown(self, diag_record, nodename):
@@ -402,9 +404,15 @@ class Diagnose(Thread):
 
 	def __diagnoseSite(self, loginbase, d_diag_nodes):
 		"""
-		rec_sitelist is a diagnose_in entry: 
+		d_diag_nodes are diagnose_in entries.
 		"""
-		diag_list = []
+		d_diag_site = {loginbase : { 'config' : 
+												{'squeeze': False, 
+												 'email': False
+												}, 
+									'nodes': {}
+									}
+					   }
 		sorted_nodes = d_diag_nodes.keys()
 		sorted_nodes.sort()
 		for nodename in sorted_nodes:
@@ -412,9 +420,27 @@ class Diagnose(Thread):
 			diag_record = self.__diagnoseNode(loginbase, node_record)
 
 			if diag_record != None:
-				diag_list += [ diag_record ]
+				d_diag_site[loginbase]['nodes'][nodename] = diag_record
+			else:
+				pass # there is nothing to do for this node.
 
-		return diag_list
+		# NOTE: these settings can be overridden by command line arguments,
+		#       or the state of a record, i.e. if already in RT's Support Queue.
+		nodes_up = self.getUpAtSite(loginbase, d_diag_site)
+		if nodes_up < MINUP:
+			d_diag_site[loginbase]['config']['squeeze'] = True
+
+		max_slices = self.getMaxSlices(loginbase)
+		num_nodes = self.getNumNodes(loginbase)
+		# NOTE: when max_slices == 0, this is either a new site (the old way)
+		#       or an old disabled site from previous monitor (before site['enabled'])
+		if nodes_up < num_nodes and max_slices != 0:
+			d_diag_site[loginbase]['config']['email'] = True
+
+		if len(d_diag_site[loginbase]['nodes'].keys()) > 0:
+			print "SITE: %20s : %d nodes up, at most" % (loginbase, nodes_up)
+
+		return d_diag_site
 
 	def diagRecordByCategory(self, node_record):
 		nodename = node_record['nodename']
@@ -427,7 +453,7 @@ class Diagnose(Thread):
 			diag_record = {}
 			diag_record.update(node_record)
 			daysdown = self.__getDaysDown(diag_record, nodename) 
-			if daysdown >= 0 and daysdown < 7:
+			if daysdown < 7:
 				format = "DIAG: %20s : %-40s Down only %s days  NOTHING DONE"
 				print format % (loginbase, nodename, daysdown)
 				return None
@@ -436,8 +462,12 @@ class Diagnose(Thread):
 			diag_record['message'] = emailTxt.mailtxt.newdown
 			diag_record['args'] = {'nodename': nodename}
 			diag_record['info'] = (nodename, s_daysdown, "")
-			diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
-					(loginbase, nodename, diag_record['info'], diag_record['ticket_id']),
+			if diag_record['ticket_id'] == "":
+				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
+					(loginbase, nodename, diag_record['info'][1:], diag_record['found_rt_ticket'])
+			else:
+				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
+					(loginbase, nodename, diag_record['info'][1:], diag_record['ticket_id'])
 
 		elif "OLDBOOTCD" in category:
 			# V2 boot cds as determined by findbad
@@ -449,9 +479,14 @@ class Diagnose(Thread):
 			diag_record['message'] = emailTxt.mailtxt.newbootcd
 			diag_record['args'] = {'nodename': nodename}
 			diag_record['info'] = (nodename, s_daysdown, s_cdversion)
-			diag_record['log'] = "BTCD: %20s : %-40s == %20s %20s %s" % \
+			if diag_record['ticket_id'] == "":
+				diag_record['log'] = "BTCD: %20s : %-40s == %20s %20s %s" % \
 									(loginbase, nodename, diag_record['kernel'], 
-									 diag_record['bootcd'], diag_record['ticket_id']),
+									 diag_record['bootcd'], diag_record['found_rt_ticket'])
+			else:
+				diag_record['log'] = "BTCD: %20s : %-40s == %20s %20s %s" % \
+									(loginbase, nodename, diag_record['kernel'], 
+									 diag_record['bootcd'], diag_record['ticket_id'])
 
 		elif "PROD" in category:
 			if "DEBUG" in state:
@@ -470,9 +505,14 @@ class Diagnose(Thread):
 					diag_record['args'] = {'nodename': nodename}
 					diag_record['info'] = (nodename, node_record['prev_category'], 
 													 node_record['category'])
-					diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s" % \
+					if diag_record['ticket_id'] == "":
+						diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s %s" % \
 									(loginbase, nodename, diag_record['stage'], 
-									 state, category),
+									 state, category, diag_record['found_rt_ticket'])
+					else:
+						diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s %s" % \
+									(loginbase, nodename, diag_record['stage'], 
+									 state, category, diag_record['ticket_id'])
 					return diag_record
 				else:
 					return None
@@ -508,7 +548,21 @@ class Diagnose(Thread):
 		elif val == 1:
 			# current category is better than previous
 			# TODO: too generous for now, but will be handled correctly
-			node_record['stage'] = 'improvement'
+			# TODO: if stage is currently ticket_waitforever, 
+			if 'ticket_id' not in node_record:
+				print "ignoring: ", node_record['nodename']
+				return None
+			else:
+				if node_record['ticket_id'] == "" or \
+				   node_record['ticket_id'] == None:
+					print "closing: ", node_record['nodename']
+					node_record['action'] = ['close_rt']
+					node_record['message'] = None
+					node_record['stage'] = 'monitor-end-record'
+					return node_record
+					#return None
+				else:
+					node_record['stage'] = 'improvement'
 		else:
 			#values are equal, carry on.
 			pass
@@ -530,7 +584,11 @@ class Diagnose(Thread):
 				diag_record['stage'] = 'ticket_waitforever'
 				
 		current_time = time.time()
-		delta = current_time - diag_record['time']
+		# take off four days, for the delay that database caused.
+		# TODO: generalize delays at PLC, and prevent enforcement when there
+		# 		have been no emails.
+		# NOTE: 7*SPERDAY exists to offset the 'bad week'
+		delta = current_time - diag_record['time'] - 7*SPERDAY
 
 		message = diag_record['message']
 		act_record = {}
@@ -541,73 +599,80 @@ class Diagnose(Thread):
 		if   'findbad' in diag_record['stage']:
 			# The node is bad, and there's no previous record of it.
 			act_record['email'] = TECH		# addative emails
-			act_record['action'] = 'noop'
+			act_record['action'] = ['noop']
 			act_record['message'] = message[0]
 			act_record['stage'] = 'stage_actinoneweek'
 
 		elif 'improvement' in diag_record['stage']:
 			# - backoff previous squeeze actions (slice suspend, nocreate)
 			# TODO: add a backoff_squeeze section... Needs to runthrough
-			act_record['action'] = 'close_rt'
+			act_record['action'] = ['close_rt']
 			act_record['message'] = message[0]
 			act_record['stage'] = 'monitor-end-record'
 
 		elif 'actinoneweek' in diag_record['stage']:
-			act_record['email'] = TECH | PI		# addative emails
 			if delta >= 7 * SPERDAY: 
+				act_record['email'] = TECH | PI
 				act_record['stage'] = 'stage_actintwoweeks'
 				act_record['message'] = message[1]
-				act_record['action'] = 'nocreate' 
+				act_record['action'] = ['nocreate' ]
 			elif delta >= 3* SPERDAY and not 'second-mail-at-oneweek' in act_record:
-				act_record['message'] = message[1]
-				act_record['action'] = 'sendmailagain-waitforoneweekaction' 
+				act_record['email'] = TECH 
+				act_record['message'] = message[0]
+				act_record['action'] = ['sendmailagain-waitforoneweekaction' ]
 				act_record['second-mail-at-oneweek'] = True
 			else:
 				act_record['message'] = None
-				act_record['action'] = 'waitforoneweekaction' 
+				act_record['action'] = ['waitforoneweekaction' ]
+				return None 			# don't send if there's no action
 
 		elif 'actintwoweeks' in diag_record['stage']:
-			act_record['email'] = TECH | PI | USER		# addative emails
 			if delta >= 14 * SPERDAY:
+				act_record['email'] = TECH | PI | USER
 				act_record['stage'] = 'stage_waitforever'
 				act_record['message'] = message[2]
-				act_record['action'] = 'suspendslices'
+				act_record['action'] = ['suspendslices']
 				act_record['time'] = current_time		# reset clock for waitforever
 			elif delta >= 10* SPERDAY and not 'second-mail-at-twoweeks' in act_record:
-				act_record['message'] = message[2]
-				act_record['action'] = 'sendmailagain-waitfortwoweeksaction' 
+				act_record['email'] = TECH | PI
+				act_record['message'] = message[1]
+				act_record['action'] = ['sendmailagain-waitfortwoweeksaction' ]
 				act_record['second-mail-at-twoweeks'] = True
 			else:
 				act_record['message'] = None
-				act_record['action'] = 'waitfortwoweeksaction'
+				act_record['action'] = ['waitfortwoweeksaction']
+				return None 			# don't send if there's no action
 
 		elif 'ticket_waitforever' in diag_record['stage']:
 			act_record['email'] = TECH
 			if 'first-found' not in act_record:
 				act_record['first-found'] = True
-				act_record['action'] = 'ticket_waitforever'
+				act_record['log'] += " firstfound"
+				act_record['action'] = ['ticket_waitforever']
 				act_record['message'] = None
 				act_record['time'] = current_time
 			else:
 				if delta >= 7*SPERDAY:
-					act_record['action'] = 'email-againticket_waitforever'
-					act_record['message'] = message[0]
+					act_record['action'] = ['ticket_waitforever']
+					act_record['message'] = None
 					act_record['time'] = current_time		# reset clock
 				else:
-					act_record['action'] = 'ticket_waitforever'
+					act_record['action'] = ['ticket_waitforever']
 					act_record['message'] = None
+					return None
 
 		elif 'waitforever' in diag_record['stage']:
 			# more than 3 days since last action
 			# TODO: send only on weekdays.
 			# NOTE: expects that 'time' has been reset before entering waitforever stage
 			if delta >= 3*SPERDAY:
-				act_record['action'] = 'email-againwaitforever'
-				act_record['message'] = message[0]
+				act_record['action'] = ['email-againwaitforever']
+				act_record['message'] = message[2]
 				act_record['time'] = current_time		# reset clock
 			else:
-				act_record['action'] = 'waitforever'
+				act_record['action'] = ['waitforever']
 				act_record['message'] = None
+				return None 			# don't send if there's no action
 
 		else:
 			# There is no action to be taken, possibly b/c the stage has
@@ -617,7 +682,7 @@ class Diagnose(Thread):
 			#	2. delta is not big enough to bump it to the next stage.
 			# TODO: figure out which. for now assume 2.
 			print "UNKNOWN!!? %s" % nodename
-			act_record['action'] = 'unknown'
+			act_record['action'] = ['unknown']
 			act_record['message'] = message[0]
 			print "Exiting..."
 			sys.exit(1)
@@ -625,6 +690,59 @@ class Diagnose(Thread):
 		print "%s" % act_record['log'],
 		print "%15s" % act_record['action']
 		return act_record
+
+	def getMaxSlices(self, loginbase):
+		# if sickdb has a loginbase, then it will have at least one node.
+		site_stats = None
+
+		for nodename in self.diagnose_in[loginbase].keys():
+			if nodename in self.findbad['nodes']:
+				site_stats = self.findbad['nodes'][nodename]['values']['plcsite']
+				break
+
+		if site_stats == None:
+			raise Exception, "loginbase with no nodes in findbad"
+		else:
+			return site_stats['max_slices']
+
+	def getNumNodes(self, loginbase):
+		# if sickdb has a loginbase, then it will have at least one node.
+		site_stats = None
+
+		for nodename in self.diagnose_in[loginbase].keys():
+			if nodename in self.findbad['nodes']:
+				site_stats = self.findbad['nodes'][nodename]['values']['plcsite']
+				break
+
+		if site_stats == None:
+			raise Exception, "loginbase with no nodes in findbad"
+		else:
+			return site_stats['num_nodes']
+
+	"""
+	Returns number of up nodes as the total number *NOT* in act_all with a
+	stage other than 'steady-state' .
+	"""
+	def getUpAtSite(self, loginbase, d_diag_site):
+		# TODO: THIS DOESN"T WORK!!! it misses all the 'debug' state nodes
+		# 		that aren't recorded yet.
+
+		numnodes = self.getNumNodes(loginbase)
+		# NOTE: assume nodes we have no record of are ok. (too conservative)
+		# TODO: make the 'up' value more representative
+		up = numnodes
+		for nodename in d_diag_site[loginbase]['nodes'].keys():
+
+			rec = d_diag_site[loginbase]['nodes'][nodename]
+			if rec['stage'] != 'monitor-end-record':
+				up -= 1
+			else:
+				pass # the node is assumed to be up.
+
+		#if up != numnodes:
+		#	print "ERROR: %s total nodes up and down != %d" % (loginbase, numnodes)
+
+		return up
 
 
 class SiteAction:
@@ -658,9 +776,11 @@ class BackoffActions(SiteAction):
 #		allow for lists of actions to be performed...
 
 def close_rt_backoff(args):
-	mailer.closeTicketViaRT(args['ticket_id'], "Ticket CLOSED automatically by SiteAssist.")
-	plc.enableSlices(args['hostname'])
-	plc.enableSliceCreation(args['hostname'])
+	if 'ticket_id' in args and (args['ticket_id'] != "" and args['ticket_id'] != None):
+		mailer.closeTicketViaRT(args['ticket_id'], 
+								"Ticket CLOSED automatically by SiteAssist.")
+		plc.enableSlices(args['hostname'])
+		plc.enableSliceCreation(args['hostname'])
 	return
 
 class Action(Thread):
@@ -713,11 +833,11 @@ class Action(Thread):
 				soltesz.dbDump("act_all", self.act_all)
 			sys.exit(1)
 
-		self.print_stats("sites", stats)
-		self.print_stats("sites_diagnosed", stats)
-		self.print_stats("nodes_diagnosed", stats)
-		self.print_stats("sites_emailed", stats)
-		self.print_stats("nodes_actedon", stats)
+		print_stats("sites_observed", stats)
+		print_stats("sites_diagnosed", stats)
+		print_stats("nodes_diagnosed", stats)
+		print_stats("sites_emailed", stats)
+		print_stats("nodes_actedon", stats)
 		print string.join(stats['allsites'], ",")
 
 		if config.policysavedb:
@@ -743,14 +863,20 @@ class Action(Thread):
 			loginbase = self.plcdb_hn2lb[nodename]
 
 			if loginbase in self.diagnose_db and \
-				nodename in self.diagnose_db[loginbase]:
+				nodename in self.diagnose_db[loginbase]['nodes']:
 
-				diag_record = self.diagnose_db[loginbase][nodename]
+				diag_record = self.diagnose_db[loginbase]['nodes'][nodename]
 
 				if loginbase not in self.sickdb:
-					self.sickdb[loginbase] = {}
+					self.sickdb[loginbase] = {'nodes' : {}}
 
-				self.sickdb[loginbase][nodename] = diag_record
+				# NOTE: don't copy all node records, since not all will be in l_action
+				self.sickdb[loginbase]['nodes'][nodename] = diag_record
+				# NOTE: but, we want to get the loginbase config settings, 
+				#		this is	the easiest way.
+				self.sickdb[loginbase]['config'] = self.diagnose_db[loginbase]['config']
+			#else:
+				#print "%s not in diagnose_db!!" % loginbase
 		return
 
 	def __emailSite(self, loginbase, roles, message, args):
@@ -822,56 +948,74 @@ class Action(Thread):
 			hlist = "    %s %s - %s\n" % (info[0], info[2], info[1]) #(node,ver,daysdn)
 		return hlist
 
-	def __actOnSite(self, loginbase, site_record):
-		i_nodes_actedon = 0
-		i_nodes_emailed = 0
-		b_squeeze = config.squeeze
 
-		act_recordlist = []
-
-		for nodename in site_record.keys():
-			diag_record = site_record[nodename]
-			act_record  = self.__actOnNode(diag_record)
-			act_recordlist += [act_record]
-
-		count_up = self.currentUpAtSite(loginbase)
-		if count_up < MINUP:
-			print "SITE: %20s : %d nodes up" % (loginbase, count_up)
-		else:
-			print "SITE: %20s : %d nodes up" % (loginbase, count_up)
-			# There may be a second penalty regardless of which stage it's in.
-			# TODO: check how long this has occurred.
+	def get_email_args(self, act_recordlist):
 
 		email_args = {}
 		email_args['hostname_list'] = ""
+
 		for act_record in act_recordlist:
 			email_args['hostname_list'] += act_record['msg_format']
 			email_args['hostname'] = act_record['nodename']
 			if 'ticket_id' in act_record:
 				email_args['ticket_id'] = act_record['ticket_id']
 
-		# Send email, perform node action
-		# TODO: only send one email per site for a given problem...
-		if len(act_recordlist) > 0:
-			act_record = act_recordlist[0]
+		return email_args
 
-			# send message before squeezing, b/c 
-			if act_record['message'] != None:
-		 		ticket_id = self.__emailSite(loginbase, act_record['email'], 
-							 act_record['message'], email_args)
+	def get_unique_issues(self, act_recordlist):
+		# NOTE: only send one email per site, per problem...
+		unique_issues = {}
+		for act_record in act_recordlist:
+			act_key = act_record['action'][0]
+			if act_key not in unique_issues:
+				unique_issues[act_key] = []
+				
+			unique_issues[act_key] += [act_record]
+			
+		return unique_issues
+			
+
+	def __actOnSite(self, loginbase, site_record):
+		i_nodes_actedon = 0
+		i_nodes_emailed = 0
+
+		act_recordlist = []
+
+		for nodename in site_record['nodes'].keys():
+			diag_record = site_record['nodes'][nodename]
+			act_record  = self.__actOnNode(diag_record)
+			#print "nodename: %s %s" % (nodename, act_record)
+			act_recordlist += [act_record]
+
+		unique_issues = self.get_unique_issues(act_recordlist)
+
+		for issue in unique_issues.keys():
+			print "\tworking on issue: %s" % issue
+			issue_record_list = unique_issues[issue]
+			email_args = self.get_email_args(issue_record_list)
+			
+			act_record = issue_record_list[0]
+			# send message before squeezing
+			print "\t\tconfig.email: %s and %s" % (act_record['message'] != None, 
+												site_record['config']['email'])
+			if act_record['message'] != None and site_record['config']['email']:
+				ticket_id = self.__emailSite(loginbase, act_record['email'], 
+							 				 act_record['message'], email_args)
 
 				# Add ticket_id to ALL nodenames
-				for act_record in act_recordlist:
+				for act_record in issue_record_list:
 					nodename = act_record['nodename']
 					# update node record with RT ticket_id
 					self.act_all[nodename][0]['ticket_id'] = "%s" % ticket_id
 					if config.mail: i_nodes_emailed += 1
 
-			# TODO: perform the most severe action?
-			if b_squeeze:
-				act_key = act_record['action']
-				self.actions[act_key](email_args)
-				i_nodes_actedon += 1
+			print "\t\tconfig.squeeze: %s and %s" % (config.squeeze,
+													site_record['config']['squeeze'])
+			if config.squeeze and site_record['config']['squeeze']:
+				for act_key in act_record['action']:
+					#act_key = act_record['action']
+					self.actions[act_key](email_args)
+					i_nodes_actedon += 1
 		
 		if config.policysavedb:
 			print "Saving Databases... act_all, diagnose_out"
@@ -880,6 +1024,8 @@ class Action(Thread):
 			del self.diagnose_db[loginbase]
 			soltesz.dbDump("diagnose_out", self.diagnose_db)
 
+		#print "sleeping for 1 sec"
+		#time.sleep(1)
 		print "Hit enter to continue..."
 		sys.stdout.flush()
 		line = sys.stdin.readline()
@@ -889,7 +1035,6 @@ class Action(Thread):
 	def __actOnNode(self, diag_record):
 		nodename = diag_record['nodename']
 		message = diag_record['message']
-		info	= diag_record['info']
 
 		act_record = {}
 		act_record.update(diag_record)
@@ -910,7 +1055,7 @@ class Action(Thread):
 		return act_record
 
 	def analyseSites(self):
-		i_sites = 0
+		i_sites_observed = 0
 		i_sites_diagnosed = 0
 		i_nodes_diagnosed = 0
 		i_nodes_actedon = 0
@@ -921,19 +1066,20 @@ class Action(Thread):
 		sorted_sites.sort()
 		for loginbase in sorted_sites:
 			site_record = self.sickdb[loginbase]
+			print "sites: %s" % loginbase
 			
 			i_nodes_diagnosed += len(site_record.keys())
 			i_sites_diagnosed += 1
 
 			(na,ne) = self.__actOnSite(loginbase, site_record)
 
-			i_sites += 1
+			i_sites_observed += 1
 			i_nodes_actedon += na
 			i_sites_emailed += ne
 
 			l_allsites += [loginbase]
 
-		return {'sites': i_sites, 
+		return {'sites_observed': i_sites_observed, 
 				'sites_diagnosed': i_sites_diagnosed, 
 				'nodes_diagnosed': i_nodes_diagnosed, 
 				'sites_emailed': i_sites_emailed, 
@@ -981,38 +1127,6 @@ class Action(Thread):
 	#	except Exception, err:
 	#		logger.info("POLICY:  Problem with DAT, %s" %err)
 
-	"""
-	Returns number of up nodes as the total number *NOT* in act_all with a
-	stage other than 'steady-state' .
-	"""
-	def currentUpAtSite(self, loginbase):
-		allsitenodes = plc.getSiteNodes(loginbase)
-		if len(allsitenodes) == 0:
-			logger.info("Site has no nodes or not in DB")
-			print "Site has no nodes or not in DB"
-			return
-
-		numnodes = len(allsitenodes)
-		sicknodes = []
-		# Get all sick nodes at this site
-		up = 0
-		down = 0
-		for node in allsitenodes:
-
-			nodename = node
-			if nodename in self.act_all: # [nodename]:
-				rec = self.act_all[nodename][0]
-				if rec['stage'] != "steady-state":
-					down += 1
-				else:
-					up += 1
-			else:
-				up += 1
-
-		if up + down != numnodes:
-			print "ERROR: %s total nodes up and down != %d" % (loginbase, numnodes)
-
-		return up
 
 #class Policy(Thread):
 

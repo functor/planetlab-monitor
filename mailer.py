@@ -4,7 +4,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: mailer.py,v 1.9 2007/07/03 19:57:16 soltesz Exp $
+# $Id: mailer.py,v 1.10 2007/08/08 13:28:06 soltesz Exp $
 from emailTxt import *
 import smtplib
 from config import config
@@ -54,6 +54,7 @@ def setAdminCCViaRT(ticket_id, to):
 		# Success
 		pass
 	else:
+		print "VALUE:", value
 		print "ERROR: RT failed to update AdminCC for ticket %s" % ticket_id
 
 	return
@@ -76,6 +77,7 @@ def setSubjectViaRT(ticket_id, subject):
 		# Success
 		pass
 	else:
+		print "VALUE:", value
 		print "ERROR: RT failed to update subject for ticket %s" % ticket_id
 
 	return
@@ -129,9 +131,10 @@ def closeTicketViaRT(ticket_id, comment):
 			# Success!!
 			pass
 		else:
+			print "VALUE: ", value
 			# Failed!!
-			print "FAILED to resolve Ticket %d" % ticket_id
-			print "FAILED to resolve Ticket %d" % i_ticket_id
+			print "FAILED to resolve Ticket %s" % ticket_id
+			print "FAILED to resolve Ticket %s" % i_ticket_id
 
 	return
 

@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Stephen Soltesz <soltesz@cs.princeton.edu>
 #
-# $Id$
+# $Id: diagnose.py,v 1.1 2007/08/08 13:36:46 soltesz Exp $
 
 import sys
 from threading import *
@@ -20,6 +20,7 @@ from optparse import OptionParser
 parser = OptionParser()
 
 parser.set_defaults(nodelist=None, 
+					refresh=False,
 					cachert=False, 
 					cachenodes=False, 
 					blacklist=None, 
@@ -27,9 +28,11 @@ parser.set_defaults(nodelist=None,
 
 parser.add_option("", "--nodelist", dest="nodelist", metavar="filename",
 					help="Read nodes to act on from specified file")
-parser.add_option("", "--cachert", action="store_true",
+parser.add_option("", "--refresh", action="store_true", dest="refresh",
+					help="Refresh the cached values")
+parser.add_option("", "--cachert", action="store_true", dest="cachert",
 					help="Cache the RT database query")
-parser.add_option("", "--cachenodes", action="store_true",
+parser.add_option("", "--cachenodes", action="store_true", dest="cachenodes",
 					help="Cache node lookup from PLC")
 parser.add_option("", "--ticketlist", dest="ticketlist",
 					help="Whitelist all RT tickets in this file")
@@ -37,7 +40,6 @@ parser.add_option("", "--blacklist", dest="blacklist",
 					help="Blacklist all nodes in this file")
 
 config = config(parser)
-print "bcalling parse_args"
 config.parse_args()
 
 # daemonize and *pid
@@ -150,9 +152,10 @@ def main():
 
 	#########  GET NODES    ########################################
 	logger.info('Get Nodes from PLC')
-	print "getnode from plc"
-	l_plcnodes = soltesz.if_cached_else(config.cachenodes, "l_plcnodes",
-				lambda : syncplcdb.create_plcdb() )
+	print "getnode from plc: %s %s %s" % (config.debug, config.cachenodes, config.refresh)
+	l_plcnodes = soltesz.if_cached_else_refresh(config.cachenodes, 
+								config.refresh, "l_plcnodes",
+								lambda : syncplcdb.create_plcdb() )
 
 	s_plcnodenames = Set([x['hostname'] for x in l_plcnodes])
 
@@ -183,7 +186,7 @@ def main():
 	logger.info('Get Tickets from RT')
 	#######  RT tickets    #########################################
 	t = soltesz.MyTimer()
-	ad_dbTickets = soltesz.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
+	ad_dbTickets = soltesz.if_cached_else_refresh(config.cachert, config.refresh, "ad_dbTickets", rt.rt_tickets)
 	print "Getting tickets from RT took: %f sec" % t.diff() ; del t
 
 	logger.info('Start Merge/RT/Diagnose threads')

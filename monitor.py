@@ -5,7 +5,7 @@
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 # Stephen Soltesz <soltesz@cs.princeton.edu>
 #
-# $Id: monitor.py,v 1.6 2007/06/29 12:42:22 soltesz Exp $
+# $Id: monitor.py,v 1.7 2007/07/03 19:59:02 soltesz Exp $
 
 import sys
 import os
@@ -15,9 +15,9 @@ from threading import *
 import time
 import logging
 import Queue
+from sets import Set
 # Global config options
 from config import config
-config = config()
 # daemonize and *pid
 from util.process import * 
 
@@ -33,20 +33,6 @@ import plc
 # Log to what 
 LOG="./monitor.log"
 
-# DAT
-DAT="./monitor.dat"
-
-# Email defaults
-MTA="localhost"
-FROM="support@planet-lab.org"
-TECHEMAIL="tech-%s@sites.planet-lab.org"
-PIEMAIL="pi-%s@sites.planet-lab.org"
-
-# API
-XMLRPC_SERVER = 'https://www.planet-lab.org/PLCAPI/'
-
-# Time between comon refresh
-COSLEEP=300 #5mins
 # Time to refresh DB and remove unused entries
 RTSLEEP=7200 #2hrs
 # Time between policy enforce/update
@@ -114,19 +100,6 @@ class Dummy(Thread):
 	def run(self):
 		time.sleep(5)
 
-def preComon(l_nodes, toCheck):
-	for host in l_nodes:
-		diag_node = {}
-		diag_node['nodename'] = host
-		diag_node['message'] = None
-		diag_node['bucket'] = ["dbg"]
-		diag_node['stage'] = ""
-		diag_node['args'] = None
-		diag_node['info'] = None
-		diag_node['time'] = time.time()
-		toCheck.put(diag_node)
-	return 
-
 def dict_from_nodelist(nl):
 	d = {}
 	for host in nl:
@@ -140,13 +113,16 @@ Start threads, do some housekeeping, then daemonize.
 def main():
 	# Defaults
 	global status, logger
+	global config
 
 	#if not debug:
         #	daemonize()
         #	writepid("monitor")
 
-	logger.info('Monitor Started')
+	config = config()
+	#config.parse_args()
 
+	logger.info('Monitor Started')
 	##########  VARIABLES   ########################################
 	# Nodes to check. Queue of all sick nodes.
 	toCheck = Queue.Queue()
@@ -163,20 +139,34 @@ def main():
 	#########  GET NODES    ########################################
 	# TODO: get authoritative node list from PLC every PLCSLEEP seconds,
 	# 		feed this into Comon.
+	l_plcnodes = soltesz.if_cached_else(config.cachenodes, 
+								"l_plcnodes", 
+								lambda : plc.getNodes({'peer_id':None}))
+
+	s_plcnodes = Set([x['hostname'] for x in l_plcnodes])
 
 	# List of nodes from a user-provided file.
-	if config.userlist:
-		file = config.userlist
+	if config.nodelist:
+		file = config.nodelist
 		nodelist = config.getListFromFile(file)
-		l_nodes = []
+		l_nodelist = []
 		print "Getting node info for hosts in: %s" % file
 		for nodename in nodelist:
 			if config.debug: print ".", ; sys.stdout.flush()
-			l_nodes += plc.getNodes({'hostname': nodename})
-		print ""
+			l_nodelist += plc.getNodes({'hostname': nodename, 'peer_id':None})
+		if config.debug: print ""
+	
+		s_usernodes = Set(nodelist)
+		# nodes from PLC and in the user list.
+		s_safe_usernodes   = s_plcnodes & s_usernodes
+		s_unsafe_usernodes = s_usernodes - s_plcnodes
+		if len(s_unsafe_usernodes) > 0 :
+			for node in s_unsafe_usernodes:
+				print "WARNING: User provided: %s but not found in PLC" % node
+
+		l_nodes = filter(lambda x: x['hostname'] in s_safe_usernodes,l_plcnodes)
 	else:
-		# Authoritative list of nodes from PLC
-		l_nodes = soltesz.if_cached_else(config.cachenodes, "l_nodes", plc.getNodes)
+		l_nodes = l_plcnodes
 
 	# Minus blacklisted ones..
 	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
@@ -190,21 +180,10 @@ def main():
 	ad_dbTickets = soltesz.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
 	print "Getting tickets from RT took: %f sec" % t.diff() ; del t
 
-	if os.path.isfile("precomon.txt"): 
-		nodelist = config.getListFromFile("precomon.txt")
-		print "PreComon node info"
-		preComon(nodelist, toCheck)
-		for nodename in nodelist:
-			# TODO: temporary hack.
-			if nodename not in d_allplc_nodes:
-				d_allplc_nodes[nodename] = {}
+	# TODO: get input nodes from findbad database, pipe into toCheck
+	cm1 = read_findbad_db(d_allplc_nodes, toCheck)
 
-	# TODO: Refreshes Comon data every COSLEEP seconds
-	cm1 = comon.Comon(cdb, d_allplc_nodes, toCheck)
-	startThread(cm1,"comon")
-
-	# TODO: make queues event based, not node based. 
-	# From the RT db, add hosts to q(toCheck) for filtering the comon nodes.
+	# Search for toCheck nodes in the RT db.
 	rt1 = rt.RT(ad_dbTickets, tickets, toCheck, sickNoTicket, l_ticket_blacklist)
 	# 	Kind of a hack. Cleans the DB for stale entries and updates db.
 	#   (UNTESTED)
@@ -233,7 +212,6 @@ def main():
 
 	# Store state of emails
 	#pol.emailedStore("WRITE")
-	soltesz.dbDump("l_blacklist")
 	soltesz.dbDump("ad_dbTickets")
 	sys.exit(0)
 	
@@ -243,6 +221,5 @@ if __name__ == '__main__':
 	except KeyboardInterrupt:
 		print "Killed.  Exitting."
 		logger.info('Monitor Killed')
-		#soltesz.dbDump("l_blacklist")
 		#soltesz.dbDump("ad_dbTickets")
 		sys.exit(0)

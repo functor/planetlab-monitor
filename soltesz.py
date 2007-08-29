@@ -21,6 +21,16 @@ def dbDump(name, obj=None):
 	# depth of the dump is 2 now, since we're redirecting to '.dump'
 	return SPickle().dump(name, obj, 2)
 
+def if_cached_else_refresh(cond, refresh, name, function):
+	s = SPickle()
+	if refresh:
+		if not config.debug and s.exists("production.%s" % name):
+			s.remove("production.%s" % name)
+		if config.debug and s.exists("debug.%s" % name):
+			s.remove("debug.%s" % name)
+
+	return if_cached_else(cond, name, function)
+
 def if_cached_else(cond, name, function):
 	s = SPickle()
 	if (cond and s.exists("production.%s" % name)) or \
@@ -34,7 +44,7 @@ def if_cached_else(cond, name, function):
 
 class SPickle:
 	def __init__(self):
-		self.config = config
+		pass
 
 	def if_cached_else(self, cond, name, function):
 		if cond and self.exists("production.%s" % name):
@@ -51,6 +61,9 @@ class SPickle:
 	def exists(self, name):
 		return os.path.exists(self.__file(name))
 
+	def remove(self, name):
+		return os.remove(self.__file(name))
+
 	def load(self, name):
 		""" 
 		In debug mode, we should fail if neither file exists.
@@ -61,7 +74,7 @@ class SPickle:
 		Load the file
 		"""
 
-		if self.config.debug:
+		if config.debug:
 			if self.exists("debug.%s" % name):
 				name = "debug.%s" % name
 			elif self.exists("production.%s" % name):
@@ -95,7 +108,7 @@ class SPickle:
 			obj = argvals[3][name] # extract the local variable name 'name'
 		if not os.path.isdir("%s/" % PICKLE_PATH):
 			os.mkdir("%s" % PICKLE_PATH)
-		if self.config.debug:
+		if config.debug:
 			name = "debug.%s" % name
 		else:
 			name = "production.%s" % name
@@ -123,7 +136,7 @@ class CMD:
 			# Reached a timeout!
 			print "TODO: kill subprocess: '%s'" % cmd
 			# TODO: kill subprocess??
-			return ("", "TIMEOUT")
+			return ("", "SCRIPTTIMEOUT")
 		o_value = f_out.read()
 		e_value = ""
 		if o_value == "":	# An error has occured

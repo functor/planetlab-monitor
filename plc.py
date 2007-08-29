@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.16 2007/07/03 19:59:02 soltesz Exp $
+# $Id: plc.py,v 1.17 2007/08/08 13:28:55 soltesz Exp $
 #
 
 from emailTxt import *
@@ -71,30 +71,35 @@ def getpcu(nodename):
 		logger.info("%s doesn't have PCU" % nodename)
 		return False
 
+def GetPCUs(filter=None, fields=None):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	sitepcu = api.GetPCUs(auth.auth, filter, fields)
+	return sitepcu
+
 '''
 Returns all site nodes for site id (loginbase).
 '''
-def getSiteNodes(loginbase):
+def getSiteNodes(loginbase, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	nodelist = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
-		nodeids = api.GetSites(anon, {"login_base": loginbase})[0]['node_ids']
-		for node in api.GetNodes(anon, {"node_id": nodeids}):
+		nodeids = api.GetSites(anon, {"login_base": loginbase}, fields)[0]['node_ids']
+		for node in api.GetNodes(anon, {"node_id": nodeids}, ['hostname']):
 			nodelist.append(node['hostname'])
 	except Exception, exc:
 		logger.info("getSiteNodes:  %s" % exc)
 	return nodelist
 
-def getSites(filter=None):
+def getSites(filter=None, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
 	sites = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
-		sites = api.GetSites(anon, filter, None)
+		sites = api.GetSites(anon, filter, fields)
 	except Exception, exc:
-		print "getSiteNodes2:  %s" % exc
-		logger.info("getSiteNodes2:  %s" % exc)
+		print "getSites:  %s" % exc
+		logger.info("getSites:  %s" % exc)
 	return sites
 
 def getSiteNodes2(loginbase):
@@ -113,9 +118,9 @@ def getNodeNetworks(filter=None):
 	nodenetworks = api.GetNodeNetworks(auth.auth, filter, None)
 	return nodenetworks
 
-def getNodes(filter=None):
+def getNodes(filter=None, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
-	nodes = api.GetNodes(auth.auth, filter, None) #['boot_state', 'hostname', 
+	nodes = api.GetNodes(auth.auth, filter, fields) #['boot_state', 'hostname', 
 			#'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
 			#'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
 	return nodes
