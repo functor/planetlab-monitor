@@ -1,6 +1,14 @@
 import os
 import sys
 import pickle
+noserial=False
+try:
+	from PHPSerialize import *
+	from PHPUnserialize import *
+except:
+	print >>sys.stderr, "PHPSerial db type not allowed."
+	noserial=True
+
 import inspect
 import shutil
 from config import config
@@ -9,62 +17,70 @@ config = config()
 DEBUG= 0
 PICKLE_PATH="pdb"
 
-def dbLoad(name):
-	return SPickle().load(name)
+def dbLoad(name, type=None):
+	return SPickle().load(name, type)
 
-def dbExists(name):
+def dbExists(name, type=None):
 	#if self.config.debug:
 	#	name = "debug.%s" % name
-	return SPickle().exists(name)
+	return SPickle().exists(name, type)
 
-def dbDump(name, obj=None):
+def dbDump(name, obj=None, type=None):
 	# depth of the dump is 2 now, since we're redirecting to '.dump'
-	return SPickle().dump(name, obj, 2)
+	return SPickle().dump(name, obj, type, 2)
 
-def if_cached_else_refresh(cond, refresh, name, function):
+def if_cached_else_refresh(cond, refresh, name, function, type=None):
 	s = SPickle()
 	if refresh:
-		if not config.debug and s.exists("production.%s" % name):
-			s.remove("production.%s" % name)
-		if config.debug and s.exists("debug.%s" % name):
-			s.remove("debug.%s" % name)
+		if not config.debug and s.exists("production.%s" % name, type):
+			s.remove("production.%s" % name, type)
+		if config.debug and s.exists("debug.%s" % name, type):
+			s.remove("debug.%s" % name, type)
 
-	return if_cached_else(cond, name, function)
+	return if_cached_else(cond, name, function, type)
 
-def if_cached_else(cond, name, function):
+def if_cached_else(cond, name, function, type=None):
 	s = SPickle()
-	if (cond and s.exists("production.%s" % name)) or \
-	   (cond and config.debug and s.exists("debug.%s" % name)):
-		o = s.load(name)
+	if (cond and s.exists("production.%s" % name, type)) or \
+	   (cond and config.debug and s.exists("debug.%s" % name, type)):
+		o = s.load(name, type)
 	else:
 		o = function()
 		if cond:
-			s.dump(name, o)	# cache the object using 'name'
+			s.dump(name, o, type)	# cache the object using 'name'
+			o = s.load(name, type)
+		# TODO: what if 'o' hasn't been converted...
 	return o
 
 class SPickle:
 	def __init__(self):
 		pass
 
-	def if_cached_else(self, cond, name, function):
-		if cond and self.exists("production.%s" % name):
-			o = self.load(name)
+	def if_cached_else(self, cond, name, function, type=None):
+		if cond and self.exists("production.%s" % name, type):
+			o = self.load(name, type)
 		else:
 			o = function()
 			if cond:
-				self.dump(name, o)	# cache the object using 'name'
+				self.dump(name, o, type)	# cache the object using 'name'
 		return o
 
-	def __file(self, name):
-		return "%s/%s.pkl" % (PICKLE_PATH, name)
+	def __file(self, name, type=None):
+		if type == None:
+			return "%s/%s.pkl" % (PICKLE_PATH, name)
+		else:
+			if noserial:
+				raise Exception("No PHPSerializer module available")
+
+			return "%s/%s.phpserial" % (PICKLE_PATH, name)
 		
-	def exists(self, name):
-		return os.path.exists(self.__file(name))
+	def exists(self, name, type=None):
+		return os.path.exists(self.__file(name, type))
 
-	def remove(self, name):
-		return os.remove(self.__file(name))
+	def remove(self, name, type=None):
+		return os.remove(self.__file(name, type))
 
-	def load(self, name):
+	def load(self, name, type=None):
 		""" 
 		In debug mode, we should fail if neither file exists.
 			if the debug file exists, reset name
@@ -75,31 +91,37 @@ class SPickle:
 		"""
 
 		if config.debug:
-			if self.exists("debug.%s" % name):
+			if self.exists("debug.%s" % name, type):
 				name = "debug.%s" % name
-			elif self.exists("production.%s" % name):
+			elif self.exists("production.%s" % name, type):
 				debugname = "debug.%s" % name
-				if not self.exists(debugname):
+				if not self.exists(debugname, type):
 					name = "production.%s" % name
-					shutil.copyfile(self.__file(name), self.__file(debugname))
+					shutil.copyfile(self.__file(name, type), self.__file(debugname, type))
 				name = debugname
 			else:	# neither exist
-				raise Exception, "No such pickle based on %s" % self.__file("debug.%s" % name)
+				raise Exception, "No such pickle based on %s" % self.__file("debug.%s" % name, type)
 		else:
-			if not self.exists("production.%s" % name):
+			if not self.exists("production.%s" % name, type):
 				raise Exception, "No such file %s" % name
 			name = "production.%s" % name
 
-		print "loading %s" % self.__file(name)
-		f = open(self.__file(name), 'r')
-		o = pickle.load(f)
+		print "loading %s" % self.__file(name, type)
+		f = open(self.__file(name, type), 'r')
+		if type == None:
+			o = pickle.load(f)
+		else:
+			if noserial:
+				raise Exception("No PHPSerializer module available")
+			s = PHPUnserialize()
+			o = s.unserialize(f.read())
 		f.close()
 		return o
 			
 	
 	# use the environment to extract the data associated with the local
 	# variable 'name'
-	def dump(self, name, obj=None, depth=1):
+	def dump(self, name, obj=None, type=None, depth=1):
 		if obj == None:
 			o = inspect.getouterframes(inspect.currentframe())
 			up1 = o[depth][0] # get the frame one prior to (up from) this frame
@@ -112,8 +134,14 @@ class SPickle:
 			name = "debug.%s" % name
 		else:
 			name = "production.%s" % name
-		f = open(self.__file(name), 'w')
-		pickle.dump(obj, f)
+		f = open(self.__file(name, type), 'w')
+		if type == None:
+			pickle.dump(obj, f)
+		else:
+			if noserial:
+				raise Exception("No PHPSerializer module available")
+			s = PHPSerialize()
+			f.write(s.serialize(obj))
 		f.close()
 		return
 
