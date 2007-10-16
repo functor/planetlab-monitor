@@ -15,7 +15,7 @@ version 0.1 of pyssh (http://pyssh.sourceforge.net) by Chuck Esterbrook.
 Licenced under a Python 2.2 style license.  See License.txt.
 """
 
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 1
 
 import os, getpass
 import signal    # should cause all KeyboardInterrupts to go to the main thread
@@ -103,8 +103,8 @@ class Ssh:
         self.port = port
         self.isopen = 0
         self.sshpid = 0  # perhaps merge this with isopen
-        self.old_handler = signal.getsignal(signal.SIGCHLD)
-        sig_handler = signal.signal(signal.SIGCHLD, self.sig_handler)
+        #self.old_handler = signal.getsignal(signal.SIGCHLD)
+        #sig_handler = signal.signal(signal.SIGCHLD, self.sig_handler)
         
     def __del__(self):
         """Destructor -- close the connection."""
@@ -143,7 +143,8 @@ class Ssh:
         Raises an mysshError if myssh.sshpath is not a file.
         Raises an error if attempting to open an already open connection.
         """
-        self.attach_agent()
+        #self.attach_agent()
+
         if not os.path.isfile(self.sshpath):
             raise mysshError, \
             "Path to ssh or plink is not defined or invalid.\nsshpath='%s'" \
@@ -155,6 +156,7 @@ class Ssh:
             sshargs = '-ssh '
         if self.port and self.port != '':
             sshargs += PORT_STR + self.port + ' '
+        sshargs += " -o StrictHostKeyChecking=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no "
         if self.username and self.username !='':
             sshargs += self.username + '@'
         sshargs += self.host
@@ -163,6 +165,7 @@ class Ssh:
         if self.debuglevel:
             print ">> Running %s %s." % (self.sshpath, sshargs)
         # temporary workaround until I get pid's working under win32
+        print sshargs
         if os.name == 'posix':
             self.sshin, self.sshoutblocking, self.sshpid = \
                                 sshpopen2(self.sshpath + ' ' + sshargs)

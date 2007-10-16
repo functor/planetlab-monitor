@@ -10,8 +10,11 @@ import errno, time, traceback
 import urllib2
 import threading, popen2
 import array, struct
-from socket import *
+#from socket import *
+import socket
 import plc
+
+plc_lock = threading.Lock()
 
 # Use our versions of telnetlib and pyssh
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
@@ -20,7 +23,7 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")
 import pyssh
 
 # Timeouts in seconds
-TELNET_TIMEOUT = 20
+TELNET_TIMEOUT = 30
 
 # Event class ID from pcu events
 #NODE_POWER_CONTROL = 3
@@ -30,28 +33,73 @@ TELNET_TIMEOUT = 20
 
 import logging
 logger = logging.getLogger("monitor")
-verbose = 1
-dryrun = 0;
+verbose = 0
+#dryrun = 0;
+
+class ExceptionNotFound(Exception): pass
+class ExceptionPassword(Exception): pass
+class ExceptionTimeout(Exception): pass
+class ExceptionPrompt(Exception): pass
+class ExceptionPort(Exception): pass
 
 def telnet_answer(telnet, expected, buffer):
 	global verbose
 
 	output = telnet.read_until(expected, TELNET_TIMEOUT)
-	if verbose:
-		logger.debug(output)
+	#if verbose:
+	#	logger.debug(output)
 	if output.find(expected) == -1:
-		raise Exception, "'%s' not found" % expected
+		raise ExceptionNotFound, "'%s' not found" % expected
 	else:
 		telnet.write(buffer + "\r\n")
 
 
-def ipal_reboot(ip, password, port):
-	global dryrun, verbose
+# PCU has model, host, preferred-port, user, passwd, 
+
+class PCUExpect:
+	def __init__(self, protocol, verbose, dryrun):
+		self.verbose = verbose
+		self.protocol = protocol
+		self.dryrun = dryrun
+
+	def telnet_answer(telnet, expected, buffer):
+		global verbose
+
+		output = telnet.read_until(expected, TELNET_TIMEOUT)
+		#if verbose:
+		#	logger.debug(output)
+		if output.find(expected) == -1:
+			raise ExceptionNotFound, "'%s' not found" % expected
+		else:
+			telnet.write(buffer + "\r\n")
+	
+	def _run(self, host, user, passwd, node_port, protocols):
+		self.run()
+
+	def run(self):
+		pass
+		
+	
+
+def ipal_reboot(ip, password, port, dryrun):
+	global verbose
+	global plc_lock
+
 
 	telnet = None
 
 	try:
+		#plc_lock.acquire()
+		#print "lock acquired"
+
+		#try:
+			#telnet = telnetlib.Telnet(ip) # , timeout=TELNET_TIMEOUT)
 		telnet = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
+		#except:
+		#	import traceback
+		#	traceback.print_exc()
+
+
 		telnet.set_debuglevel(verbose)
 
 		# XXX Some iPals require you to hit Enter a few times first
@@ -68,33 +116,66 @@ def ipal_reboot(ip, password, port):
 
 		# Close
 		telnet.close()
+
+		#print "lock released"
+		#plc_lock.release()
 		return 0
 
 	except EOFError, err:
 		if verbose:
+			logger.debug("ipal_reboot: EOF")
 			logger.debug(err)
 		telnet.close()
+		import traceback
+		traceback.print_exc()
+		#print "lock released"
+		#plc_lock.release()
 		return errno.ECONNRESET
+	except socket.error, err:
+		logger.debug("ipal_reboot: Socket Error")
+		logger.debug(err)
+		import traceback
+		traceback.print_exc()
+
+		return errno.ETIMEDOUT
+		
 	except Exception, err:
 		if verbose:
+			logger.debug("ipal_reboot: Exception")
 			logger.debug(err)
 		if telnet:
 			telnet.close()
-		return errno.ETIMEDOUT
+		import traceback
+		traceback.print_exc()
+		#print "lock released"
+		#plc_lock.release()
+		return  "ipal error"
 
 
-def apc_reboot(ip, username, password, port):
-	global dryrun, verbose
+def apc_reboot(ip, username, password, port, protocol, dryrun):
+	global verbose
 
-	telnet = None
+	transport = None
 
 	try:
-		telnet = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
-		telnet.set_debuglevel(verbose)
+		#if "ssh" in protocol:
+		if "22" in protocol and protocol['22'] == "open":
+			transport = pyssh.Ssh(username, ip)
+			transport.open()
+			# Login
+			telnet_answer(transport, "password:", password)
+		#elif "telnet" in protocol:
+		elif "23" in protocol and protocol['23'] == "open":
+			transport = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
+			#transport = telnetlib.Telnet(ip)
+			transport.set_debuglevel(verbose)
+			# Login
+			telnet_answer(transport, "User Name", username)
+			telnet_answer(transport, "Password", password)
+		else:
+			logger.debug("Unknown protocol %s" %protocol)
+			raise "Closed protocol ports!"
 
-		# Login
-		telnet_answer(telnet, "User Name", username)
-		telnet_answer(telnet, "Password", password)
 
 		# 1- Device Manager
 		# 2- Network
@@ -102,7 +183,7 @@ def apc_reboot(ip, username, password, port):
 		# 4- Logout
 
 		# 1- Device Manager
-		telnet_answer(telnet, "\r\n> ", "1")
+		telnet_answer(transport, "\r\n> ", "1")
 
 		# 1- Phase Monitor/Configuration
 		# 2- Outlet Restriction Configuration
@@ -110,20 +191,20 @@ def apc_reboot(ip, username, password, port):
 		# 4- Power Supply Status
 
 		# 3- Outlet Control/Config
-		telnet_answer(telnet, "\r\n> ", "3")
+		telnet_answer(transport, "\r\n> ", "3")
 
 		# 1- Outlet 1
 		# 2- Outlet 2
 		# ...
 
 		# n- Outlet n
-		telnet_answer(telnet, "\r\n> ", str(port))
+		telnet_answer(transport, "\r\n> ", str(port))
 		
 		# 1- Control Outlet
 		# 2- Configure Outlet
 
 		# 1- Control Outlet
-		telnet_answer(telnet, "\r\n> ", "1")
+		telnet_answer(transport, "\r\n> ", "1")
 
 		# 1- Immediate On			  
 		# 2- Immediate Off			 
@@ -134,39 +215,158 @@ def apc_reboot(ip, username, password, port):
 		# 7- Cancel					
 
 		# 3- Immediate Reboot		  
-		telnet_answer(telnet, "\r\n> ", "3")
+		telnet_answer(transport, "\r\n> ", "3")
 
 		if not dryrun:
-			telnet_answer(telnet, 
+			telnet_answer(transport, 
 				"Enter 'YES' to continue or <ENTER> to cancel", "YES\r\n")
-			telnet_answer(telnet, 
+			telnet_answer(transport, 
 				"Press <ENTER> to continue...", "")
 
 		# Close
-		telnet.close()
+		transport.close()
 		return 0
 
 	except EOFError, err:
 		if verbose:
 			logger.debug(err)
-		if telnet:
-			telnet.close()
+		if transport:
+			transport.close()
 		return errno.ECONNRESET
-	except Exception, err:
+	except socket.error, err:
 		if verbose:
 			logger.debug(err)
-		if telnet:
-			telnet.close()
 		return errno.ETIMEDOUT
 
+	except Exception, err:
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if transport:
+			transport.close()
+		return "apc error"
 
-def baytech_reboot(ip, username, password, port):
-	global dryrun, verbose
+def drac_reboot(ip, username, password, dryrun):
+	global verbose
+	ssh = None
+	try:
+		ssh = pyssh.Ssh(username, ip)
+		ssh.set_debuglevel(verbose)
+		ssh.open()
+		# Login
+		print "password"
+		telnet_answer(ssh, "password:", password)
+
+		# Testing Reboot ?
+		print "reset or power"
+		if dryrun:
+			telnet_answer(ssh, "[%s]#" % username, "getsysinfo")
+		else:
+			# Reset this machine
+			telnet_answer(ssh, "[%s]#" % username, "serveraction powercycle")
+
+		print "exit"
+		telnet_answer(ssh, "[%s]#" % username, "exit")
+
+		# Close
+		print "close"
+		output = ssh.close()
+		return 0
+
+	except socket.error, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if ssh:
+			output = ssh.close()
+			if verbose:
+				logger.debug(err)
+		return errno.ETIMEDOUT
+	except Exception, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if ssh:
+			output = ssh.close()
+			if verbose:
+				logger.debug(err)
+		return "drac error"
+
+def ilo_reboot(ip, username, password, dryrun):
+	global verbose
 
 	ssh = None
 
 	try:
 		ssh = pyssh.Ssh(username, ip)
+		ssh.set_debuglevel(verbose)
+		ssh.open()
+		# Login
+		print "password"
+		telnet_answer(ssh, "password:", password)
+
+		# User:vici logged-in to ILOUSE701N7N4.CS.Princeton.EDU(128.112.154.171)
+		# iLO Advanced 1.26 at 10:01:40 Nov 17 2006
+		# Server Name: USE701N7N400
+		# Server Power: On
+		# 
+		# </>hpiLO-> 
+		print "cd system1"
+		telnet_answer(ssh, "</>hpiLO->", "cd system1")
+
+		# Reboot Outlet  N	  (Y/N)?
+		print "reset or power"
+		if dryrun:
+			telnet_answer(ssh, "</system1>hpiLO->", "POWER")
+		else:
+			# Reset this machine
+			telnet_answer(ssh, "</system1>hpiLO->", "reset")
+
+		print "exit"
+		telnet_answer(ssh, "</system1>hpiLO->", "exit")
+
+		# Close
+		print "close"
+		output = ssh.close()
+		return 0
+
+	except socket.error, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if ssh:
+			output = ssh.close()
+			if verbose:
+				logger.debug(err)
+		return errno.ETIMEDOUT
+	except Exception, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if ssh:
+			output = ssh.close()
+			if verbose:
+				logger.debug(err)
+		return "ilo error"
+
+def baytech_reboot(ip, username, password, port, dryrun):
+	global verbose
+
+	ssh = None
+
+	#verbose = 1 
+	try:
+		ssh = pyssh.Ssh(username, ip)
+		ssh.set_debuglevel(verbose)
 		ssh.open()
 
 		# Login
@@ -183,7 +383,15 @@ def baytech_reboot(ip, username, password, port):
 		telnet_answer(ssh, "Enter Request :", "5")
 
 		# Reboot N
-		telnet_answer(ssh, "DS-RPC>", "Reboot %d" % port)
+		try:
+			telnet_answer(ssh, "DS-RPC>", "Reboot %d" % port)
+		except ExceptionNotFound, msg:
+			# one machine is configured to ask for a username,
+			# even after login...
+			print "msg: %s" % msg
+			ssh.write(username + "\r\n")
+			telnet_answer(ssh, "DS-RPC>", "Reboot %d" % port)
+			
 
 		# Reboot Outlet  N	  (Y/N)?
 		if dryrun:
@@ -194,11 +402,12 @@ def baytech_reboot(ip, username, password, port):
 
 		# Close
 		output = ssh.close()
-		if verbose:
-			logger.debug(err)
 		return 0
 
-	except Exception, err:
+	except socket.error, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
 		if verbose:
 			logger.debug(err)
 		if ssh:
@@ -206,6 +415,17 @@ def baytech_reboot(ip, username, password, port):
 			if verbose:
 				logger.debug(err)
 		return errno.ETIMEDOUT
+	except Exception, err:
+		print "exception"
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if ssh:
+			output = ssh.close()
+			if verbose:
+				logger.debug(err)
+		return "baytech error"
 
 ### rebooting european BlackBox PSE boxes
 # Thierry Parmentelat - May 11 2005
@@ -216,9 +436,9 @@ def baytech_reboot(ip, username, password, port):
 # curl --http1.0 --basic --user <username>:<password> --data P<port>=r \
 #	http://<hostname>:<http_port>/cmd.html && echo OK
 
-def bbpse_reboot (pcu_ip,username,password,port_in_pcu,http_port):
+def bbpse_reboot (pcu_ip,username,password,port_in_pcu,http_port, dryrun):
 
-	global dryrun, verbose
+	global verbose
 
 	url = "http://%s:%d/cmd.html" % (pcu_ip,http_port)
 	data= "P%d=r" % port_in_pcu
@@ -246,7 +466,7 @@ def bbpse_reboot (pcu_ip,username,password,port_in_pcu,http_port):
 
 	except urllib2.URLError,err:
 		logger.info('Could not open http connection', err)
-		return -1
+		return "bbpse error"
 
 ### rebooting x10toggle based systems addressed by port
 # Marc E. Fiuczynski - May 31 2005
@@ -254,8 +474,8 @@ def bbpse_reboot (pcu_ip,username,password,port_in_pcu,http_port):
 # uses ssh and password to login to an account
 # that will cause the system to be powercycled.
 
-def x10toggle_reboot(ip, username, password, port):
-	global dryrun, verbose
+def x10toggle_reboot(ip, username, password, port, dryrun):
+	global verbose
 
 	ssh = None
 	try:
@@ -359,8 +579,8 @@ def runcmd(command, args, username, password, timeout = None):
 				out += "; output follows:\n" + data
 			raise Exception, out
 
-def racadm_reboot(ip, username, password, port):
-	global dryrun, verbose
+def racadm_reboot(ip, username, password, port, dryrun):
+	global verbose
 
 	try:
 		cmd = "/usr/sbin/racadm"
@@ -383,7 +603,7 @@ def racadm_reboot(ip, username, password, port):
 		return errno.ETIMEDOUT
 
 # Returns true if rebooted via PCU
-def reboot(nodename):
+def reboot(nodename, dryrun):
 	pcu = plc.getpcu(nodename)
 	if not pcu:
 		plc.nodePOD(nodename)
@@ -392,29 +612,30 @@ def reboot(nodename):
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
 	# APC Masterswitch (Berkeley)
-	if pcu['protocol'] == "telnet" and pcu['model'] == "APC Masterswitch":
-		err = apc_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename])
+	if pcu['model'] == "APC Masterswitch":
+		err = apc_reboot(pcu['ip'], pcu['username'],pcu['password'], 
+				pcu[nodename], pcu['protocol'], dryrun)
 
 	# DataProbe iPal (many sites)
 	elif pcu['protocol'] == "telnet" and pcu['model'].find("IP-4") >= 0:
-		err = ipal_reboot(pcu['ip'],pcu['password'], pcu[nodename])
+		err = ipal_reboot(pcu['ip'],pcu['password'], pcu[nodename], dryrun)
 
 	# BayTech DS4-RPC
 	elif pcu['protocol'] == "ssh" and \
 	(pcu['model'].find("Baytech") >= 0 or pcu['model'].find("DS4") >= 0):
-		err = baytech_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename])
+		err = baytech_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename], dryrun)
 
 	# BlackBox PSExxx-xx (e.g. PSE505-FR)
 	elif pcu['protocol'] == "http" and (pcu['model'] == "bbpse"):
-		err = bbpse_reboot(pcu['ip'], pcu['username'], pcu['password'], pcu[nodename],80)
+		err = bbpse_reboot(pcu['ip'], pcu['username'], pcu['password'], pcu[nodename],80, dryrun)
 
 	# x10toggle
 	elif pcu['protocol'] == "ssh" and (pcu['model'] == "x10toggle"):
-		err = x10toggle_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename])
+		err = x10toggle_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename], dryrun)
 
-	# x10toggle
+	# 
 	elif pcu['protocol'] == "racadm" and (pcu['model'] == "RAC"):
-		err = racadm_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu_[nodename])
+		err = racadm_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu_[nodename], dryrun)
 
 	# Unknown or unsupported
 	else:
