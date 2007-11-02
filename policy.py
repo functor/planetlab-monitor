@@ -20,7 +20,7 @@ import sys
 import reboot
 import soltesz
 import string
-from printbadbysite import cmpCategoryVal
+from www.printbadnodes import cmpCategoryVal
 from config import config
 print "policy"
 config = config()
@@ -200,27 +200,34 @@ class Merge(Thread):
 					self.mergedb[loginbase][nodename]['prev_category'] = None
 				else: 
 					if len(self.act_all[nodename]) == 0:
+						print "len(act_all[%s]) == 0, skipping %s %s" % (nodename, loginbase, nodename)
 						continue
 
 					y = self.act_all[nodename][0]
 
 					# skip if end-stage
 					if 'stage' in y and "monitor-end-record" in y['stage']:
+						# 1) ok, b/c it's a new problem. set ticket_id to null
+						self.mergedb[loginbase][nodename] = {} 
+						self.mergedb[loginbase][nodename].update(x)
+						self.mergedb[loginbase][nodename]['ticket_id'] = ""
+						self.mergedb[loginbase][nodename]['prev_category'] = None
 						continue
 
-					# for legacy actions
-					if 'bucket' in y and y['bucket'][0] == 'dbg':
-						# Only bootcd debugs made it to the act_all db.
-						y['prev_category'] = "OLDBOOTCD"
-					elif 'bucket' in y and y['bucket'][0] == 'down':
-						y['prev_category'] = "ERROR"
-					elif 'bucket' not in y:
-						# for all other actions, just carry over the
-						# previous category
-						y['prev_category'] = y['category']
-					else:
-						print "UNKNOWN state for record: %s" % y
-						sys.exit(1)
+					## for legacy actions
+					#if 'bucket' in y and y['bucket'][0] == 'dbg':
+					#	# Only bootcd debugs made it to the act_all db.
+					#	y['prev_category'] = "OLDBOOTCD"
+					#elif 'bucket' in y and y['bucket'][0] == 'down':
+					#	y['prev_category'] = "ERROR"
+					#elif 'bucket' not in y:
+					#	# for all other actions, just carry over the
+					#	# previous category
+					#	y['prev_category'] = y['category']
+					#else:
+					#	print "UNKNOWN state for record: %s" % y
+					#	sys.exit(1)
+
 					# determine through translation, if the buckets match
 					#if 'category' in y and x['category'] == y['category']:
 					#	b_match = True
@@ -651,6 +658,7 @@ class Diagnose(Thread):
 			act_record['action'] = ['reset_nodemanager']
 			act_record['message'] = message[0]
 			act_record['stage']  = 'nmreset'
+			return None
 			
 		elif 'improvement' in diag_record['stage']:
 			# - backoff previous squeeze actions (slice suspend, nocreate)
