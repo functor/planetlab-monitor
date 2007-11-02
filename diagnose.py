@@ -187,6 +187,9 @@ def main():
 	#######  RT tickets    #########################################
 	t = soltesz.MyTimer()
 	ad_dbTickets = soltesz.if_cached_else_refresh(config.cachert, config.refresh, "ad_dbTickets", rt.rt_tickets)
+	if ad_dbTickets == "":
+		print "ad_dbTickets failed..."
+		sys.exit(1)
 	print "Getting tickets from RT took: %f sec" % t.diff() ; del t
 
 	logger.info('Start Merge/RT/Diagnose threads')

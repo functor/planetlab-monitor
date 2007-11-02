@@ -14,7 +14,7 @@ from threading import *
 # TODO: merge the RT mailer from mailer.py into this file.
 
 # RT database access constants file
-RT_DB_CONSTANTS_PATH='/etc/planetlab/rt_db'
+RT_DB_CONSTANTS_PATH='rt_db'
 
 #Logging
 logger = logging.getLogger("monitor")
@@ -91,6 +91,8 @@ def open_rt_db():
 
 def rt_tickets():
 	db = open_rt_db()
+	if db == -1:
+		return ""
 #	sql = """SELECT distinct Tk.id, Tk.Status, Tk.Subject
 #			 FROM Tickets AS Tk
 #			 JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId

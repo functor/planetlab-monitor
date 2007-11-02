@@ -27,7 +27,7 @@ def reformat_for_rt(text):
 		
 
 def _setupRTenvironment():
-	os.environ['PATH'] = os.environ['PATH'] + ":/home/soltesz/rpm/opt/rt3/bin/"
+	os.environ['PATH'] = os.environ['PATH'] + ":/home/soltesz/local/bin/"
 	os.environ['RTSERVER'] = "https://rt.planet-lab.org/"
 	os.environ['RTUSER']   = "monitor"
 	os.environ['RTPASSWD'] = "ssorcmor"
