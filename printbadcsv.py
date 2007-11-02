@@ -2,7 +2,7 @@
 import soltesz
 from config import config
 from optparse import OptionParser
-from printbadbysite import *
+from www.printbadnodes import *
 
 
 def main():
