@@ -199,7 +199,7 @@ def fields_to_html(fields, vals):
 				r_str += "<td %s>%s</td>" % (bgcolor, f)
 		elif f == 'PCU':
 			if len(vals['plcnode']['pcu_ids']) > 0:
-				url = "<a href='http://dendrite.cs.princeton.edu/~soltesz/printbadpcus.php#id%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
+				url = "<a href='/cgi-bin/printbadpcus.php#id%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
 				r_str += "<td nowrap %s>%s</td>" % (bgcolor, url)
 		else:
 			r_str += "<td nowrap %s>%s</td>" % (bgcolor, f)
@@ -267,7 +267,7 @@ def main(sitefilter):
 			'status' in vals['plcsite'] and  \
 			vals['plcsite']['status'] == "SUCCESS":
 
-			url = "<a href='printbad.cgi?site=%s'>%s</a>" % ( vals['plcsite']['login_base'],
+			url = "<a href='printbadnodes.py?site=%s'>%s</a>" % ( vals['plcsite']['login_base'],
 															 vals['plcsite']['login_base'])
 
 			site_string = "%s %2s nodes :: %2s of %4s slices" % ( \
