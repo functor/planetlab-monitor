@@ -5,7 +5,7 @@
 # 
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu
 #
-# $Id: plc.py,v 1.17 2007/08/08 13:28:55 soltesz Exp $
+# $Id: plc.py,v 1.18 2007/08/29 17:26:50 soltesz Exp $
 #
 
 from emailTxt import *
@@ -73,8 +73,8 @@ def getpcu(nodename):
 
 def GetPCUs(filter=None, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
-	sitepcu = api.GetPCUs(auth.auth, filter, fields)
-	return sitepcu
+	pcu_list = api.GetPCUs(auth.auth, filter, fields)
+	return pcu_list 
 
 '''
 Returns all site nodes for site id (loginbase).
