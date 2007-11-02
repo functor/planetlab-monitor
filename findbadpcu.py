@@ -355,7 +355,7 @@ def recordPingAndSSH(request, result):
 
 		count += 1
 		print "%d %s %s" % (count, nodename, externalState['nodes'][pcu_id]['values'])
-		soltesz.dbDump(config.dbname, externalState, 'php')
+		soltesz.dbDump(config.dbname, externalState)
 
 # this will be called when an exception occurs within a thread
 def handle_exception(request, result):
@@ -409,7 +409,7 @@ def checkAndRecordState(l_pcus, cohash):
 def main():
 	global externalState
 
-	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState, 'php') 
+	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
 	cohash = {}
 
 	if config.increment:
@@ -419,7 +419,7 @@ def main():
 	if config.filename == "":
 		print "Calling API GetPCUs() : refresh(%s)" % config.refresh
 		l_pcus = soltesz.if_cached_else_refresh(1, 
-								config.refresh, "pculist", lambda : plc.GetPCUs(), 'php')
+								config.refresh, "pculist", lambda : plc.GetPCUs())
 		l_pcus  = [pcu['pcu_id'] for pcu in l_pcus]
 	else:
 		l_pcus = config.getListFromFile(config.filename)
@@ -450,5 +450,5 @@ if __name__ == '__main__':
 	except Exception, err:
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		soltesz.dbDump(config.dbname, externalState, 'php')
+		soltesz.dbDump(config.dbname, externalState)
 		sys.exit(0)

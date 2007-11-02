@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: emailTxt.py,v 1.9 2007/08/08 13:26:46 soltesz Exp $
+# $Id: emailTxt.py,v 1.10 2007/08/29 17:26:50 soltesz Exp $
 
 
 # 
@@ -183,10 +183,20 @@ OLDBOOTCD- This state corresponds to the situation where an oldbootcd prevented
 ERROR- 	   This is an error state, where there is absolutely no contact 
            with PlanetLab.
 	""")
+
+	nmreset =("""NM Reset at %(loginbase)s""",
+	"""
+Monitor restarted NM on the following machines:
+
+%(hostname_list)s  
+
+	""")
+
 	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
 	newthankyou=[thankyou,thankyou,thankyou]
+	NMReset=[nmreset,nmreset,nmreset]
 
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 
