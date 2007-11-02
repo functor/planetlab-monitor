@@ -392,21 +392,21 @@ def main(sitefilter):
 		print "</tr>"
 	print "</table>"
 
-import cgi
-import cgitb; 
-cgitb.enable()
-import sys
-
-form = cgi.FieldStorage()
-myfilter = None
-
-if form.has_key('site'):
-	myfilter = form.getvalue("site")
-else:
-	myfilter = None
 
 
 if __name__ == '__main__':
+	import cgi
+	import cgitb; 
+	cgitb.enable()
+	import sys
+
+	form = cgi.FieldStorage()
+	myfilter = None
+
+	if form.has_key('site'):
+		myfilter = form.getvalue("site")
+	else:
+		myfilter = None
 	parser = OptionParser()
 	parser.set_defaults(cmpdays=False, 
 						comon="sshstatus", 
