@@ -3,7 +3,7 @@
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
 #
-# $Id: policy.py,v 1.16 2007/08/08 13:30:42 soltesz Exp $
+# $Id: policy.py,v 1.17 2007/08/29 17:26:50 soltesz Exp $
 #
 # Policy Engine.
 
@@ -40,6 +40,8 @@ SLICEMAIL="%s@slices.planet-lab.org"
 PLCEMAIL="support@planet-lab.org"
 
 #Thresholds (DAYS)
+SPERMIN = 60
+SPERHOUR = 60*60
 SPERDAY = 86400
 PITHRESH = 7 * SPERDAY
 SLICETHRESH = 7 * SPERDAY
@@ -197,6 +199,9 @@ class Merge(Thread):
 					self.mergedb[loginbase][nodename]['ticket_id'] = ""
 					self.mergedb[loginbase][nodename]['prev_category'] = None
 				else: 
+					if len(self.act_all[nodename]) == 0:
+						continue
+
 					y = self.act_all[nodename][0]
 
 					# skip if end-stage
@@ -407,7 +412,7 @@ class Diagnose(Thread):
 		d_diag_nodes are diagnose_in entries.
 		"""
 		d_diag_site = {loginbase : { 'config' : 
-												{'squeeze': False, 
+												{'squeeze': False,
 												 'email': False
 												}, 
 									'nodes': {}
@@ -421,6 +426,16 @@ class Diagnose(Thread):
 
 			if diag_record != None:
 				d_diag_site[loginbase]['nodes'][nodename] = diag_record
+
+				# NOTE: improvement means, we need to act/squeeze and email.
+				#print "DIAG_RECORD", diag_record
+				if 'monitor-end-record' in diag_record['stage'] or \
+				   'nmreset' in diag_record['stage']:
+				#	print "resetting loginbase!" 
+					d_diag_site[loginbase]['config']['squeeze'] = True
+					d_diag_site[loginbase]['config']['email'] = True
+				#else:
+				#	print "NO IMPROVEMENT!!!!"
 			else:
 				pass # there is nothing to do for this node.
 
@@ -497,6 +512,13 @@ class Diagnose(Thread):
 			elif "BOOT" in state:
 				# no action needed.
 				# TODO: remove penalties, if any are applied.
+				now = time.time()
+				last_contact = node_record['plcnode']['last_contact']
+				if last_contact == None:
+					time_diff = 0
+				else:
+					time_diff = now - last_contact;
+
 				if 'improvement' in node_record['stage']:
 					# then we need to pass this on to 'action'
 					diag_record = {}
@@ -513,6 +535,27 @@ class Diagnose(Thread):
 						diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s %s" % \
 									(loginbase, nodename, diag_record['stage'], 
 									 state, category, diag_record['ticket_id'])
+					return diag_record
+				elif time_diff >= 6*SPERHOUR:
+					# heartbeat is older than 30 min.
+					# then reset NM.
+					#print "Possible NM problem!! %s - %s = %s" % (now, last_contact, time_diff)
+					diag_record = {}
+					diag_record.update(node_record)
+					diag_record['message'] = emailTxt.mailtxt.NMReset
+					diag_record['args'] = {'nodename': nodename}
+					diag_record['stage'] = "nmreset"
+					diag_record['info'] = (nodename, 
+											node_record['prev_category'], 
+											node_record['category'])
+					if diag_record['ticket_id'] == "":
+						diag_record['log'] = "NM  : %20s : %-40s == %20s %20s %s %s" % \
+									(loginbase, nodename, diag_record['stage'], 
+									 state, category, diag_record['found_rt_ticket'])
+					else:
+						diag_record['log'] = "NM  : %20s : %-40s == %20s" % \
+									(loginbase, nodename, diag_record['stage'])
+
 					return diag_record
 				else:
 					return None
@@ -588,21 +631,27 @@ class Diagnose(Thread):
 		# TODO: generalize delays at PLC, and prevent enforcement when there
 		# 		have been no emails.
 		# NOTE: 7*SPERDAY exists to offset the 'bad week'
-		delta = current_time - diag_record['time'] - 7*SPERDAY
+		#delta = current_time - diag_record['time'] - 7*SPERDAY
+		delta = current_time - diag_record['time']
 
 		message = diag_record['message']
 		act_record = {}
 		act_record.update(diag_record)
 
 		#### DIAGNOSE STAGES 
-		#print "%s has stage %s" % (nodename, diag_record['stage'])
 		if   'findbad' in diag_record['stage']:
 			# The node is bad, and there's no previous record of it.
-			act_record['email'] = TECH		# addative emails
+			act_record['email'] = TECH
 			act_record['action'] = ['noop']
 			act_record['message'] = message[0]
 			act_record['stage'] = 'stage_actinoneweek'
 
+		elif 'nmreset' in diag_record['stage']:
+			act_record['email']  = ADMIN 
+			act_record['action'] = ['reset_nodemanager']
+			act_record['message'] = message[0]
+			act_record['stage']  = 'nmreset'
+			
 		elif 'improvement' in diag_record['stage']:
 			# - backoff previous squeeze actions (slice suspend, nocreate)
 			# TODO: add a backoff_squeeze section... Needs to runthrough
@@ -616,6 +665,7 @@ class Diagnose(Thread):
 				act_record['stage'] = 'stage_actintwoweeks'
 				act_record['message'] = message[1]
 				act_record['action'] = ['nocreate' ]
+				act_record['time'] = current_time		# reset clock for waitforever
 			elif delta >= 3* SPERDAY and not 'second-mail-at-oneweek' in act_record:
 				act_record['email'] = TECH 
 				act_record['message'] = message[0]
@@ -627,13 +677,13 @@ class Diagnose(Thread):
 				return None 			# don't send if there's no action
 
 		elif 'actintwoweeks' in diag_record['stage']:
-			if delta >= 14 * SPERDAY:
+			if delta >= 7 * SPERDAY:
 				act_record['email'] = TECH | PI | USER
 				act_record['stage'] = 'stage_waitforever'
 				act_record['message'] = message[2]
 				act_record['action'] = ['suspendslices']
 				act_record['time'] = current_time		# reset clock for waitforever
-			elif delta >= 10* SPERDAY and not 'second-mail-at-twoweeks' in act_record:
+			elif delta >= 3* SPERDAY and not 'second-mail-at-twoweeks' in act_record:
 				act_record['email'] = TECH | PI
 				act_record['message'] = message[1]
 				act_record['action'] = ['sendmailagain-waitfortwoweeksaction' ]
@@ -681,7 +731,7 @@ class Diagnose(Thread):
 			#	1. stage is unknown, or 
 			#	2. delta is not big enough to bump it to the next stage.
 			# TODO: figure out which. for now assume 2.
-			print "UNKNOWN!!? %s" % nodename
+			print "UNKNOWN!?!? %s" % nodename
 			act_record['action'] = ['unknown']
 			act_record['message'] = message[0]
 			print "Exiting..."
@@ -783,6 +833,10 @@ def close_rt_backoff(args):
 		plc.enableSliceCreation(args['hostname'])
 	return
 
+def reset_nodemanager(args):
+	os.system("ssh root@%s /sbin/service nm restart" % nodename)
+	return
+
 class Action(Thread):
 	def __init__(self, l_action):
 		self.l_action = l_action
@@ -802,6 +856,8 @@ class Action(Thread):
 		self.actions['close_rt'] = lambda args: close_rt_backoff(args)
 		self.actions['rins'] = lambda args: plc.nodeBootState(args['hostname'], "rins")	
 		self.actions['noop'] = lambda args: args
+		self.actions['reset_nodemanager'] = lambda args: args # reset_nodemanager(args)
+
 		self.actions['ticket_waitforever'] = lambda args: args
 		self.actions['waitforever'] = lambda args: args
 		self.actions['unknown'] = lambda args: args
@@ -922,14 +978,6 @@ class Action(Thread):
 				mailer.email(subj, body, contacts)
 				ticket_id = args['ticket_id']
 			else:
-				#if 'ticket_id' in args and 'ticket_id' != "":
-				#	# Reformat Subject to include Ticket_ID for RT
-				#	subj = "Re: [PL #%s] %s" % (args['ticket_id'], subject)
-				#	# RT remembers old contacts, so only add new users
-				#	mailer.email(subj, body, ['monitor@planet-lab.org'] + contacts)
-				#	ticket_id = args['ticket_id']
-				#else:
-				#	ticket_id = mailer.emailViaRT(subject, body, contacts)	
 				ticket_id = mailer.emailViaRT(subject, body, contacts, args['ticket_id'])
 		except Exception, err:
 			print "exception on message:"
@@ -1006,16 +1054,16 @@ class Action(Thread):
 				for act_record in issue_record_list:
 					nodename = act_record['nodename']
 					# update node record with RT ticket_id
-					self.act_all[nodename][0]['ticket_id'] = "%s" % ticket_id
+					if nodename in self.act_all:
+						self.act_all[nodename][0]['ticket_id'] = "%s" % ticket_id
 					if config.mail: i_nodes_emailed += 1
 
 			print "\t\tconfig.squeeze: %s and %s" % (config.squeeze,
 													site_record['config']['squeeze'])
 			if config.squeeze and site_record['config']['squeeze']:
 				for act_key in act_record['action']:
-					#act_key = act_record['action']
 					self.actions[act_key](email_args)
-					i_nodes_actedon += 1
+				i_nodes_actedon += 1
 		
 		if config.policysavedb:
 			print "Saving Databases... act_all, diagnose_out"
@@ -1024,11 +1072,11 @@ class Action(Thread):
 			del self.diagnose_db[loginbase]
 			soltesz.dbDump("diagnose_out", self.diagnose_db)
 
-		#print "sleeping for 1 sec"
-		#time.sleep(1)
-		print "Hit enter to continue..."
-		sys.stdout.flush()
-		line = sys.stdin.readline()
+		print "sleeping for 1 sec"
+		time.sleep(1)
+		#print "Hit enter to continue..."
+		#sys.stdout.flush()
+		#line = sys.stdin.readline()
 
 		return (i_nodes_actedon, i_nodes_emailed)
 
@@ -1044,7 +1092,8 @@ class Action(Thread):
 		print "%s" % act_record['log'],
 		print "%15s" % act_record['action']
 
-		if act_record['stage'] is not 'monitor-end-record':
+		if act_record['stage'] is not 'monitor-end-record' and \
+		   act_record['stage'] is not 'nmreset':
 			if nodename not in self.act_all: 
 				self.act_all[nodename] = []
 
