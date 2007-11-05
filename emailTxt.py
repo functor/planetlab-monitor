@@ -191,12 +191,43 @@ Monitor restarted NM on the following machines:
 %(hostname_list)s  
 
 	""")
+	pcudown_one =("""Could not use PCU to reboot %(hostname)s""",
+
+"""As part of our machine monitoring and maintenance, we tried to use the PCU registered below, but could not for the following reason at the link below:
+
+	https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php#id%(pcu_id)s
+
+We need your help resolving this issue in two ways:  
+
+* First, we need your help rebooting %(hostname)s.  Because we cannot leverage
+  the above PCU, please manually reboot this machine and we can help you
+  resolve any configuration errors with the PCU independently.
+
+* Second, if it is possible, please correcct the above PCU problem.  
+  By enabling us to take administrative actions automatically from
+  PlanetLab Central without local intervention, you can trade a small
+  amount of time now for a time savings in the future. 
+
+If the PCU is up and running, but behind a firewall, please make it accessible
+from address block 128.112.139.0/25.  You can confirm that this is the address
+space from which the PlanetLab Central servers run.
+
+If the above PCU is no longer in service, please delete it by visiting:
+
+    https://www.planet-lab.org/db/sites/pcu.php?id=%(pcu_id)s
+
+and selecting 'Delete PCU'.
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
 
 	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
 	newthankyou=[thankyou,thankyou,thankyou]
 	NMReset=[nmreset,nmreset,nmreset]
+	PCUDown=[pcudown_one, pcudown_one, pcudown_one]
 
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 
