@@ -61,20 +61,13 @@ externalState = {'round': round, 'nodes': {'a': None}}
 count = 0
 
 import reboot
+from reboot import pcu_name
 
 import soltesz
 import plc
 import comon
 import threadpool
 import syncplcdb
-
-def pcu_name(pcu):
-	if pcu['hostname'] is not None and pcu['hostname'] is not "":
-		return pcu['hostname']
-	elif pcu['ip'] is not None and pcu['ip'] is not "":
-		return pcu['ip']
-	else:
-		return None
 
 def nmap_portstatus(status):
 	ps = {}
