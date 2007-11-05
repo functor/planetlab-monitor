@@ -258,6 +258,11 @@ def main(sitefilter):
 	# d2 was an array of [{node}, {}, ...]
 	# the bysite is a loginbase dict of [{node}, {node}]
 	d2 = []
+	import re
+	if sitefilter != None:
+		sf = re.compile(sitefilter)
+	else:
+		sf = None
 	for nodename in l_nodes: 
 		vals=d_n[nodename]['values'] 
 		v = {}
@@ -283,7 +288,7 @@ def main(sitefilter):
 
 		v['site_string'] = site_string
 		v['loginbase'] = loginbase
-		if (sitefilter != None and loginbase == sitefilter) or sitefilter == None:
+		if (sitefilter != None and sf.match(loginbase) != None) or sitefilter == None:
 			d2.append(v)
 			
 
