@@ -28,7 +28,7 @@ function format_ports($pcu)
 	$str = "";
 	#print print_r(is_array($pcu)) . "<BR>";
 	#print print_r(array_key_exists('portstatus', $pcu)) . "<BR>";
-	if ( is_array($pcu) && array_key_exists('portstatus', $pcu) )
+	if ( is_array($pcu) && array_key_exists('portstatus', $pcu) && count(array_keys($pcu['portstatus'])) > 0 )
 	{
 		$portstat = $pcu['portstatus'];
 
