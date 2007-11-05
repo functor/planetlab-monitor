@@ -841,6 +841,10 @@ def close_rt_backoff(args):
 		plc.enableSliceCreation(args['hostname'])
 	return
 
+def reboot_node(args):
+	host = args['hostname']
+	return reboot.reboot_new(host, True, config.debug)
+
 def reset_nodemanager(args):
 	os.system("ssh root@%s /sbin/service nm restart" % nodename)
 	return
@@ -864,6 +868,7 @@ class Action(Thread):
 		self.actions['close_rt'] = lambda args: close_rt_backoff(args)
 		self.actions['rins'] = lambda args: plc.nodeBootState(args['hostname'], "rins")	
 		self.actions['noop'] = lambda args: args
+		self.actions['reboot_node'] = lambda args: reboot_node(args)
 		self.actions['reset_nodemanager'] = lambda args: args # reset_nodemanager(args)
 
 		self.actions['ticket_waitforever'] = lambda args: args
@@ -1013,6 +1018,14 @@ class Action(Thread):
 		for act_record in act_recordlist:
 			email_args['hostname_list'] += act_record['msg_format']
 			email_args['hostname'] = act_record['nodename']
+			if  'plcnode' in act_record and \
+				'pcu_ids' in act_record['plcnode'] and \
+				len(act_record['plcnode']['pcu_ids']) > 0:
+				print "setting 'pcu_id' for email_args %s"%email_args['hostname']
+				email_args['pcu_id'] = act_record['plcnode']['pcu_ids'][0]
+			else:
+				email_args['pcu_id'] = "-1"
+					
 			if 'ticket_id' in act_record:
 				email_args['ticket_id'] = act_record['ticket_id']
 
@@ -1041,7 +1054,8 @@ class Action(Thread):
 			diag_record = site_record['nodes'][nodename]
 			act_record  = self.__actOnNode(diag_record)
 			#print "nodename: %s %s" % (nodename, act_record)
-			act_recordlist += [act_record]
+			if act_record is not None:
+				act_recordlist += [act_record]
 
 		unique_issues = self.get_unique_issues(act_recordlist)
 
@@ -1049,6 +1063,20 @@ class Action(Thread):
 			print "\tworking on issue: %s" % issue
 			issue_record_list = unique_issues[issue]
 			email_args = self.get_email_args(issue_record_list)
+
+			# for each record.
+			for act_record in issue_record_list:
+				# if there's a pcu record and email config is set
+				if 'email_pcu' in act_record:
+					if act_record['email_pcu'] and \
+						site_record['config']['email']:
+
+						ticket_id = self.__emailSite(loginbase, 
+											act_record['email'], 
+											emailTxt.mailtxt.pcudown[0],
+											email_args)
+						email_args['ticket_id'] = ticket_id
+
 			
 			act_record = issue_record_list[0]
 			# send message before squeezing
@@ -1080,11 +1108,11 @@ class Action(Thread):
 			del self.diagnose_db[loginbase]
 			soltesz.dbDump("diagnose_out", self.diagnose_db)
 
-		print "sleeping for 1 sec"
-		time.sleep(1)
+		#print "sleeping for 1 sec"
+		#time.sleep(1)
 		#print "Hit enter to continue..."
-		#sys.stdout.flush()
-		#line = sys.stdin.readline()
+		sys.stdout.flush()
+		line = sys.stdin.readline()
 
 		return (i_nodes_actedon, i_nodes_emailed)
 
@@ -1096,6 +1124,30 @@ class Action(Thread):
 		act_record.update(diag_record)
 		act_record['nodename'] = nodename
 		act_record['msg_format'] = self._format_diaginfo(diag_record)
+
+
+		if "DOWN" in act_record['log']:
+			print "%s" % act_record['log'],
+			print "%15s" % (['reboot_node'],)
+			ret = reboot_node(act_record['nodename'])
+			if ret:
+				# Reboot Succeeded
+				act_record2 = {}
+				act_record2.update(act_record)
+				act_record2['action'] = ['reboot_node']
+				act_record2['reboot_node_failed'] = False
+				act_record2['email_pcu'] = False
+
+				if nodename not in self.act_all: 
+					self.act_all[nodename] = []
+				self.act_all[nodename].insert(0,act_record2)
+
+				# return None to avoid further action
+				return None
+			else:
+				# set email_pcu to also send pcu notice for this record.
+				act_record['reboot_node_failed'] = True
+				act_record['email_pcu'] = True
 
 		print "%s" % act_record['log'],
 		print "%15s" % act_record['action']
