@@ -245,7 +245,7 @@ def apc_reboot(ip, username, password, port, protocol, dryrun):
 			logger.debug(err)
 		if transport:
 			transport.close()
-		return "apc error"
+		return "apc error: check password"
 
 def drac_reboot(ip, username, password, dryrun):
 	global verbose
@@ -295,7 +295,7 @@ def drac_reboot(ip, username, password, dryrun):
 			output = ssh.close()
 			if verbose:
 				logger.debug(err)
-		return "drac error"
+		return "drac error: check password"
 
 def ilo_reboot(ip, username, password, dryrun):
 	global verbose
@@ -356,7 +356,7 @@ def ilo_reboot(ip, username, password, dryrun):
 			output = ssh.close()
 			if verbose:
 				logger.debug(err)
-		return "ilo error"
+		return "ilo error: check password"
 
 def baytech_reboot(ip, username, password, port, dryrun):
 	global verbose
@@ -425,7 +425,7 @@ def baytech_reboot(ip, username, password, port, dryrun):
 			output = ssh.close()
 			if verbose:
 				logger.debug(err)
-		return "baytech error"
+		return "baytech error: check password"
 
 ### rebooting european BlackBox PSE boxes
 # Thierry Parmentelat - May 11 2005
@@ -601,6 +601,142 @@ def racadm_reboot(ip, username, password, port, dryrun):
 		if verbose:
 			logger.debug(err)
 		return errno.ETIMEDOUT
+
+def pcu_name(pcu):
+	if pcu['hostname'] is not None and pcu['hostname'] is not "":
+		return pcu['hostname']
+	elif pcu['ip'] is not None and pcu['ip'] is not "":
+		return pcu['ip']
+	else:
+		return None
+
+def get_pcu_values(pcu_id):
+	# TODO: obviously, this shouldn't be loaded each time...
+	import soltesz
+	fb =soltesz.dbLoad("findbadpcus")
+
+	try:
+		values = fb['nodes']["id_%s" % pcu_id]['values']
+	except:
+		values = None
+
+	return values
+
+def reboot_new(nodename, continue_probe, dryrun):
+
+	pcu = plc.getpcu(nodename)
+	if not pcu:
+		return False
+
+	values = get_pcu_values(pcu['pcu_id'])
+	if values == None:
+		return False
+	
+	# Try the PCU first
+	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
+
+	# DataProbe iPal (many sites)
+	if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
+		if values['portstatus']['23'] == "open":
+			rb_ret = reboot.ipal_reboot(pcu_name(values),
+									values['password'],
+									pcu[nodename],
+									dryrun)
+		else:
+			rb_ret = "Unsupported_Port"
+			
+
+	# APC Masterswitch (Berkeley)
+	elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
+		if  values['portstatus']['22'] == "open" or \
+			values['portstatus']['23'] == "open":
+			rb_ret = reboot.apc_reboot(pcu_name(values),
+									values['username'],
+									values['password'], 
+									pcu[nodename],
+									values['portstatus'], 
+									dryrun)
+		else:
+			rb_ret = "Unsupported_Port"
+	# BayTech DS4-RPC
+	elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
+		if values['portstatus']['22'] == "open":
+			rb_ret = reboot.baytech_reboot(pcu_name(values),
+									   values['username'],
+									   values['password'], 
+									   pcu[nodename],
+									   dryrun)
+		else:
+			rb_ret = "Unsupported_Port"
+			
+
+	# iLO
+	elif continue_probe and values['model'].find("HP iLO") >= 0:
+		if values['portstatus']['22'] == "open":
+			rb_ret = reboot.ilo_reboot(pcu_name(values),
+									   values['username'],
+									   values['password'], 
+									   dryrun)
+		else:
+			rb_ret = "Unsupported_Port"
+			
+	# DRAC ssh
+	elif continue_probe and values['model'].find("Dell RAC") >= 0:
+		if values['portstatus']['22'] == "open":
+			rb_ret = reboot.drac_reboot(pcu_name(values),
+									   values['username'],
+									   values['password'], 
+									   dryrun)
+		else:
+			rb_ret = "Unsupported_Port"
+			
+
+	# BlackBox PSExxx-xx (e.g. PSE505-FR)
+	elif continue_probe and \
+		(values['model'].find("BlackBox PS5xx") >= 0 or
+		 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
+		if values['portstatus']['80'] == "open":
+			rb_ret = reboot.bbpse_reboot(pcu_name(values),
+							values['username'], 
+							values['password'], 
+							pcu[nodename],
+							80,
+							dryrun)
+		else:
+			rb_ret = "Unsupported_PCU"
+			
+	# x10toggle
+	elif 	continue_probe and values['protocol'] == "ssh" and \
+			values['model'] == "x10toggle":
+		rb_ret = reboot.x10toggle_reboot(pcu_name(values),
+										values['username'],
+										values['password'], 
+										pcu[nodename],
+										dryrun)
+	# ????
+	elif continue_probe and values['protocol'] == "racadm" and \
+			values['model'] == "RAC":
+		rb_ret = reboot.racadm_reboot(pcu_name(values),
+									  values['username'],
+									  values['password'],
+									  pcu[nodename],
+									  dryrun)
+	elif continue_probe:
+		rb_ret = "Unsupported_PCU"
+
+	elif continue_probe == False:
+		if 'portstatus' in values:
+			rb_ret = "NetDown"
+		else:
+			rb_ret = "Not_Run"
+	else:
+		rb_ret = -1
+	
+	if rb_ret != 0:
+		return False
+	else:
+		return True
+
 
 # Returns true if rebooted via PCU
 def reboot(nodename, dryrun):
