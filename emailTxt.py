@@ -22,7 +22,7 @@ As part of PlanetLab node monitoring, we noticed the following nodes were down a
 %(hostname_list)s 
 We're writing because we need your help returning them to their regular operation.
 
-To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.  Until that time, visiting the link below will return an 'Internal Server Error'.
+To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.  Until that time, visiting the link below will return an 'Internal Server Error'.
 
 	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
 
@@ -30,11 +30,11 @@ If the machine has booted successfully, you may check it more quickly by logging
 
     sudo /usr/sbin/vps ax
 
-If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create a new BootCD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
-If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
 After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
 
@@ -51,7 +51,7 @@ As part of PlanetLab node monitoring, we noticed the following nodes were down a
 %(hostname_list)s 
 We're writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
 
-To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.  Until that time, visiting the link below will return an 'Internal Server Error'.
 
 	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
 
@@ -61,9 +61,9 @@ If the machine has booted successfully, you may check it more quickly by logging
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
-If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
 After another week, we will disable all slices currently running on PlanetLab.  Because this action will directly affect all users of these slices, these users will also be notified at that time.
 
@@ -80,7 +80,7 @@ As part of PlanetLab node monitoring, we noticed the following nodes were down a
 %(hostname_list)s 
 We understand that machine maintenance can take time.  We're writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.
 
-To help, please confirm that a recent BootCD is installed in the machine (Version 3.0 or greater).  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.
+To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.  It may take several minutes before Comon registers your node.  Until that time, visiting the link below will return an 'Internal Server Error'.
 
 	http://summer.cs.princeton.edu/status/tabulator.cgi?table=nodes/table_%(hostname)s&limit=50
 
@@ -90,9 +90,9 @@ If the machine has booted successfully, you may check it more quickly by logging
 
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
-If after following these directions and finding your machine reported by CoMon, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
@@ -102,7 +102,7 @@ Thank you for your help,
 """As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
 
 %(hostname_list)s  
-This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (Either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
 
 To check the status of these and any other machines that you manage please visit:
 
@@ -110,7 +110,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
@@ -133,7 +133,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
@@ -156,7 +156,7 @@ To check the status of these and any other machines that you manage please visit
 
 Instructions to perform the steps necessary for a BootCD upgrade are available in the Technical Contact's Guide.
 
-    https://www.planet-lab.org/doc/guides/tech#NodeInstallation
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
