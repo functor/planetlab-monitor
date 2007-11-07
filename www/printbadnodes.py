@@ -63,7 +63,7 @@ def cmpState(l1, l2):
 	return cmpMap(l1,l2,'state', map)
 
 def cmpCategoryVal(v1, v2):
-	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'ERROR', ])
+	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	return cmpValMap(v1,v2,map)
 
 def cmpCategory(l1, l2):
