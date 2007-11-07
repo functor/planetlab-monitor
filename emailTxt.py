@@ -193,7 +193,8 @@ Monitor restarted NM on the following machines:
 	""")
 	pcudown_one =("""Could not use PCU to reboot %(hostname)s""",
 
-"""As part of our machine monitoring and maintenance, we tried to use the PCU registered below, but could not for the following reason at the link below:
+"""As part of our machine monitoring and maintenance, we tried to use the PCU
+registered below, but could not for the following reason at the link below:
 
 	https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php#id%(pcu_id)s
 
@@ -216,7 +217,47 @@ If the above PCU is no longer in service, please delete it by visiting:
 
     https://www.planet-lab.org/db/sites/pcu.php?id=%(pcu_id)s
 
-and selecting 'Delete PCU'.
+and selecting 'Delete PCU'. You may then register a new PCU for your nodes.
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	pcutonodemapping_one =("""PCU to Node mapping is incorrect for %(hostname)s""",
+	"""
+    As part of our machine monitoring and maintenance, we tried to use the PCU
+registered below, and though it appears to succeed, we do not subsequently
+observe the associated nodes rebooting:
+
+    https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php#id%(pcu_id)s
+
+%(hostname_list)s
+
+We need your help resolving this issue in two ways:  
+
+* First, we need your help rebooting %(hostname)s.  Because the above PCU 
+  does not appear to actually control the above Nodes, we cannot use it to
+  reboot these machines. So, please manually reboot the machine and we can 
+  help you resolve any configuration errors with the PCU independently.
+
+* Second, please check the configuration of the above PCU.  Check that the 
+  PCU is physically connected to the servers that it should be able to
+  control.  A common mistake is that the PCU is registered for a machine, 
+  but not actually connected physically to the machine. 
+
+By enabling us to take administrative actions automatically from PlanetLab
+Central without local intervention, you can trade a small amount of time now
+for a time savings in the future. 
+    
+If the above PCU is no longer in service, please delete it by visiting:
+
+    https://www.planet-lab.org/db/sites/pcu.php?id=%(pcu_id)s
+
+and selecting 'Delete PCU'. You may then register a new PCU for your nodes.
+
+Alternately, if the machines listed above are no longer in service, please
+delete them by visiting your sites page at:
+
+    https://www.planet-lab.org/
 
 Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
@@ -227,7 +268,8 @@ Thank you very much for your help,
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
 	newthankyou=[thankyou,thankyou,thankyou]
 	NMReset=[nmreset,nmreset,nmreset]
-	PCUDown=[pcudown_one, pcudown_one, pcudown_one]
+	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
+	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 

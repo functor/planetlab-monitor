@@ -5,7 +5,7 @@ import string
 import sys
 
 def main():
-	meta_sites = ['canarie', 'rnp', 'jgn2', 'i2', 'tp', 'princetondsl', 'plcolo', 'wide']
+	meta_sites = ['canarie', 'rnp', 'jgn2', 'i2', 'tp', 'princeton', 'princetondsl', 'plcolo', 'wide']
 	l_blacklist = [ "grouse.hpl.hp.com", "planet1.att.nodes.planet-lab.org"]
 	#l_blacklist = soltesz.dbLoad("l_blacklist")
 	l_sitelist = []

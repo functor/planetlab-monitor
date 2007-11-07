@@ -66,7 +66,7 @@ POLSLEEP=10
 # list will be monitored.
 runningthreads = {}
 # Seconds between checking threads
-WATCHSLEEP = 10
+WATCHSLEEP = 5
  
 # Set up Logging
 logger = logging.getLogger("monitor")

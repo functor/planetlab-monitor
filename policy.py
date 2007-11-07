@@ -17,6 +17,7 @@ import pickle
 import Queue
 import plc
 import sys
+import os
 import reboot
 import soltesz
 import string
@@ -130,7 +131,14 @@ class Merge(Thread):
 
 			fb_record = {}
 			fb_record['nodename'] = nodename
-			fb_record['category'] = values['category']
+			try:
+				fb_record['category'] = values['category']
+			except:
+				print values
+				print nodename
+				print self.findbad['nodes'][nodename]
+				count -= 1
+				continue
 			fb_record['state'] = values['state']
 			fb_record['comonstats'] = values['comonstats']
 			fb_record['plcnode'] = values['plcnode']
@@ -197,7 +205,7 @@ class Merge(Thread):
 					self.mergedb[loginbase][nodename] = {} 
 					self.mergedb[loginbase][nodename].update(x)
 					self.mergedb[loginbase][nodename]['ticket_id'] = ""
-					self.mergedb[loginbase][nodename]['prev_category'] = None
+					self.mergedb[loginbase][nodename]['prev_category'] = "NORECORD" 
 				else: 
 					if len(self.act_all[nodename]) == 0:
 						print "len(act_all[%s]) == 0, skipping %s %s" % (nodename, loginbase, nodename)
@@ -205,14 +213,14 @@ class Merge(Thread):
 
 					y = self.act_all[nodename][0]
 
-					# skip if end-stage
-					if 'stage' in y and "monitor-end-record" in y['stage']:
-						# 1) ok, b/c it's a new problem. set ticket_id to null
-						self.mergedb[loginbase][nodename] = {} 
-						self.mergedb[loginbase][nodename].update(x)
-						self.mergedb[loginbase][nodename]['ticket_id'] = ""
-						self.mergedb[loginbase][nodename]['prev_category'] = None
-						continue
+					## skip if end-stage
+					#if 'stage' in y and "monitor-end-record" in y['stage']:
+					#	# 1) ok, b/c it's a new problem. set ticket_id to null
+					##	self.mergedb[loginbase][nodename] = {} 
+					#	self.mergedb[loginbase][nodename].update(x)
+					#	self.mergedb[loginbase][nodename]['ticket_id'] = ""
+					#	self.mergedb[loginbase][nodename]['prev_category'] = None
+					#	continue
 
 					## for legacy actions
 					#if 'bucket' in y and y['bucket'][0] == 'dbg':
@@ -241,7 +249,6 @@ class Merge(Thread):
 					#if b_match: 
 					#	# 2b) ok, b/c they agree that there's still a problem..
 					#	# 2b) Comon & Monitor still agree; RT ticket?
-					#	y['prev_category'] = y['category']
 					#else:
 					#	# 2a) mismatch, need a policy for how to resolve
 					#	#     resolution will be handled in __diagnoseNode()
@@ -251,7 +258,7 @@ class Merge(Thread):
 					#	print "FINDBAD and MONITOR have a mismatch: %s vs %s" % \
 					#				(x['category'], y['bucket'])
 
-
+					y['prev_category'] = y['category']
 					self.mergedb[loginbase][nodename] = {}
 					self.mergedb[loginbase][nodename].update(y)
 					self.mergedb[loginbase][nodename]['comonstats'] = x['comonstats']
@@ -484,6 +491,17 @@ class Diagnose(Thread):
 			diag_record['message'] = emailTxt.mailtxt.newdown
 			diag_record['args'] = {'nodename': nodename}
 			diag_record['info'] = (nodename, s_daysdown, "")
+
+			if 'reboot_node_failed' in node_record:
+				# there was a previous attempt to use the PCU.
+				if node_record['reboot_node_failed'] == False:
+					# then the last attempt apparently, succeeded.
+					# But, the category is still 'ERROR'.  Therefore, the
+					# PCU-to-Node mapping is broken.
+					#print "Setting message for ERROR node to PCU2NodeMapping: %s" % nodename
+					diag_record['message'] = emailTxt.mailtxt.pcutonodemapping
+					diag_record['email_pcu'] = True
+
 			if diag_record['ticket_id'] == "":
 				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
 					(loginbase, nodename, diag_record['info'][1:], diag_record['found_rt_ticket'])
@@ -586,36 +604,44 @@ class Diagnose(Thread):
 	def __diagnoseNode(self, loginbase, node_record):
 		# TODO: change the format of the hostname in this 
 		#		record to something more natural.
-		nodename 	  = node_record['nodename']
-		category 	  = node_record['category']
-		prev_category = node_record['prev_category']
-		state    	  = node_record['state']
-
-		val = cmpCategoryVal(category, prev_category)
-		if val == -1:
-			# current category is worse than previous, carry on
-			pass
-		elif val == 1:
-			# current category is better than previous
-			# TODO: too generous for now, but will be handled correctly
-			# TODO: if stage is currently ticket_waitforever, 
-			if 'ticket_id' not in node_record:
-				print "ignoring: ", node_record['nodename']
-				return None
-			else:
-				if node_record['ticket_id'] == "" or \
-				   node_record['ticket_id'] == None:
-					print "closing: ", node_record['nodename']
+		nodename 	  	= node_record['nodename']
+		category 	  	= node_record['category']
+		prev_category 	= node_record['prev_category']
+		state    	  	= node_record['state']
+		#if 'prev_category' in node_record:
+		#	prev_category = node_record['prev_category']
+		#else:
+		#	prev_category = "ERROR"
+		if node_record['prev_category'] != "NORECORD":
+		
+			val = cmpCategoryVal(category, prev_category)
+			print "%s went from %s -> %s" % (nodename, prev_category, category)
+			if val == 1:
+				# improved
+				if node_record['ticket_id'] == "" or node_record['ticket_id'] == None:
+					print "closing record with no ticket: ", node_record['nodename']
 					node_record['action'] = ['close_rt']
 					node_record['message'] = None
 					node_record['stage'] = 'monitor-end-record'
 					return node_record
-					#return None
 				else:
 					node_record['stage'] = 'improvement'
-		else:
-			#values are equal, carry on.
-			pass
+
+				#if 'monitor-end-record' in node_record['stage']:
+				#	# just ignore it if it's already ended.
+				#	# otherwise, the status should be worse, and we won't get
+				#	# here.
+				#	print "monitor-end-record: ignoring ", node_record['nodename']
+				#	return None
+#
+#					#return None
+			elif val == -1:
+				# current category is worse than previous, carry on
+				pass
+			else:
+				#values are equal, carry on.
+				#print "why are we here?"
+				pass
 			
 		#### COMPARE category and prev_category
 		# if not_equal
@@ -624,6 +650,7 @@ class Diagnose(Thread):
 		#	then check category for stats.
 		diag_record = self.diagRecordByCategory(node_record)
 		if diag_record == None:
+			#print "diag_record == None"
 			return None
 
 		#### found_RT_ticket
@@ -659,6 +686,12 @@ class Diagnose(Thread):
 			act_record['message'] = message[0]
 			act_record['stage']  = 'nmreset'
 			return None
+
+		elif 'reboot_node' in diag_record['stage']:
+			act_record['email'] = TECH
+			act_record['action'] = ['noop']
+			act_record['message'] = message[0]
+			act_record['stage'] = 'stage_actinoneweek'
 			
 		elif 'improvement' in diag_record['stage']:
 			# - backoff previous squeeze actions (slice suspend, nocreate)
@@ -682,6 +715,7 @@ class Diagnose(Thread):
 			else:
 				act_record['message'] = None
 				act_record['action'] = ['waitforoneweekaction' ]
+				print "ignoring this record for: %s" % act_record['nodename']
 				return None 			# don't send if there's no action
 
 		elif 'actintwoweeks' in diag_record['stage']:
@@ -739,11 +773,12 @@ class Diagnose(Thread):
 			#	1. stage is unknown, or 
 			#	2. delta is not big enough to bump it to the next stage.
 			# TODO: figure out which. for now assume 2.
-			print "UNKNOWN!?!? %s" % nodename
+			print "UNKNOWN stage for %s; nothing done" % nodename
 			act_record['action'] = ['unknown']
 			act_record['message'] = message[0]
-			print "Exiting..."
-			sys.exit(1)
+			#print "Exiting..."
+			return None
+			#sys.exit(1)
 
 		print "%s" % act_record['log'],
 		print "%15s" % act_record['action']
@@ -1071,6 +1106,7 @@ class Action(Thread):
 					if act_record['email_pcu'] and \
 						site_record['config']['email']:
 
+						email_args['hostname'] = act_record['nodename']
 						ticket_id = self.__emailSite(loginbase, 
 											act_record['email'], 
 											emailTxt.mailtxt.pcudown[0],
@@ -1110,7 +1146,7 @@ class Action(Thread):
 
 		#print "sleeping for 1 sec"
 		#time.sleep(1)
-		#print "Hit enter to continue..."
+		print "Hit enter to continue..."
 		sys.stdout.flush()
 		line = sys.stdin.readline()
 
@@ -1124,33 +1160,57 @@ class Action(Thread):
 		act_record.update(diag_record)
 		act_record['nodename'] = nodename
 		act_record['msg_format'] = self._format_diaginfo(diag_record)
+		print "act_record['stage'] == %s " % act_record['stage']
 
+		# avoid end records, and nmreset records					
+		# reboot_node_failed, is set below, so don't reboot repeatedly.
 
-		if "DOWN" in act_record['log']:
+		if 'monitor-end-record' not in act_record['stage'] and \
+		   'nmreset' not in act_record['stage'] and \
+		   'reboot_node_failed' not in act_record:
+
+			if "DOWN" in act_record['log'] and \
+					'pcu_ids' in act_record['plcnode'] and \
+					len(act_record['plcnode']['pcu_ids']) > 0:
+
+				print "%s" % act_record['log'],
+				print "%15s" % (['reboot_node'],)
+				# Set node to re-install
+				plc.nodeBootState(act_record['nodename'], "rins")	
+				try:
+					ret = reboot_node({'hostname': act_record['nodename']})
+				except Exception, exc:
+					print "exception on reboot_node:"
+					import traceback
+					print traceback.print_exc()
+					ret = False
+
+				if ret: # and ( 'reboot_node_failed' not in act_record or act_record['reboot_node_failed'] == False):
+					# Reboot Succeeded
+					print "reboot succeeded for %s" % act_record['nodename']
+					act_record2 = {}
+					act_record2.update(act_record)
+					act_record2['action'] = ['reboot_node']
+					act_record2['stage'] = "reboot_node"
+					act_record2['reboot_node_failed'] = False
+					act_record2['email_pcu'] = False
+
+					if nodename not in self.act_all: 
+						self.act_all[nodename] = []
+					print "inserting 'reboot_node' record into act_all"
+					self.act_all[nodename].insert(0,act_record2)
+
+					# return None to avoid further action
+					print "Taking no further action"
+					return None
+				else:
+					print "reboot failed for %s" % act_record['nodename']
+					# set email_pcu to also send pcu notice for this record.
+					act_record['reboot_node_failed'] = True
+					act_record['email_pcu'] = True
+
 			print "%s" % act_record['log'],
-			print "%15s" % (['reboot_node'],)
-			ret = reboot_node(act_record['nodename'])
-			if ret:
-				# Reboot Succeeded
-				act_record2 = {}
-				act_record2.update(act_record)
-				act_record2['action'] = ['reboot_node']
-				act_record2['reboot_node_failed'] = False
-				act_record2['email_pcu'] = False
-
-				if nodename not in self.act_all: 
-					self.act_all[nodename] = []
-				self.act_all[nodename].insert(0,act_record2)
-
-				# return None to avoid further action
-				return None
-			else:
-				# set email_pcu to also send pcu notice for this record.
-				act_record['reboot_node_failed'] = True
-				act_record['email_pcu'] = True
-
-		print "%s" % act_record['log'],
-		print "%15s" % act_record['action']
+			print "%15s" % act_record['action']
 
 		if act_record['stage'] is not 'monitor-end-record' and \
 		   act_record['stage'] is not 'nmreset':
