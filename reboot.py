@@ -154,6 +154,114 @@ def ipal_reboot(ip, password, port, dryrun):
 		#plc_lock.release()
 		return  "ipal error"
 
+def apc_reboot_original(ip, username, password, port, protocol, dryrun):
+	global verbose
+
+	transport = None
+
+	# TODO: I may need to differentiate between different models of APC
+	# hardware...
+	# 	for instance, the original code didn't work for:
+	# 		planetdev03.fm.intel.com
+	#			American Power Conversion               
+	#					Network Management Card AOS      v3.3.0
+	#			(c) Copyright 2005 All Rights Reserved  
+	#					Rack PDU APP                     v3.3.1
+
+
+	try:
+		#if "ssh" in protocol:
+		if "22" in protocol and protocol['22'] == "open":
+			transport = pyssh.Ssh(username, ip)
+			transport.open()
+			# Login
+			telnet_answer(transport, "password:", password)
+		#elif "telnet" in protocol:
+		elif "23" in protocol and protocol['23'] == "open":
+			transport = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
+			#transport = telnetlib.Telnet(ip)
+			transport.set_debuglevel(verbose)
+			# Login
+			telnet_answer(transport, "User Name", username)
+			telnet_answer(transport, "Password", password)
+		else:
+			logger.debug("Unknown protocol %s" %protocol)
+			raise "Closed protocol ports!"
+
+
+		# 1- Device Manager
+		# 2- Network
+		# 3- System
+		# 4- Logout
+
+		# 1- Device Manager
+		telnet_answer(transport, "\r\n> ", "1")
+
+		# 1- Phase Monitor/Configuration
+		# 2- Outlet Restriction Configuration
+		# 3- Outlet Control/Config
+		# 4- Power Supply Status
+
+		# 3- Outlet Control/Config
+		#telnet_answer(transport, "\r\n> ", "2")
+		#telnet_answer(transport, "\r\n> ", "1")
+
+		# 3- Outlet Control/Config
+		telnet_answer(transport, "\r\n> ", "3")
+
+		# 1- Outlet 1
+		# 2- Outlet 2
+		# ...
+
+		# n- Outlet n
+		telnet_answer(transport, "\r\n> ", str(port))
+		
+		# 1- Control Outlet
+		# 2- Configure Outlet
+
+		# 1- Control Outlet
+		telnet_answer(transport, "\r\n> ", "1")
+
+		# 1- Immediate On			  
+		# 2- Immediate Off			 
+		# 3- Immediate Reboot		  
+		# 4- Delayed On				
+		# 5- Delayed Off			   
+		# 6- Delayed Reboot			
+		# 7- Cancel					
+
+		# 3- Immediate Reboot		  
+		telnet_answer(transport, "\r\n> ", "3")
+
+		if not dryrun:
+			telnet_answer(transport, 
+				"Enter 'YES' to continue or <ENTER> to cancel", "YES\r\n")
+			telnet_answer(transport, 
+				"Press <ENTER> to continue...", "")
+
+		# Close
+		transport.close()
+		return 0
+
+	except EOFError, err:
+		if verbose:
+			logger.debug(err)
+		if transport:
+			transport.close()
+		return errno.ECONNRESET
+	except socket.error, err:
+		if verbose:
+			logger.debug(err)
+		return errno.ETIMEDOUT
+
+	except Exception, err:
+		import traceback
+		traceback.print_exc()
+		if verbose:
+			logger.debug(err)
+		if transport:
+			transport.close()
+		return "apc error: check password"
 
 def apc_reboot(ip, username, password, port, protocol, dryrun):
 	global verbose
@@ -262,7 +370,7 @@ def apc_reboot(ip, username, password, port, protocol, dryrun):
 			logger.debug(err)
 		if transport:
 			transport.close()
-		return "apc error: check password"
+		return apc_reboot_original(ip, username, password, port, protocol, dryrun)
 
 def drac_reboot(ip, username, password, dryrun):
 	global verbose
@@ -639,6 +747,19 @@ def get_pcu_values(pcu_id):
 
 	return values
 
+def check_open_port(values, port_list):
+	ret = False
+
+	if 'portstatus' in values:
+		for port in port_list:
+			if	port in values['portstatus'] and \
+				values['portstatus'][port] == "open":
+
+				ret = True
+	
+	return ret
+	
+
 def reboot_new(nodename, continue_probe, dryrun):
 
 	pcu = plc.getpcu(nodename)
@@ -654,7 +775,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 
 	# DataProbe iPal (many sites)
 	if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
-		if values['portstatus']['23'] == "open":
+		if check_open_port(values, ['23']): 
 			rb_ret = ipal_reboot(pcu_name(values),
 									values['password'],
 									pcu[nodename],
@@ -665,8 +786,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 
 	# APC Masterswitch (Berkeley)
 	elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
-		if  values['portstatus']['22'] == "open" or \
-			values['portstatus']['23'] == "open":
+		if check_open_port(values, ['22', '23']): 
 			rb_ret = apc_reboot(pcu_name(values),
 									values['username'],
 									values['password'], 
@@ -677,7 +797,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 			rb_ret = "Unsupported_Port"
 	# BayTech DS4-RPC
 	elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
-		if values['portstatus']['22'] == "open":
+		if check_open_port(values, ['22']): 
 			rb_ret = baytech_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
@@ -689,7 +809,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 
 	# iLO
 	elif continue_probe and values['model'].find("HP iLO") >= 0:
-		if values['portstatus']['22'] == "open":
+		if check_open_port(values, ['22']): 
 			rb_ret = ilo_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
@@ -699,7 +819,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 			
 	# DRAC ssh
 	elif continue_probe and values['model'].find("Dell RAC") >= 0:
-		if values['portstatus']['22'] == "open":
+		if check_open_port(values, ['22']): 
 			rb_ret = drac_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
@@ -712,7 +832,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	elif continue_probe and \
 		(values['model'].find("BlackBox PS5xx") >= 0 or
 		 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
-		if values['portstatus']['80'] == "open":
+		if check_open_port(values, ['80']): 
 			rb_ret = bbpse_reboot(pcu_name(values),
 							values['username'], 
 							values['password'], 
