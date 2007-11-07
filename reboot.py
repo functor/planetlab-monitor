@@ -106,7 +106,10 @@ def ipal_reboot(ip, password, port, dryrun):
 		telnet_answer(telnet, "Password >", "\r\n\r\n")
 
 		# Login
-		telnet_answer(telnet, "Password >", password + "\r\n\r\n")
+		telnet_answer(telnet, "Password >", password)
+
+		# XXX Some iPals require you to hit Enter a few times first
+		telnet.write("\r\n\r\n")
 
 		# P# - Pulse relay
 		if not dryrun:
