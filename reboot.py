@@ -33,7 +33,7 @@ TELNET_TIMEOUT = 30
 
 import logging
 logger = logging.getLogger("monitor")
-verbose = 0
+verbose = 1
 #dryrun = 0;
 
 class ExceptionNotFound(Exception): pass
@@ -106,7 +106,7 @@ def ipal_reboot(ip, password, port, dryrun):
 		telnet_answer(telnet, "Password >", "\r\n\r\n")
 
 		# Login
-		telnet_answer(telnet, "Password >", password)
+		telnet_answer(telnet, "Password >", password + "\r\n\r\n")
 
 		# P# - Pulse relay
 		if not dryrun:
@@ -638,7 +638,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# DataProbe iPal (many sites)
 	if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
 		if values['portstatus']['23'] == "open":
-			rb_ret = reboot.ipal_reboot(pcu_name(values),
+			rb_ret = ipal_reboot(pcu_name(values),
 									values['password'],
 									pcu[nodename],
 									dryrun)
@@ -650,7 +650,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
 		if  values['portstatus']['22'] == "open" or \
 			values['portstatus']['23'] == "open":
-			rb_ret = reboot.apc_reboot(pcu_name(values),
+			rb_ret = apc_reboot(pcu_name(values),
 									values['username'],
 									values['password'], 
 									pcu[nodename],
@@ -661,7 +661,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# BayTech DS4-RPC
 	elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
 		if values['portstatus']['22'] == "open":
-			rb_ret = reboot.baytech_reboot(pcu_name(values),
+			rb_ret = baytech_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
 									   pcu[nodename],
@@ -673,7 +673,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# iLO
 	elif continue_probe and values['model'].find("HP iLO") >= 0:
 		if values['portstatus']['22'] == "open":
-			rb_ret = reboot.ilo_reboot(pcu_name(values),
+			rb_ret = ilo_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
 									   dryrun)
@@ -683,7 +683,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# DRAC ssh
 	elif continue_probe and values['model'].find("Dell RAC") >= 0:
 		if values['portstatus']['22'] == "open":
-			rb_ret = reboot.drac_reboot(pcu_name(values),
+			rb_ret = drac_reboot(pcu_name(values),
 									   values['username'],
 									   values['password'], 
 									   dryrun)
@@ -696,7 +696,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 		(values['model'].find("BlackBox PS5xx") >= 0 or
 		 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
 		if values['portstatus']['80'] == "open":
-			rb_ret = reboot.bbpse_reboot(pcu_name(values),
+			rb_ret = bbpse_reboot(pcu_name(values),
 							values['username'], 
 							values['password'], 
 							pcu[nodename],
@@ -708,7 +708,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# x10toggle
 	elif 	continue_probe and values['protocol'] == "ssh" and \
 			values['model'] == "x10toggle":
-		rb_ret = reboot.x10toggle_reboot(pcu_name(values),
+		rb_ret = x10toggle_reboot(pcu_name(values),
 										values['username'],
 										values['password'], 
 										pcu[nodename],
@@ -716,7 +716,7 @@ def reboot_new(nodename, continue_probe, dryrun):
 	# ????
 	elif continue_probe and values['protocol'] == "racadm" and \
 			values['model'] == "RAC":
-		rb_ret = reboot.racadm_reboot(pcu_name(values),
+		rb_ret = racadm_reboot(pcu_name(values),
 									  values['username'],
 									  values['password'],
 									  pcu[nodename],
