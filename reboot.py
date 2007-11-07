@@ -160,6 +160,16 @@ def apc_reboot(ip, username, password, port, protocol, dryrun):
 
 	transport = None
 
+	# TODO: I may need to differentiate between different models of APC
+	# hardware...
+	# 	for instance, the original code didn't work for:
+	# 		planetdev03.fm.intel.com
+	#			American Power Conversion               
+	#					Network Management Card AOS      v3.3.0
+	#			(c) Copyright 2005 All Rights Reserved  
+	#					Rack PDU APP                     v3.3.1
+
+
 	try:
 		#if "ssh" in protocol:
 		if "22" in protocol and protocol['22'] == "open":
@@ -194,7 +204,11 @@ def apc_reboot(ip, username, password, port, protocol, dryrun):
 		# 4- Power Supply Status
 
 		# 3- Outlet Control/Config
-		telnet_answer(transport, "\r\n> ", "3")
+		telnet_answer(transport, "\r\n> ", "2")
+		telnet_answer(transport, "\r\n> ", "1")
+
+		# 3- Outlet Control/Config
+		#telnet_answer(transport, "\r\n> ", "3")
 
 		# 1- Outlet 1
 		# 2- Outlet 2
