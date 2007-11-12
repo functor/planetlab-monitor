@@ -5,7 +5,7 @@ Dependencies
 	versions of the command line tool.  
 
 	The RPM pulls in *ALOT* of stuff; probably easier to work with from the
-	source package, especially, since all that's needed is the command line
+	source package, especially since all that's needed is the command line
 	tool.  It has far fewer dependencies than the full RT package.
 
   * MySQL-python
@@ -15,3 +15,23 @@ Dependencies
   * util/PHPSerializer/PHPUnserializer
   	these are helper scripts for converting pickle objects into php serialize
 	objects and back.
+
+  * For iLO control over https, rather than SSH, you'll need the latest
+    linux-LO* tools from HP. Searching for LOCFG.PL and Linux should get you
+	a link.
+
+		These required CPAN perl modules "Net::SSLeay" and "IO::Socket::SSL".
+		These will pull in a bunch of other dependencies...
+
+		$ perl -MCPAN -e "install Net::SSLeay"
+		$ perl -MCPAN -e "install IO::Socket::SSL"
+
+		I had to 'force install IO::Socket::SSL'...
+
+		This mirror is reasonably fast: ftp://mirrors.ibiblio.org
+
+  * For DRAC control over https rather than SSH
+  		http://lanceerplaats.nl/PowerEdge/RAC/
+
+  		$ perl -MCPAN -e "install Crypt::SSLeay"
+
