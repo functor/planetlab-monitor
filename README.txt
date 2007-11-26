@@ -35,3 +35,14 @@ Dependencies
 
   		$ perl -MCPAN -e "install Crypt::SSLeay"
 
+  * For DRAC racadm:
+  		Provides libstdc++-libc6.2-2.so.3:
+
+  			rpm -ihv compat-libstdc++-7.3-2.96.110.i386.rpm
+			rpm -ihv srvadmin-omilcore-4.5.0-335.i386.rpm
+		    rpm -ihv srvadmin-racadm4-4.5.0-335.i386.rpm 
+
+		The srvadmin rpms are available from the Dell Systems Management: Dell CD ISO
+
+		Mounting it and copy out the 'srvadmin/linux' subdirectory.
+
