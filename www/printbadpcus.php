@@ -175,13 +175,6 @@ if ( $_GET['category'] )
 	}
 }
 
-if ( $_GET['auth'] )
-{
-	$auth = True;
-} else {
-	$auth = False;
-}
-
 
 //array_multisort($protocols, SORT_ASC, SORT_STRING, $pculist);
 ?>
@@ -202,11 +195,6 @@ Total PCUs : <?= $total ?>
 			<th><?= get_category_link("reboot", "Dry Run Results") ?></th>
 			<th><?= get_category_link("model", "Model") ?></th>
 			<th><?= get_category_link("node_ids", "Nodes") ?></th>
-			<?php if ( $auth ): ?>
-				<th>Username</th>
-				<th>Password</th>
-				<th>Notes</th>
-			<?php endif; ?>
 		</tr>
 <?php $count = 0; ?>
 <?php foreach ( $pculist as $pcu ): ?>
@@ -220,11 +208,6 @@ Total PCUs : <?= $total ?>
 			<td bgcolor='<?= reboot_to_color($pcu['reboot']) ?>'><?= $pcu['reboot'] ?></td>
 			<td nowrap><?= $pcu['model'] ?></td>
 			<td><?= count( $pcu['node_ids'] ) ?></td>
-			<?php if ( $auth ): ?>
-				<td><?= ( $pcu['username'] ? $pcu['username'] : "&nbsp;" ) ?></td>
-				<td><?= $pcu['password'] ?></td>
-				<td><?= $pcu['notes'] ?></td>
-			<?php endif; ?>
 		</tr>
 <?php $count += 1; ?>
 <?php endforeach; ?>
