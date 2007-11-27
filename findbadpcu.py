@@ -58,6 +58,7 @@ import threading
 plc_lock = threading.Lock()
 round = 1
 externalState = {'round': round, 'nodes': {'a': None}}
+errorState = {}
 count = 0
 
 import reboot
@@ -85,6 +86,7 @@ def nmap_portstatus(status):
 def collectPingAndSSH(pcuname, cohash):
 
 	continue_probe = True
+	errors = None
 	values = {}
 	### GET PCU ######################
 	try:
@@ -95,13 +97,15 @@ def collectPingAndSSH(pcuname, cohash):
 			l_pcu  = plc.GetPCUs({'pcu_id' : pcuname})
 			
 			if len(l_pcu) > 0:
-				node_ids = l_pcu[0]['node_ids']
-				l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 'node_id'])
 				site_id = l_pcu[0]['site_id']
 
-				values['pcu_id'] = l_pcu[0]['pcu_id']
-
+				node_ids = l_pcu[0]['node_ids']
+				l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 
+												 'node_id', 'ports'])
 			if len(l_node) > 0:
+				for node in l_node:
+					values[node['hostname']] = node['ports'][0]
+
 				values['nodenames'] = [node['hostname'] for node in l_node]
 				# NOTE: this is for a dry run later. It doesn't matter which node.
 				values['node_id'] = l_node[0]['node_id']
@@ -130,8 +134,8 @@ def collectPingAndSSH(pcuname, cohash):
 		#### COMPLETE ENTRY   #######################
 
 		values['complete_entry'] = []
-		if values['protocol'] is None or values['protocol'] is "":
-			values['complete_entry'] += ["protocol"]
+		#if values['protocol'] is None or values['protocol'] is "":
+		#	values['complete_entry'] += ["protocol"]
 		if values['model'] is None or values['model'] is "":
 			values['complete_entry'] += ["model"]
 			# Cannot continue due to this condition
@@ -183,119 +187,15 @@ def collectPingAndSSH(pcuname, cohash):
 		#### RUN NMAP ###############################
 		if continue_probe:
 			nmap = soltesz.CMD()
-			(oval,eval) = nmap.run_noexcept("nmap -oG - -p22,23,80,443,16992 %s | grep Host:" % pcu_name(values))
+			(oval,eval) = nmap.run_noexcept("nmap -oG - -p22,23,80,443,5869,16992 %s | grep Host:" % pcu_name(values))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
 
 		######  DRY RUN  ############################
-		node_ids = values['node_ids']
-		ports = values['ports']
-		nid2port = {}
-		i = 0
-
-		for id in node_ids:
-			nid2port[id] = ports[i]
-			i += 1
-
-		# ####
-		# TODO: check port status above for whether or not to try...
-		# ####
-		# DataProbe iPal (many sites)
-		if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
-			if values['portstatus']['23'] == "open":
-				rb_ret = reboot.ipal_reboot(pcu_name(values),
-										values['password'],
-										nid2port[values['node_id']],
-										True)
-			else:
-				rb_ret = "Unsupported_Port"
-				
-
-		# APC Masterswitch (Berkeley)
-		elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
-			if  values['portstatus']['22'] == "open" or \
-				values['portstatus']['23'] == "open":
-				rb_ret = reboot.apc_reboot(pcu_name(values),
-										values['username'],
-										values['password'], 
-										nid2port[values['node_id']], 
-										values['portstatus'], 
-										True)
-			else:
-				rb_ret = "Unsupported_Port"
-		# BayTech DS4-RPC
-		elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
-			if values['portstatus']['22'] == "open":
-				rb_ret = reboot.baytech_reboot(pcu_name(values),
-										   values['username'],
-										   values['password'], 
-										   nid2port[values['node_id']], 
-										   True)
-			else:
-				rb_ret = "Unsupported_Port"
-				
-
-		# iLO
-		elif continue_probe and values['model'].find("HP iLO") >= 0:
-			if values['portstatus']['22'] == "open":
-				rb_ret = reboot.ilo_reboot(pcu_name(values),
-										   values['username'],
-										   values['password'], 
-										   True)
-			else:
-				rb_ret = "Unsupported_Port"
-				
-		# DRAC ssh
-		elif continue_probe and values['model'].find("Dell RAC") >= 0:
-			if values['portstatus']['22'] == "open":
-				rb_ret = reboot.drac_reboot(pcu_name(values),
-										   values['username'],
-										   values['password'], 
-										   True)
-			else:
-				rb_ret = "Unsupported_Port"
-				
-
-		# BlackBox PSExxx-xx (e.g. PSE505-FR)
-		elif continue_probe and \
-			(values['model'].find("BlackBox PS5xx") >= 0 or
-			 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
-			if values['portstatus']['80'] == "open":
-				rb_ret = reboot.bbpse_reboot(pcu_name(values),
-								values['username'], 
-								values['password'], 
-								nid2port[values['node_id']], 
-								80,
-								True)
-			else:
-				rb_ret = "Unsupported_PCU"
-				
-		# x10toggle
-		elif 	continue_probe and values['protocol'] == "ssh" and \
-				values['model'] == "x10toggle":
-			rb_ret = reboot.x10toggle_reboot(pcu_name(values),
-											values['username'],
-											values['password'], 
-											nid2port[values['node_id']], 
-											True)
-		# ????
-		elif continue_probe and values['protocol'] == "racadm" and \
-				values['model'] == "RAC":
-			rb_ret = reboot.racadm_reboot(pcu_name(values),
-										  values['username'],
-										  values['password'],
-										  nid2port[values['node_id']], 
-										  True)
-		elif continue_probe:
-			rb_ret = "Unsupported_PCU"
-
-		elif continue_probe == False:
-			if 'portstatus' in values:
-				rb_ret = "NetDown"
-			else:
-				rb_ret = "Not_Run"
+		if 'node_ids' in values and len(values['node_ids']) > 0:
+			rb_ret = reboot.reboot_test(values['nodenames'][0], values, continue_probe, 1, True)
 		else:
-			rb_ret = -1
+			rb_ret = "Not_Run" # No nodes to test"
 
 		values['reboot'] = rb_ret
 
@@ -329,16 +229,19 @@ def collectPingAndSSH(pcuname, cohash):
 	except:
 		print "____________________________________"
 		print values
+		errors = values
 		print "____________________________________"
 		import traceback
-		traceback.print_exc()
+		errors['traceback'] = traceback.format_exc()
+		print errors['traceback']
 
-	return (pcuname, values)
+	return (pcuname, values, errors)
 
 def recordPingAndSSH(request, result):
+	global errorState
 	global externalState
 	global count
-	(nodename, values) = result
+	(nodename, values, errors) = result
 
 	if values is not None:
 		global_round = externalState['round']
@@ -349,6 +252,11 @@ def recordPingAndSSH(request, result):
 		count += 1
 		print "%d %s %s" % (count, nodename, externalState['nodes'][pcu_id]['values'])
 		soltesz.dbDump(config.dbname, externalState)
+
+	if errors is not None:
+		pcu_id = "id_%s" % nodename
+		errorState[pcu_id] = errors
+		soltesz.dbDump("findbadpcu_errors", errorState)
 
 # this will be called when an exception occurs within a thread
 def handle_exception(request, result):
