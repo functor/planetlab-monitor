@@ -536,7 +536,7 @@ class HPiLOHttps(PCUControl):
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
 		p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
-		cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+		cmd2 = "/bin/grep 'MESSAGE' | /bin/grep -v 'No error'"
 		p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
 		sout, serr = p_grep.communicate()
 
@@ -550,9 +550,11 @@ class HPiLOHttps(PCUControl):
 			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
 					self.host, "iloxml/Reset_Server.xml", 
 					self.username, self.password)
+			print cmd
 			p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-			cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
-			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
+			cmd2 = "/bin/grep 'MESSAGE' | /bin/grep -v 'No error'"
+			print cmd2
+			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
 			sout, serr = p_grep.communicate()
 			p_ilo.wait()
 			p_grep.wait()
@@ -973,6 +975,9 @@ def check_open_port(values, port_list):
 				ret = True
 	
 	return ret
+
+def reboot(nodename):
+	return reboot_policy(nodename, True, False)
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
@@ -989,8 +994,9 @@ def reboot_policy(nodename, continue_probe, dryrun):
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
+	print ret
 
-	if rb_ret != 0:
+	if ret != 0:
 		return False
 	else:
 		return True
@@ -1042,9 +1048,13 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# iLO
 		elif continue_probe and values['model'].find("HP iLO") >= 0:
-			hpilo = HPiLO(values, verbose, ['22'])
-			rb_ret = hpilo.reboot(0, dryrun)
-			if rb_ret != 0:
+			try:
+				hpilo = HPiLO(values, verbose, ['22'])
+				rb_ret = hpilo.reboot(0, dryrun)
+				if rb_ret != 0:
+					hpilo = HPiLOHttps(values, verbose, ['443'])
+					rb_ret = hpilo.reboot(0, dryrun)
+			except:
 				hpilo = HPiLOHttps(values, verbose, ['443'])
 				rb_ret = hpilo.reboot(0, dryrun)
 
