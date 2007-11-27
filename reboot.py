@@ -13,6 +13,8 @@ import array, struct
 #from socket import *
 import socket
 import plc
+import base64
+from subprocess import PIPE, Popen
 
 plc_lock = threading.Lock()
 
@@ -36,11 +38,15 @@ logger = logging.getLogger("monitor")
 verbose = 1
 #dryrun = 0;
 
+class ExceptionNoTransport(Exception): pass
 class ExceptionNotFound(Exception): pass
 class ExceptionPassword(Exception): pass
 class ExceptionTimeout(Exception): pass
 class ExceptionPrompt(Exception): pass
+class ExceptionSequence(Exception): pass
+class ExceptionReset(Exception): pass
 class ExceptionPort(Exception): pass
+class ExceptionUsername(Exception): pass
 
 def telnet_answer(telnet, expected, buffer):
 	global verbose
@@ -56,36 +62,250 @@ def telnet_answer(telnet, expected, buffer):
 
 # PCU has model, host, preferred-port, user, passwd, 
 
-class PCUExpect:
-	def __init__(self, protocol, verbose, dryrun):
-		self.verbose = verbose
-		self.protocol = protocol
-		self.dryrun = dryrun
+# This is an object derived directly form the PLCAPI DB fields
+class PCU(object):
+	def __init__(self, plc_pcu_dict):
+		for field in ['username', 'password', 'site_id', 
+						'hostname', 'ip', 
+						'pcu_id', 'model', 
+						'node_ids', 'ports', ]:
+			if field in plc_pcu_dict:
+				self.__setattr__(field, plc_pcu_dict[field])
+			else:
+				raise Exception("No such field %s in PCU object" % field)
 
-	def telnet_answer(telnet, expected, buffer):
-		global verbose
+# These are the convenience functions build around the PCU object.
+class PCUModel(PCU):
+	def __init__(self, plc_pcu_dict):
+		PCU.__init__(self, plc_pcu_dict)
+		self.host = self.pcu_name()
 
-		output = telnet.read_until(expected, TELNET_TIMEOUT)
-		#if verbose:
-		#	logger.debug(output)
-		if output.find(expected) == -1:
-			raise ExceptionNotFound, "'%s' not found" % expected
+	def pcu_name(self):
+		if self.hostname is not None and self.hostname is not "":
+			return self.hostname
+		elif self.ip is not None and self.ip is not "":
+			return self.ip
 		else:
-			telnet.write(buffer + "\r\n")
-	
-	def _run(self, host, user, passwd, node_port, protocols):
-		self.run()
+			return None
 
-	def run(self):
+	def nodeidToPort(self, node_id):
+		if node_id in self.node_ids:
+			for i in range(0, len(self.node_ids)):
+				if node_id == self.node_ids[i]:
+					return self.ports[i]
+
+		raise Exception("No such Node ID: %d" % node_id)
+
+# This class captures the observed pcu records from FindBadPCUs.py
+class PCURecord:
+	def __init__(self, pcu_record_dict):
+		for field in ['nodenames', 'portstatus', 
+						'dnsmatch', 
+						'complete_entry', ]:
+			if field in pcu_record_dict:
+				if field == "reboot":
+					self.__setattr__("reboot_str", pcu_record_dict[field])
+				else:
+					self.__setattr__(field, pcu_record_dict[field])
+			else:
+				raise Exception("No such field %s in pcu record dict" % field)
+
+class Transport:
+	TELNET = 1
+	SSH    = 2
+	HTTP   = 3
+
+	TELNET_TIMEOUT = 60
+
+	def __init__(self, type, verbose):
+		self.type = type
+		self.verbose = verbose
+		self.transport = None
+
+#	def __del__(self):
+#		if self.transport:
+#			self.close()
+
+	def open(self, host, username=None, password=None, prompt="User Name"):
+		transport = None
+
+		if self.type == self.TELNET:
+			transport = telnetlib.Telnet(host, timeout=self.TELNET_TIMEOUT)
+			transport.set_debuglevel(self.verbose)
+			if username is not None:
+				self.transport = transport
+				self.ifThenSend(prompt, username, ExceptionUsername)
+
+		elif self.type == self.SSH:
+			if username is not None:
+				transport = pyssh.Ssh(username, host)
+				transport.set_debuglevel(self.verbose)
+				transport.open()
+				# TODO: have an ssh set_debuglevel() also...
+			else:
+				raise Exception("Username cannot be None for ssh transport.")
+		elif self.type == self.HTTP:
+			self.url = "http://%s:%d/" % (host,80)
+			uri = "%s:%d" % (host,80)
+
+			# create authinfo
+			authinfo = urllib2.HTTPPasswordMgrWithDefaultRealm()
+			authinfo.add_password (None, uri, username, password)
+			authhandler = urllib2.HTTPBasicAuthHandler( authinfo )
+
+			transport = urllib2.build_opener(authhandler)
+
+		else:
+			raise Exception("Unknown transport type: %s" % self.type)
+
+		self.transport = transport
+		return True
+
+	def close(self):
+		if self.type == self.TELNET:
+			self.transport.close() 
+		elif self.type == self.SSH:
+			self.transport.close() 
+		elif self.type == self.HTTP:
+			pass
+		else:
+			raise Exception("Unknown transport type %s" % self.type)
+		self.transport = None
+
+	def sendHTTP(self, resource, data):
+		if self.verbose:
+			print "POSTing '%s' to %s" % (data,self.url + resource)
+
+		try:
+			f = self.transport.open(self.url + resource ,data)
+			r = f.read()
+			if self.verbose:
+				print r
+
+		except urllib2.URLError,err:
+			logger.info('Could not open http connection', err)
+			return "http transport error"
+
+		return 0
+
+	def sendPassword(self, password, prompt=None):
+		if self.type == self.TELNET:
+			if prompt == None:
+				self.ifThenSend("Password", password, ExceptionPassword)
+			else:
+				self.ifThenSend(prompt, password, ExceptionPassword)
+		elif self.type == self.SSH:
+			self.ifThenSend("password:", password, ExceptionPassword)
+		elif self.type == self.HTTP:
+			pass
+		else:
+			raise Exception("Unknown transport type: %s" % self.type)
+
+	def ifThenSend(self, expected, buffer, ErrorClass=ExceptionPrompt):
+
+		if self.transport != None:
+			output = self.transport.read_until(expected, self.TELNET_TIMEOUT)
+			if output.find(expected) == -1:
+				raise ErrorClass, "'%s' not found" % expected
+			else:
+				self.transport.write(buffer + "\r\n")
+		else:
+			raise ExceptionNoTransport("transport object is type None")
+
+	def ifElse(self, expected, ErrorClass):
+		try:
+			self.transport.read_until(expected, self.TELNET_TIMEOUT)
+		except:
+			raise ErrorClass("Could not find '%s' within timeout" % expected)
+			
+
+class PCUControl(Transport,PCUModel,PCURecord):
+	def __init__(self, plc_pcu_record, verbose, supported_ports=[]):
+		PCUModel.__init__(self, plc_pcu_record)
+		PCURecord.__init__(self, plc_pcu_record)
+		if self.portstatus:
+			if '22' in supported_ports and self.portstatus['22'] == "open":
+				type = Transport.SSH
+			elif '23' in supported_ports and self.portstatus['23'] == "open":
+				type = Transport.TELNET
+			elif '80' in supported_ports and self.portstatus['80'] == "open":
+				type = Transport.HTTP
+			elif '443' in supported_ports and self.portstatus['443'] == "open":
+				type = Transport.HTTP
+			elif '5869' in supported_ports and self.portstatus['5869'] == "open":
+				# For DRAC cards.  not sure how much it's used in the
+				# protocol.. but racadm opens this port.
+				type = Transport.HTTP
+			else:
+				raise ExceptionPort("Unsupported Port: No transport from open ports")
+		Transport.__init__(self, type, verbose)
+
+	def run(self, node_port, dryrun):
+		""" This function is to be defined by the specific PCU instance.  """
 		pass
 		
-	
+	def reboot(self, node_port, dryrun):
+		try:
+			return self.run(node_port, dryrun)
+		except ExceptionNotFound, err:
+			return "error: " + str(err)
+		except ExceptionPassword, err:
+			return "password exception: " + str(err)
+		except ExceptionTimeout, err:
+			return "timeout exception: " + str(err)
+		except ExceptionUsername, err:
+			return "exception: no username prompt: " + str(err)
+		except ExceptionSequence, err:
+			return "sequence error: " + str(err)
+		except ExceptionPrompt, err:
+			return "prompt exception: " + str(err)
+		except ExceptionPort, err:
+			return "no ports exception: " + str(err)
+		except socket.error, err:
+			return "socket error: timeout: " + str(err)
+		except EOFError, err:
+			if self.verbose:
+				logger.debug("reboot: EOF")
+				logger.debug(err)
+			self.transport.close()
+			import traceback
+			traceback.print_exc()
+			return "EOF connection reset" + str(err)
+		#except Exception, err:
+		#	if self.verbose:
+		#		logger.debug("reboot: Exception")
+		#		logger.debug(err)
+		#	if self.transport:
+		#		self.transport.close()
+		#	import traceback
+		#	traceback.print_exc()
+		#	return  "generic exception; unknown problem."
+
+		
+class IPAL(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host)
+
+		# XXX Some iPals require you to hit Enter a few times first
+		self.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
+
+		# Login
+		self.ifThenSend("Password >", self.password, ExceptionPassword)
+		self.transport.write("\r\n\r\n")
+
+		if not dryrun: # P# - Pulse relay
+			self.ifThenSend("Enter >", 
+							"P%d" % node_port, 
+							ExceptionNotFound)
+		# Get the next prompt
+		self.ifElse("Enter >", ExceptionTimeout)
+
+		self.close()
+		return 0
 
 def ipal_reboot(ip, password, port, dryrun):
 	global verbose
 	global plc_lock
-
-
 	telnet = None
 
 	try:
@@ -154,403 +374,397 @@ def ipal_reboot(ip, password, port, dryrun):
 		#plc_lock.release()
 		return  "ipal error"
 
-def apc_reboot_original(ip, username, password, port, protocol, dryrun):
-	global verbose
+class APCEurope(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
 
-	transport = None
-
-	# TODO: I may need to differentiate between different models of APC
-	# hardware...
-	# 	for instance, the original code didn't work for:
-	# 		planetdev03.fm.intel.com
-	#			American Power Conversion               
-	#					Network Management Card AOS      v3.3.0
-	#			(c) Copyright 2005 All Rights Reserved  
-	#					Rack PDU APP                     v3.3.1
-
-
-	try:
-		#if "ssh" in protocol:
-		if "22" in protocol and protocol['22'] == "open":
-			transport = pyssh.Ssh(username, ip)
-			transport.open()
-			# Login
-			telnet_answer(transport, "password:", password)
-		#elif "telnet" in protocol:
-		elif "23" in protocol and protocol['23'] == "open":
-			transport = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
-			#transport = telnetlib.Telnet(ip)
-			transport.set_debuglevel(verbose)
-			# Login
-			telnet_answer(transport, "User Name", username)
-			telnet_answer(transport, "Password", password)
-		else:
-			logger.debug("Unknown protocol %s" %protocol)
-			raise "Closed protocol ports!"
-
-
-		# 1- Device Manager
-		# 2- Network
-		# 3- System
-		# 4- Logout
-
-		# 1- Device Manager
-		telnet_answer(transport, "\r\n> ", "1")
-
-		# 1- Phase Monitor/Configuration
-		# 2- Outlet Restriction Configuration
-		# 3- Outlet Control/Config
-		# 4- Power Supply Status
-
-		# 3- Outlet Control/Config
-		#telnet_answer(transport, "\r\n> ", "2")
-		#telnet_answer(transport, "\r\n> ", "1")
-
-		# 3- Outlet Control/Config
-		telnet_answer(transport, "\r\n> ", "3")
-
-		# 1- Outlet 1
-		# 2- Outlet 2
-		# ...
-
-		# n- Outlet n
-		telnet_answer(transport, "\r\n> ", str(port))
-		
-		# 1- Control Outlet
-		# 2- Configure Outlet
-
-		# 1- Control Outlet
-		telnet_answer(transport, "\r\n> ", "1")
-
-		# 1- Immediate On			  
-		# 2- Immediate Off			 
+		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
+		self.ifThenSend("\r\n> ", "2")
+		self.ifThenSend("\r\n> ", str(node_port))
 		# 3- Immediate Reboot		  
-		# 4- Delayed On				
-		# 5- Delayed Off			   
-		# 6- Delayed Reboot			
-		# 7- Cancel					
-
-		# 3- Immediate Reboot		  
-		telnet_answer(transport, "\r\n> ", "3")
+		self.ifThenSend("\r\n> ", "3")
 
 		if not dryrun:
-			telnet_answer(transport, 
-				"Enter 'YES' to continue or <ENTER> to cancel", "YES\r\n")
-			telnet_answer(transport, 
-				"Press <ENTER> to continue...", "")
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"YES\r\n",
+							ExceptionSequence)
+		else:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"", ExceptionSequence)
+		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
 
-		# Close
-		transport.close()
+		self.close()
 		return 0
 
-	except EOFError, err:
-		if verbose:
-			logger.debug(err)
-		if transport:
-			transport.close()
-		return errno.ECONNRESET
-	except socket.error, err:
-		if verbose:
-			logger.debug(err)
-		return errno.ETIMEDOUT
+class APCFolsom(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
 
-	except Exception, err:
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if transport:
-			transport.close()
-		return "apc error: check password"
-
-def apc_reboot(ip, username, password, port, protocol, dryrun):
-	global verbose
-
-	transport = None
-
-	# TODO: I may need to differentiate between different models of APC
-	# hardware...
-	# 	for instance, the original code didn't work for:
-	# 		planetdev03.fm.intel.com
-	#			American Power Conversion               
-	#					Network Management Card AOS      v3.3.0
-	#			(c) Copyright 2005 All Rights Reserved  
-	#					Rack PDU APP                     v3.3.1
-
-
-	try:
-		#if "ssh" in protocol:
-		if "22" in protocol and protocol['22'] == "open":
-			transport = pyssh.Ssh(username, ip)
-			transport.open()
-			# Login
-			telnet_answer(transport, "password:", password)
-		#elif "telnet" in protocol:
-		elif "23" in protocol and protocol['23'] == "open":
-			transport = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
-			#transport = telnetlib.Telnet(ip)
-			transport.set_debuglevel(verbose)
-			# Login
-			telnet_answer(transport, "User Name", username)
-			telnet_answer(transport, "Password", password)
-		else:
-			logger.debug("Unknown protocol %s" %protocol)
-			raise "Closed protocol ports!"
-
-
-		# 1- Device Manager
-		# 2- Network
-		# 3- System
-		# 4- Logout
-
-		# 1- Device Manager
-		telnet_answer(transport, "\r\n> ", "1")
-
-		# 1- Phase Monitor/Configuration
-		# 2- Outlet Restriction Configuration
-		# 3- Outlet Control/Config
-		# 4- Power Supply Status
-
-		# 3- Outlet Control/Config
-		telnet_answer(transport, "\r\n> ", "2")
-		telnet_answer(transport, "\r\n> ", "1")
-
-		# 3- Outlet Control/Config
-		#telnet_answer(transport, "\r\n> ", "3")
-
-		# 1- Outlet 1
-		# 2- Outlet 2
-		# ...
-
-		# n- Outlet n
-		telnet_answer(transport, "\r\n> ", str(port))
-		
-		# 1- Control Outlet
-		# 2- Configure Outlet
-
-		# 1- Control Outlet
-		telnet_answer(transport, "\r\n> ", "1")
-
-		# 1- Immediate On			  
-		# 2- Immediate Off			 
-		# 3- Immediate Reboot		  
-		# 4- Delayed On				
-		# 5- Delayed Off			   
-		# 6- Delayed Reboot			
-		# 7- Cancel					
+		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
+		self.ifThenSend("\r\n> ", "2")
+		self.ifThenSend("\r\n> ", "1")
+		self.ifThenSend("\r\n> ", str(node_port))
+		self.ifThenSend("\r\n> ", "1")
 
 		# 3- Immediate Reboot		  
-		telnet_answer(transport, "\r\n> ", "3")
+		self.ifThenSend("\r\n> ", "3")
 
 		if not dryrun:
-			telnet_answer(transport, 
-				"Enter 'YES' to continue or <ENTER> to cancel", "YES\r\n")
-			telnet_answer(transport, 
-				"Press <ENTER> to continue...", "")
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"YES\r\n",
+							ExceptionSequence)
+		else:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"", ExceptionSequence)
+		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
 
-		# Close
-		transport.close()
+		self.close()
 		return 0
 
-	except EOFError, err:
-		if verbose:
-			logger.debug(err)
-		if transport:
-			transport.close()
-		return errno.ECONNRESET
-	except socket.error, err:
-		if verbose:
-			logger.debug(err)
-		return errno.ETIMEDOUT
+class APCMaster(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
 
-	except Exception, err:
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if transport:
-			transport.close()
-		return apc_reboot_original(ip, username, password, port, protocol, dryrun)
+		# 1- Device Manager
+		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
+		# 3- Outlet Control/Config
+		self.ifThenSend("\r\n> ", "3")
+		# n- Outlet n
+		self.ifThenSend("\r\n> ", str(node_port))
+		# 1- Control Outlet
+		self.ifThenSend("\r\n> ", "1")
+		# 3- Immediate Reboot		  
+		self.ifThenSend("\r\n> ", "3")
 
-def drac_reboot(ip, username, password, dryrun):
-	global verbose
-	ssh = None
-	try:
-		ssh = pyssh.Ssh(username, ip)
-		ssh.set_debuglevel(verbose)
-		ssh.open()
-		# Login
-		print "password"
-		telnet_answer(ssh, "password:", password)
+		if not dryrun:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"YES\r\n",
+							ExceptionSequence)
+		else:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"", ExceptionSequence)
+		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
 
+		self.close()
+		return 0
+
+class APC(PCUControl):
+	def __init__(self, plc_pcu_record, verbose):
+		PCUControl.__init__(self, plc_pcu_record, verbose)
+
+		self.master = APCMaster(plc_pcu_record, verbose)
+		self.folsom = APCFolsom(plc_pcu_record, verbose)
+		self.europe = APCEurope(plc_pcu_record, verbose)
+
+	def run(self, node_port, dryrun):
+		try_again = True
+		sleep_time = 1
+
+		for pcu in [self.master, self.europe, self.folsom]:
+			if try_again:
+				try:
+					print "-*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"
+					try_again = False
+					print "sleeping 5"
+					time.sleep(sleep_time)
+					ret = pcu.reboot(node_port, dryrun)
+				except ExceptionSequence, err:
+					del pcu
+					sleep_time = 130
+					try_again = True
+
+		if try_again:
+			return "Unknown reboot sequence for APC PCU"
+		else:
+			return ret
+
+class DRACRacAdm(PCUControl):
+	def run(self, node_port, dryrun):
+
+		print "trying racadm_reboot..."
+		racadm_reboot(self.host, self.username, self.password, node_port, dryrun)
+
+		return 0
+
+class DRAC(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
+
+		print "logging in..."
+		self.transport.write("\r\n")
 		# Testing Reboot ?
-		print "reset or power"
 		if dryrun:
-			telnet_answer(ssh, "[%s]#" % username, "getsysinfo")
+			self.ifThenSend("[%s]#" % self.username, "getsysinfo")
 		else:
 			# Reset this machine
-			telnet_answer(ssh, "[%s]#" % username, "serveraction powercycle")
+			self.ifThenSend("[%s]#" % self.username, "serveraction powercycle")
 
-		print "exit"
-		telnet_answer(ssh, "[%s]#" % username, "exit")
+		self.ifThenSend("[%s]#" % self.username, "exit")
 
-		# Close
-		print "close"
-		output = ssh.close()
+		self.close()
 		return 0
 
-	except socket.error, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return errno.ETIMEDOUT
-	except Exception, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return "drac error: check password"
+class HPiLO(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
 
-def ilo_reboot(ip, username, password, dryrun):
-	global verbose
-
-	ssh = None
-
-	try:
-		ssh = pyssh.Ssh(username, ip)
-		ssh.set_debuglevel(verbose)
-		ssh.open()
-		# Login
-		print "password"
-		telnet_answer(ssh, "password:", password)
-
-		# User:vici logged-in to ILOUSE701N7N4.CS.Princeton.EDU(128.112.154.171)
-		# iLO Advanced 1.26 at 10:01:40 Nov 17 2006
-		# Server Name: USE701N7N400
-		# Server Power: On
-		# 
 		# </>hpiLO-> 
-		print "cd system1"
-		telnet_answer(ssh, "</>hpiLO->", "cd system1")
+		self.ifThenSend("</>hpiLO->", "cd system1")
 
 		# Reboot Outlet  N	  (Y/N)?
-		print "reset or power"
 		if dryrun:
-			telnet_answer(ssh, "</system1>hpiLO->", "POWER")
+			self.ifThenSend("</system1>hpiLO->", "POWER")
 		else:
 			# Reset this machine
-			telnet_answer(ssh, "</system1>hpiLO->", "reset")
+			self.ifThenSend("</system1>hpiLO->", "reset")
 
-		print "exit"
-		telnet_answer(ssh, "</system1>hpiLO->", "exit")
+		self.ifThenSend("</system1>hpiLO->", "exit")
 
-		# Close
-		print "close"
-		output = ssh.close()
+		self.close()
 		return 0
 
-	except socket.error, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return errno.ETIMEDOUT
-	except Exception, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return "ilo error: check password"
+		
+class HPiLOHttps(PCUControl):
+	def run(self, node_port, dryrun):
 
-def baytech_reboot(ip, username, password, port, dryrun):
-	global verbose
+		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
+					self.host, "iloxml/Get_Network.xml", 
+					self.username, self.password)
+		p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
+		cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+		p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
+		sout, serr = p_grep.communicate()
 
-	ssh = None
+		p_ilo.wait()
+		p_grep.wait()
+		if sout.strip() != "":
+			print "sout: %s" % sout.strip()
+			return sout.strip()
 
-	#verbose = 1 
-	try:
-		ssh = pyssh.Ssh(username, ip)
-		ssh.set_debuglevel(verbose)
-		ssh.open()
+		if not dryrun:
+			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
+					self.host, "iloxml/Reset_Server.xml", 
+					self.username, self.password)
+			p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
+			cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
+			sout, serr = p_grep.communicate()
+			p_ilo.wait()
+			p_grep.wait()
 
-		# Login
-		telnet_answer(ssh, "password:", password)
+			if sout.strip() != "":
+				print "sout: %s" % sout.strip()
+				return sout.strip()
 
-		# PL1 comm output  (2 ,1).........1
-		# PL2 comm output  (2 ,2).........2
-		# PL3 comm output  (2 ,3).........3
-		# no machine	   (2 ,4).........4
+		return 0
+
+class BayTechGeorgeTown(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username, None, "Enter user name:")
+		self.sendPassword(self.password, "Enter Password:")
+
+		#self.ifThenSend("RPC-16>", "Status")
+
+		self.ifThenSend("RPC-16>", "Reboot %d" % node_port)
+
+		# Reboot Outlet  N	  (Y/N)?
+		if dryrun:
+			self.ifThenSend("(Y/N)?", "N")
+		else:
+			self.ifThenSend("(Y/N)?", "Y")
+		self.ifThenSend("RPC-16>", "")
+
+		self.close()
+		return 0
+
+class BayTechCtrlC(PCUControl):
+	"""
+		For some reason, these units let you log in fine, but they hang
+		indefinitely, unless you send a Ctrl-C after the password.  No idea
+		why.
+	"""
+	def run(self, node_port, dryrun):
+		print "BayTechCtrlC %s" % self.host
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
+
+		#self.transport.write('')
+		self.transport.write("\r\n")
+		self.transport.write(pyssh.CTRL_C)
+		#self.transport.write(chr(3))
+		#self.transport.write(chr(24))
+		#self.transport.write(chr(26))
+		#self.transport.write('')
 		# Control Outlets  (5 ,1).........5
-		# Logout..........................T
-
-		# Control Outlets  (5 ,1).........5
-		telnet_answer(ssh, "Enter Request :", "5")
+		self.ifThenSend("Enter Request :", "5")
 
 		# Reboot N
 		try:
-			telnet_answer(ssh, "DS-RPC>", "Reboot %d" % port)
+			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
 		except ExceptionNotFound, msg:
 			# one machine is configured to ask for a username,
 			# even after login...
 			print "msg: %s" % msg
-			ssh.write(username + "\r\n")
-			telnet_answer(ssh, "DS-RPC>", "Reboot %d" % port)
+			self.transport.write(self.username + "\r\n")
+			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
 			
 
 		# Reboot Outlet  N	  (Y/N)?
 		if dryrun:
-			telnet_answer(ssh, "(Y/N)?", "N")
+			self.ifThenSend("(Y/N)?", "N")
 		else:
-			telnet_answer(ssh, "(Y/N)?", "Y")
-		telnet_answer(ssh, "DS-RPC>", "")
+			self.ifThenSend("(Y/N)?", "Y")
+		self.ifThenSend("DS-RPC>", "")
 
-		# Close
-		output = ssh.close()
+		self.close()
 		return 0
 
-	except socket.error, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return errno.ETIMEDOUT
-	except Exception, err:
-		print "exception"
-		import traceback
-		traceback.print_exc()
-		if verbose:
-			logger.debug(err)
-		if ssh:
-			output = ssh.close()
-			if verbose:
-				logger.debug(err)
-		return "baytech error: check password"
+class BayTech(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
+
+		# Control Outlets  (5 ,1).........5
+		self.ifThenSend("Enter Request :", "5")
+
+		# Reboot N
+		try:
+			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
+		except ExceptionNotFound, msg:
+			# one machine is configured to ask for a username,
+			# even after login...
+			print "msg: %s" % msg
+			self.transport.write(self.username + "\r\n")
+			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
+			
+
+		# Reboot Outlet  N	  (Y/N)?
+		if dryrun:
+			self.ifThenSend("(Y/N)?", "N")
+		else:
+			self.ifThenSend("(Y/N)?", "Y")
+		self.ifThenSend("DS-RPC>", "")
+
+		self.close()
+		return 0
+
+class ePowerSwitchGood(PCUControl):
+	# NOTE:
+	# 		The old code used Python's HTTPPasswordMgrWithDefaultRealm()
+	#		For some reason this both doesn't work and in some cases, actually
+	#		hangs the PCU.  Definitely not what we want.
+	#		
+	# 		The code below is much simpler.  Just letting things fail first,
+	# 		and then, trying again with authentication string in the header.
+	#		
+	def run(self, node_port, dryrun):
+		self.transport = None
+		self.url = "http://%s:%d/" % (self.host,80)
+		uri = "%s:%d" % (self.host,80)
+
+		req = urllib2.Request(self.url)
+		try:
+			handle = urllib2.urlopen(req)
+		except IOError, e:
+			# NOTE: this is expected to fail initially
+			pass
+		else:
+			print self.url
+			print "-----------"
+			print handle.read()
+			print "-----------"
+			return "ERROR: not protected by HTTP authentication"
+
+		if not hasattr(e, 'code') or e.code != 401:
+			return "ERROR: failed for: %s" % str(e)
+
+		base64data = base64.encodestring("%s:%s" % (self.username, self.password))[:-1]
+		# NOTE: assuming basic realm authentication.
+		authheader = "Basic %s" % base64data
+		req.add_header("Authorization", authheader)
+
+		try:
+			f = urllib2.urlopen(req)
+		except IOError, e:
+			# failing here means the User/passwd is wrong (hopefully)
+			raise ExceptionPassword("Incorrect username/password")
+
+		# TODO: after verifying that the user/password is correct, we should
+		# actually reboot the given node.
+
+		if not dryrun:
+			# add data to handler,
+			# fetch url one more time on cmd.html, econtrol.html or whatever.
+			pass
+
+		if self.verbose: print f.read()
+
+		self.close()
+		return 0
+
+
+class ePowerSwitchOld(PCUControl):
+	def run(self, node_port, dryrun):
+		self.url = "http://%s:%d/" % (self.host,80)
+		uri = "%s:%d" % (self.host,80)
+
+		# create authinfo
+		authinfo = urllib2.HTTPPasswordMgrWithDefaultRealm()
+		authinfo.add_password (None, uri, self.username, self.password)
+		authhandler = urllib2.HTTPBasicAuthHandler( authinfo )
+
+		# NOTE: it doesn't seem to matter whether this authinfo is here or not.
+		transport = urllib2.build_opener(authinfo)
+		f = transport.open(self.url)
+		if self.verbose: print f.read()
+
+		if not dryrun:
+			transport = urllib2.build_opener(authhandler)
+			f = transport.open(self.url + "cmd.html", "P%d=r" % node_port)
+			if self.verbose: print f.read()
+
+		self.close()
+		return 0
+
+class ePowerSwitch(PCUControl):
+	def run(self, node_port, dryrun):
+		self.url = "http://%s:%d/" % (self.host,80)
+		uri = "%s:%d" % (self.host,80)
+
+		# TODO: I'm still not sure what the deal is here.
+		# 		two independent calls appear to need to be made before the
+		# 		reboot will succeed.  It doesn't seem to be possible to do
+		# 		this with a single call.  I have no idea why.
+
+		# create authinfo
+		authinfo = urllib2.HTTPPasswordMgrWithDefaultRealm()
+		authinfo.add_password (None, uri, self.username, self.password)
+		authhandler = urllib2.HTTPBasicAuthHandler( authinfo )
+
+		# NOTE: it doesn't seem to matter whether this authinfo is here or not.
+		transport = urllib2.build_opener()
+		f = transport.open(self.url + "elogin.html", "pwd=%s" % self.password)
+		if self.verbose: print f.read()
+
+		if not dryrun:
+			transport = urllib2.build_opener(authhandler)
+			f = transport.open(self.url + "econtrol.html", "P%d=r" % node_port)
+			if self.verbose: print f.read()
+
+		#	data= "P%d=r" % node_port
+		#self.open(self.host, self.username, self.password)
+		#self.sendHTTP("elogin.html", "pwd=%s" % self.password)
+		#self.sendHTTP("econtrol.html", data)
+		#self.sendHTTP("cmd.html", data)
+
+		self.close()
+		return 0
+		
 
 ### rebooting european BlackBox PSE boxes
 # Thierry Parmentelat - May 11 2005
@@ -714,9 +928,10 @@ def racadm_reboot(ip, username, password, port, dryrun):
 			output = runcmd(cmd, ["-r %s -i serveraction powercycle" % ip],
 				username, password)
 		else:
-			output = "dryrun of racadm command"
+			output = runcmd(cmd, ["-r %s -i getsysinfo" % ip],
+				username, password)
 
-		logger.debug("runcmd returned without output %s" % output)
+		print "RUNCMD: %s" % output
 		if verbose:
 			logger.debug(output)
 		return 0
@@ -725,7 +940,7 @@ def racadm_reboot(ip, username, password, port, dryrun):
 		logger.debug("runcmd raised exception %s" % err)
 		if verbose:
 			logger.debug(err)
-		return errno.ETIMEDOUT
+		return -1
 
 def pcu_name(pcu):
 	if pcu['hostname'] is not None and pcu['hostname'] is not "":
@@ -759,124 +974,132 @@ def check_open_port(values, port_list):
 	
 	return ret
 	
-
-def reboot_new(nodename, continue_probe, dryrun):
+def reboot_policy(nodename, continue_probe, dryrun):
+	global verbose
 
 	pcu = plc.getpcu(nodename)
 	if not pcu:
-		return False
+		return False # "%s has no pcu" % nodename
 
 	values = get_pcu_values(pcu['pcu_id'])
 	if values == None:
-		return False
+		return False #"no info for pcu_id %s" % pcu['pcu_id']
 	
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
-	# DataProbe iPal (many sites)
-	if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
-		if check_open_port(values, ['23']): 
-			rb_ret = ipal_reboot(pcu_name(values),
-									values['password'],
-									pcu[nodename],
-									dryrun)
-		else:
-			rb_ret = "Unsupported_Port"
-			
+	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
 
-	# APC Masterswitch (Berkeley)
-	elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
-		if check_open_port(values, ['22', '23']): 
-			rb_ret = apc_reboot(pcu_name(values),
-									values['username'],
-									values['password'], 
-									pcu[nodename],
-									values['portstatus'], 
-									dryrun)
-		else:
-			rb_ret = "Unsupported_Port"
-	# BayTech DS4-RPC
-	elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
-		if check_open_port(values, ['22']): 
-			rb_ret = baytech_reboot(pcu_name(values),
-									   values['username'],
-									   values['password'], 
-									   pcu[nodename],
-									   dryrun)
-		else:
-			rb_ret = "Unsupported_Port"
-			
-
-	# iLO
-	elif continue_probe and values['model'].find("HP iLO") >= 0:
-		if check_open_port(values, ['22']): 
-			rb_ret = ilo_reboot(pcu_name(values),
-									   values['username'],
-									   values['password'], 
-									   dryrun)
-		else:
-			rb_ret = "Unsupported_Port"
-			
-	# DRAC ssh
-	elif continue_probe and values['model'].find("Dell RAC") >= 0:
-		if check_open_port(values, ['22']): 
-			rb_ret = drac_reboot(pcu_name(values),
-									   values['username'],
-									   values['password'], 
-									   dryrun)
-		else:
-			rb_ret = "Unsupported_Port"
-			
-
-	# BlackBox PSExxx-xx (e.g. PSE505-FR)
-	elif continue_probe and \
-		(values['model'].find("BlackBox PS5xx") >= 0 or
-		 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
-		if check_open_port(values, ['80']): 
-			rb_ret = bbpse_reboot(pcu_name(values),
-							values['username'], 
-							values['password'], 
-							pcu[nodename],
-							80,
-							dryrun)
-		else:
-			rb_ret = "Unsupported_PCU"
-			
-	# x10toggle
-	elif 	continue_probe and values['protocol'] == "ssh" and \
-			values['model'] == "x10toggle":
-		rb_ret = x10toggle_reboot(pcu_name(values),
-										values['username'],
-										values['password'], 
-										pcu[nodename],
-										dryrun)
-	# ????
-	elif continue_probe and values['protocol'] == "racadm" and \
-			values['model'] == "RAC":
-		rb_ret = racadm_reboot(pcu_name(values),
-									  values['username'],
-									  values['password'],
-									  pcu[nodename],
-									  dryrun)
-	elif continue_probe:
-		rb_ret = "Unsupported_PCU"
-
-	elif continue_probe == False:
-		if 'portstatus' in values:
-			rb_ret = "NetDown"
-		else:
-			rb_ret = "Not_Run"
-	else:
-		rb_ret = -1
-	
 	if rb_ret != 0:
 		return False
 	else:
 		return True
 
+def reboot_test(nodename, values, continue_probe, verbose, dryrun):
+	rb_ret = ""
+
+	try:
+		# DataProbe iPal (many sites)
+		if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
+			ipal = IPAL(values, verbose, ['23'])
+			rb_ret = ipal.reboot(values[nodename], dryrun)
+				
+		# APC Masterswitch (Berkeley)
+		elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
+
+			# TODO: make a more robust version of APC
+			if values['pcu_id'] in [1163,1055,1111,1231,1113,1127,1128,1148]:
+				apc = APCEurope(values, verbose, ['22', '23'])
+				rb_ret = apc.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [1173,1221,1220,1225]:
+				apc = APCFolsom(values, verbose, ['22', '23'])
+				rb_ret = apc.reboot(values[nodename], dryrun)
+
+			else:
+				apc = APCMaster(values, verbose, ['22', '23'])
+				rb_ret = apc.reboot(values[nodename], dryrun)
+
+		# BayTech DS4-RPC
+		elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
+			if values['pcu_id'] in [1041,1209,1025,1052,1057]:
+				# These  require a 'ctrl-c' to be sent... 
+				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
+				rb_ret = baytech.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [1012]:
+				# This pcu sometimes doesn't present the 'Username' prompt,
+				# unless you immediately try again...
+				try:
+					baytech = BayTechGeorgeTown(values, verbose, ['22', '23'])
+					rb_ret = baytech.reboot(values[nodename], dryrun)
+				except:
+					baytech = BayTechGeorgeTown(values, verbose, ['22', '23'])
+					rb_ret = baytech.reboot(values[nodename], dryrun)
+			else:
+				baytech = BayTech(values, verbose, ['22', '23'])
+				rb_ret = baytech.reboot(values[nodename], dryrun)
+
+		# iLO
+		elif continue_probe and values['model'].find("HP iLO") >= 0:
+			hpilo = HPiLO(values, verbose, ['22'])
+			rb_ret = hpilo.reboot(0, dryrun)
+			if rb_ret != 0:
+				hpilo = HPiLOHttps(values, verbose, ['443'])
+				rb_ret = hpilo.reboot(0, dryrun)
+
+		# DRAC ssh
+		elif continue_probe and values['model'].find("Dell RAC") >= 0:
+			# TODO: I don't think DRACRacAdm will throw an exception for the
+			# default method to catch...
+			try:
+				drac = DRACRacAdm(values, verbose, ['443', '5869'])
+				rb_ret = drac.reboot(0, dryrun)
+			except:
+				drac = DRAC(values, verbose, ['22'])
+				rb_ret = drac.reboot(0, dryrun)
+
+		# BlackBox PSExxx-xx (e.g. PSE505-FR)
+		elif continue_probe and \
+			(values['model'].find("BlackBox PS5xx") >= 0 or
+			 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
+
+			# TODO: allow a different port than http 80.
+			if values['pcu_id'] in [1089, 1071, 1046, 1035, 1118]:
+				eps = ePowerSwitchGood(values, verbose, ['80'])
+			elif values['pcu_id'] in [1003]:
+				eps = ePowerSwitch(values, verbose, ['80'])
+			else:
+				eps = ePowerSwitchGood(values, verbose, ['80'])
+
+			rb_ret = eps.reboot(values[nodename], dryrun)
+
+		elif continue_probe:
+			rb_ret = "Unsupported_PCU"
+
+		elif continue_probe == False:
+			if 'portstatus' in values:
+				rb_ret = "NetDown"
+			else:
+				rb_ret = "Not_Run"
+		else:
+			rb_ret = -1
+
+	except ExceptionPort, err:
+		rb_ret = str(err)
+
+	return rb_ret
+	# ????
+	#elif continue_probe and values['protocol'] == "racadm" and \
+	#		values['model'] == "RAC":
+	#	rb_ret = racadm_reboot(pcu_name(values),
+	#								  values['username'],
+	#								  values['password'],
+	#								  pcu[nodename],
+	#								  dryrun)
 
 # Returns true if rebooted via PCU
-def reboot(nodename, dryrun):
+def reboot_old(nodename, dryrun):
 	pcu = plc.getpcu(nodename)
 	if not pcu:
 		plc.nodePOD(nodename)
@@ -916,54 +1139,6 @@ def reboot(nodename, dryrun):
 		return False
 	return True 
 
-#def get_suggested(suggestion_id,db):
-#
-#	sql= """select node_id,pcu_id from nodes where suggestion = %d """\
-#			% (suggestion_id)
-#	try:
-#		nodes = db.query(sql).dictresult()
-#	except pg.ProgrammingError, err:
-#		print( "Database error for query: %s\n%s" % (sql,err) )
-#		sys.exit(1)
-#	return nodes
-
-#def get_pcu_info(node_id,pcu_id,db):
-#	sql= """select port_number from pcu_ports where node_id = %d and pcu_id = %d """\
-#			% (node_id,pcu_id)
-#	try:
-#	   port_number = db.query(sql).dictresult()
-#	except pg.ProgrammingError, err:
-#		print( "Database error for query: %s\n%s" % (sql,err) )
-#		sys.exit(1)
-#	
-#	sql= """select * from pcu where pcu_id = %d """\
-#			% (pcu_id)
-#	try:
-#		pcu = db.query(sql).dictresult()
-#	except pg.ProgrammingError, err:
-#		print( "Database error for query: %s\n%s" % (sql,err) )
-#		sys.exit(1)
-#
-#	result = {'node_id':node_id,'pcu_id':pcu_id,'port_number':port_number[0]['port_number'], 
-#			  'ip':pcu[0]['ip'],'username':pcu[0]['username'],'password':pcu[0]['password'],\
-#			  'model':pcu[0]['model'],'protocol':pcu[0]['protocol'],'hostname':pcu[0]['hostname']}
-#
-#	return result
-
-#def add_plc_event(node_id,err,db):
-#	site_id = plc_db_utils.get_site_from_node_id(node_id,db)
-#	message = "PCU reboot by monitor-msgs@planet-lab.org: %s" % os.strerror(err)
-#
-#	sql = """insert into events (event_class_id,message,person_id,node_id,site_id) values """\
-#		  """(%d,'%s',%d,%d,%d)""" % (NODE_POWER_CONTROL,message,MONITOR_USER_ID,node_id,site_id)
-#	print sql
-#
-#	try:
-#		db.query(sql)
-#	except pg.ProgrammingError, err:
-#		print( "Database error for: %s\n%s" % (sql,err) )
-#		sys.exit(1)
-
 
 def main():
 	logger.setLevel(logging.DEBUG)
@@ -973,28 +1148,11 @@ def main():
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
 
-
 	try:
 		reboot("planetlab2.cs.uchicago.edu")
 		reboot("alice.cs.princeton.edu")
 	except Exception, err:
 		print err
-	# used later for pretty printing
-#	pp = pprint.PrettyPrinter(indent=2)
-
-#	user = "Monitor"
-#	password = None
-
-#	plc_db = plc_dbs.open_plc_db_write()
-#	mon_db = plc_dbs.open_mon_db()
-
-	# 5 = needs script reboot - fix this later
-#	nodes = get_suggested(5,mon_db)
-
-#	for row in nodes:
-		
-#		pcu = get_pcu_info(row['node_id'],row['pcu_id'],plc_db)
-#		add_plc_event(row['node_id'],err,plc_db)
 
 if __name__ == '__main__':
 	import plc
