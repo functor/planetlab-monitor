@@ -46,3 +46,6 @@ Dependencies
 
 		Mounting it and copy out the 'srvadmin/linux' subdirectory.
 
+
+		Have to suid root:
+			chmod 4755 /usr/sbin/racadm
