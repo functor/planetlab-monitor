@@ -1096,9 +1096,13 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# iLO
 		elif continue_probe and values['model'].find("HP iLO") >= 0:
-			hpilo = HPiLO(values, verbose, ['22'])
-			rb_ret = hpilo.reboot(0, dryrun)
-			if rb_ret != 0:
+			try:
+				hpilo = HPiLO(values, verbose, ['22'])
+				rb_ret = hpilo.reboot(0, dryrun)
+				if rb_ret != 0:
+					hpilo = HPiLOHttps(values, verbose, ['443'])
+					rb_ret = hpilo.reboot(0, dryrun)
+			except:
 				hpilo = HPiLOHttps(values, verbose, ['443'])
 				rb_ret = hpilo.reboot(0, dryrun)
 
