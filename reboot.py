@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")
 import pyssh
 
 # Timeouts in seconds
-TELNET_TIMEOUT = 30
+TELNET_TIMEOUT = 45
 
 # Event class ID from pcu events
 #NODE_POWER_CONTROL = 3
@@ -397,6 +397,52 @@ class APCEurope(PCUControl):
 		self.close()
 		return 0
 
+class APCBrazil(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
+
+		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
+		self.ifThenSend("\r\n> ", str(node_port))
+		# 4- Immediate Reboot		  
+		self.ifThenSend("\r\n> ", "4")
+
+		if not dryrun:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"YES\r\n",
+							ExceptionSequence)
+		else:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"", ExceptionSequence)
+		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
+
+		self.close()
+		return 0
+
+class APCBerlin(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username)
+		self.sendPassword(self.password)
+
+		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
+		self.ifThenSend("\r\n> ", "2")
+		self.ifThenSend("\r\n> ", "1")
+		self.ifThenSend("\r\n> ", str(node_port))
+		# 3- Immediate Reboot		  
+		self.ifThenSend("\r\n> ", "3")
+
+		if not dryrun:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"YES\r\n",
+							ExceptionSequence)
+		else:
+			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
+							"", ExceptionSequence)
+		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
+
+		self.close()
+		return 0
+
 class APCFolsom(PCUControl):
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
@@ -536,7 +582,7 @@ class HPiLOHttps(PCUControl):
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
 		p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
-		cmd2 = "/bin/grep 'MESSAGE' | /bin/grep -v 'No error'"
+		cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
 		p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
 		sout, serr = p_grep.communicate()
 
@@ -550,11 +596,9 @@ class HPiLOHttps(PCUControl):
 			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
 					self.host, "iloxml/Reset_Server.xml", 
 					self.username, self.password)
-			print cmd
 			p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-			cmd2 = "/bin/grep 'MESSAGE' | /bin/grep -v 'No error'"
-			print cmd2
-			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
+			cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
 			sout, serr = p_grep.communicate()
 			p_ilo.wait()
 			p_grep.wait()
@@ -975,9 +1019,6 @@ def check_open_port(values, port_list):
 				ret = True
 	
 	return ret
-
-def reboot(nodename):
-	return reboot_policy(nodename, True, False)
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
@@ -994,9 +1035,8 @@ def reboot_policy(nodename, continue_probe, dryrun):
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
-	print ret
 
-	if ret != 0:
+	if rb_ret != 0:
 		return False
 	else:
 		return True
@@ -1016,6 +1056,14 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			# TODO: make a more robust version of APC
 			if values['pcu_id'] in [1163,1055,1111,1231,1113,1127,1128,1148]:
 				apc = APCEurope(values, verbose, ['22', '23'])
+				rb_ret = apc.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [1110,86]:
+				apc = APCBrazil(values, verbose, ['22', '23'])
+				rb_ret = apc.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [1221]:
+				apc = APCBerlin(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1173,1221,1220,1225]:
@@ -1048,13 +1096,9 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# iLO
 		elif continue_probe and values['model'].find("HP iLO") >= 0:
-			try:
-				hpilo = HPiLO(values, verbose, ['22'])
-				rb_ret = hpilo.reboot(0, dryrun)
-				if rb_ret != 0:
-					hpilo = HPiLOHttps(values, verbose, ['443'])
-					rb_ret = hpilo.reboot(0, dryrun)
-			except:
+			hpilo = HPiLO(values, verbose, ['22'])
+			rb_ret = hpilo.reboot(0, dryrun)
+			if rb_ret != 0:
 				hpilo = HPiLOHttps(values, verbose, ['443'])
 				rb_ret = hpilo.reboot(0, dryrun)
 
