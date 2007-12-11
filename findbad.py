@@ -104,7 +104,7 @@ def collectPingAndSSH(nodename, cohash):
 		val = oval
 		if "BootCD" in val:
 			values['bootcd'] = val
-			if "v2" in val:
+			if "v2" in val and nodename is not "planetlab1.cs.unc.edu":
 				values['category'] = 'OLDBOOTCD'
 		else:
 			values['bootcd'] = ""
@@ -127,7 +127,7 @@ def collectPingAndSSH(nodename, cohash):
 	plc_lock.acquire()
 
 	try:
-		d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 'last_contact'])
+		d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 'last_contact', 'boot_state'])
 	except:
 		b_except = True
 		import traceback
@@ -147,6 +147,7 @@ def collectPingAndSSH(nodename, cohash):
 		last_contact = d_node[0]['last_contact']
 		values['plcnode'] = {'status' : 'SUCCESS', 
 							'pcu_ids': pcu, 
+							'boot_state' : d_node[0]['boot_state'],
 							'site_id': site_id,
 							'last_contact': last_contact}
 	else:
