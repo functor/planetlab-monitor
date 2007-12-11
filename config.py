@@ -23,6 +23,14 @@ def parse_bool(option, opt_str, value, parser):
 	else:
 		print "blue"
 
+def getListFromFile(file):
+	f = open(file, 'r')
+	list = []
+	for line in f:
+		line = line.strip()
+		list += [line]
+	return list
+
 class config:
 	debug=0
 	mail=0
