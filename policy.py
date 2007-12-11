@@ -552,6 +552,14 @@ class Diagnose(Thread):
 					diag_record['args'] = {'nodename': nodename}
 					diag_record['info'] = (nodename, node_record['prev_category'], 
 													 node_record['category'])
+					if 'email_pcu' in diag_record:
+						if diag_record['email_pcu']:
+							# previously, the pcu failed to reboot, so send
+							# email. Now, reset these values to try the reboot
+							# again.
+							diag_record['email_pcu'] = False
+							del diag_record['reboot_node_failed']
+
 					if diag_record['ticket_id'] == "":
 						diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s %s" % \
 									(loginbase, nodename, diag_record['stage'], 
@@ -776,8 +784,14 @@ class Diagnose(Thread):
 			print "UNKNOWN stage for %s; nothing done" % nodename
 			act_record['action'] = ['unknown']
 			act_record['message'] = message[0]
+
+			act_record['email'] = TECH
+			act_record['action'] = ['noop']
+			act_record['message'] = message[0]
+			act_record['stage'] = 'stage_actinoneweek'
+			act_record['time'] = current_time		# reset clock
 			#print "Exiting..."
-			return None
+			#return None
 			#sys.exit(1)
 
 		print "%s" % act_record['log'],
@@ -878,7 +892,7 @@ def close_rt_backoff(args):
 
 def reboot_node(args):
 	host = args['hostname']
-	return reboot.reboot_new(host, True, config.debug)
+	return reboot.reboot_policy(host, True, config.debug)
 
 def reset_nodemanager(args):
 	os.system("ssh root@%s /sbin/service nm restart" % nodename)
@@ -1045,7 +1059,7 @@ class Action(Thread):
 		return hlist
 
 
-	def get_email_args(self, act_recordlist):
+	def get_email_args(self, act_recordlist, loginbase=None):
 
 		email_args = {}
 		email_args['hostname_list'] = ""
@@ -1062,7 +1076,19 @@ class Action(Thread):
 				email_args['pcu_id'] = "-1"
 					
 			if 'ticket_id' in act_record:
-				email_args['ticket_id'] = act_record['ticket_id']
+				if act_record['ticket_id'] == 0 or act_record['ticket_id'] == '0':
+					print "Enter the ticket_id for %s @ %s" % (loginbase, act_record['nodename'])
+					sys.stdout.flush()
+					line = sys.stdin.readline()
+					try:
+						ticket_id = int(line)
+					except:
+						print "could not get ticket_id from stdin..."
+						os._exit(1)
+				else:
+					ticket_id = act_record['ticket_id']
+					
+				email_args['ticket_id'] = ticket_id
 
 		return email_args
 
@@ -1097,20 +1123,25 @@ class Action(Thread):
 		for issue in unique_issues.keys():
 			print "\tworking on issue: %s" % issue
 			issue_record_list = unique_issues[issue]
-			email_args = self.get_email_args(issue_record_list)
+			email_args = self.get_email_args(issue_record_list, loginbase)
 
 			# for each record.
 			for act_record in issue_record_list:
 				# if there's a pcu record and email config is set
 				if 'email_pcu' in act_record:
-					if act_record['email_pcu'] and \
-						site_record['config']['email']:
+					if act_record['message'] != None and act_record['email_pcu'] and site_record['config']['email']:
+						# and 'reboot_node' in act_record['stage']:
 
 						email_args['hostname'] = act_record['nodename']
 						ticket_id = self.__emailSite(loginbase, 
 											act_record['email'], 
 											emailTxt.mailtxt.pcudown[0],
 											email_args)
+						if ticket_id == 0:
+							# error.
+							print "got a ticket_id == 0!!!! %s" % act_record['nodename']
+							os._exit(1)
+							pass
 						email_args['ticket_id'] = ticket_id
 
 			
@@ -1121,6 +1152,12 @@ class Action(Thread):
 			if act_record['message'] != None and site_record['config']['email']:
 				ticket_id = self.__emailSite(loginbase, act_record['email'], 
 							 				 act_record['message'], email_args)
+
+				if ticket_id == 0:
+					# error.
+					print "ticket_id == 0 for %s %s" % (loginbase, act_record['nodename'])
+					os._exit(1)
+					pass
 
 				# Add ticket_id to ALL nodenames
 				for act_record in issue_record_list:
@@ -1144,11 +1181,11 @@ class Action(Thread):
 			del self.diagnose_db[loginbase]
 			soltesz.dbDump("diagnose_out", self.diagnose_db)
 
-		#print "sleeping for 1 sec"
-		#time.sleep(1)
-		print "Hit enter to continue..."
-		sys.stdout.flush()
-		line = sys.stdin.readline()
+		print "sleeping for 1 sec"
+		time.sleep(1)
+		#print "Hit enter to continue..."
+		#sys.stdout.flush()
+		#line = sys.stdin.readline()
 
 		return (i_nodes_actedon, i_nodes_emailed)
 
