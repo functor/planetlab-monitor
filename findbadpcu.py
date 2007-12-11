@@ -187,7 +187,7 @@ def collectPingAndSSH(pcuname, cohash):
 		#### RUN NMAP ###############################
 		if continue_probe:
 			nmap = soltesz.CMD()
-			(oval,eval) = nmap.run_noexcept("nmap -oG - -p22,23,80,443,5869,16992 %s | grep Host:" % pcu_name(values))
+			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,16992 %s | grep Host:" % pcu_name(values))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
 
