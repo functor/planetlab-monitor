@@ -106,7 +106,7 @@ class SPickle:
 				raise Exception, "No such file %s" % name
 			name = "production.%s" % name
 
-		print "loading %s" % self.__file(name, type)
+		#print "loading %s" % self.__file(name, type)
 		f = open(self.__file(name, type), 'r')
 		if type == None:
 			o = pickle.load(f)
