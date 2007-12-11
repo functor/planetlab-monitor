@@ -147,16 +147,7 @@ foreach ( $findbadpcus as $pcu_id )
 $total = count($pculist);
 
 
-## Sort the pculist
 
-#$pcu_ids = array_map('get_pcuid', $pculist);
-#array_multisort($pcu_ids, SORT_ASC, SORT_NUMERIC, $pculist);
-
-#$dns_ids = array_map('get_dns', $pculist);
-#array_multisort($dns_ids, SORT_ASC, SORT_STRING, $pculist);
-
-#$dry_ids = array_map('get_dryrun', $pculist);
-#array_multisort($dry_ids, SORT_ASC, SORT_STRING, $pculist);
 if ( $_GET['category'] ) 
 {
 	$category = $_GET['category'];
@@ -197,6 +188,7 @@ Total PCUs : <?= $total ?>
 			<th><?= get_category_link("node_ids", "Nodes") ?></th>
 		</tr>
 <?php $count = 0; ?>
+<?php $reachable_nodes = 0; ?>
 <?php foreach ( $pculist as $pcu ): ?>
 		<tr>
 			<td><?= $count ?></td>
@@ -209,9 +201,13 @@ Total PCUs : <?= $total ?>
 			<td nowrap><?= $pcu['model'] ?></td>
 			<td><?= count( $pcu['node_ids'] ) ?></td>
 		</tr>
+
+<?php if ( $pcu['reboot'] == "0" ) $reachable_nodes+=count($pcu['node_ids']); ?>
 <?php $count += 1; ?>
 <?php endforeach; ?>
 </table>
+
+<b>Reachable Nodes:</b> <?= $reachable_nodes ?>
 
 </body>
 </html>
