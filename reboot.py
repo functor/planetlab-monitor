@@ -15,6 +15,8 @@ import socket
 import plc
 import base64
 from subprocess import PIPE, Popen
+import ssh.pxssh as pxssh
+import ssh.pexpect as pexpect
 
 plc_lock = threading.Lock()
 
@@ -223,6 +225,7 @@ class PCUControl(Transport,PCUModel,PCURecord):
 	def __init__(self, plc_pcu_record, verbose, supported_ports=[]):
 		PCUModel.__init__(self, plc_pcu_record)
 		PCURecord.__init__(self, plc_pcu_record)
+		type = None
 		if self.portstatus:
 			if '22' in supported_ports and self.portstatus['22'] == "open":
 				type = Transport.SSH
@@ -628,6 +631,62 @@ class BayTechGeorgeTown(PCUControl):
 		self.close()
 		return 0
 
+class BayTechCtrlCUnibe(PCUControl):
+	"""
+		For some reason, these units let you log in fine, but they hang
+		indefinitely, unless you send a Ctrl-C after the password.  No idea
+		why.
+	"""
+	def run(self, node_port, dryrun):
+		print "BayTechCtrlC %s" % self.host
+
+		ssh_options="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no"
+		s = pxssh.pxssh()
+		if not s.login(self.host, self.username, self.password, ssh_options):
+			raise ExceptionPassword("Invalid Password")
+		# Otherwise, the login succeeded.
+
+		# Send a ctrl-c to the remote process.
+		print "sending ctrl-c"
+		s.send(chr(3))
+
+		# Control Outlets  (5 ,1).........5
+		try:
+			index = s.expect(["Enter Request :"])
+
+			if index == 0:
+				print "3"
+				s.send("3\r\n")
+				index = s.expect(["DS-RPC>", "Enter user name:"])
+				if index == 1:
+					s.send(self.username + "\r\n")
+					index = s.expect(["DS-RPC>"])
+
+				if index == 0:
+					print "Reboot %d" % node_port
+					s.send("Reboot %d\r\n" % node_port)
+
+					index = s.expect(["(Y/N)?"])
+					if index == 0:
+						if dryrun:
+							print "sending N"
+							s.send("N\r\n")
+						else:
+							print "sending Y"
+							s.send("Y\r\n")
+
+				#index = s.expect(["DS-RPC>"])
+				#print "got prompt back"
+
+			s.close()
+
+		except pexpect.EOF:
+			raise ExceptionPrompt("EOF before 'Enter Request' Prompt")
+		except pexpect.TIMEOUT:
+			raise ExceptionPrompt("Timeout before 'Enter Request' Prompt")
+
+		return 0
+
 class BayTechCtrlC(PCUControl):
 	"""
 		For some reason, these units let you log in fine, but they hang
@@ -636,38 +695,53 @@ class BayTechCtrlC(PCUControl):
 	"""
 	def run(self, node_port, dryrun):
 		print "BayTechCtrlC %s" % self.host
-		self.open(self.host, self.username)
-		self.sendPassword(self.password)
 
-		#self.transport.write('')
-		self.transport.write("\r\n")
-		self.transport.write(pyssh.CTRL_C)
-		#self.transport.write(chr(3))
-		#self.transport.write(chr(24))
-		#self.transport.write(chr(26))
-		#self.transport.write('')
+		ssh_options="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no"
+		s = pxssh.pxssh()
+		if not s.login(self.host, self.username, self.password, ssh_options):
+			raise ExceptionPassword("Invalid Password")
+		# Otherwise, the login succeeded.
+
+		# Send a ctrl-c to the remote process.
+		print "sending ctrl-c"
+		s.send(chr(3))
+
 		# Control Outlets  (5 ,1).........5
-		self.ifThenSend("Enter Request :", "5")
-
-		# Reboot N
 		try:
-			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
-		except ExceptionNotFound, msg:
-			# one machine is configured to ask for a username,
-			# even after login...
-			print "msg: %s" % msg
-			self.transport.write(self.username + "\r\n")
-			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
-			
+			index = s.expect(["Enter Request :"])
 
-		# Reboot Outlet  N	  (Y/N)?
-		if dryrun:
-			self.ifThenSend("(Y/N)?", "N")
-		else:
-			self.ifThenSend("(Y/N)?", "Y")
-		self.ifThenSend("DS-RPC>", "")
+			if index == 0:
+				print "5"
+				s.send("5\r\n")
+				index = s.expect(["DS-RPC>", "Enter user name:"])
+				if index == 1:
+					print "sending username"
+					s.send(self.username + "\r\n")
+					index = s.expect(["DS-RPC>"])
 
-		self.close()
+				if index == 0:
+					print "Reboot %d" % node_port
+					s.send("Reboot %d\r\n" % node_port)
+
+					index = s.expect(["(Y/N)?"])
+					if index == 0:
+						if dryrun:
+							print "sending N"
+							s.send("N\r\n")
+						else:
+							print "sending Y"
+							s.send("Y\r\n")
+
+				#index = s.expect(["DS-RPC>"])
+				#print "got prompt back"
+
+			s.close()
+
+		except pexpect.EOF:
+			raise ExceptionPrompt("EOF before 'Enter Request' Prompt")
+		except pexpect.TIMEOUT:
+			raise ExceptionPrompt("Timeout before 'Enter Request' Prompt")
+
 		return 0
 
 class BayTech(PCUControl):
@@ -680,14 +754,13 @@ class BayTech(PCUControl):
 
 		# Reboot N
 		try:
-			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
+			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port, ExceptionNotFound)
 		except ExceptionNotFound, msg:
 			# one machine is configured to ask for a username,
 			# even after login...
 			print "msg: %s" % msg
 			self.transport.write(self.username + "\r\n")
 			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
-			
 
 		# Reboot Outlet  N	  (Y/N)?
 		if dryrun:
@@ -695,6 +768,22 @@ class BayTech(PCUControl):
 		else:
 			self.ifThenSend("(Y/N)?", "Y")
 		self.ifThenSend("DS-RPC>", "")
+
+		self.close()
+		return 0
+
+class WTIIPS4(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host)
+		self.sendPassword(self.password, "Enter Password:")
+
+		self.ifThenSend("IPS> ", "/Boot %s" % node_port)
+		if not dryrun:
+			self.ifThenSend("Sure? (Y/N): ", "N")
+		else:
+			self.ifThenSend("Sure? (Y/N): ", "Y")
+
+		self.ifThenSend("IPS> ", "")
 
 		self.close()
 		return 0
@@ -1036,7 +1125,7 @@ def reboot_policy(nodename, continue_probe, dryrun):
 
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
 
-	if rb_ret != 0:
+	if ret != 0:
 		return False
 	else:
 		return True
@@ -1076,9 +1165,14 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# BayTech DS4-RPC
 		elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
-			if values['pcu_id'] in [1041,1209,1025,1052,1057]:
+			if values['pcu_id'] in [1052,1209,1002,1008,1041,1013,1022]:
 				# These  require a 'ctrl-c' to be sent... 
 				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
+				rb_ret = baytech.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [1057]:
+				# These  require a 'ctrl-c' to be sent... 
+				baytech = BayTechCtrlCUnibe(values, verbose, ['22', '23'])
 				rb_ret = baytech.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1012]:
@@ -1116,6 +1210,10 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			except:
 				drac = DRAC(values, verbose, ['22'])
 				rb_ret = drac.reboot(0, dryrun)
+
+		elif continue_probe and values['model'].find("WTI IPS-4") >= 0:
+				wti = WTIIPS4(values, verbose, ['23'])
+				rb_ret = wti.reboot(values[nodename], dryrun)
 
 		# BlackBox PSExxx-xx (e.g. PSE505-FR)
 		elif continue_probe and \
@@ -1207,8 +1305,8 @@ def main():
 	logger.addHandler(ch)
 
 	try:
-		reboot("planetlab2.cs.uchicago.edu")
-		reboot("alice.cs.princeton.edu")
+		print "Rebooting %s" % sys.argv[1]
+		reboot_policy(sys.argv[1], True, False)
 	except Exception, err:
 		print err
 
