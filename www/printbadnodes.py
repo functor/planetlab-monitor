@@ -210,7 +210,7 @@ def fields_to_html(fields, vals):
 
 
 
-def main(sitefilter):
+def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	db = soltesz.dbLoad(config.dbname)
 
 	## Field widths used for printing
@@ -318,11 +318,37 @@ def main(sitefilter):
 		d2.sort(cmp=cmpCategory)
 	
 
+	if catfilter != None:	cf = re.compile(catfilter)
+	else: 					cf = None
+
+	if statefilter != None:	stf = re.compile(statefilter)
+	else: 					stf = None
+
+	if comonfilter != None:	cmf = re.compile(comonfilter)
+	else: 					cmf = None
+
 	#l_loginbase = bysite.keys()
 	#l_loginbase.sort()
-	print "<table width=80% border=1>"
+	if nodeonlyfilter == None:
+		print "<table width=80% border=1>"
+
 	prev_sitestring = ""
 	for row in d2:
+
+		vals = row
+
+		if (catfilter != None and cf.match(vals['category']) == None):
+			continue
+
+		if (statefilter != None and stf.match(vals['state']) == None):
+			continue
+
+		if (comonfilter != None and comonfilter in vals['comonstats'] and vals['comonstats'][comonfilter] != 'null'):
+			continue
+
+		if nodeonlyfilter != None:
+			print vals['nodename']
+			continue
 
 		site_string = row['site_string']
 		if site_string != prev_sitestring:
@@ -334,7 +360,7 @@ def main(sitefilter):
 
 		prev_sitestring = site_string
 
-		vals = row
+			
 		# convert uname values into a single kernel version string
 		if 'kernel' in vals:
 			kernel = vals['kernel'].split()
@@ -372,6 +398,10 @@ def main(sitefilter):
 			vals['reboot'] = "%s" % vals['reboot']
 			vals['reboot'] = vals['reboot'].replace(" ", "_")
 
+		if 'nodename' in vals:
+			url = "<a href='https://www.planet-lab.org/db/nodes/index.php?nodepattern=%s'>%s</a>" % (vals['nodename'], vals['nodename'])
+			vals['nodename'] = url
+
 		try:
 			str_fields = []
 			count = 0
@@ -386,8 +416,9 @@ def main(sitefilter):
 			
 		print "\n</tr>"
 
-	print "</table>"
-	print "<table>"
+	if nodeonlyfilter == None:
+		print "</table>"
+		print "<table>"
 	keys = categories.keys()
 	keys.sort()
 	for cat in keys:
@@ -395,7 +426,8 @@ def main(sitefilter):
 		print "<th nowrap align=left>Total %s</th>" % cat
 		print "<td align=left>%s</td>" % categories[cat]
 		print "</tr>"
-	print "</table>"
+	if nodeonlyfilter == None:
+		print "</table>"
 
 
 
@@ -412,10 +444,31 @@ if __name__ == '__main__':
 		myfilter = form.getvalue("site")
 	else:
 		myfilter = None
+
+	if form.has_key('category'):
+		mycategory = form.getvalue("category")
+	else:
+		mycategory = None
+
+	if form.has_key('state'):
+		mystate = form.getvalue("state")
+	else:
+		mystate = None
+
+	if form.has_key('comon'):
+		mycomon = form.getvalue("comon")
+	else:
+		mycomon = None
+
+	if form.has_key('nodeonly'):
+		mynodeonly = form.getvalue("nodeonly")
+	else:
+		mynodeonly = None
+
 	parser = OptionParser()
 	parser.set_defaults(cmpdays=False, 
 						comon="sshstatus", 
-						fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd", 
+						fields="nodename,ping,ssh,pcu,category,state,comonstats,kernel,bootcd", 
 						dbname="findbad", # -070724-1", 
 						cmpping=False, 
 						cmpdns=False, 
@@ -437,9 +490,11 @@ if __name__ == '__main__':
 	config = config(parser)
 	config.parse_args()
 	print "Content-Type: text/html\r\n"
-	print "<html><body>\n"
+	if mynodeonly == None:
+		print "<html><body>\n"
 	if len(sys.argv) > 1:
 		if sys.argv[1] == "ssherror":
 			ssherror = True
-	main(myfilter)
-	print "</body></html>\n"
+	main(myfilter, mycategory, mystate, mycomon,mynodeonly)
+	if mynodeonly == None:
+		print "</body></html>\n"
