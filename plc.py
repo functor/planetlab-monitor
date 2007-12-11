@@ -8,7 +8,6 @@
 # $Id: plc.py,v 1.18 2007/08/29 17:26:50 soltesz Exp $
 #
 
-from emailTxt import *
 import xml, xmlrpclib
 import logging
 import auth
@@ -90,6 +89,16 @@ def getSiteNodes(loginbase, fields=None):
 	except Exception, exc:
 		logger.info("getSiteNodes:  %s" % exc)
 	return nodelist
+
+def getPersons(filter=None, fields=None):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	persons = []
+	try:
+		persons = api.GetPersons(auth.auth, filter, fields)
+	except Exception, exc:
+		print "getPersons:  %s" % exc
+		logger.info("getPersons:  %s" % exc)
+	return persons
 
 def getSites(filter=None, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
