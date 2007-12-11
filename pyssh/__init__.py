@@ -165,7 +165,7 @@ class Ssh:
         if self.debuglevel:
             print ">> Running %s %s." % (self.sshpath, sshargs)
         # temporary workaround until I get pid's working under win32
-        print sshargs
+        #print sshargs
         if os.name == 'posix':
             self.sshin, self.sshoutblocking, self.sshpid = \
                                 sshpopen2(self.sshpath + ' ' + sshargs)
