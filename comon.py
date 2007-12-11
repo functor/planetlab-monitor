@@ -40,6 +40,40 @@ COMONURL = "http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_node
 #	3 == rins
 #	4 == ins
 
+def _tohash(rawdata):
+	# First line Comon returns is list of keys with respect to index
+	keys = rawdata.readline().rstrip().split(", ")
+	l_host = []
+	hash = {}
+	try:
+		i_ignored = 0
+		for line in rawdata.readlines():
+			l_host = line.rstrip().split(", ")		# split the line on ', '
+			hostname = l_host[0]
+			hash[hostname] = {}
+			for i in range(1,len(keys)):
+				hash[hostname][keys[i]]=l_host[i]
+
+	except Exception, err:
+		logger.debug("No hosts retrieved")	
+		return {} 
+	return hash
+
+def comonget(url):
+	rawdata = None
+	print "Getting: %s" % url
+	try:
+		coserv = urllib2.Request(url)
+		coserv.add_header('User-Agent', 'PL_Monitor +http://monitor.planet-lab.org/')
+		opener = urllib2.build_opener()
+    		# Initial web get from summer.cs in CSV
+		rawdata = opener.open(coserv)
+	except urllib2.URLError, (err):
+		print "Attempting %s" %COMONURL
+		print "URL error (%s)" % (err)
+		rawdata = None
+	return _tohash(rawdata)
+
 
 class Comon(Thread): 
 	"""
