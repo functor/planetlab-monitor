@@ -612,6 +612,24 @@ class HPiLOHttps(PCUControl):
 
 		return 0
 
+class BayTechAU(PCUControl):
+	def run(self, node_port, dryrun):
+		self.open(self.host, self.username, None, "Enter user name:")
+		self.sendPassword(self.password, "Enter Password:")
+
+		#self.ifThenSend("RPC-16>", "Status")
+		self.ifThenSend("RPC3-NC>", "Reboot %d" % node_port)
+
+		# Reboot Outlet  N	  (Y/N)?
+		if dryrun:
+			self.ifThenSend("(Y/N)?", "N")
+		else:
+			self.ifThenSend("(Y/N)?", "Y")
+		self.ifThenSend("RPC3-NC>", "")
+
+		self.close()
+		return 0
+
 class BayTechGeorgeTown(PCUControl):
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username, None, "Enter user name:")
@@ -1168,6 +1186,10 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			if values['pcu_id'] in [1052,1209,1002,1008,1041,1013,1022]:
 				# These  require a 'ctrl-c' to be sent... 
 				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
+				rb_ret = baytech.reboot(values[nodename], dryrun)
+
+			elif values['pcu_id'] in [93]:
+				baytech = BayTechAU(values, verbose, ['22', '23'])
 				rb_ret = baytech.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1057]:
