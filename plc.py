@@ -19,6 +19,27 @@ logger = logging.getLogger("monitor")
 #XMLRPC_SERVER = config.XMLRPC_SERVER
 
 config = config()
+api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+
+def getAPI(url):
+	api = xmlrpclib.Server(url, verbose=False, allow_none=True)
+	return api
+
+class PLC:
+	def __init__(self, auth, url):
+		self.auth = auth
+		self.url = url
+		self.api = xmlrpclib.Server(self.url, verbose=False, allow_none=True)
+
+	def __getattr__(self, name):
+		method = getattr(self.api, name)
+		if method is None:
+			raise AssertionError("method does not exist")
+
+		return lambda *params : method(self.auth, *params)
+
+	def __repr__(self):
+		return self.api.__repr__()
 
 '''
 Returns list of nodes in dbg as reported by PLC
@@ -88,6 +109,7 @@ def getSiteNodes(loginbase, fields=None):
 			nodelist.append(node['hostname'])
 	except Exception, exc:
 		logger.info("getSiteNodes:  %s" % exc)
+		print "getSiteNodes:  %s" % exc
 	return nodelist
 
 def getPersons(filter=None, fields=None):
@@ -129,7 +151,8 @@ def getNodeNetworks(filter=None):
 
 def getNodes(filter=None, fields=None):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
-	nodes = api.GetNodes(auth.auth, filter, fields) #['boot_state', 'hostname', 
+	nodes = api.GetNodes(auth.auth, filter, fields) 
+			#['boot_state', 'hostname', 
 			#'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
 			#'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
 	return nodes
@@ -143,6 +166,13 @@ def nodeBootState(nodename, state):
 		return api.UpdateNode(auth.auth, nodename, {'boot_state': state})
 	except Exception, exc:
 		logger.info("nodeBootState:  %s" % exc)
+
+def updateNodeKey(nodename, key):
+	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	try:
+		return api.UpdateNode(auth.auth, nodename, {'key': key})
+	except Exception, exc:
+		logger.info("updateNodeKey:  %s" % exc)
 
 '''
 Sends Ping Of Death to node.
