@@ -24,6 +24,9 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %(echo %{url} | cut -d ' ' -f 2)
 
+Requires: curl
+Requires: coreutils
+
 %description
 Scripts for creating the monitor account in the root filesystem, to enable node access 
 without using the 'root' account.
