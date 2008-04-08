@@ -42,12 +42,12 @@ install -D -m 755 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files %{name}
+%files
 %defattr(-,root,root)
 %{_initrddir}/monitor
 %{_sysconfdir}/cron.d/monitor
 
-%post %{slicefamily}
+%post
 chkconfig --add monitor
 chkconfig monitor on
 
