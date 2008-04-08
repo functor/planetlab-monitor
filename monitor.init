@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# monitor  Enables the monitor account by setting up the ssh key from the enabled PLC.
+#
+# Load before nm, vcached, and vservers, vserver-reference
+# chkconfig: 3 59 80
+# description: Fetch monitor ssh key to enable access to machine via monitor immediately.
+#
+# Stephen Soltesz <soltesz@cs.princeton.edu>
+# Copyright (C) 2008 The Trustees of Princeton University
+#
+# $Id$
+#
+
+case "$1" in
+    start|restart|reload)
+	;;
+    stop|status)
+	exit 0
+	;;
+    *)
+	echo $"Usage: $0 {start|stop|restart|status}"
+	exit 1
+	;;
+esac
+
+# NOTE: If user already exists, this just exists with status 9.  I think it's
+# ok to simply let this command check and error out.
+# Parse PLC configuration
+if [ -r /etc/planetlab/plc_config ] ; then
+    . /etc/planetlab/plc_config
+else
+    PLC_NAME="PlanetLab"
+    PLC_SLICE_PREFIX="pl"
+    PLC_BOOT_HOST="boot.planet-lab.org"
+fi
+
+USER="${PLC_SLICE_PREFIX}_monitor"
+/usr/sbin/useradd -p "" -m $USER &> /dev/null || : 
+
+if [ ! -d /home/$USER/.ssh ] ; then
+	mkdir /home/$USER/.ssh
+	chmod 700 /home/$USER/.ssh
+	chown $USER.$USER /home/$USER/.ssh
+fi
+
+URL="http://${PLC_BOOT_HOST}/PlanetLabConf/keys.php?$USER"
+curl -s "$URL" > /home/$USER/.ssh/authorized_keys
+chown $USER.$USER /home/$USER/.ssh/authorized_keys
