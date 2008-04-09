@@ -88,6 +88,19 @@ def open_rt_db():
 
 
 
+def fetch_from_db(db, sql):
+	try:
+		# create a 'cursor' (required by MySQLdb)
+		c = db.cursor()
+		c.execute(sql)
+	except Exception, err:
+		print "Could not execute RT query %s" %err
+		return -1
+
+	# fetch all rows (list of lists)
+	raw = c.fetchall()
+	return raw
+	
 
 def rt_tickets():
 	db = open_rt_db()
@@ -120,28 +133,40 @@ def rt_tickets():
 			 WHERE Tk.Queue != 10 AND Tk.id > 10000 AND 
 			 	   Tr.id=At.TransactionID AND Tk.Status = 'open'"""
 			 	   #Tr.id=At.TransactionID AND (Tk.Status = 'new' OR Tk.Status = 'open')"""
+	#sqlall = """SELECT distinct Tk.id, Tk.Status, Tk.Subject, At.Content
+#FROM Tickets AS Tk, Attachments AS At 
+#JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId  
+#WHERE Tk.Queue != 10 AND Tk.id > 10000 AND 
+#Tr.id=At.TransactionID AND ( Tk.Status = 'open' OR
+#Tk.Status = 'new') """
+	sqlall = """SELECT distinct Tk.id, Tk.Status, Tk.Subject, At.Content, Us.EmailAddress FROM Tickets AS Tk, Attachments AS At, Users as Us JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId WHERE (Tk.Queue=3 OR Tk.Queue=22) AND Tk.id > 10000 AND Tr.id=At.TransactionID AND ( Tk.Status = 'open' OR Tk.Status = 'new') AND Us.id=Tk.LastUpdatedBy """
 
-	try:
-		# create a 'cursor' (required by MySQLdb)
-		c = db.cursor()
-		c.execute(sql)
-	except Exception, err:
-		print "Could not execute RT query %s" %err
-		return -1
 
-	# fetch all rows (list of lists)
-	raw = c.fetchall()
-
-	# map list of lists (raw) to list of dicts (tickets) 
-	# when int gets pulls from SQL into python ints are converted to LONG to
-	# prevent overflow .. convert back
-	#tickets = map(lambda x: {"ticket_id":int(x[0]),
+	raw = fetch_from_db(db, sql)
+	if raw == -1:
+		return raw
 	tickets = map(lambda x: {"ticket_id":str(x[0]),
 				"status":x[1],
 				"subj":str(x[2]),
 				"content":str(x[3])},
 				raw)
+
+	raw = fetch_from_db(db,sqlall)
+	if raw == -1:
+		return raw
+	tickets_all = map(lambda x: {"ticket_id":str(x[0]),
+				"status":x[1],
+				"subj":str(x[2]),
+				"content":str(x[3]),
+				"email":str(x[4]) },
+				raw)
+
 	db.close()
+
+	idTickets = {}
+	for t in tickets_all:
+		idTickets[t['ticket_id']] = t
+	soltesz.dbDump("idTickets", idTickets)
 
 	return tickets
 
@@ -279,39 +304,9 @@ def main():
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
 
-	bucket = Queue.Queue() 
-	tickets = {}
-	a = RT(tickets, bucket)
-	b = RT(tickets, bucket)
-	c = RT(tickets, bucket)
-	d = RT(tickets, bucket)
-	e = RT(tickets, bucket)
-	a.start()
-	b.start()
-	c.start()
-	d.start()
-	tmp = ('planetlab-1.cs.ucy.ac.cy','planetlab-2.vuse.vanderbilt.edu', 'planetlab-11.cs.princeton.edu', 'planet03.csc.ncsu.edu', 'planetlab1.pop-rj.rnp.br', 'planet1.halifax.canet4.nodes.planet-lab.org', 'planet1.cavite.nodes.planet-lab.org', 'ds-pl3.technion.ac.il', 'planetlab2.cs.purdue.edu', 'planetlab3.millennium.berkeley.edu', 'planetlab1.unl.edu', 'planetlab1.cs.colorado.edu', 'planetlab02.cs.washington.edu', 'orbpl2.rutgers.edu', 'planetlab2.informatik.uni-erlangen.de', 'pl2.ernet.in', 'neu2.6planetlab.edu.cn', 'planetlab-2.cs.uni-paderborn.de', 'planetlab1.elet.polimi.it', 'planetlab2.iiitb.ac.in', 'server1.planetlab.iit-tech.net', 'planetlab2.iitb.ac.in', 'planetlab1.ece.ucdavis.edu', 'planetlab02.dis.unina.it', 'planetlab-1.dis.uniroma1.it', 'planetlab1.iitb.ac.in', 'pku1.6planetlab.edu.cn', 'planetlab1.warsaw.rd.tp.pl', 'planetlab2.cs.unc.edu', 'csu2.6planetlab.edu.cn', 'pl1.ernet.in', 'planetlab2.georgetown.edu', 'planetlab1.cs.uchicago.edu') 
-	for host in tmp:
-		bucket.put(host)
-	#et = Thread(target=e.pushHosts)	
-	#et.start()
-	time.sleep(15)
-	print tickets.keys()
-	time.sleep(15)
-	print tickets.keys()
-	time.sleep(15)
-	print tickets.keys()
-	#cmn = comon.Comon(cdb, bucket)
-	#cmn.updatebkts()
-	#for bucket in cmn.comonbkts.keys():
-#		for host in getattr(cmn,bucket):
-#			alldown.put(host)
-#
-	at = Thread(target=a.cleanTickets)
-	at.start()
-	time.sleep(15)
-	print tickets.keys()
-	os._exit(0)
+	tickets = rt_tickets()
+	soltesz.dbDump("ad_dbTickets", tickets)
+
 
 if __name__ == '__main__':
     main()
