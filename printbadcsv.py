@@ -4,14 +4,17 @@ from config import config
 from optparse import OptionParser
 from www.printbadnodes import *
 
-
 def main():
+	global fb
 	db = soltesz.dbLoad(config.dbname)
+	fb = soltesz.dbLoad("findbadpcus")
+	act= soltesz.dbLoad("act_all")
 
 	## Field widths used for printing
 	maxFieldLengths = { 'nodename' : -45,
 						'ping' : 6, 
 						'ssh' : 6, 
+						'rt' : 10, 
 						'pcu' : 7, 
 						'category' : 9, 
 						'state' : 5, 
@@ -29,18 +32,10 @@ def main():
 
 
 	d_n = db['nodes']
-	l_nodes = d_n.keys()
-
-	# category by site
-	#bysite = {}
-	#for nodename in l_nodes:
-	#	if 'plcsite' in d_n[nodename]['values'] and \
-	#	'login_base' in d_n[nodename]['values']['plcsite']:
-	#		loginbase = d_n[nodename]['values']['plcsite']['login_base']
-	#		if loginbase not in bysite:
-	#			bysite[loginbase] = []
-	#		d_n[nodename]['values']['nodename'] = nodename
-	#		bysite[loginbase].append(d_n[nodename]['values'])
+	if config.display:
+		l_nodes = sys.argv[2:]
+	else:
+		l_nodes = d_n.keys()
 
 	# d2 was an array of [{node}, {}, ...]
 	# the bysite is a loginbase dict of [{node}, {node}]
@@ -97,10 +92,28 @@ def main():
 			vals['kernel'] = ""
 			continue
 
+		if 'pcu' in vals and vals['pcu'] == "PCU":
+			# check the health of the pcu.
+			s = pcu_state(vals['plcnode']['pcu_ids'][0])
+			if s == 0:
+				vals['pcu'] = "UP-PCU"
+			else:
+				vals['pcu'] = "DN-PCU"
+
+		vals['rt'] = " -"
+		if vals['nodename'] in act:
+			if len(act[vals['nodename']]) > 0 and 'rt' in act[vals['nodename']][0]:
+				if 'Status' in act[vals['nodename']][0]['rt']:
+					vals['rt'] = "%s %s" % (act[vals['nodename']][0]['rt']['Status'], 
+											act[vals['nodename']][0]['rt']['id'])
+
 		str = format % vals 
 		fields = str.split()
 		#print "<tr>"
 		s = fields_to_html(fields, vals)
+		s = ""
+		if config.display:
+			print str
 
 	keys = categories.keys()
 	for cat in ['BOOT-ALPHA', 'BOOT-PROD', 'BOOT-OLDBOOTCD', 'DEBUG-ALPHA',
@@ -118,14 +131,16 @@ if __name__ == '__main__':
 	parser = OptionParser()
 	parser.set_defaults(cmpdays=False, 
 						comon="sshstatus", 
-						fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd", 
+						fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd,rt", 
 						dbname="findbad", # -070724-1", 
+						display=False,
 						cmpping=False, 
 						cmpssh=False, 
 						cmpcategory=False,
 						cmpstate=False)
 	parser.add_option("", "--fields",	dest="dbname", help="")
 	parser.add_option("", "--dbname",	dest="dbname", help="")
+	parser.add_option("", "--display",	dest="display", action="store_true")
 	parser.add_option("", "--days",		dest="cmpdays", action="store_true", help="")
 	parser.add_option("", "--ping",		dest="cmpping", action="store_true", help="")
 	parser.add_option("", "--ssh",		dest="cmpssh",	action="store_true", help="")
