@@ -1,9 +1,22 @@
 <?php 
 
+function plc_site_link($site_name) 
+{ 
+	return "https://www.planet-lab.org/db/sites/index.php?site_pattern=" .  $site_name;
+}
 
 function pcu_link($pcu) 
 { 
 	return "https://www.planet-lab.org/db/sites/pcu.php?id=" . $pcu['pcu_id']; 
+}
+
+function pcu_site($pcu)
+{
+	if ( array_key_exists('plcsite', $pcu) ):
+		return $pcu['plcsite']['login_base'];
+	else: 
+		return "none";
+	endif;
 }
 
 function pcu_name($pcu)
@@ -83,6 +96,19 @@ function DNS_to_color($dns)
 	}
 	return 'white';
 }
+function reboot_to_str($reboot)
+{
+	$ret = $reboot;
+	switch ($reboot)
+	{
+		case "0":
+			$ret = "OK";
+			break;
+		default:
+			break;
+	}
+	return $ret;
+}
 
 function reboot_to_color($reboot)
 {
@@ -154,6 +180,9 @@ if ( $_GET['category'] )
 	if ( $category == "node_ids" )
 	{
 		$newfunc = create_function('$pcu', 'return count($pcu[\'' . $category . '\']);');
+	} else if ( $category == "login_base" )
+	{
+		$newfunc = create_function('$pcu', 'return $pcu[\'plcsite\'][\'' . $category . '\'];');
 	} else {
 		$newfunc = create_function('$pcu', 'return $pcu[\'' . $category . '\'];');
 	}
@@ -179,7 +208,8 @@ Total PCUs : <?= $total ?>
 		<tr>
 			<th>Count</th>
 			<th><?= get_category_link("pcu_id", "PCU ID") ?></th>
-			<th><?= get_category_link("hostname", "Hostname") ?></th>
+			<th><?= get_category_link("login_base", "Site") ?></th>
+			<th><?= get_category_link("hostname", "PCU Name") ?></th>
 			<th><?= get_category_link("complete_entry", "Incomplete Fields") ?></th>
 			<th><?= get_category_link("dnsmatch", "DNS Status") ?></th>
 			<th><?= get_category_link("portstatus", "Port Status") ?></th>
@@ -193,11 +223,12 @@ Total PCUs : <?= $total ?>
 		<tr>
 			<td><?= $count ?></td>
 			<td id='id<?= $pcu['pcu_id'] ?>'><a href='<?= pcu_link($pcu) ?>'><?= $pcu['pcu_id'] ?></a></td>
+			<td><a href='<?= plc_site_link(pcu_site($pcu)) ?>'><?= pcu_site($pcu) ?></a></td>
 			<td><?= pcu_name($pcu) ?></td>
 			<td><?= pcu_entry($pcu) ?></td>
 			<td bgcolor='<?= DNS_to_color($pcu['dnsmatch']) ?>'><?= $pcu['dnsmatch'] ?></td>
 			<td><?= format_ports($pcu) ?></td>
-			<td bgcolor='<?= reboot_to_color($pcu['reboot']) ?>'><?= $pcu['reboot'] ?></td>
+			<td bgcolor='<?= reboot_to_color($pcu['reboot']) ?>'><?= reboot_to_str($pcu['reboot']) ?></td>
 			<td nowrap><?= $pcu['model'] ?></td>
 			<td><?= count( $pcu['node_ids'] ) ?></td>
 		</tr>

@@ -46,7 +46,6 @@ def main():
 
 	act_all = soltesz.dbLoad("act_all")
 	plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
-	s_nodenames = ""
 	sickdb = {}
 
 	sorted_keys = act_all.keys()
@@ -135,7 +134,6 @@ def main():
 	print "</tr>"
 	print "</table>"
 
-	print s_nodenames
 
 	
 if __name__ == '__main__':
