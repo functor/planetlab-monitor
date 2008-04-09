@@ -42,10 +42,10 @@ COMONURL = "http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_node
 
 def _tohash(rawdata):
 	# First line Comon returns is list of keys with respect to index
-	keys = rawdata.readline().rstrip().split(", ")
-	l_host = []
-	hash = {}
 	try:
+		keys = rawdata.readline().rstrip().split(", ")
+		l_host = []
+		hash = {}
 		i_ignored = 0
 		for line in rawdata.readlines():
 			l_host = line.rstrip().split(", ")		# split the line on ', '
