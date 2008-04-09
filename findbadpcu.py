@@ -235,6 +235,7 @@ def collectPingAndSSH(pcuname, cohash):
 		errors['traceback'] = traceback.format_exc()
 		print errors['traceback']
 
+	values['checked'] = time.time()
 	return (pcuname, values, errors)
 
 def recordPingAndSSH(request, result):
