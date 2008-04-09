@@ -87,6 +87,16 @@ def getdebug():
 def print_stats(key, stats):
 	if key in stats: print "%20s : %d" % (key, stats[key])
 
+def get_ticket_id(record):
+	if 'ticket_id' in record and record['ticket_id'] is not "" and record['ticket_id'] is not None:
+		return record['ticket_id']
+	elif 		'found_rt_ticket' in record and \
+		 record['found_rt_ticket'] is not "" and \
+		 record['found_rt_ticket'] is not None:
+		return record['found_rt_ticket']
+	else:
+		return None
+
 class Merge(Thread):
 	def __init__(self, l_merge, toRT):
 		self.toRT = toRT
@@ -199,6 +209,16 @@ class Merge(Thread):
 				if loginbase not in self.mergedb:
 					self.mergedb[loginbase] = {}
 
+				# take the info either from act_all or fb-record.
+				# if node not in act_all
+				# 	then take it from fbrecord, obviously.
+				# else node in act_all
+				#   if act_all == 0 length (no previous records)
+				#		then take it from fbrecord.
+				#   else
+				# 	    take it from act_all.
+				#   
+
 				# We must compare findbad state with act_all state
 				if nodename not in self.act_all:
 					# 1) ok, b/c it's a new problem. set ticket_id to null
@@ -208,65 +228,25 @@ class Merge(Thread):
 					self.mergedb[loginbase][nodename]['prev_category'] = "NORECORD" 
 				else: 
 					if len(self.act_all[nodename]) == 0:
-						print "len(act_all[%s]) == 0, skipping %s %s" % (nodename, loginbase, nodename)
-						continue
+						self.mergedb[loginbase][nodename] = {} 
+						self.mergedb[loginbase][nodename].update(x)
+						self.mergedb[loginbase][nodename]['ticket_id'] = ""
+						self.mergedb[loginbase][nodename]['prev_category'] = "NORECORD" 
+					else:
+						y = self.act_all[nodename][0]
+						y['prev_category'] = y['category']
 
-					y = self.act_all[nodename][0]
+						self.mergedb[loginbase][nodename] = {}
+						self.mergedb[loginbase][nodename].update(y)
+						self.mergedb[loginbase][nodename]['comonstats'] = x['comonstats']
+						self.mergedb[loginbase][nodename]['category']   = x['category']
+						self.mergedb[loginbase][nodename]['state'] = x['state']
+						self.mergedb[loginbase][nodename]['kernel']=x['kernel']
+						self.mergedb[loginbase][nodename]['bootcd']=x['bootcd']
+						self.mergedb[loginbase][nodename]['plcnode']=x['plcnode']
+						ticket = get_ticket_id(self.mergedb[loginbase][nodename])
+						self.mergedb[loginbase][nodename]['rt'] = mailer.getTicketStatus(ticket)
 
-					## skip if end-stage
-					#if 'stage' in y and "monitor-end-record" in y['stage']:
-					#	# 1) ok, b/c it's a new problem. set ticket_id to null
-					##	self.mergedb[loginbase][nodename] = {} 
-					#	self.mergedb[loginbase][nodename].update(x)
-					#	self.mergedb[loginbase][nodename]['ticket_id'] = ""
-					#	self.mergedb[loginbase][nodename]['prev_category'] = None
-					#	continue
-
-					## for legacy actions
-					#if 'bucket' in y and y['bucket'][0] == 'dbg':
-					#	# Only bootcd debugs made it to the act_all db.
-					#	y['prev_category'] = "OLDBOOTCD"
-					#elif 'bucket' in y and y['bucket'][0] == 'down':
-					#	y['prev_category'] = "ERROR"
-					#elif 'bucket' not in y:
-					#	# for all other actions, just carry over the
-					#	# previous category
-					#	y['prev_category'] = y['category']
-					#else:
-					#	print "UNKNOWN state for record: %s" % y
-					#	sys.exit(1)
-
-					# determine through translation, if the buckets match
-					#if 'category' in y and x['category'] == y['category']:
-					#	b_match = True
-					#elif x['category'] == "OLDBOOTCD" and y['bucket'][0] == 'dbg':
-					#	b_match = True
-					#elif x['category'] == "ERROR" and y['bucket'][0] == 'down':
-					#	b_match = True
-					#else:
-					#	b_match = False
-
-					#if b_match: 
-					#	# 2b) ok, b/c they agree that there's still a problem..
-					#	# 2b) Comon & Monitor still agree; RT ticket?
-					#else:
-					#	# 2a) mismatch, need a policy for how to resolve
-					#	#     resolution will be handled in __diagnoseNode()
-					#	#	  for now just record the two categories.
-					#	#if x['category'] == "PROD" and x['state'] == "BOOT" and \
-					#	# ( y['bucket'][0] == 'down' or  y['bucket'][0] == 'dbg'):
-					#	print "FINDBAD and MONITOR have a mismatch: %s vs %s" % \
-					#				(x['category'], y['bucket'])
-
-					y['prev_category'] = y['category']
-					self.mergedb[loginbase][nodename] = {}
-					self.mergedb[loginbase][nodename].update(y)
-					self.mergedb[loginbase][nodename]['comonstats'] = x['comonstats']
-					self.mergedb[loginbase][nodename]['category']   = x['category']
-					self.mergedb[loginbase][nodename]['state'] = x['state']
-					self.mergedb[loginbase][nodename]['kernel']=x['kernel']
-					self.mergedb[loginbase][nodename]['bootcd']=x['bootcd']
-					self.mergedb[loginbase][nodename]['plcnode']=x['plcnode']
 					# delete the entry from cache_all to keep it out of case 3)
 					del self.cache_all[nodename]
 
@@ -569,27 +549,27 @@ class Diagnose(Thread):
 									(loginbase, nodename, diag_record['stage'], 
 									 state, category, diag_record['ticket_id'])
 					return diag_record
-				elif time_diff >= 6*SPERHOUR:
-					# heartbeat is older than 30 min.
-					# then reset NM.
-					#print "Possible NM problem!! %s - %s = %s" % (now, last_contact, time_diff)
-					diag_record = {}
-					diag_record.update(node_record)
-					diag_record['message'] = emailTxt.mailtxt.NMReset
-					diag_record['args'] = {'nodename': nodename}
-					diag_record['stage'] = "nmreset"
-					diag_record['info'] = (nodename, 
-											node_record['prev_category'], 
-											node_record['category'])
-					if diag_record['ticket_id'] == "":
-						diag_record['log'] = "NM  : %20s : %-40s == %20s %20s %s %s" % \
-									(loginbase, nodename, diag_record['stage'], 
-									 state, category, diag_record['found_rt_ticket'])
-					else:
-						diag_record['log'] = "NM  : %20s : %-40s == %20s" % \
-									(loginbase, nodename, diag_record['stage'])
-
-					return diag_record
+				#elif time_diff >= 6*SPERHOUR:
+				#	# heartbeat is older than 30 min.
+				#	# then reset NM.
+				#	#print "Possible NM problem!! %s - %s = %s" % (now, last_contact, time_diff)
+				#	diag_record = {}
+				#	diag_record.update(node_record)
+				#	diag_record['message'] = emailTxt.mailtxt.NMReset
+				#	diag_record['args'] = {'nodename': nodename}
+				#	diag_record['stage'] = "nmreset"
+				#	diag_record['info'] = (nodename, 
+				#							node_record['prev_category'], 
+				#							node_record['category'])
+				#	if diag_record['ticket_id'] == "":
+				#		diag_record['log'] = "NM  : %20s : %-40s == %20s %20s %s %s" % \
+				#					(loginbase, nodename, diag_record['stage'], 
+				#					 state, category, diag_record['found_rt_ticket'])
+				#	else:
+				#		diag_record['log'] = "NM  : %20s : %-40s == %20s" % \
+				#					(loginbase, nodename, diag_record['stage'])
+#
+#					return diag_record
 				else:
 					return None
 			else:
@@ -650,6 +630,23 @@ class Diagnose(Thread):
 				#values are equal, carry on.
 				#print "why are we here?"
 				pass
+
+		if 'rt' in node_record and 'Status' in node_record['rt']:
+			if node_record['stage'] == 'ticket_waitforever':
+				if 'resolved' in node_record['rt']['Status']:
+					print "ending waitforever record for: ", node_record['nodename']
+					node_record['action'] = ['noop']
+					node_record['message'] = None
+					node_record['stage'] = 'monitor-end-record'
+					print "oldlog: %s" % node_record['log'],
+					print "%15s" % node_record['action']
+					return node_record
+				if 'new' in node_record['rt']['Status'] and \
+					'Queue' in node_record['rt'] and \
+					'Monitor' in node_record['rt']['Queue']:
+
+					print "RESETTING stage to findbad"
+					node_record['stage'] = 'findbad'
 			
 		#### COMPARE category and prev_category
 		# if not_equal
@@ -663,6 +660,8 @@ class Diagnose(Thread):
 
 		#### found_RT_ticket
 		# TODO: need to record time found, and maybe add a stage for acting on it...
+		# NOTE: after found, if the support ticket is resolved, the block is
+		# 		not removed. How to remove the block on this?
 		if 'found_rt_ticket' in diag_record and \
 			diag_record['found_rt_ticket'] is not None:
 			if diag_record['stage'] is not 'improvement':
@@ -704,6 +703,7 @@ class Diagnose(Thread):
 		elif 'improvement' in diag_record['stage']:
 			# - backoff previous squeeze actions (slice suspend, nocreate)
 			# TODO: add a backoff_squeeze section... Needs to runthrough
+			print "backing off of %s" % nodename
 			act_record['action'] = ['close_rt']
 			act_record['message'] = message[0]
 			act_record['stage'] = 'monitor-end-record'
@@ -1165,6 +1165,13 @@ class Action(Thread):
 					# update node record with RT ticket_id
 					if nodename in self.act_all:
 						self.act_all[nodename][0]['ticket_id'] = "%s" % ticket_id
+						# if the ticket was previously resolved, reset it to new.
+						if 'rt' in act_record and \
+							'Status' in act_record['rt'] and \
+							act_record['rt']['Status'] == 'resolved':
+							mailer.setTicketStatus(ticket_id, "new")
+						status = mailer.getTicketStatus(ticket_id)
+						self.act_all[nodename][0]['rt'] = status
 					if config.mail: i_nodes_emailed += 1
 
 			print "\t\tconfig.squeeze: %s and %s" % (config.squeeze,
