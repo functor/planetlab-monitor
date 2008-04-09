@@ -34,6 +34,35 @@ def _setupRTenvironment():
 	os.environ['RTDEBUG'] = "0"
 	return
 
+def setTicketStatus(ticket_id, status):
+	_setupRTenvironment()
+	if ticket_id == None or ticket_id == "":
+		return {}
+
+	cmd = "rt edit ticket/%s set status=%s" % (ticket_id, status)
+	(f_in, f_out, f_err) = os.popen3(cmd)
+	value = f_out.read()
+	l_values = value.split('\n')
+	return "".join(l_values).strip()
+
+def getTicketStatus(ticket_id):
+	_setupRTenvironment()
+	if ticket_id == None or ticket_id == "":
+		return {}
+
+	cmd = "rt show -t ticket -f id,subject,status,queue %s" % (ticket_id)
+	(f_in, f_out, f_err) = os.popen3(cmd)
+	value = f_out.read()
+	l_values = value.split('\n')
+	r_values = {}
+	for line in l_values:
+		if len(line) == 0: continue
+		vals = line.split(':')
+		key = vals[0]
+		r_values[key] = "".join(vals[1:])
+		r_values[key] = r_values[key].strip()
+	return r_values
+
 def setAdminCCViaRT(ticket_id, to):
 	# Set ENV Variables/PATH
 	_setupRTenvironment()
