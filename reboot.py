@@ -17,8 +17,7 @@ import base64
 from subprocess import PIPE, Popen
 import ssh.pxssh as pxssh
 import ssh.pexpect as pexpect
-
-plc_lock = threading.Lock()
+import socket
 
 # Use our versions of telnetlib and pyssh
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
@@ -306,77 +305,6 @@ class IPAL(PCUControl):
 		self.close()
 		return 0
 
-def ipal_reboot(ip, password, port, dryrun):
-	global verbose
-	global plc_lock
-	telnet = None
-
-	try:
-		#plc_lock.acquire()
-		#print "lock acquired"
-
-		#try:
-			#telnet = telnetlib.Telnet(ip) # , timeout=TELNET_TIMEOUT)
-		telnet = telnetlib.Telnet(ip, timeout=TELNET_TIMEOUT)
-		#except:
-		#	import traceback
-		#	traceback.print_exc()
-
-
-		telnet.set_debuglevel(verbose)
-
-		# XXX Some iPals require you to hit Enter a few times first
-		telnet_answer(telnet, "Password >", "\r\n\r\n")
-
-		# Login
-		telnet_answer(telnet, "Password >", password)
-
-		# XXX Some iPals require you to hit Enter a few times first
-		telnet.write("\r\n\r\n")
-
-		# P# - Pulse relay
-		if not dryrun:
-			telnet_answer(telnet, "Enter >", "P%d" % port)
-
-		telnet.read_until("Enter >", TELNET_TIMEOUT)
-
-		# Close
-		telnet.close()
-
-		#print "lock released"
-		#plc_lock.release()
-		return 0
-
-	except EOFError, err:
-		if verbose:
-			logger.debug("ipal_reboot: EOF")
-			logger.debug(err)
-		telnet.close()
-		import traceback
-		traceback.print_exc()
-		#print "lock released"
-		#plc_lock.release()
-		return errno.ECONNRESET
-	except socket.error, err:
-		logger.debug("ipal_reboot: Socket Error")
-		logger.debug(err)
-		import traceback
-		traceback.print_exc()
-
-		return errno.ETIMEDOUT
-		
-	except Exception, err:
-		if verbose:
-			logger.debug("ipal_reboot: Exception")
-			logger.debug(err)
-		if telnet:
-			telnet.close()
-		import traceback
-		traceback.print_exc()
-		#print "lock released"
-		#plc_lock.release()
-		return  "ipal error"
-
 class APCEurope(PCUControl):
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
@@ -599,12 +527,19 @@ class HPiLOHttps(PCUControl):
 			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
 					self.host, "iloxml/Reset_Server.xml", 
 					self.username, self.password)
+			print cmd
 			p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
 			cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
 			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
 			sout, serr = p_grep.communicate()
-			p_ilo.wait()
-			p_grep.wait()
+			try: p_ilo.wait()
+			except: 
+				print "p_ilo wait failed."
+				pass
+			try: p_grep.wait()
+			except: 
+				print "p_grep wait failed."
+				pass
 
 			if sout.strip() != "":
 				print "sout: %s" % sout.strip()
@@ -1071,9 +1006,10 @@ def runcmd(command, args, username, password, timeout = None):
 				out += "; output follows:\n" + data
 			raise Exception, out
 
-def racadm_reboot(ip, username, password, port, dryrun):
+def racadm_reboot(host, username, password, port, dryrun):
 	global verbose
 
+	ip = socket.gethostbyname(host)
 	try:
 		cmd = "/usr/sbin/racadm"
 		os.stat(cmd)
@@ -1144,6 +1080,7 @@ def reboot_policy(nodename, continue_probe, dryrun):
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
 
 	if ret != 0:
+		print ret
 		return False
 	else:
 		return True
@@ -1169,11 +1106,11 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				apc = APCBrazil(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1221]:
+			elif values['pcu_id'] in [1221,1225]:
 				apc = APCBerlin(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1173,1221,1220,1225]:
+			elif values['pcu_id'] in [1173,1221,1220]:
 				apc = APCFolsom(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
@@ -1183,7 +1120,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# BayTech DS4-RPC
 		elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
-			if values['pcu_id'] in [1052,1209,1002,1008,1041,1013,1022]:
+			if values['pcu_id'] in [1237,1052,1209,1002,1008,1041,1013,1022]:
 				# These  require a 'ctrl-c' to be sent... 
 				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
 				rb_ret = baytech.reboot(values[nodename], dryrun)
@@ -1276,48 +1213,6 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 	#								  pcu[nodename],
 	#								  dryrun)
 
-# Returns true if rebooted via PCU
-def reboot_old(nodename, dryrun):
-	pcu = plc.getpcu(nodename)
-	if not pcu:
-		plc.nodePOD(nodename)
-		return False
-	# Try the PCU first
-	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
-
-	# APC Masterswitch (Berkeley)
-	if pcu['model'] == "APC Masterswitch":
-		err = apc_reboot(pcu['ip'], pcu['username'],pcu['password'], 
-				pcu[nodename], pcu['protocol'], dryrun)
-
-	# DataProbe iPal (many sites)
-	elif pcu['protocol'] == "telnet" and pcu['model'].find("IP-4") >= 0:
-		err = ipal_reboot(pcu['ip'],pcu['password'], pcu[nodename], dryrun)
-
-	# BayTech DS4-RPC
-	elif pcu['protocol'] == "ssh" and \
-	(pcu['model'].find("Baytech") >= 0 or pcu['model'].find("DS4") >= 0):
-		err = baytech_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename], dryrun)
-
-	# BlackBox PSExxx-xx (e.g. PSE505-FR)
-	elif pcu['protocol'] == "http" and (pcu['model'] == "bbpse"):
-		err = bbpse_reboot(pcu['ip'], pcu['username'], pcu['password'], pcu[nodename],80, dryrun)
-
-	# x10toggle
-	elif pcu['protocol'] == "ssh" and (pcu['model'] == "x10toggle"):
-		err = x10toggle_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu[nodename], dryrun)
-
-	# 
-	elif pcu['protocol'] == "racadm" and (pcu['model'] == "RAC"):
-		err = racadm_reboot(pcu['ip'], pcu['username'],pcu['password'], pcu_[nodename], dryrun)
-
-	# Unknown or unsupported
-	else:
-		err = errno.EPROTONOSUPPORT
-		return False
-	return True 
-
-
 def main():
 	logger.setLevel(logging.DEBUG)
 	ch = logging.StreamHandler()
@@ -1327,8 +1222,12 @@ def main():
 	logger.addHandler(ch)
 
 	try:
-		print "Rebooting %s" % sys.argv[1]
-		reboot_policy(sys.argv[1], True, False)
+		for node in sys.argv[1:]:
+			print "Rebooting %s" % node
+			if reboot_policy(node, True, False):
+				print "success"
+			else:
+				print "failed"
 	except Exception, err:
 		print err
 
