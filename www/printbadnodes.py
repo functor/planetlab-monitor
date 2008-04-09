@@ -3,11 +3,14 @@ import soltesz
 from config import config
 from optparse import OptionParser
 import string
+from HyperText.HTML import A, BR, IMG, TABLE, TR, TH, TD, EM, quote_body
+from HyperText.Documents import Document
 
 import sys
 
 categories = {}
 ssherror = False
+fb = {}
 
 def sec2days(sec):
 	if sec == "null":
@@ -144,9 +147,32 @@ def ssh_error_to_str(str):
 
 	return ssh_error
 
+def pcu_state(pcu_id):
+	global fb
+
+	if 'nodes' in fb and "id_%s" % pcu_id in fb['nodes'] \
+		and 'values' in fb['nodes']["id_%s" % pcu_id]:
+		rec = fb['nodes']["id_%s" % pcu_id]['values']
+		if 'reboot' in rec:
+			rb = rec['reboot']
+			if rb == 0 or rb == "0":
+				return 0
+			elif "NetDown" == rb  or "Not_Run" == rb:
+				return 1
+			else:
+				return -1
+		else:
+			return -1
+	else:
+		return -1 
+
 def fields_to_html(fields, vals):
 	global categories
 	global ssherror
+	pcu_colorMap = { -1 : 'indianred',
+					  0 : 'darkseagreen',
+					  1 : 'gold', }
+
 	colorMap = { 'PING'  : 'darkseagreen',
 				 'NOPING': 'darksalmon',
 				 'SSH': 'darkseagreen',
@@ -199,6 +225,10 @@ def fields_to_html(fields, vals):
 				r_str += "<td %s>%s</td>" % (bgcolor, f)
 		elif f == 'PCU':
 			if len(vals['plcnode']['pcu_ids']) > 0:
+				#print "pcu_id: %s<br>" % vals['plcnode']['pcu_ids'][0]
+				#print "state: %s<br>" % pcu_state(vals['plcnode']['pcu_ids'][0])
+				#print "color: %s<br>" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
+				bgcolor = "bgcolor='%s'" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
 				url = "<a href='/cgi-bin/printbadpcus.php#id%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
 				r_str += "<td nowrap %s>%s</td>" % (bgcolor, url)
 		else:
@@ -211,7 +241,10 @@ def fields_to_html(fields, vals):
 
 
 def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
+	global fb
+
 	db = soltesz.dbLoad(config.dbname)
+	fb = soltesz.dbLoad("findbadpcus")
 
 	## Field widths used for printing
 	maxFieldLengths = { 'nodename' : -45,
