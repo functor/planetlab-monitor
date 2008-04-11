@@ -7,10 +7,23 @@
 # privilges in order to setup an ssh key, add a user, and upload the key to
 # the user, make the user a member of the PLC site, etc.
 
-import auth
-import plc
 import sys
 import os
+try:
+	import auth
+except:
+	print """
+	Create a file named: 'auth.py' which contains two variables:
+
+plc = "https://yourplc.hostname.org/PLCAPI/"
+auth = {'Username': 'root@localhost.localdomain',
+        'AuthMethod': 'password',
+        'AuthString': 'root'}
+
+"""
+	sys.exit(1)
+	
+import plc
 
 def filevalue(filename):
 	f = open(filename, 'r')
