@@ -20,6 +20,15 @@ api = plc.PLC(auth.auth, auth.plc)
 from config import config
 from optparse import OptionParser
 
+import soltesz
+fb = soltesz.dbLoad("findbad")
+
+def get_current_state(fbnode):
+	state = fbnode['state']
+	l = state.lower()
+	if l == "debug": return 'dbg'
+	return l
+
 parser = OptionParser()
 parser.set_defaults(nodegroup="Alpha",
 					node=None,
@@ -58,7 +67,11 @@ if config.list:
 	i = 0
 	for node in nodelist:
 		print "%-2d" % i, 
-		print "%(hostname)-38s %(boot_state)5s %(key)s" % node
+		if node['hostname'] in fb['nodes']:
+			node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])
+		else:
+			node['current'] = 'none'
+		print "%(hostname)-38s %(boot_state)5s %(current)5s %(key)s" % node
 		i += 1
 
 elif config.add:
