@@ -11,14 +11,17 @@ act_all = soltesz.dbLoad("act_all")
 import reboot
 
 import time
+from model import *
 
 from config import config
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.set_defaults(node=None)
+parser.set_defaults(node=None, endrecord=False)
 parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
 					help="A single node name to add to the nodegroup")
+parser.add_option("", "--endrecord", dest="endrecord", action="store_true",
+					help="Force an end to the action record; to prompt Montior to start messaging again.")
 config = config(parser)
 config.parse_args()
 
@@ -87,22 +90,31 @@ def act_print_nodeinfo(actnode, header):
 			 actnode['category'], actnode['action'][0], 
 			 actnode['msg_format'][:-1])
 	else:
+		if type(actnode['action']) == type([]):
+			action = actnode['action'][0]
+		else:
+			action = actnode['action']
+		if 'category' in actnode:
+			category = actnode['category']
+		else:
+			category = "none"
+			
 		print "\t       %5.5s | %8.8s | %15.15s | %s" % \
 			(actnode['ticket_id'],
-			 actnode['category'], actnode['action'][0], 
+			 category, action, 
 			 actnode['msg_format'][:-1])
 
-def pcu_print_info(pcuinfo):
+def pcu_print_info(pcuinfo, hostname):
 	print "   Checked: ",
 	if 'checked' in pcuinfo:
 		print "%11.11s " % diff_time(pcuinfo['checked'])
 	else:
 		print "Unknown"
 
-	print "\t            user   |          password |   hostname "
-	print "\t %17s | %17s | %30s | %s" % \
+	print "\t            user   |          password | port | hostname "
+	print "\t %17s | %17s | %4s | %30s | %s" % \
 		(pcuinfo['username'], pcuinfo['password'], 
-		 reboot.pcu_name(pcuinfo), pcuinfo['model'])
+		 pcuinfo[hostname], reboot.pcu_name(pcuinfo), pcuinfo['model'])
 
 	if pcuinfo['portstatus']['22'] == "open":
 		print "\t ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no %s@%s" % (pcuinfo['username'], reboot.pcu_name(pcuinfo))
@@ -111,8 +123,14 @@ def pcu_print_info(pcuinfo):
 	if pcuinfo['portstatus']['80'] == "open" or \
 		pcuinfo['portstatus']['443'] == "open":
 		print "\t http://%s" % (reboot.pcu_name(pcuinfo))
+	if pcuinfo['portstatus']['443'] == "open":
+		print "\t racadm.py -r %s -u %s -p '%s'" % (pcuinfo['ip'], pcuinfo['username'], pcuinfo['password'])
+		print "\t cmdhttps/locfg.pl -s %s -f iloxml/Reset_Server.xml -u %s -p %s | grep MESSAGE" % \
+			(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 
-if config.node:
+for node in config.args:
+	config.node = node
+
 	plc_nodeinfo = api.GetNodes({'hostname': config.node}, None)[0]
 	fb_nodeinfo  = fb['nodes'][config.node]['values']
 
@@ -121,10 +139,24 @@ if config.node:
 
 	if fb_nodeinfo['pcu'] == "PCU":
 		pcu = reboot.get_pcu_values(fb_nodeinfo['plcnode']['pcu_ids'][0])
-		pcu_print_info(pcu)
+		pcu_print_info(pcu, config.node)
 
 	if config.node in act_all and len(act_all[config.node]) > 0:
 		header = [True]
+
+		if config.endrecord:
+			a = Action(config.node, act_all[config.node][0])
+			a.delField('rt')
+			a.delField('second-mail-at-oneweek')
+			a.delField('second-mail-at-twoweeks')
+			a.delField('first-found')
+			rec = a.get()
+			rec['action'] = ["close_rt"]
+			rec['category'] = "UNKNOWN"
+			rec['stage'] = "monitor-end-record"
+			rec['time'] = time.time() - 7*60*60*24
+			act_all[config.node].insert(0,rec)
+
 		for act_nodeinfo in act_all[config.node]:
 			act_print_nodeinfo(act_nodeinfo, header)
 	else: act_nodeinfo = None
