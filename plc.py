@@ -21,6 +21,7 @@ except:
 import time
 try:
 	from config import config
+	config = config()
 	debug = config.debug
 except:
 	debug = False
@@ -29,9 +30,6 @@ XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 
 logger = logging.getLogger("monitor")
 
-#XMLRPC_SERVER = config.XMLRPC_SERVER
-
-config = config()
 api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
 
 def getAPI(url):
@@ -279,7 +277,7 @@ QED
 #	if len(siteid) == 1:
 #		logger.info("Enabling slice creation for site %s" % siteId(nodename))
 #		try:
-#			if not config.debug:
+#			if not debug:
 #				api.AdmUpdateSite(auth.auth, siteid[0], {"max_slices" : maxslices})
 #		except Exception, exc:
 #			logger.info("API:  %s" % exc)
