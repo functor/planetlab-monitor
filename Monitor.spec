@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 1
+%define taglevel 2
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,9 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Mon May 05 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-2
+- 
+
 * Wed Apr 23 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-1
 - This should be ready for 4.2rc2
 - 
