@@ -10,9 +10,22 @@
 
 import xml, xmlrpclib
 import logging
-import auth
+try:
+    import auth
+except:
+	class Anon:
+		def __init__(self):
+			self.auth = {'AuthMethod': "anonymous"}
+	auth = Anon()
+
 import time
-from config import config,XMLRPC_SERVER
+try:
+	from config import config
+	debug = config.debug
+except:
+	debug = False
+	
+XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 
 logger = logging.getLogger("monitor")
 
@@ -181,7 +194,7 @@ def nodePOD(nodename):
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	logger.info("Sending POD to %s" % nodename)
 	try:
-		if not config.debug:
+		if not debug:
 			return api.RebootNode(auth.auth, nodename)
 	except Exception, exc:
 			logger.info("nodePOD:  %s" % exc)
@@ -194,7 +207,7 @@ def suspendSlices(nodename):
 	for slice in slices(siteId(nodename)):
 		logger.info("Suspending slice %s" % slice)
 		try:
-			if not config.debug:
+			if not debug:
 				api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
 		except Exception, exc:
 			logger.info("suspendSlices:  %s" % exc)
@@ -204,7 +217,7 @@ def enableSlices(nodename):
 	for slice in slices(siteId(nodename)):
 		logger.info("Enabling slices %s" % slice)
 		try:
-			if not config.debug:
+			if not debug:
 				slice_list = api.GetSlices(auth.auth, {'name': slice}, None)
 				if len(slice_list) == 0:
 					return
@@ -233,7 +246,7 @@ def enableSliceCreation(nodename):
 	try:
 		loginbase = siteId(nodename)
 		logger.info("Enabling slice creation for site %s" % loginbase)
-		if not config.debug:
+		if not debug:
 			logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
 			api.UpdateSite(auth.auth, loginbase, {'enabled': True})
 	except Exception, exc:
@@ -250,7 +263,7 @@ def removeSliceCreation(nodename):
 		#numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
 		#		["max_slices"])[0]['max_slices']
 		logger.info("Removing slice creation for site %s" % loginbase)
-		if not config.debug:
+		if not debug:
 			#api.UpdateSite(auth.auth, loginbase, {'max_slices': 0})
 			api.UpdateSite(auth.auth, loginbase, {'enabled': False})
 	except Exception, exc:

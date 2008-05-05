@@ -4,11 +4,10 @@ import os
 import sys
 import string
 import time
-import soltesz
 import plc
 
 args = {}
-args['known_hosts'] = "/home/soltesz/.ssh/known_hosts"
+args['known_hosts'] =  os.environ['HOME'] + "/.ssh/known_hosts"
 
 class SSHKnownHosts:
 	def __init__(self, args = args):
