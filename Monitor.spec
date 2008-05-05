@@ -8,7 +8,7 @@
 %define version 1.0
 %define taglevel 1
 
-%define release %{taglevel}%{?date:.%{date}}
+%define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
 Summary: Monitor account initialization for the root image.
 Name: %{name}
