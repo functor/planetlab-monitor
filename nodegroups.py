@@ -19,15 +19,11 @@ api = plc.PLC(auth.auth, auth.plc)
 
 from config import config
 from optparse import OptionParser
+from sets import Set
 
+from nodecommon import *
 import soltesz
 fb = soltesz.dbLoad("findbad")
-
-def get_current_state(fbnode):
-	state = fbnode['state']
-	l = state.lower()
-	if l == "debug": return 'dbg'
-	return l
 
 parser = OptionParser()
 parser.set_defaults(nodegroup="Alpha",
@@ -35,10 +31,14 @@ parser.set_defaults(nodegroup="Alpha",
 					nodelist=None,
 					list=False,
 					add=False,
+					notng=False,
 					delete=False,
 					)
+parser.add_option("", "--not", dest="notng", action="store_true", 
+					help="All nodes NOT in nodegroup.")
 parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
 					help="Specify a nodegroup to perform actions on")
+
 parser.add_option("", "--list", dest="list", action="store_true", 
 					help="List all nodes in the given nodegroup")
 parser.add_option("", "--add", dest="add", action="store_true", 
@@ -53,25 +53,45 @@ config = config(parser)
 config.parse_args()
 
 # COLLECT nodegroups, nodes and node lists
-ng = api.GetNodeGroups({'name' : config.nodegroup})
-nodelist = api.GetNodes(ng[0]['node_ids'])
-hostnames = [ n['hostname'] for n in nodelist ]
-
 if config.node or config.nodelist:
-	if config.node: hostnames = [ config.node ] 
-	else: hostnames = config.getListFromFile(config.nodelist)
+	if config.node: 
+		hostlist = [ config.node ] 
+	else: 
+		hostlist = config.getListFromFile(config.nodelist)
+	nodelist = api.GetNodes(hostlist)
+
+	group_str = "Given"
+
+else:
+	ng = api.GetNodeGroups({'name' : config.nodegroup})
+	nodelist = api.GetNodes(ng[0]['node_ids'])
+
+	group_str = config.nodegroup
+
+if config.notng:
+	# Get nodegroup nodes
+	ng_nodes = nodelist
+
+	# Get all nodes
+	all_nodes = api.GetNodes({'peer_id': None})
+	
+	# remove ngnodes from all node list
+	ng_list = [ x['hostname'] for x in ng_nodes ]
+	all_list = [ x['hostname'] for x in all_nodes ]
+	not_ng_nodes = Set(all_list) - Set(ng_list)
+
+	# keep each node that *is* in the not_ng_nodes set
+	nodelist = filter(lambda x : x['hostname'] in not_ng_nodes, all_nodes)
+
+hostnames = [ n['hostname'] for n in nodelist ]
 
 # commands:
 if config.list:
-	print " ---- Nodes in the %s Node Group ----" % config.nodegroup
-	i = 0
+	print " ---- Nodes in the %s Node Group ----" % group_str
+	i = 1
 	for node in nodelist:
 		print "%-2d" % i, 
-		if node['hostname'] in fb['nodes']:
-			node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])
-		else:
-			node['current'] = 'none'
-		print "%(hostname)-38s %(boot_state)5s %(current)5s %(key)s" % node
+		print nodegroup_display(node, fb)
 		i += 1
 
 elif config.add:
