@@ -8,8 +8,8 @@ import time
 from config import config
 from optparse import OptionParser
 parser = OptionParser()
-parser.set_defaults(filename="", increment=False, dbname="findbadnodes", cachenodes=False)
-parser.add_option("-f", "--nodes", dest="filename", metavar="FILE", 
+parser.set_defaults(filename=None, increment=False, dbname="findbadnodes", cachenodes=False)
+parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
 					help="Provide the input file for the node list")
 parser.add_option("", "--cachenodes", action="store_true",
 					help="Cache node lookup from PLC")
@@ -272,10 +272,13 @@ def main():
 	# history information for all nodes
 	cohash = cotop.coget(cotop_url)
 	l_nodes = syncplcdb.create_plcdb()
+	if config.filename:
+		f_nodes = config.getListFromFile(config.filename)
+		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
+
 	l_nodes = [node['hostname'] for node in l_nodes]
-		#l_nodes = cohash.keys()
-#	else:
-#		l_nodes = config.getListFromFile(config.filename)
+
+	print "fetching %s hosts" % len(l_nodes)
 
 	checkAndRecordState(l_nodes, cohash)
 
@@ -286,6 +289,8 @@ if __name__ == '__main__':
 	try:
 		main()
 	except Exception, err:
+		import traceback
+		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		soltesz.dbDump(config.dbname, externalState)
