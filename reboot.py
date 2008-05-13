@@ -240,6 +240,8 @@ class PCUControl(Transport,PCUModel,PCURecord):
 				type = Transport.HTTP
 			else:
 				raise ExceptionPort("Unsupported Port: No transport from open ports")
+		else:
+			raise Exception("No Portstatus: No transport because no open ports")
 		Transport.__init__(self, type, verbose)
 
 	def run(self, node_port, dryrun):
@@ -508,43 +510,55 @@ class HPiLO(PCUControl):
 		
 class HPiLOHttps(PCUControl):
 	def run(self, node_port, dryrun):
+		import soltesz
 
-		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
+		#cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s'" % (
+		#			self.host, "iloxml/Get_Network.xml", 
+		#			self.username, self.password)
+		#p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
+		#cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+		#p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
+		#sout, serr = p_grep.communicate()
+
+		locfg = soltesz.CMD()
+		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
-		p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
-		cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
-		p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
-		sout, serr = p_grep.communicate()
+		sout, serr = locfg.run_noexcept(cmd)
 
-		p_ilo.wait()
-		p_grep.wait()
+		#p_ilo.wait()
+		#p_grep.wait()
 		if sout.strip() != "":
 			print "sout: %s" % sout.strip()
 			return sout.strip()
 
 		if not dryrun:
-			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p %s" % (
-					self.host, "iloxml/Reset_Server.xml", 
-					self.username, self.password)
-			print cmd
-			p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-			cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
-			p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
-			sout, serr = p_grep.communicate()
-			try: p_ilo.wait()
-			except: 
-				print "p_ilo wait failed."
-				pass
-			try: p_grep.wait()
-			except: 
-				print "p_grep wait failed."
-				pass
+			locfg = soltesz.CMD()
+			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
+						self.host, "iloxml/Reset_Server.xml", 
+						self.username, self.password)
+			sout, serr = locfg.run_noexcept(cmd)
+
+			#cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s'" % (
+			#		self.host, "iloxml/Reset_Server.xml", 
+			#		self.username, self.password)
+			#print cmd
+			#p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
+			#cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
+			#p_grep = Popen(cmd2, shell=True, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
+			#sout, serr = p_grep.communicate()
+			#try: p_ilo.wait()
+			#except: 
+			#	print "p_ilo wait failed."
+			#	pass
+			#try: p_grep.wait()
+			#except: 
+			#	print "p_grep wait failed."
+			#	pass
 
 			if sout.strip() != "":
 				print "sout: %s" % sout.strip()
-				return sout.strip()
-
+				#return sout.strip()
 		return 0
 
 class BayTechAU(PCUControl):
@@ -685,7 +699,7 @@ class BayTechCtrlC(PCUControl):
 							print "sending Y"
 							s.send("Y\r\n")
 
-				#index = s.expect(["DS-RPC>"])
+				index = s.expect(["DS-RPC>"])
 				#print "got prompt back"
 
 			s.close()
@@ -1051,17 +1065,8 @@ def get_pcu_values(pcu_id):
 
 	return values
 
-def check_open_port(values, port_list):
-	ret = False
-
-	if 'portstatus' in values:
-		for port in port_list:
-			if	port in values['portstatus'] and \
-				values['portstatus'][port] == "open":
-
-				ret = True
-	
-	return ret
+def reboot(nodename):
+	return reboot_policy(nodename, True, False)
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
