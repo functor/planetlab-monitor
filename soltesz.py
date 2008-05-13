@@ -6,12 +6,12 @@ try:
 	from PHPSerialize import *
 	from PHPUnserialize import *
 except:
-	print >>sys.stderr, "PHPSerial db type not allowed."
+	#print >>sys.stderr, "PHPSerial db type not allowed."
 	noserial=True
 
 import inspect
 import shutil
-from config import config
+from config2 import config
 config = config()
 
 DEBUG= 0
@@ -53,8 +53,8 @@ def if_cached_else(cond, name, function, type=None):
 	return o
 
 class SPickle:
-	def __init__(self):
-		pass
+	def __init__(self, path=PICKLE_PATH):
+		self.path = path
 
 	def if_cached_else(self, cond, name, function, type=None):
 		if cond and self.exists("production.%s" % name, type):
@@ -67,12 +67,12 @@ class SPickle:
 
 	def __file(self, name, type=None):
 		if type == None:
-			return "%s/%s.pkl" % (PICKLE_PATH, name)
+			return "%s/%s.pkl" % (self.path, name)
 		else:
 			if noserial:
 				raise Exception("No PHPSerializer module available")
 
-			return "%s/%s.phpserial" % (PICKLE_PATH, name)
+			return "%s/%s.phpserial" % (self.path, name)
 		
 	def exists(self, name, type=None):
 		return os.path.exists(self.__file(name, type))
@@ -102,9 +102,13 @@ class SPickle:
 			else:	# neither exist
 				raise Exception, "No such pickle based on %s" % self.__file("debug.%s" % name, type)
 		else:
-			if not self.exists("production.%s" % name, type):
+			if   self.exists("production.%s" % name, type):
+				name = "production.%s" % name
+			elif self.exists(name, type):
+				name = name
+			else:
 				raise Exception, "No such file %s" % name
-			name = "production.%s" % name
+				
 
 		#print "loading %s" % self.__file(name, type)
 		f = open(self.__file(name, type), 'r')
@@ -128,8 +132,8 @@ class SPickle:
 			argvals = inspect.getargvalues(up1)
 			# TODO: check that 'name' is a local variable; otherwise this would fail.
 			obj = argvals[3][name] # extract the local variable name 'name'
-		if not os.path.isdir("%s/" % PICKLE_PATH):
-			os.mkdir("%s" % PICKLE_PATH)
+		if not os.path.isdir("%s/" % self.path):
+			os.mkdir("%s" % self.path)
 		if config.debug:
 			name = "debug.%s" % name
 		else:
@@ -152,11 +156,43 @@ ssh_options = { 'StrictHostKeyChecking':'no',
 				'PasswordAuthentication':'no',
 				'ConnectTimeout':'%s' % COMMAND_TIMEOUT}
 from select import select 
+import subprocess
+import signal
+
+class Sopen(subprocess.Popen):
+	def kill(self, signal = signal.SIGTERM):
+		os.kill(self.pid, signal)
+
 class CMD:
 	def __init__(self):
 		pass
 
 	def run_noexcept(self, cmd):
+
+		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+		#(f_in, f_out, f_err) = os.popen3(cmd)
+		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
+		lout, lin, lerr = select([f_out,f_err], [], [], COMMAND_TIMEOUT*2)
+		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
+			# Reached a timeout!
+			#print "TODO: kill subprocess: '%s'" % cmd
+			# TODO: kill subprocess??
+			s.kill()
+			return ("", "SCRIPTTIMEOUT")
+		o_value = f_out.read()
+		e_value = ""
+		if o_value == "":	# An error has occured
+			e_value = f_err.read()
+
+		o_value = o_value.strip()
+		e_value = e_value.strip()
+
+		f_out.close()
+		f_in.close()
+		f_err.close()
+		return (o_value, e_value)
+
+	def run_noexcept2(self, cmd):
 
 		(f_in, f_out, f_err) = os.popen3(cmd)
 		lout, lin, lerr = select([f_out,f_err], [], [], COMMAND_TIMEOUT*2)
