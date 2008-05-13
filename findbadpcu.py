@@ -190,6 +190,9 @@ def collectPingAndSSH(pcuname, cohash):
 			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,16992 %s | grep Host:" % pcu_name(values))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
+		else:
+			values['portstatus'] = None
+			
 
 		######  DRY RUN  ############################
 		if 'node_ids' in values and len(values['node_ids']) > 0:
