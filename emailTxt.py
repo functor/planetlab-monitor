@@ -263,9 +263,31 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
+	newalphacd_one=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", 
+"""As part of PlanetLab node monitoring, we noticed that your machines needs a new BootCD to fully support your hardware: 
+
+%(hostname_list)s  
+
+To make this process as simple as possible, we have created All-in-One boot images that include the node configuration file.  
+
+The only step that you need to take is to choose which media you prefer, either CD ISO, or USB image for each host.
+
+%(url_list)s
+
+Instructions to burn or copy these All-in-One images to the appropriate media are available in the Technical Contact's Guide.
+
+    https://www.planet-lab.org/doc/guides/bootcdsetup
+
+If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
 	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
+	newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
 	newthankyou=[thankyou,thankyou,thankyou]
 	NMReset=[nmreset,nmreset,nmreset]
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
