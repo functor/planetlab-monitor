@@ -27,14 +27,17 @@ import signal
 from config import config
 from optparse import OptionParser
 parser = OptionParser()
-parser.set_defaults(filename="", 
+parser.set_defaults(filename=None, 
 					increment=False, 
+					pcuid=None,
 					dbname="findbadpcus", 
 					cachenodes=False,
 					refresh=False,
 					)
 parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
 					help="Provide the input file for the node list")
+parser.add_option("", "--pcuid", dest="pcuid", metavar="id", 
+					help="Provide the id for a single pcu")
 parser.add_option("", "--cachenodes", action="store_true",
 					help="Cache node lookup from PLC")
 parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
@@ -321,14 +324,18 @@ def main():
 		# update global round number to force refreshes across all nodes
 		externalState['round'] += 1
 
-	if config.filename == "":
+	if config.filename == None and config.pcuid == None:
 		print "Calling API GetPCUs() : refresh(%s)" % config.refresh
 		l_pcus = soltesz.if_cached_else_refresh(1, 
 								config.refresh, "pculist", lambda : plc.GetPCUs())
 		l_pcus  = [pcu['pcu_id'] for pcu in l_pcus]
-	else:
+	elif config.filename is not None:
 		l_pcus = config.getListFromFile(config.filename)
 		l_pcus = [int(pcu) for pcu in l_pcus]
+	elif config.pcuid is not None:
+		l_pcus = [ config.pcuid ] 
+		l_pcus = [int(pcu) for pcu in l_pcus]
+		
 
 	checkAndRecordState(l_pcus, cohash)
 

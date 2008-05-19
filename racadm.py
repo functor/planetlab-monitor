@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
 import threading
+import socket
+import os
+import popen2
+#import logger
 
 def runcmd(command, args, username, password, timeout = None):
 
@@ -72,14 +76,14 @@ def runcmd(command, args, username, password, timeout = None):
 				out += "; output follows:\n" + data
 			raise Exception, out
 
-def racadm_reboot(host, username, password, dryrun):
+def racadm_reboot(host, username, password, dryrun, state="powercycle"):
 
 	ip = socket.gethostbyname(host)
 	try:
 		cmd = "/usr/sbin/racadm"
 		os.stat(cmd)
 		if not dryrun:
-			output = runcmd(cmd, ["-r %s -i serveraction powercycle" % ip],
+			output = runcmd(cmd, ["-r %s -i serveraction %s" % (ip, state)],
 				username, password)
 		else:
 			output = runcmd(cmd, ["-r %s -i getsysinfo" % ip],
@@ -89,16 +93,19 @@ def racadm_reboot(host, username, password, dryrun):
 		return 0
 
 	except Exception, err:
-		logger.debug("runcmd raised exception %s" % err)
+		#logger.debug("runcmd raised exception %s" % err)
+		print "runcmd raised exception %s" % err
 		return -1
 
 
 from optparse import OptionParser
 parser = OptionParser()
-parser.set_defaults(ip="", user="", password="")
+parser.set_defaults(ip="", user="", password="", state="powercycle")
 parser.add_option("-r", "", dest="ip", metavar="nodename.edu", 
 					help="A single node name to add to the nodegroup")
 parser.add_option("-u", "", dest="user", metavar="username",
+					help="")
+parser.add_option("-s", "", dest="state", metavar="powercycle",
 					help="")
 parser.add_option("-p", "", dest="password", metavar="password",
 					help="")
@@ -110,6 +117,6 @@ if __name__ == '__main__':
 		options.user is not "" and \
 		options.password is not "":
 
-		racadm_reboot(options.ip, options.user, options.password, False)
+		racadm_reboot(options.ip, options.user, options.password, False, options.state)
 	else:
 		parser.print_help()

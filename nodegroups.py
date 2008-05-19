@@ -94,15 +94,15 @@ if config.list:
 		print nodegroup_display(node, fb)
 		i += 1
 
-elif config.add:
+elif config.add and config.nodegroup:
 	for node in hostnames:
-		print "Adding %s to %s nodegroup" % (config.node, config.nodegroup)
-		api.AddNodeToNodeGroup(config.node, config.nodegroup)
+		print "Adding %s to %s nodegroup" % (node, config.nodegroup)
+		api.AddNodeToNodeGroup(node, config.nodegroup)
 
 elif config.delete:
 	for node in hostnames:
-		print "Deleting %s from %s nodegroup" % (config.node, config.nodegroup)
-		api.DeleteNodeFromNodeGroup(config.node, config.nodegroup)
+		print "Deleting %s from %s nodegroup" % (node, config.nodegroup)
+		api.DeleteNodeFromNodeGroup(node, config.nodegroup)
 
 else:
 	print "no other options supported."

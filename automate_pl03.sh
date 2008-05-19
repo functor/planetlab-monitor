@@ -4,6 +4,16 @@ set -e
 cd $HOME/monitor/
 DATE=`date +%Y-%m-%d-%T`
 
+
+if [ -f $HOME/monitor/SKIP ] ; then 
+	echo "SKIPPING Monitor"
+	# TODO: should be possible to kill the old version if 
+	# desired and prevent lingering instances of automate.
+	#./kill.cmd.sh `cat $HOME/monitor/SKIP`
+	exit
+else
+	echo $$ > $HOME/monitor/SKIP
+fi
 #########################
 # 1. FINDBAD NODES 
 rm -f pdb/production.findbad2.pkl
@@ -40,3 +50,5 @@ cp pdb/production.findbadpcus2.pkl pdb/production.findbadpcus.pkl
 for f in findbad act_all findbadpcus l_plcnodes; do 
 	cp pdb/production.$f.pkl archive-pdb/`date +%F`.production.$f.pkl
 done
+
+rm -f $HOME/monitor/SKIP
