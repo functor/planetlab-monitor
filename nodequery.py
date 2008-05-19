@@ -57,7 +57,7 @@ def fb_print_nodeinfo(fbnode, hostname):
 	else:
 		fbnode['bootcd'] = "unknown"
 	fbnode['kernel'] = fbnode['kernel'].split()[2]
-	fbnode['pcu'] = color_pcu_state(fbnode)
+	#fbnode['pcu'] = color_pcu_state(fbnode)
 	print "%(hostname)-39s | %(checked)11.11s | %(state)10.10s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 
 if config.nodelist:
@@ -79,7 +79,7 @@ for node in nodelist:
 		config.category == fb_nodeinfo['state']:
 
 			fb_print_nodeinfo(fb_nodeinfo, node)
-	elif config.nodelist and 'state' in fb_nodeinfo:
+	elif 'state' in fb_nodeinfo:
 		fb_print_nodeinfo(fb_nodeinfo, node)
 	else:
 		pass
