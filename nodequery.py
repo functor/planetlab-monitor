@@ -56,7 +56,10 @@ def fb_print_nodeinfo(fbnode, hostname):
 		fbnode['bootcd'] = fbnode['bootcd'].split()[-1]
 	else:
 		fbnode['bootcd'] = "unknown"
-	fbnode['kernel'] = fbnode['kernel'].split()[2]
+	if 'ERROR' in fbnode['category']:
+		fbnode['kernel'] = ""
+	else:
+		fbnode['kernel'] = fbnode['kernel'].split()[2]
 	#fbnode['pcu'] = color_pcu_state(fbnode)
 	print "%(hostname)-39s | %(checked)11.11s | %(state)10.10s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 
