@@ -482,12 +482,19 @@ class Diagnose(Thread):
 					diag_record['message'] = emailTxt.mailtxt.pcutonodemapping
 					diag_record['email_pcu'] = True
 
-			if diag_record['ticket_id'] == "":
-				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
-					(loginbase, nodename, diag_record['info'][1:], diag_record['found_rt_ticket'])
+			if 'ticket_id' in diag_record:
+				if diag_record['ticket_id'] == "":
+					if 'found_rt_ticket' in diag_record:
+						ticket_id = diag_record['found_rt_ticket']
+					else:
+						ticket_id = "None"
+				else:
+					ticket_id = diag_record['ticket_id']
 			else:
-				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
-					(loginbase, nodename, diag_record['info'][1:], diag_record['ticket_id'])
+				ticket_id = "None"
+
+			diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
+					(loginbase, nodename, diag_record['info'][1:], ticket_id)
 
 		elif "OLDBOOTCD" in category:
 			# V2 boot cds as determined by findbad
