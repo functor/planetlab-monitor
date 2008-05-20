@@ -3,8 +3,8 @@ import soltesz
 from config import config
 from optparse import OptionParser
 import string
-from HyperText.HTML import A, BR, IMG, TABLE, TR, TH, TD, EM, quote_body
-from HyperText.Documents import Document
+#from HyperText.HTML import A, BR, IMG, TABLE, TR, TH, TD, EM, quote_body
+#from HyperText.Documents import Document
 
 import sys
 
