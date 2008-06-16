@@ -167,17 +167,17 @@ class CMD:
 	def __init__(self):
 		pass
 
-	def run_noexcept(self, cmd):
+	def run_noexcept(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
 		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 		#(f_in, f_out, f_err) = os.popen3(cmd)
 		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
-		lout, lin, lerr = select([f_out,f_err], [], [], COMMAND_TIMEOUT*2)
+		lout, lin, lerr = select([f_out,f_err], [], [], timeout)
 		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
 			# Reached a timeout!
 			#print "TODO: kill subprocess: '%s'" % cmd
 			# TODO: kill subprocess??
-			s.kill()
+			s.kill(signal.SIGKILL)
 			return ("", "SCRIPTTIMEOUT")
 		o_value = f_out.read()
 		e_value = ""
@@ -190,6 +190,12 @@ class CMD:
 		f_out.close()
 		f_in.close()
 		f_err.close()
+		try:
+			s.kill()
+		except OSError:
+			# no such process, due to it already exiting...
+			pass
+
 		return (o_value, e_value)
 
 	def run_noexcept2(self, cmd):
