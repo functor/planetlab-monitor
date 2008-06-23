@@ -1,0 +1,180 @@
+##
+#
+# TODO: Whitelist for sites or machines with scheduled maintenance or
+#			predicted downtimes way in the future.
+# 		Scheduled outages for some short period of time.
+#			gives admins a chance to compare expectations with observations.
+
+
+PLC
+	name
+	fullname
+	xmlrpcserver
+	history->MultipleJoin->PLCHistory.plc
+	sites -> MultipleJoin->Site.plc
+	actions->MultipleJoin->PLCAction.plc
+
+  # configuration parameters...
+	monitor_frequency
+	rt_db_stuff
+	rt_user_stuff
+
+
+PLCHistory
+	plc->
+	date_checked
+	plc_nodes
+	plc_sites
+	ob_sites_up
+	ob_sites_down
+	ob_nodes_up
+	ob_nodes_down
+	ob_nodes_other
+
+# I'm unsure of this.  There is a transactional pattern that I need to
+# discover or define wrt how data is introduced into the db and whether or not
+# it can be trusted as 'complete'.  this action may be the root of all the
+# others in a tree.
+
+PLCAction
+	date_performed
+	plc->ForeignKey->PLC.actions
+	plc_query							# site, node, slice query.
+	nodes_query							# probe nodes
+	nodes_categorize					# take raw data and push into finite states
+										# also aggregate data for site and plc
+	stats_aggregate						# fill out the rest of aggregate fields in db?
+	nodes_diagnose						# decide what actions to take based on history
+										# write action to db.
+	nodes_act							# read action db and perform to change state at plc or node
+
+--
+
+Site
+	loginbase								# from plc
+	active									# site exists in PLC
+	plc->ForeignKey->PLC.sites
+	history->MultipleJoin->SiteHistory.site
+	nodes->MultipleJoin->Node.site
+	actions->MultipleJoin->SiteAction.site
+
+SiteHistory
+	site->ForeignKey->Site.history
+	date_checked
+
+  # Statistics
+	plc_nodes					# from plc
+	plc_slices_max					# from plc
+	plc_slices_used					# from plc
+	plc_disabled					# from plc
+	plc_suspended					# from plc
+	ob_nodes_up						# from monitor
+	ob_nodes_down					# from monitor
+
+SiteAction
+	site->ForeignKey->Site.actions
+
+	date_created
+  # Action to take
+	email 						# from monitor diagnose -> action
+	suspend_slices				# from monitor diagnose -> action
+	disable_creation			# from monitor diagnose -> action
+
+  # Are other actions available for either Notify or Findbad scripts?
+  	slices_suspend
+	slices_enable
+
+	site_enable
+	site_disable
+
+	email_send
+	message
+
+  # Action taken
+	date_performed				# from monitor (action)
+	rt_ticket_id				# from monitor sent mail (action.py)
+
+--
+
+Node
+	nodename
+	probe->ForeignKey->NodeProbe.node
+	hardware->OnetoOne->Hardware->node
+	actions->MultipleJoin->NodeAction.node
+
+NodeCurrent
+	->node
+	site->
+	->probe
+	->action
+	->downtime
+
+NodeProbe
+	nodecurrent->
+	date_checked
+	ob_ping
+	ob_ssh
+	ob_kernel
+	ob_bmlog
+	ob_bootstate
+	ob_bootcd
+	plc_bootstate
+	plc_bootcd
+	plc_pcu
+
+NodeDowntime
+	nodecurrent->
+	date_created
+	date_expires
+	enabled
+	owner_reason
+	owner_comments
+
+NodeAction
+	nodecurrent->ForeignKey->Node.actions
+	date_created
+
+	inferred_state
+	inf_category
+	
+  # Are there actions on individual nodes?
+	plc_boot_state_reset
+	pcu_test
+  	node_reboot
+
+# TODO: Whitelist for sites or machines with scheduled maintenance or
+#			predicted downtimes way in the future.
+# 		Scheduled outages for some short period of time.
+#			gives admins a chance to compare expectations with observations.
+
+Message
+	date_created
+	title
+	template_arguments
+	message_parts->Join->MessagePart->message.id
+
+MessagePart
+	date_created
+	title
+	template_message
+	message->ForeignKey->Message.id
+	
+
+Hardware
+	node->
+	date_checked
+	cpu_model
+	cpu_speed
+	cpu_count
+
+	ram_model
+	ram_size
+	disk_model
+	disk_specs
+	
+  # pci devices
+	network cards
+	daughter cards
+	raid cards
+	usb
+	other?
