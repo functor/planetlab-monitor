@@ -5,27 +5,30 @@ import auth
 api = plc.PLC(auth.auth, auth.plc)
 
 import soltesz
-fb = soltesz.dbLoad("findbad")
-act_all = soltesz.dbLoad("act_all")
-
 import reboot
 
 import time
 from model import *
 from nodecommon import *
 
-from config import config
+import config as configmodule
+
+from config import config as cfg
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.set_defaults(node=None, endrecord=False)
+parser.set_defaults(node=None, 
+					findbad=False,
+					endrecord=False)
 parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
 					help="A single node name to add to the nodegroup")
 parser.add_option("", "--endrecord", dest="endrecord", action="store_true",
 					help="Force an end to the action record; to prompt Montior to start messaging again.")
+parser.add_option("", "--findbad", dest="findbad", action="store_true", 
+					help="Re-run findbad on the nodes we're going to check before acting.")
 parser.add_option("", "--bootcd", dest="bootcd", action="store_true",
 					help="A stock help message for fetching a new BootCD from the PLC GUI.")
-config = config(parser)
+config = cfg(parser)
 config.parse_args()
 
 def diff_time(timestamp):
@@ -143,6 +146,18 @@ def pcu_print_info(pcuinfo, hostname):
 			print "\t racadm.py -r %s -u %s -p '%s'" % (pcuinfo['ip'], pcuinfo['username'], pcuinfo['password'])
 			print "\t cmdhttps/locfg.pl -s %s -f iloxml/Reset_Server.xml -u %s -p '%s' | grep MESSAGE" % \
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
+		if pcuinfo['portstatus']['16992'] == "open":
+			print "\t ./cmdamt/remoteControl -A -verbose 'http://%s:16992/RemoteControlService' -user admin -pass '%s'" % (reboot.pcu_name(pcuinfo), pcuinfo['password'])
+
+if config.findbad:
+	# rerun findbad with the nodes in the given nodes.
+	import os
+	file = "findbad.txt"
+	configmodule.setFileFromList(file, config.args)
+	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
+
+fb = soltesz.dbLoad("findbad")
+act_all = soltesz.dbLoad("act_all")
 
 for node in config.args:
 	config.node = node

@@ -9,6 +9,7 @@ api = plc.PLC(auth.auth, auth.plc)
 
 import sys
 import os
+import policy
 
 from getsshkeys import SSHKnownHosts
 
@@ -20,8 +21,8 @@ from sets import Set
 import ssh.pxssh as pxssh
 import ssh.fdpexpect as fdpexpect
 import ssh.pexpect as pexpect
-
-
+from unified_model import *
+from emailTxt import mailtxt
 
 import signal
 class Sopen(subprocess.Popen):
@@ -136,13 +137,22 @@ class NodeConnection:
 	def restart_node(self, state='boot'):
 		api.UpdateNode(self.node, {'boot_state' : state})
 
-		print "   Killing all slice processes... : %s" %  self.node
-		cmd_slicekill = "ls -d /proc/virtual/[0-9]* | awk -F '/' '{print $4}' | xargs -I{} /usr/sbin/vkill -s 9 --xid {} -- 0"
-		self.c.modules.os.system(cmd_slicekill)
+		pflags = PersistFlags(self.node, 1*60*60*24, db='restart_persistflags')
+		if not pflags.getRecentFlag('gentlekill'):
+			print "   Killing all slice processes... : %s" %  self.node
+			cmd_slicekill = "ls -d /proc/virtual/[0-9]* | awk -F '/' '{print $4}' | xargs -I{} /usr/sbin/vkill -s 9 --xid {} -- 0"
+			self.c.modules.os.system(cmd_slicekill)
+			cmd = """ shutdown -r +1 & """
+			print "   Restarting %s : %s" % ( self.node, cmd)
+			self.c.modules.os.system(cmd)
 
-		cmd = """ shutdown -r +1 & """
-		print "   Restarting %s : %s" % ( self.node, cmd)
-		self.c.modules.os.system(cmd)
+			pflags.setRecentFlag('gentlekill')
+			pflags.save()
+		else:
+			print "   Restarting with sysrq 'sub' %s" % self.node
+			cmd = """ (sleep 5; echo 's' > /proc/sysrq-trigger; echo 'u' > /proc/sysrq-trigger; echo 'b' > /proc/sysrq-trigger ) & """
+			self.c.modules.os.system(cmd)
+
 		return
 
 	def restart_bootmanager(self, forceState):
@@ -162,8 +172,9 @@ class NodeConnection:
 		return 
 
 
+import random
 class PlanetLabSession:
-	globalport = 22222
+	globalport = 22000 + int(random.random()*1000)
 
 	def __init__(self, node, nosetup, verbose):
 		self.verbose = verbose
@@ -193,48 +204,60 @@ class PlanetLabSession:
 		# COPY Rpyc files to host
 		cmd = "rsync -qv -az -e ssh %(monitordir)s/Rpyc-2.45-2.3/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
 		if self.verbose: print cmd
-		ret = os.system(cmd)
+		# TODO: Add timeout
+		timeout = 120
+		localos = soltesz.CMD()
+
+		ret = localos.system(cmd, timeout)
+		print ret
 		if ret != 0:
-			print "UNKNOWN SSH KEY FOR %s" % self.node
-			print "MAKE EXPLICIT EXCEPTION FOR %s" % self.node
+			print "\tUNKNOWN SSH KEY FOR %s; making an exception" % self.node
+			#print "MAKE EXPLICIT EXCEPTION FOR %s" % self.node
 			k = SSHKnownHosts(); k.updateDirect(self.node); k.write(); del k
-			ret = os.system(cmd)
+			ret = localos.system(cmd, timeout)
+			print ret
 			if ret != 0:
-				print "FAILED TWICE"
-				sys.exit(1)
+				print "\tFAILED TWICE"
+				#sys.exit(1)
+				raise Exception("Failed twice trying to login with updated ssh host key")
 
-		#cmd = "rsync -qv -az -e ssh %(monitordir)s/BootManager.py 
-		# %(monitordir)s/ChainBoot.py %(user)s@%(hostname)s:/tmp/source" % args
-		#print cmd; os.system(cmd)
-
+		t1 = time.time()
 		# KILL any already running servers.
 		cmd = """ssh %(user)s@%(hostname)s """ + \
-		     """'ps ax | grep Rpyc | grep -v grep | awk "{print \$1}" | xargs kill 2> /dev/null' """
+			 """'ps ax | grep Rpyc | grep -v grep | awk "{print \$1}" | xargs kill 2> /dev/null' """
 		cmd = cmd % args
 		if self.verbose: print cmd
-		os.system(cmd)
+		# TODO: Add timeout
+		print localos.system(cmd,timeout)
 
 		# START a new rpyc server.
-		cmd = """ssh %(user)s@%(hostname)s "export PYTHONPATH=\$HOME; """ + \
+		cmd = """ssh -n %(user)s@%(hostname)s "export PYTHONPATH=\$HOME; """ + \
 			 """python Rpyc/Servers/forking_server.py &> server.log < /dev/null &" """ 
 		cmd = cmd % args
 		if self.verbose: print cmd
-		os.system(cmd)
+		print localos.system(cmd,timeout)
 
+		# TODO: Add timeout
 		# This was tricky to make synchronous.  The combination of ssh-clients-4.7p1, 
 		# and the following options seems to work well.
 		cmd = """ssh -o ExitOnForwardFailure=yes -o BatchMode=yes """ + \
-		      """-o PermitLocalCommand=yes -o LocalCommand='echo "READY"' """ + \
-		      """-o ConnectTimeout=120 """ + \
-		      """-n -N -L %(port)s:localhost:18812 """ + \
-		      """%(user)s@%(hostname)s"""
+			  """-o PermitLocalCommand=yes -o LocalCommand='echo "READY"' """ + \
+			  """-o ConnectTimeout=120 """ + \
+			  """-n -N -L %(port)s:localhost:18812 """ + \
+			  """%(user)s@%(hostname)s"""
 		cmd = cmd % args
 		if self.verbose: print cmd
 		self.command = Sopen(cmd, shell=True, stdout=subprocess.PIPE)
+		# TODO: the read() here may block indefinitely.  Need a better
+		# approach therefore, that includes a timeout.
 		ret = self.command.stdout.read(5)
+
+		t2 = time.time()
 		if 'READY' in ret:
-			# We can return without delay.
-			time.sleep(1)
+			# NOTE: There is still a slight race for machines that are slow...
+			self.timeout = 2*(t2-t1)
+			print "Sleeping for %s sec" % self.timeout
+			time.sleep(self.timeout)
 			return
 
 		if self.command.returncode is not None:
@@ -267,13 +290,35 @@ def reboot(hostname, config=None, forced_action=None):
 	print "Creating session for %s" % node
 	# update known_hosts file (in case the node has rebooted since last run)
 	if config and not config.quiet: print "...updating known_hosts ssh-rsa key for %s" % node
-	k = SSHKnownHosts(); k.update(node); k.write(); del k
+	try:
+		k = SSHKnownHosts(); k.update(node); k.write(); del k
+	except:
+		import traceback; print traceback.print_exc()
+		return False
 
-	if config == None:
-		session = PlanetLabSession(node, False, False)
-	else:
-		session = PlanetLabSession(node, config.nosetup, config.verbose)
-	conn = session.get_connection(config)
+	try:
+		if config == None:
+			session = PlanetLabSession(node, False, True)
+		else:
+			session = PlanetLabSession(node, config.nosetup, config.verbose)
+	except Exception, e:
+		print "ERROR setting up session for %s" % hostname
+		import traceback; print traceback.print_exc()
+		print e
+		return False
+
+	try:
+		conn = session.get_connection(config)
+	except EOFError:
+		# NOTE: sometimes the wait in setup_host() is not long enough.  
+		# So, here we try to wait a little longer before giving up entirely.
+		try:
+			time.sleep(session.timeout*4)
+			conn = session.get_connection(config)
+		except:
+			import traceback; print traceback.print_exc()
+			return False
+			
 
 	if forced_action == "reboot":
 		conn.restart_node('rins')
@@ -282,7 +327,7 @@ def reboot(hostname, config=None, forced_action=None):
 	boot_state = conn.get_boot_state()
 	if boot_state == "boot":
 		print "...Boot state of %s already completed : skipping..." % node
-		return False
+		return True
 	elif boot_state == "unknown":
 		print "...Unknown bootstate for %s : skipping..."% node
 		return False
@@ -291,12 +336,16 @@ def reboot(hostname, config=None, forced_action=None):
 
 	if conn.bootmanager_running():
 		print "...BootManager is currently running.  Skipping host %s" % node
-		return False
+		return True
 
-	if config != None:
-		if config.force:
-			conn.restart_bootmanager(config.force)
-			return True
+	#if config != None:
+	#	if config.force:
+	#		conn.restart_bootmanager(config.force)
+	#		return True
+
+	# Read persistent flags, tagged on one week intervals.
+	pflags = PersistFlags(hostname, 3*60*60*24, db='debug_persistflags')
+		
 
 	if config and not config.quiet: print "...downloading dmesg from %s" % node
 	dmesg = conn.get_dmesg()
@@ -334,7 +383,7 @@ def reboot(hostname, config=None, forced_action=None):
 			break
 
 	s = Set(sequence)
-	if config and not config.quiet: print "SET: ", s
+	if config and not config.quiet: print "\tSET: ", s
 
 	if len(s) > 1:
 		print "...Potential drive errors on %s" % node
@@ -342,6 +391,16 @@ def reboot(hostname, config=None, forced_action=None):
 			print "...Should investigate.  Continuing with node."
 		else:
 			print "...Should investigate.  Skipping node."
+			# TODO: send message related to these errors.
+			args = {}
+			args['hostname'] = hostname
+			args['log'] = conn.get_dmesg().read()
+
+			m = PersistMessage(hostname, mailtxt.baddisk[0] % args,
+										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
+
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 			return False
 
 	print "...Downloading bm.log from %s" % node
@@ -382,15 +441,18 @@ def reboot(hostname, config=None, forced_action=None):
 			('exception'	, 'Exception'),
 			('nocfg'        , 'Found configuration file planet.cnf on floppy, but was unable to parse it.'),
 			('protoerror'   , 'XML RPC protocol error'),
+			('nodehostname' , 'Configured node hostname does not resolve'),
 			('implementerror', 'Implementation Error'),
 			('readonlyfs'   , '[Errno 30] Read-only file system'),
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
+			('disktoosmall' , 'The total usable disk size of all disks is insufficient to be usable as a PlanetLab node.'),
 			('hardwarefail' , 'Hardware requirements not met'),
 			('chrootfail'   , 'Running chroot /tmp/mnt/sysimg'),
 			('modulefail'   , 'Unable to get list of system modules'),
 			('writeerror'   , 'write error: No space left on device'),
+			('nospace'      , "No space left on device"),
 			('nonode'       , 'Failed to authenticate call: No such node'),
 			('authfail'     , 'Failed to authenticate call: Call could not be authenticated'),
 			('bootcheckfail'     , 'BootCheckAuthentication'),
@@ -410,81 +472,181 @@ def reboot(hostname, config=None, forced_action=None):
 	s = "-".join(sequence)
 	print "   FOUND SEQUENCE: ", s
 
-	if s == "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done":
-		if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
-		conn.restart_bootmanager('boot')
-	elif s == "bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done":
-		if conn.compare_and_repair_nodekeys():
-			# the keys either are in sync or were forced in sync.
-			# so try to reboot the node again.
-			conn.restart_bootmanager('boot')
-		else:
-			# there was some failure to synchronize the keys.
-			print "...Unable to repair node keys on %s" % node
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done":
-		conn.restart_bootmanager('boot')
-	elif s == "bminit-cfg-auth-getplc-update-debug-done":
-		conn.restart_bootmanager('boot')
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done":
-		conn.restart_bootmanager('rins')
-	elif s == "bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done":
-		conn.restart_bootmanager('boot')
-	elif s == "bminit-cfg-auth-protoerror-exception-update-debug-done":
-		conn.restart_bootmanager('boot')
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-update-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done":
-		# reinstall b/c it is not installed.
-		conn.restart_bootmanager('rins')
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-done":
+	# NOTE: We get or set the flag based on the current sequence identifier.
+	#  By using the sequence identifier, we guarantee that there will be no
+	#  frequent loops.  I'm guessing there is a better way to track loops,
+	#  though.
+	if not config.force and ( pflags.getFlag(s) or pflags.isRecent() ):
+		pflags.resetFlag(s)
+		pflags.setRecent()
+		pflags.save() 
+		print "... flag is set or it has already run recently. Skipping %s" % node
+		return True
 
-		conn.restart_bootmanager('rins')
-	elif s == "bminit-cfg-auth-getplc-update-hardware-installinit-exception-bmexceptrmfail-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-hardware-installinit-exception-bmexceptrmfail-update-debug-done":
-		conn.restart_node('rins')
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-implementerror-bootupdatefail-update-debug-done":
-		conn.restart_node('rins')
-	elif s == "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-readonlyfs-update-debug-done":
-		conn.restart_node('rins')
-	elif s == "bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done":
-		conn.restart_bootmanager('rins')
-	elif s == "bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done":
-		conn.restart_bootmanager('rins')
-	elif s == "bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done" or \
-		 s == "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done":
-		conn.dump_plconf_file()
-	elif s == "bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarefail-update-debug-done" or \
-	     s == "bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarefail-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarefail-update-debug-done":
-		print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
-		pass
+	sequences = {}
 
-	elif s == "bminit-cfg-auth-getplc-update-hardware-exception-hardwarefail-update-debug-done":
-		# MAKE An ACTION record that this host has failed hardware.  May
-		# require either an exception "/minhw" or other manual intervention.
-		# Definitely need to send out some more EMAIL.
-		print "...NOTIFY OWNER OF BROKEN HARDWARE!!!"
-		pass
 
-	elif s == "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done" or \
-	     s == "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done" or \
-	     s == "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done" or \
-		 s == "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-writeerror-exception-chrootfail-update-debug-done":
-		conn.restart_node('rins')
-		#conn.restart_bootmanager('rins')
-		print "...Need to follow up on this one."
+	# restart_bootmanager_boot
+	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
+			"bminit-cfg-auth-getplc-update-debug-done",
+			"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
+			"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
+			"bminit-cfg-auth-protoerror-exception-update-bootupdatefail-authfail-debug-done",
+			"bminit-cfg-auth-protoerror-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-implementerror-update-debug-done",
+			]:
+		sequences.update({n : "restart_bootmanager_boot"})
 
-		## If the disk is full, just start over.
-		#conn.restart_bootmanager('rins')
-	elif s == "":
-		pass
+	#	conn.restart_bootmanager('rins')
+	for n in [ "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
+			]:
+		sequences.update({n : "restart_bootmanager_rins"})
 
-	else:
+	# repair_node_keys
+	sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
+
+	#   conn.restart_node('rins')
+	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-writeerror-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-implementerror-bootupdatefail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-readonlyfs-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-nospace-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-update-debug-done",
+			]:
+		sequences.update({n : "restart_node_rins"})
+
+	#	restart_node_boot
+	for n in ["bminit-cfg-auth-getplc-implementerror-bootupdatefail-update-debug-done",
+			 "bminit-cfg-auth-implementerror-bootcheckfail-update-debug-done",
+			 "bminit-cfg-auth-implementerror-bootcheckfail-update-implementerror-bootupdatefail-done",
+			 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
+			 ]:
+		sequences.update({n: "restart_node_boot"})
+
+	# update_node_config_email
+	for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
+			"bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
+			"bminit-cfg-exception-nodehostname-update-debug-done",
+			]:
+		sequences.update({n : "update_node_config_email"})
+
+	# update_bootcd_email
+	for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarefail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-exception-hardwarefail-update-debug-done",
+			]:
+		sequences.update({n : "update_bootcd_email"})
+
+	# update_hardware_email
+	sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarefail-update-debug-done" : "update_hardware_email"})
+
+	# broken_hardware_email
+	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarefail-update-debug-done" : "broken_hardware_email"})
+
+	
+	if s not in sequences:
 		print "   HOST %s" % hostname
 		print "   UNKNOWN SEQUENCE: %s" % s
-		pass
+
+		args = {}
+		args['hostname'] = hostname
+		args['sequence'] = s
+		args['bmlog'] = conn.get_bootmanager_log().read()
+		m = PersistMessage(hostname, mailtxt.unknownsequence[0] % args,
+									 mailtxt.unknownsequence[1] % args, False, db='unknown_persistmessages')
+		m.reset()
+		m.send(['monitor-list@lists.planet-lab.org'])
+
+		conn.restart_bootmanager('boot')
+
+	else:
+
+		if   sequences[s] == "restart_bootmanager_boot":
+			if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
+			conn.restart_bootmanager('boot')
+		elif sequences[s] == "restart_bootmanager_rins":
+			if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
+			conn.restart_bootmanager('rins')
+		elif sequences[s] == "restart_node_rins":
+			conn.restart_node('rins')
+		elif sequences[s] == "restart_node_boot":
+			conn.restart_node('boot')
+		elif sequences[s] == "repair_node_keys":
+			if conn.compare_and_repair_nodekeys():
+				# the keys either are in sync or were forced in sync.
+				# so try to reboot the node again.
+				conn.restart_bootmanager('boot')
+			else:
+				# there was some failure to synchronize the keys.
+				print "...Unable to repair node keys on %s" % node
+		elif sequences[s] == "update_node_config_email":
+			print "...Sending message to UPDATE NODE CONFIG"
+			args = {}
+			args['hostname'] = hostname
+			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
+								True, db='nodeid_persistmessages')
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.dump_plconf_file()
+
+		elif sequences[s] == "update_bootcd_email":
+			print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
+			import getconf
+			args = {}
+			args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
+			args['hostname_list'] = "%s" % hostname
+
+			m = PersistMessage(hostname, "Please Update Boot Image for %s" % hostname,
+								mailtxt.newalphacd_one[1] % args, True, db='bootcd_persistmessages')
+
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+
+		elif sequences[s] == "broken_hardware_email":
+			# MAKE An ACTION record that this host has failed hardware.  May
+			# require either an exception "/minhw" or other manual intervention.
+			# Definitely need to send out some more EMAIL.
+			print "...NOTIFYING OWNERS OF BROKEN HARDWARE on %s!!!" % hostname
+			# TODO: email notice of broken hardware
+			args = {}
+			args['hostname'] = hostname
+			args['log'] = conn.get_dmesg().read()
+			m = PersistMessage(hostname, mailtxt.baddisk[0] % args,
+										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
+
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+
+		elif sequences[s] == "update_hardware_email":
+			print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
+			args = {}
+			args['hostname'] = hostname
+			args['bmlog'] = conn.get_bootmanager_log().read()
+			m = PersistMessage(hostname, mailtxt.minimalhardware[0] % args,
+										 mailtxt.minimalhardware[1] % args, True, db='minhardware_persistmessages')
+
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+
+	pflags.setFlag(s)
+	pflags.save() 
 
 	return True
 	

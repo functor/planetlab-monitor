@@ -43,8 +43,7 @@ def main():
 					for k in keys:
 						if "message" not in k and "msg" not in k:
 							if 'time' in k:
-								s_time=time.strftime("%Y/%m/%d %H:%M:%S",
-														time.gmtime(diag_node[k]))
+								s_time=time.strftime("%Y/%m/%d %H:%M:%S", time.gmtime(diag_node[k]))
 								print "\t'%s' : %s" % (k, s_time)
 							else:
 								print "\t'%s' : %s" % (k, diag_node[k])

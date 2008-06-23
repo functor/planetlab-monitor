@@ -17,6 +17,8 @@ config = config()
 DEBUG= 0
 PICKLE_PATH="pdb"
 
+class ExceptionTimeout(Exception): pass
+
 def dbLoad(name, type=None):
 	return SPickle().load(name, type)
 
@@ -169,16 +171,57 @@ class CMD:
 
 	def run_noexcept(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
+		try:
+			return CMD.run(self,cmd,timeout)
+		except ExceptionTimeout:
+			import traceback; print traceback.print_exc()
+			return ("", "SCRIPTTIMEOUT")
+			
+
+#		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+#		#(f_in, f_out, f_err) = os.popen3(cmd)
+#		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
+#		lout, lin, lerr = select([f_out,f_err], [], [], timeout)
+#		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
+#			# Reached a timeout!  Nuke process so it does not hang.
+#			s.kill(signal.SIGKILL)
+#			return ("", "SCRIPTTIMEOUT")
+#		o_value = f_out.read()
+#		e_value = ""
+#		if o_value == "":	# An error has occured
+#			e_value = f_err.read()
+#
+#		o_value = o_value.strip()
+#		e_value = e_value.strip()
+#
+#		f_out.close()
+#		f_in.close()
+#		f_err.close()
+#		try:
+#			s.kill()
+#		except OSError:
+#			# no such process, due to it already exiting...
+#			pass
+#
+#		return (o_value, e_value)
+	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):
+		(o,e) = self.run(cmd, timeout)
+		self.output = o
+		self.error = e
+		if self.s.returncode is None:
+			self.s.wait()
+		return self.s.returncode
+
+	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
+
 		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-		#(f_in, f_out, f_err) = os.popen3(cmd)
+		self.s = s
 		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
 		lout, lin, lerr = select([f_out,f_err], [], [], timeout)
 		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
-			# Reached a timeout!
-			#print "TODO: kill subprocess: '%s'" % cmd
-			# TODO: kill subprocess??
+			# Reached a timeout!  Nuke process so it does not hang.
 			s.kill(signal.SIGKILL)
-			return ("", "SCRIPTTIMEOUT")
+			raise ExceptionTimeout("TIMEOUT Running: %s" % cmd)
 		o_value = f_out.read()
 		e_value = ""
 		if o_value == "":	# An error has occured
@@ -198,42 +241,6 @@ class CMD:
 
 		return (o_value, e_value)
 
-	def run_noexcept2(self, cmd):
-
-		(f_in, f_out, f_err) = os.popen3(cmd)
-		lout, lin, lerr = select([f_out,f_err], [], [], COMMAND_TIMEOUT*2)
-		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
-			# Reached a timeout!
-			print "TODO: kill subprocess: '%s'" % cmd
-			# TODO: kill subprocess??
-			return ("", "SCRIPTTIMEOUT")
-		o_value = f_out.read()
-		e_value = ""
-		if o_value == "":	# An error has occured
-			e_value = f_err.read()
-
-		o_value = o_value.strip()
-		e_value = e_value.strip()
-
-		f_out.close()
-		f_in.close()
-		f_err.close()
-		return (o_value, e_value)
-
-	def run(self, cmd):
-
-		(f_in, f_out, f_err) = os.popen3(cmd)
-		value = f_out.read()
-		if value == "":
-			raise Exception, f_err.read()
-		value = value.strip()
-
-		f_out.close()
-		f_in.close()
-		f_err.close()
-		return value
-
-		
 
 class SSH(CMD):
 	def __init__(self, user, host, options = ssh_options):
@@ -248,10 +255,10 @@ class SSH(CMD):
 			options = options + "-o %s=%s " % (o,v)
 		return options
 
-	def run(self, cmd):
+	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
 		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
 									self.user, self.host, cmd)
-		return CMD.run(self, cmd)
+		return CMD.run(self, cmd, timeout)
 
 	def get_file(self, rmt_filename, local_filename=None):
 		if local_filename == None:

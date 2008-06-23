@@ -23,7 +23,7 @@ import soltesz
 import string
 from www.printbadnodes import cmpCategoryVal
 from config import config
-print "policy"
+#print "policy"
 config = config()
 
 DAT="./monitor.dat"
@@ -371,9 +371,12 @@ class Diagnose(Thread):
 
 		pass
 		
-	def __getDaysDown(self, diag_record, nodename):
+	def getDaysDown(cls, diag_record):
 		daysdown = -1
-		if diag_record['comonstats']['sshstatus'] != "null":
+		if diag_record['comonstats']['uptime'] != "null":
+			#print "uptime %s" % (int(float(diag_record['comonstats']['uptime'])) // (60*60*24))
+			daysdown = - int(float(diag_record['comonstats']['uptime'])) // (60*60*24)
+		elif diag_record['comonstats']['sshstatus'] != "null":
 			daysdown = int(diag_record['comonstats']['sshstatus']) // (60*60*24)
 		elif diag_record['comonstats']['lastcotop'] != "null":
 			daysdown = int(diag_record['comonstats']['lastcotop']) // (60*60*24)
@@ -387,13 +390,17 @@ class Diagnose(Thread):
 				diff = now - last_contact
 				daysdown = diff // (60*60*24)
 		return daysdown
+	getDaysDown = classmethod(getDaysDown)
 
-	def __getStrDaysDown(self, diag_record, nodename):
-		daysdown = self.__getDaysDown(diag_record, nodename)
+	def getStrDaysDown(cls, diag_record):
+		daysdown = cls.getDaysDown(diag_record)
 		if daysdown > 0:
-			return "(%d days down)"%daysdown
-		else:
+			return "%d days down"%daysdown
+		elif daysdown == -1:
 			return "Unknown number of days"
+		else:
+			return "%d days up"% -daysdown
+	getStrDaysDown = classmethod(getStrDaysDown)
 
 	def __getCDVersion(self, diag_record, nodename):
 		cdversion = ""
@@ -461,13 +468,13 @@ class Diagnose(Thread):
 		if  "ERROR" in category:	# i.e. "DOWN"
 			diag_record = {}
 			diag_record.update(node_record)
-			daysdown = self.__getDaysDown(diag_record, nodename) 
+			daysdown = self.getDaysDown(diag_record) 
 			if daysdown < 7:
 				format = "DIAG: %20s : %-40s Down only %s days  NOTHING DONE"
 				print format % (loginbase, nodename, daysdown)
 				return None
 
-			s_daysdown = self.__getStrDaysDown(diag_record, nodename)
+			s_daysdown = self.getStrDaysDown(diag_record)
 			diag_record['message'] = emailTxt.mailtxt.newdown
 			diag_record['args'] = {'nodename': nodename}
 			diag_record['info'] = (nodename, s_daysdown, "")
@@ -498,7 +505,7 @@ class Diagnose(Thread):
 
 		elif "OLDBOOTCD" in category:
 			# V2 boot cds as determined by findbad
-			s_daysdown = self.__getStrDaysDown(node_record, nodename)
+			s_daysdown = self.getStrDaysDown(node_record)
 			s_cdversion = self.__getCDVersion(node_record, nodename)
 			diag_record = {}
 			diag_record.update(node_record)
@@ -756,12 +763,17 @@ class Diagnose(Thread):
 				act_record['first-found'] = True
 				act_record['log'] += " firstfound"
 				act_record['action'] = ['ticket_waitforever']
-				act_record['message'] = None
+				act_record['message'] = message[0]
 				act_record['time'] = current_time
 			else:
 				if delta >= 7*SPERDAY:
 					act_record['action'] = ['ticket_waitforever']
-					act_record['message'] = None
+					if 'rt' in act_record and 'Status' in act_record['rt'] and \
+							act_record['rt']['Status'] == 'new':
+						act_record['message'] = message[0]
+					else:
+						act_record['message'] = None
+						
 					act_record['time'] = current_time		# reset clock
 				else:
 					act_record['action'] = ['ticket_waitforever']
@@ -831,7 +843,10 @@ class Diagnose(Thread):
 		if site_stats == None:
 			raise Exception, "loginbase with no nodes in findbad"
 		else:
-			return site_stats['num_nodes']
+			if 'num_nodes' in site_stats:
+				return site_stats['num_nodes']
+			else:
+				return 0
 
 	"""
 	Returns number of up nodes as the total number *NOT* in act_all with a

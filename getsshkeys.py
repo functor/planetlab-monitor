@@ -86,12 +86,14 @@ class SSHKnownHosts:
 
 	def delete(self, host):
 		node = self.getNodes(host) 
-		(host, ip, _, _) = self._record_from_node(node[0])
-		index = "%s,%s" % (host,ip)
-		if index in self.pl_keys:
-			del self.pl_keys[index]
-		if index in self.other_keys:
-			del self.other_keys[index]
+		if len(node) > 0:
+			(host, ip, _, _) = self._record_from_node(node[0])
+			index = "%s,%s" % (host,ip)
+			if index in self.pl_keys:
+				del self.pl_keys[index]
+			if index in self.other_keys:
+				del self.other_keys[index]
+		return node
 
 	def updateDirect(self, host):
 		cmd = os.popen("/usr/bin/ssh-keyscan -t rsa %s 2>/dev/null" % host)
@@ -105,14 +107,16 @@ class SSHKnownHosts:
 		self.other_keys.update(rec)
 
 	def update(self, host):
-		node = self.getNodes(host) 
-		ret = self._record_from_node(node[0])
-		(host, ip, key, comment)  = ret
-		if ip == None:
-			self.updateDirect(host)
-		else:
-			rec = { "%s,%s" % (host,ip) : "%s %s" % (key, comment) }
-			self.pl_keys.update(rec)
+		node = self.delete(host)
+		#node = self.getNodes(host) 
+		if node is not []:
+			ret = self._record_from_node(node[0])
+			(host, ip, key, comment)  = ret
+			if ip == None:
+				self.updateDirect(host)
+			else:
+				rec = { "%s,%s" % (host,ip) : "%s %s" % (key, comment) }
+				self.pl_keys.update(rec)
 
 	def getNodes(self, host=None):
 		if type(host) == type(""): host = [host]
@@ -163,7 +167,7 @@ def main(hosts):
 	k = SSHKnownHosts()
 	if len (hosts) > 0:
 		for host in hosts:
-			k.update(host)
+			k.updateDirect(host)
 	else:
 		k.updateAll()
 	k.write()

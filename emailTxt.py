@@ -293,6 +293,58 @@ Thank you for your help,
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
+	unknownsequence = ("""Unrecognized Error on PlanetLab host %(hostname)s""", 
+					   """
+While trying to automatically recover this machine:
+
+    http://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+
+We encountered an unknown situation.  Please re-code to handle, or manually intervene to repair this host.
+
+Abbreviated BootManager Sequence:
+
+    %(sequence)s
+
+BootManager.log output follows:
+---------------------------------------------------------
+%(bmlog)s
+"""	  )
+
+	minimalhardware = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
+					   """
+While trying to automatically recover this machine:
+
+    http://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+
+We encountered an failed hardware requirement.  Please look at the log below to determine the exact nature of the failure, either Disk, CPU, Network, or Mimial RAM was not satisfied.
+
+If your machine does not meet the current hardware specifications for a PlanetLab node (http://www.planet-lab.org/hardware), please upgrade it to meet the current recommended configuration.  
+
+If you believe this message is an error, please email support@planet-lab.org explaining the problem.  You may need to create an updated Boot Image that includes drivers for your hardware.
+
+Thank you,
+ - PlanetLab Support
+
+BootManager.log output follows:
+---------------------------------------------------------
+%(bmlog)s
+"""	  )
+
+	baddisk = ("""Bad Disk on PlanetLab node %(hostname)s""", 
+			   """As part of PlanetLab node monitoring, we noticed %(hostname)s has a number of disk or media related I/O errors, that prevent it from either booting or reliably running as a PlanetLab node.
+
+Please verify the integrity of the disk, and order a replacment if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
+
+Thanks.
+
+  -- PlanetLab Central (support@planet-lab.org)
+
+The output of `dmesg` follows:
+-------------------------------------------------------------------------
+
+%(log)s
+""")
+
 	down=("""PlanetLab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has been down for %(days)s days.
 
 Please check the node's connectivity and, if properly networked, power cycle the machine. Note that rebooting the machine may not fully resolve the problems we're seeing. Once the machine has come back up, please visit the Comon status page to verify that your node is accessible from the network.
@@ -321,13 +373,14 @@ Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	planet_cnf=(""" Planetlab node %(hostname)s needs an updated configuration file""", """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated planet.cnf file with no NODE_ID.  This can happen after an upgrade and requires your assistance in correcting.  All that is needed is to visit:
+	plnode_cfg=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
+				"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
-	https://www.planet-lab.org/db/nodes/index.php?id=%(node_id)d
+	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
 
-And follow the "Download conf file" link to generate a new configuration file for each node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machines.
+Then, select, "Download -> Download plnode.txt file for %(hostname)s" menu.  This will generate a new configuration file for your node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machine.
 
-There's no need to respond to this message if you're able to update the configuration files without difficulty and your node returns to normal operation.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue. 
+There is no need to respond to this message if you're able to update the configuration file without difficulty and your node returns to normal operation.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue. 
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)

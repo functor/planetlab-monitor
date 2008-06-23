@@ -39,7 +39,7 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a better flow chart for this.
-    def login (self,server,username,password='',ssh_options="",terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]|[#$] ",login_timeout=10):
+    def login (self,server,username,password='',ssh_options="",terminal_type='ansi',original_prompts=r"][#$]|~[#$]|-bash.*?[#$]|[#$] ",login_timeout=10):
         """This logs the user into the given server. By default the prompt is
         rather optimistic and should be considered more of an example. It's
         better to try to match the prompt as exactly as possible to prevent
@@ -97,6 +97,7 @@ class pxssh (spawn):
             return False
         # We appear to be in -- reset prompt to something more unique.
         #if not self.set_unique_prompt():
+        #    print "couldn't reset prompt"
         #    self.close()
         #    return False
         return True

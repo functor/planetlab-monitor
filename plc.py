@@ -138,8 +138,11 @@ def getSites(filter=None, fields=None):
 	sites = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
-		sites = api.GetSites(anon, filter, fields)
+		#sites = api.GetSites(anon, filter, fields)
+		sites = api.GetSites(auth.auth, filter, fields)
 	except Exception, exc:
+		import traceback
+		traceback.print_exc()
 		print "getSites:  %s" % exc
 		logger.info("getSites:  %s" % exc)
 	return sites
@@ -255,6 +258,7 @@ def enableSliceCreation(nodename):
 Removes ability to create slices. Returns previous max_slices
 '''
 def removeSliceCreation(nodename):
+	print "removeSliceCreation(%s)" % nodename
 	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
 	try:
 		loginbase = siteId(nodename)

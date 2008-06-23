@@ -23,6 +23,13 @@ def parse_bool(option, opt_str, value, parser):
 	else:
 		print "blue"
 
+def setFileFromList(file, list):
+	f = open(file, 'w')
+	for line in list:
+		f.write(line + "\n")
+	f.close()
+	return True
+
 def getListFromFile(file):
 	f = open(file, 'r')
 	list = []

@@ -86,6 +86,122 @@ def nmap_portstatus(status):
 			continue_probe = True
 	return (ps, continue_probe)
 
+def get_pcu(pcuname):
+	plc_lock.acquire()
+	try:
+		print "GetPCU from PLC %s" % pcuname
+		l_pcu  = plc.GetPCUs({'pcu_id' : pcuname})
+		print l_pcu
+		if len(l_pcu) > 0:
+			l_pcu = l_pcu[0]
+	except:
+		try:
+			print "GetPCU from file %s" % pcuname
+			l_pcus = soltesz.dbLoad("pculist")
+			for i in l_pcus:
+				if i['pcu_id'] == pcuname:
+					l_pcu = i
+		except:
+			import traceback
+			traceback.print_exc()
+			l_pcu = None
+
+	plc_lock.release()
+	return l_pcu
+
+def get_nodes(node_ids):
+	plc_lock.acquire()
+	l_node = []
+	try:
+		l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 'node_id', 'ports'])
+	except:
+		try:
+			plc_nodes = soltesz.dbLoad("l_plcnodes")
+			for n in plc_nodes:
+				if n['node_id'] in node_ids:
+					l_node.append(n)
+		except:
+			import traceback
+			traceback.print_exc()
+			l_node = None
+
+	plc_lock.release()
+	if l_node == []:
+		l_node = None
+	return l_node
+	
+
+def get_plc_pcu_values(pcuname):
+	"""
+		Try to contact PLC to get the PCU info.
+		If that fails, try a backup copy from the last run.
+		If that fails, return None
+	"""
+	values = {}
+
+	l_pcu = get_pcu(pcuname)
+	
+	if l_pcu is not None:
+		site_id = l_pcu['site_id']
+		node_ids = l_pcu['node_ids']
+		l_node = get_nodes(node_ids) 
+				
+		if l_node is not None:
+			for node in l_node:
+				values[node['hostname']] = node['ports'][0]
+
+			values['nodenames'] = [node['hostname'] for node in l_node]
+
+			# NOTE: this is for a dry run later. It doesn't matter which node.
+			values['node_id'] = l_node[0]['node_id']
+
+		values.update(l_pcu)
+	else:
+		values = None
+	
+	return values
+
+def get_plc_site_values(site_id):
+	### GET PLC SITE ######################
+	plc_lock.acquire()
+	values = {}
+	d_site = None
+
+	try:
+		d_site = plc.getSites({'site_id': site_id}, ['max_slices', 'slice_ids', 'node_ids', 'login_base'])
+		if len(d_site) > 0:
+			d_site = d_site[0]
+	except:
+		try:
+			plc_sites = soltesz.dbLoad("l_plcsites")
+			for site in plc_sites:
+				if site['site_id'] == site_id:
+					d_site = site
+					break
+		except:
+			import traceback
+			traceback.print_exc()
+			values = None
+
+	plc_lock.release()
+
+	if d_site is not None:
+		max_slices = d_site['max_slices']
+		num_slices = len(d_site['slice_ids'])
+		num_nodes = len(d_site['node_ids'])
+		loginbase = d_site['login_base']
+		values['plcsite'] = {'num_nodes' : num_nodes, 
+							'max_slices' : max_slices, 
+							'num_slices' : num_slices,
+							'login_base' : loginbase,
+							'status'     : 'SUCCESS'}
+	else:
+		values = None
+
+
+	return values
+
+
 def collectPingAndSSH(pcuname, cohash):
 
 	continue_probe = True
@@ -94,39 +210,19 @@ def collectPingAndSSH(pcuname, cohash):
 	### GET PCU ######################
 	try:
 		b_except = False
-		plc_lock.acquire()
-
 		try:
-			l_pcu  = plc.GetPCUs({'pcu_id' : pcuname})
-			
-			if len(l_pcu) > 0:
-				site_id = l_pcu[0]['site_id']
-
-				node_ids = l_pcu[0]['node_ids']
-				l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 
-												 'node_id', 'ports'])
-			if len(l_node) > 0:
-				for node in l_node:
-					values[node['hostname']] = node['ports'][0]
-
-				values['nodenames'] = [node['hostname'] for node in l_node]
-				# NOTE: this is for a dry run later. It doesn't matter which node.
-				values['node_id'] = l_node[0]['node_id']
-
-			if len(l_pcu) > 0:
-				values.update(l_pcu[0])
+			v = get_plc_pcu_values(pcuname)
+			if v is not None:
+				values.update(v)
 			else:
 				continue_probe = False
-
 		except:
 			b_except = True
 			import traceback
 			traceback.print_exc()
-
 			continue_probe = False
 
-		plc_lock.release()
-		if b_except: return (None, None)
+		if b_except or not continue_probe: return (None, None, None)
 
 		if values['hostname'] is not None:
 			values['hostname'] = values['hostname'].strip()
@@ -206,32 +302,12 @@ def collectPingAndSSH(pcuname, cohash):
 		values['reboot'] = rb_ret
 
 		### GET PLC SITE ######################
-		b_except = False
-		plc_lock.acquire()
-
-		try:
-			d_site = plc.getSites({'site_id': site_id}, 
-								['max_slices', 'slice_ids', 'node_ids', 'login_base'])
-		except:
-			b_except = True
-			import traceback
-			traceback.print_exc()
-
-		plc_lock.release()
-		if b_except: return (None, None)
-
-		if d_site and len(d_site) > 0:
-			max_slices = d_site[0]['max_slices']
-			num_slices = len(d_site[0]['slice_ids'])
-			num_nodes = len(d_site[0]['node_ids'])
-			loginbase = d_site[0]['login_base']
-			values['plcsite'] = {'num_nodes' : num_nodes, 
-								'max_slices' : max_slices, 
-								'num_slices' : num_slices,
-								'login_base' : loginbase,
-								'status'     : 'SUCCESS'}
+		v = get_plc_site_values(values['site_id'])
+		if v is not None:
+			values.update(v)
 		else:
 			values['plcsite'] = {'status' : "GS_FAILED"}
+			
 	except:
 		print "____________________________________"
 		print values
@@ -317,6 +393,7 @@ def checkAndRecordState(l_pcus, cohash):
 def main():
 	global externalState
 
+	l_pcus = soltesz.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
 	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
 	cohash = {}
 
@@ -326,8 +403,6 @@ def main():
 
 	if config.filename == None and config.pcuid == None:
 		print "Calling API GetPCUs() : refresh(%s)" % config.refresh
-		l_pcus = soltesz.if_cached_else_refresh(1, 
-								config.refresh, "pculist", lambda : plc.GetPCUs())
 		l_pcus  = [pcu['pcu_id'] for pcu in l_pcus]
 	elif config.filename is not None:
 		l_pcus = config.getListFromFile(config.filename)
@@ -335,7 +410,6 @@ def main():
 	elif config.pcuid is not None:
 		l_pcus = [ config.pcuid ] 
 		l_pcus = [int(pcu) for pcu in l_pcus]
-		
 
 	checkAndRecordState(l_pcus, cohash)
 
@@ -360,6 +434,8 @@ if __name__ == '__main__':
 		main()
 		time.sleep(1)
 	except Exception, err:
+		import traceback
+		traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		soltesz.dbDump(config.dbname, externalState)

@@ -63,6 +63,33 @@ def color_boot_state(l):
 	else:
 		return l
 
+def diff_time(timestamp):
+	now = time.time()
+	if timestamp == None:
+		return "unknown"
+	diff = now - timestamp
+	# return the number of seconds as a difference from current time.
+	t_str = ""
+	if diff < 60: # sec in min.
+		t = diff // 1
+		t_str = "%s sec ago" % t
+	elif diff < 60*60: # sec in hour
+		t = diff // (60)
+		t_str = "%s min ago" % int(t)
+	elif diff < 60*60*24: # sec in day
+		t = diff // (60*60)
+		t_str = "%s hrs ago" % int(t)
+	elif diff < 60*60*24*7: # sec in week
+		t = diff // (60*60*24)
+		t_str = "%s days ago" % int(t)
+	elif diff < 60*60*24*30: # approx sec in month
+		t = diff // (60*60*24*7)
+		t_str = "%s wks ago" % int(t)
+	elif diff > 60*60*24*30: # approx sec in month
+		t = diff // (60*60*24*7*30)
+		t_str = "%s mnths ago" % int(t)
+	return t_str
+
 def nodegroup_display(node, fb):
 	if node['hostname'] in fb['nodes']:
 		node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])
@@ -84,7 +111,9 @@ def nodegroup_display(node, fb):
 	#node['boot_state']	= node['boot_state']
 	#node['current'] 	= node['current']
 	node['pcu'] = fb['nodes'][node['hostname']]['values']['pcu']
-	return "%(hostname)-38s %(boot_state)5s %(current)5s %(pcu)6s %(key)45s %(kernel)s" % node
+	node['lastupdate'] = diff_time(node['last_contact'])
+
+	return "%(hostname)-38s %(boot_state)5s %(current)5s %(pcu)6s %(key)45s %(kernel)32s %(lastupdate)12s " % node
 
 from model import *
 import soltesz
@@ -94,6 +123,11 @@ def node_end_record(node):
 	if node not in act_all:
 		del act_all
 		return False
+
+	if len(act_all[node]) == 0:
+		del act_all
+		return False
+
 	a = Action(node, act_all[node][0])
 	a.delField('rt')
 	a.delField('found_rt_ticket')

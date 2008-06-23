@@ -169,8 +169,9 @@ def closeTicketViaRT(ticket_id, comment):
 
 def emailViaRT(subject, text, to, ticket_id=None):
 	if ticket_id == None or ticket_id == "":
+		print "No TICKET"
 		return emailViaRT_NoTicket(subject, text, to)
-		
+
 
 	# Set ENV Variables/PATH
 	_setupRTenvironment()
@@ -314,22 +315,30 @@ def email(subject, text, to):
 	#	mail and debug, 'to' changed at the beginning'
 	#   nomail, but report who I'd send to.
 	if config.mail:
-		try:
-			# This is normal operation
-			server = smtplib.SMTP(MTA)
-			server.sendmail(FROM, to,  msg)
-			if config.bcc and not config.debug:
-				server.sendmail(FROM, config.email,  msg)
-			server.quit()
-		except Exception, err:
-			print "Mailer error: %s" % err
+		for mta in [MTA, 'golf.cs.princeton.edu']:
+			try:
+				# This is normal operation
+				#print MTA
+				#print FROM
+				#print to
+				#print msg
+				server = smtplib.SMTP(mta)
+				#server = smtplib.SMTP('golf.cs.princeton.edu')
+				server.sendmail(FROM, to,  msg)
+				if config.bcc and not config.debug:
+					server.sendmail(FROM, config.email,  msg)
+				server.quit()
+			except Exception, err:
+				print "Mailer error1: failed using MTA(%s) with: %s" % (mta, err)
+
 	elif not config.debug and not config.mail and config.bcc:
-		try:
-			server = smtplib.SMTP(MTA)
-			server.sendmail(FROM, to,  msg)
-			server.quit()
-		except Exception, err:
-			print "Mailer error: %s" % err
+		for mta in [MTA, 'golf.cs.princeton.edu']:
+			try:
+				server = smtplib.SMTP(mta)
+				server.sendmail(FROM, to,  msg)
+				server.quit()
+			except Exception, err:
+				print "Mailer error2: failed using MTA(%s) with: %s" % (mta, err)
 	else:
 		#print "Would mail %s" %to
 		logger.debug("Would send mail to %s" % to)

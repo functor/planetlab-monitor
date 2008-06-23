@@ -5,20 +5,6 @@ import sys
 import string
 import time
 
-from config import config
-from optparse import OptionParser
-parser = OptionParser()
-parser.set_defaults(filename=None, increment=False, dbname="findbadnodes", cachenodes=False)
-parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
-					help="Provide the input file for the node list")
-parser.add_option("", "--cachenodes", action="store_true",
-					help="Cache node lookup from PLC")
-parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
-					help="Specify the name of the database to which the information is saved")
-parser.add_option("-i", "--increment", action="store_true", dest="increment", 
-					help="Increment round number to force refresh or retry")
-config = config(parser)
-config.parse_args()
 
 # QUERY all nodes.
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
@@ -36,10 +22,13 @@ count = 0
 
 
 import soltesz
-import plc
 import comon
 import threadpool
 import syncplcdb
+
+import plc
+import auth
+api = plc.PLC(auth.auth, auth.plc)
 
 def collectPingAndSSH(nodename, cohash):
 	### RUN PING ######################
@@ -275,6 +264,12 @@ def main():
 	if config.filename:
 		f_nodes = config.getListFromFile(config.filename)
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
+	elif config.node:
+		f_nodes = [config.node]
+		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
+	elif config.nodegroup:
+		ng = api.GetNodeGroups({'name' : config.nodegroup})
+		l_nodes = api.GetNodes(ng[0]['node_ids'])
 
 	l_nodes = [node['hostname'] for node in l_nodes]
 
@@ -286,6 +281,26 @@ def main():
 
 
 if __name__ == '__main__':
+	from config import config
+	from optparse import OptionParser
+	parser = OptionParser()
+	parser.set_defaults(filename=None, node=None, nodegroup=None, increment=False, dbname="findbadnodes", cachenodes=False)
+	parser.add_option("", "--node", dest="node", metavar="hostname", 
+						help="Provide a single node to operate on")
+	parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
+						help="Provide the input file for the node list")
+	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="FILE", 
+						help="Provide the nodegroup for the list of nodes.")
+
+	parser.add_option("", "--cachenodes", action="store_true",
+						help="Cache node lookup from PLC")
+	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
+						help="Specify the name of the database to which the information is saved")
+	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
+						help="Increment round number to force refresh or retry")
+	config = config(parser)
+	config.parse_args()
+
 	try:
 		main()
 	except Exception, err:

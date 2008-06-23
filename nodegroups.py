@@ -17,92 +17,106 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-from config import config
 from optparse import OptionParser
 from sets import Set
 
 from nodecommon import *
 import soltesz
-fb = soltesz.dbLoad("findbad")
 
-parser = OptionParser()
-parser.set_defaults(nodegroup="Alpha",
-					node=None,
-					nodelist=None,
-					list=False,
-					add=False,
-					notng=False,
-					delete=False,
-					)
-parser.add_option("", "--not", dest="notng", action="store_true", 
-					help="All nodes NOT in nodegroup.")
-parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
-					help="Specify a nodegroup to perform actions on")
+def main():
+	from config import config
+	fb = soltesz.dbLoad("findbad")
 
-parser.add_option("", "--list", dest="list", action="store_true", 
-					help="List all nodes in the given nodegroup")
-parser.add_option("", "--add", dest="add", action="store_true", 
-					help="Add nodes to the given nodegroup")
-parser.add_option("", "--delete", dest="delete", action="store_true", 
-					help="Delete nodes from the given nodegroup")
-parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
-					help="A single node name to add to the nodegroup")
-parser.add_option("", "--nodelist", dest="nodelist", metavar="list.txt", 
-					help="Use all nodes in the given file for operation.")
-config = config(parser)
-config.parse_args()
+	parser = OptionParser()
+	parser.set_defaults(nodegroup="Alpha",
+						node=None,
+						nodelist=None,
+						list=False,
+						add=False,
+						notng=False,
+						delete=False,
+						)
+	parser.add_option("", "--not", dest="notng", action="store_true", 
+						help="All nodes NOT in nodegroup.")
+	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
+						help="Specify a nodegroup to perform actions on")
 
-# COLLECT nodegroups, nodes and node lists
-if config.node or config.nodelist:
-	if config.node: 
-		hostlist = [ config.node ] 
-	else: 
-		hostlist = config.getListFromFile(config.nodelist)
-	nodelist = api.GetNodes(hostlist)
+	parser.add_option("", "--list", dest="list", action="store_true", 
+						help="List all nodes in the given nodegroup")
+	parser.add_option("", "--add", dest="add", action="store_true", 
+						help="Add nodes to the given nodegroup")
+	parser.add_option("", "--delete", dest="delete", action="store_true", 
+						help="Delete nodes from the given nodegroup")
+	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
+						help="A single node name to add to the nodegroup")
+	parser.add_option("", "--nodelist", dest="nodelist", metavar="list.txt", 
+						help="Use all nodes in the given file for operation.")
+	config = config(parser)
+	config.parse_args()
 
-	group_str = "Given"
+	# COLLECT nodegroups, nodes and node lists
+	if config.node or config.nodelist:
+		if config.node: 
+			hostlist = [ config.node ] 
+		else: 
+			hostlist = config.getListFromFile(config.nodelist)
 
-else:
-	ng = api.GetNodeGroups({'name' : config.nodegroup})
-	nodelist = api.GetNodes(ng[0]['node_ids'])
+		# NOTE: preserve order given in file.  Otherwise, return values are not in order
+		# given to GetNodes
+		nodelist = []
+		for h in hostlist:
+			nodelist += api.GetNodes(h)
 
-	group_str = config.nodegroup
+		#nodelist = api.GetNodes(hostlist)
+		group_str = "Given"
 
-if config.notng:
-	# Get nodegroup nodes
-	ng_nodes = nodelist
+	else:
+		ng = api.GetNodeGroups({'name' : config.nodegroup})
+		nodelist = api.GetNodes(ng[0]['node_ids'])
 
-	# Get all nodes
-	all_nodes = api.GetNodes({'peer_id': None})
-	
-	# remove ngnodes from all node list
-	ng_list = [ x['hostname'] for x in ng_nodes ]
-	all_list = [ x['hostname'] for x in all_nodes ]
-	not_ng_nodes = Set(all_list) - Set(ng_list)
+		group_str = config.nodegroup
 
-	# keep each node that *is* in the not_ng_nodes set
-	nodelist = filter(lambda x : x['hostname'] in not_ng_nodes, all_nodes)
+	if config.notng:
+		# Get nodegroup nodes
+		ng_nodes = nodelist
 
-hostnames = [ n['hostname'] for n in nodelist ]
+		# Get all nodes
+		all_nodes = api.GetNodes({'peer_id': None})
+		
+		# remove ngnodes from all node list
+		ng_list = [ x['hostname'] for x in ng_nodes ]
+		all_list = [ x['hostname'] for x in all_nodes ]
+		not_ng_nodes = Set(all_list) - Set(ng_list)
 
-# commands:
-if config.list:
-	print " ---- Nodes in the %s Node Group ----" % group_str
-	i = 1
-	for node in nodelist:
-		print "%-2d" % i, 
-		print nodegroup_display(node, fb)
-		i += 1
+		# keep each node that *is* in the not_ng_nodes set
+		nodelist = filter(lambda x : x['hostname'] in not_ng_nodes, all_nodes)
 
-elif config.add and config.nodegroup:
-	for node in hostnames:
-		print "Adding %s to %s nodegroup" % (node, config.nodegroup)
-		api.AddNodeToNodeGroup(node, config.nodegroup)
+	hostnames = [ n['hostname'] for n in nodelist ]
 
-elif config.delete:
-	for node in hostnames:
-		print "Deleting %s from %s nodegroup" % (node, config.nodegroup)
-		api.DeleteNodeFromNodeGroup(node, config.nodegroup)
+	# commands:
+	if config.list:
+		print " ---- Nodes in the %s Node Group ----" % group_str
+		i = 1
+		for node in nodelist:
+			print "%-2d" % i, 
+			print nodegroup_display(node, fb)
+			i += 1
 
-else:
-	print "no other options supported."
+	elif config.add and config.nodegroup:
+		for node in hostnames:
+			print "Adding %s to %s nodegroup" % (node, config.nodegroup)
+			api.AddNodeToNodeGroup(node, config.nodegroup)
+
+	elif config.delete:
+		for node in hostnames:
+			print "Deleting %s from %s nodegroup" % (node, config.nodegroup)
+			api.DeleteNodeFromNodeGroup(node, config.nodegroup)
+
+	else:
+		print "no other options supported."
+
+if __name__ == "__main__":
+	try:
+		main()
+	except IOError:
+		pass

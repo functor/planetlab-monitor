@@ -64,13 +64,15 @@ def create_netid2ip(l_nodes, l_nodenetworks):
 def create_plcdb():
 
 	# get sites, and stats
-	l_sites = plc.getSites({'peer_id':None}, ['login_base', 'site_id', 'abbreviated_name', 'latitude', 'longitude'])
+	l_sites = plc.getSites({'peer_id':None}, ['login_base', 'site_id', 'abbreviated_name', 'latitude', 'longitude', 
+											  'max_slices', 'slice_ids', 'node_ids' ])
 	if len(l_sites) == 0:
 		sys.exit(1)
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
 
 	# get nodes at each site, and 
-	l_nodes = plc.getNodes({'peer_id':None}, ['hostname', 'site_id', 'version', 'last_updated', 'date_created', 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
+	l_nodes = plc.getNodes({'peer_id':None}, ['hostname', 'node_id', 'ports', 'site_id', 'version', 
+	                                          'last_updated', 'date_created', 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
 
 	l_nodenetworks = plc.getNodeNetworks()
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)

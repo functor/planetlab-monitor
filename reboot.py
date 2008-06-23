@@ -404,6 +404,7 @@ class APCFolsom(PCUControl):
 
 class APCMaster(PCUControl):
 	def run(self, node_port, dryrun):
+		print "Rebooting %s" % self.host
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
 
@@ -512,22 +513,12 @@ class HPiLOHttps(PCUControl):
 	def run(self, node_port, dryrun):
 		import soltesz
 
-		#cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s'" % (
-		#			self.host, "iloxml/Get_Network.xml", 
-		#			self.username, self.password)
-		#p_ilo  = Popen(cmd, stdout=PIPE, shell=True)
-		#cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
-		#p_grep = Popen(cmd2, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE, shell=True)
-		#sout, serr = p_grep.communicate()
-
 		locfg = soltesz.CMD()
 		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
 		sout, serr = locfg.run_noexcept(cmd)
 
-		#p_ilo.wait()
-		#p_grep.wait()
 		if sout.strip() != "":
 			print "sout: %s" % sout.strip()
 			return sout.strip()
@@ -538,23 +529,6 @@ class HPiLOHttps(PCUControl):
 						self.host, "iloxml/Reset_Server.xml", 
 						self.username, self.password)
 			sout, serr = locfg.run_noexcept(cmd)
-
-			#cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s'" % (
-			#		self.host, "iloxml/Reset_Server.xml", 
-			#		self.username, self.password)
-			#print cmd
-			#p_ilo = Popen(cmd, stdin=PIPE, stdout=PIPE, shell=True)
-			#cmd2 = "grep 'MESSAGE' | grep -v 'No error'"
-			#p_grep = Popen(cmd2, shell=True, stdin=p_ilo.stdout, stdout=PIPE, stderr=PIPE)
-			#sout, serr = p_grep.communicate()
-			#try: p_ilo.wait()
-			#except: 
-			#	print "p_ilo wait failed."
-			#	pass
-			#try: p_grep.wait()
-			#except: 
-			#	print "p_grep wait failed."
-			#	pass
 
 			if sout.strip() != "":
 				print "sout: %s" % sout.strip()
@@ -1053,10 +1027,11 @@ def pcu_name(pcu):
 	else:
 		return None
 
+import soltesz
+fb =soltesz.dbLoad("findbadpcus")
+
 def get_pcu_values(pcu_id):
 	# TODO: obviously, this shouldn't be loaded each time...
-	import soltesz
-	fb =soltesz.dbLoad("findbadpcus")
 
 	try:
 		values = fb['nodes']["id_%s" % pcu_id]['values']
@@ -1070,24 +1045,31 @@ def reboot(nodename):
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
+	print "this is a test of reboot_policy()"
 
 	pcu = plc.getpcu(nodename)
 	if not pcu:
+		logger.debug("no pcu for %s" % hostname)
+		print "no pcu for %s" % hostname
 		return False # "%s has no pcu" % nodename
 
 	values = get_pcu_values(pcu['pcu_id'])
 	if values == None:
+		logger.debug("No values for pcu probe %s" % hostname)
+		print "No values for pcu probe %s" % hostname
 		return False #"no info for pcu_id %s" % pcu['pcu_id']
 	
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
+	print "reboot_test"
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
 
 	if ret != 0:
 		print ret
 		return False
 	else:
+		print "return true"
 		return True
 
 def reboot_test(nodename, values, continue_probe, verbose, dryrun):
@@ -1101,6 +1083,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				
 		# APC Masterswitch (Berkeley)
 		elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
+			print values
 
 			# TODO: make a more robust version of APC
 			if values['pcu_id'] in [1163,1055,1111,1231,1113,1127,1128,1148]:
@@ -1227,13 +1210,21 @@ def main():
 	logger.addHandler(ch)
 
 	try:
+		if "test" in sys.argv:
+			dryrun = True
+		else:
+			dryrun = False
+
 		for node in sys.argv[1:]:
+			if node == "test": continue
+
 			print "Rebooting %s" % node
-			if reboot_policy(node, True, False):
+			if reboot_policy(node, True, dryrun):
 				print "success"
 			else:
 				print "failed"
 	except Exception, err:
+		import traceback; traceback.print_exc()
 		print err
 
 if __name__ == '__main__':
