@@ -433,15 +433,15 @@ class Diagnose:
 			diag_record['args'] = {'nodename': nodename}
 			diag_record['info'] = (nodename, s_daysdown, "")
 
-			if 'reboot_node_failed' in node_record:
-				# there was a previous attempt to use the PCU.
-				if node_record['reboot_node_failed'] == False:
-					# then the last attempt apparently, succeeded.
-					# But, the category is still 'ERROR'.  Therefore, the
-					# PCU-to-Node mapping is broken.
-					#print "Setting message for ERROR node to PCU2NodeMapping: %s" % nodename
-					diag_record['message'] = emailTxt.mailtxt.pcutonodemapping
-					diag_record['email_pcu'] = True
+			#if 'reboot_node_failed' in node_record:
+			#	# there was a previous attempt to use the PCU.
+			#	if node_record['reboot_node_failed'] == False:
+			#		# then the last attempt apparently, succeeded.
+			#		# But, the category is still 'ERROR'.  Therefore, the
+			#		# PCU-to-Node mapping is broken.
+			#		#print "Setting message for ERROR node to PCU2NodeMapping: %s" % nodename
+			#		diag_record['message'] = emailTxt.mailtxt.pcutonodemapping
+			#		diag_record['email_pcu'] = True
 
 			if diag_record['ticket_id'] == "":
 				diag_record['log'] = "DOWN: %20s : %-40s == %20s %s" % \
@@ -493,13 +493,13 @@ class Diagnose:
 					diag_record['args'] = {'nodename': nodename}
 					diag_record['info'] = (nodename, node_record['prev_category'], 
 													 node_record['category'])
-					if 'email_pcu' in diag_record:
-						if diag_record['email_pcu']:
-							# previously, the pcu failed to reboot, so send
-							# email. Now, reset these values to try the reboot
-							# again.
-							diag_record['email_pcu'] = False
-							del diag_record['reboot_node_failed']
+					#if 'email_pcu' in diag_record:
+					#	if diag_record['email_pcu']:
+					#		# previously, the pcu failed to reboot, so send
+					#		# email. Now, reset these values to try the reboot
+					#		# again.
+					#		diag_record['email_pcu'] = False
+					#		del diag_record['reboot_node_failed']
 
 					if diag_record['ticket_id'] == "":
 						diag_record['log'] = "IMPR: %20s : %-40s == %20s %20s %s %s" % \
@@ -1028,23 +1028,23 @@ class Action:
 			email_args = self.get_email_args(issue_record_list, loginbase)
 
 			# for each record.
-			for act_record in issue_record_list:
-				# if there's a pcu record and email config is set
-				if 'email_pcu' in act_record:
-					if act_record['message'] != None and act_record['email_pcu'] and site_record['config']['email']:
-						# and 'reboot_node' in act_record['stage']:
+			#for act_record in issue_record_list:
+			#	# if there's a pcu record and email config is set
+			#	if 'email_pcu' in act_record:
+			#		if act_record['message'] != None and act_record['email_pcu'] and site_record['config']['email']:
+			#			# and 'reboot_node' in act_record['stage']:
 
-						email_args['hostname'] = act_record['nodename']
-						ticket_id = self.__emailSite(loginbase, 
-											act_record['email'], 
-											emailTxt.mailtxt.pcudown[0],
-											email_args)
-						if ticket_id == 0:
-							# error.
-							print "got a ticket_id == 0!!!! %s" % act_record['nodename']
-							os._exit(1)
-							pass
-						email_args['ticket_id'] = ticket_id
+			#			email_args['hostname'] = act_record['nodename']
+			#			ticket_id = self.__emailSite(loginbase, 
+			#								act_record['email'], 
+			#								emailTxt.mailtxt.pcudown[0],
+			#								email_args)
+			#			if ticket_id == 0:
+			#				# error.
+			#				print "got a ticket_id == 0!!!! %s" % act_record['nodename']
+			#				os._exit(1)
+			#				pass
+			#			email_args['ticket_id'] = ticket_id
 
 			
 			act_record = issue_record_list[0]
@@ -1111,52 +1111,52 @@ class Action:
 		# avoid end records, and nmreset records					
 		# reboot_node_failed, is set below, so don't reboot repeatedly.
 
-		if 'monitor-end-record' not in act_record['stage'] and \
-		   'nmreset' not in act_record['stage'] and \
-		   'reboot_node_failed' not in act_record:
+		#if 'monitor-end-record' not in act_record['stage'] and \
+		#   'nmreset' not in act_record['stage'] and \
+		#   'reboot_node_failed' not in act_record:
 
-			if "DOWN" in act_record['log'] and \
-					'pcu_ids' in act_record['plcnode'] and \
-					len(act_record['plcnode']['pcu_ids']) > 0:
-
-				print "%s" % act_record['log'],
-				print "%15s" % (['reboot_node'],)
-				# Set node to re-install
-				plc.nodeBootState(act_record['nodename'], "rins")	
-				try:
-					ret = reboot_node({'hostname': act_record['nodename']})
-				except Exception, exc:
-					print "exception on reboot_node:"
-					import traceback
-					print traceback.print_exc()
-					ret = False
-
-				if ret: # and ( 'reboot_node_failed' not in act_record or act_record['reboot_node_failed'] == False):
-					# Reboot Succeeded
-					print "reboot succeeded for %s" % act_record['nodename']
-					act_record2 = {}
-					act_record2.update(act_record)
-					act_record2['action'] = ['reboot_node']
-					act_record2['stage'] = "reboot_node"
-					act_record2['reboot_node_failed'] = False
-					act_record2['email_pcu'] = False
-
-					if nodename not in self.act_all: 
-						self.act_all[nodename] = []
-					print "inserting 'reboot_node' record into act_all"
-					self.act_all[nodename].insert(0,act_record2)
-
-					# return None to avoid further action
-					print "Taking no further action"
-					return None
-				else:
-					print "reboot failed for %s" % act_record['nodename']
-					# set email_pcu to also send pcu notice for this record.
-					act_record['reboot_node_failed'] = True
-					act_record['email_pcu'] = True
-
-			print "%s" % act_record['log'],
-			print "%15s" % act_record['action']
+		#	if "DOWN" in act_record['log'] and \
+		#			'pcu_ids' in act_record['plcnode'] and \
+		#			len(act_record['plcnode']['pcu_ids']) > 0:
+#
+#				print "%s" % act_record['log'],
+#				print "%15s" % (['reboot_node'],)
+#				# Set node to re-install
+#				plc.nodeBootState(act_record['nodename'], "rins")	
+#				try:
+#					ret = reboot_node({'hostname': act_record['nodename']})
+#				except Exception, exc:
+#					print "exception on reboot_node:"
+#					import traceback
+#					print traceback.print_exc()
+#					ret = False
+#
+#				if ret: # and ( 'reboot_node_failed' not in act_record or act_record['reboot_node_failed'] == False):
+#					# Reboot Succeeded
+#					print "reboot succeeded for %s" % act_record['nodename']
+#					act_record2 = {}
+#					act_record2.update(act_record)
+#					act_record2['action'] = ['reboot_node']
+#					act_record2['stage'] = "reboot_node"
+#					act_record2['reboot_node_failed'] = False
+#					act_record2['email_pcu'] = False
+#
+#					if nodename not in self.act_all: 
+#						self.act_all[nodename] = []
+#					print "inserting 'reboot_node' record into act_all"
+#					self.act_all[nodename].insert(0,act_record2)
+#
+#					# return None to avoid further action
+#					print "Taking no further action"
+#					return None
+#				else:
+#					print "reboot failed for %s" % act_record['nodename']
+#					# set email_pcu to also send pcu notice for this record.
+#					act_record['reboot_node_failed'] = True
+#					act_record['email_pcu'] = True
+#
+#			print "%s" % act_record['log'],
+#			print "%15s" % act_record['action']
 
 		if act_record['stage'] is not 'monitor-end-record' and \
 		   act_record['stage'] is not 'nmreset':
