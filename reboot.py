@@ -115,6 +115,7 @@ class Transport:
 	TELNET = 1
 	SSH    = 2
 	HTTP   = 3
+	IPAL   = 4
 
 	TELNET_TIMEOUT = 60
 
@@ -122,10 +123,6 @@ class Transport:
 		self.type = type
 		self.verbose = verbose
 		self.transport = None
-
-#	def __del__(self):
-#		if self.transport:
-#			self.close()
 
 	def open(self, host, username=None, password=None, prompt="User Name"):
 		transport = None
@@ -235,8 +232,11 @@ class PCUControl(Transport,PCUModel,PCURecord):
 			elif '443' in supported_ports and self.portstatus['443'] == "open":
 				type = Transport.HTTP
 			elif '5869' in supported_ports and self.portstatus['5869'] == "open":
-				# For DRAC cards.  not sure how much it's used in the
-				# protocol.. but racadm opens this port.
+				# For DRAC cards. Racadm opens this port.
+				type = Transport.HTTP
+			elif '9100' in supported_ports and self.portstatus['9100'] == "open":
+				type = Transport.IPAL
+			elif '16992' in supported_ports and self.portstatus['16992'] == "open":
 				type = Transport.HTTP
 			else:
 				raise ExceptionPort("Unsupported Port: No transport from open ports")
@@ -275,37 +275,128 @@ class PCUControl(Transport,PCUModel,PCURecord):
 			import traceback
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
-		#except Exception, err:
-		#	if self.verbose:
-		#		logger.debug("reboot: Exception")
-		#		logger.debug(err)
-		#	if self.transport:
-		#		self.transport.close()
-		#	import traceback
-		#	traceback.print_exc()
-		#	return  "generic exception; unknown problem."
-
 		
 class IPAL(PCUControl):
+	""" 
+		This now uses a proprietary format for communicating with the PCU.  I
+		prefer it to Telnet, and Web access, since it's much lighter weight
+		and, more importantly, IT WORKS!! HHAHHHAHAHAHAHAHA!
+	"""
+
+	def format_msg(self, data, cmd):
+		esc = chr(int('1b',16))
+		return "%c%s%c%s%c" % (esc, self.password, esc, data, cmd) # esc, 'q', chr(4))
+	
+	def recv_noblock(self, s, count):
+		import errno
+
+		try:
+			# TODO: make sleep backoff, before stopping.
+			time.sleep(4)
+			ret = s.recv(count, socket.MSG_DONTWAIT)
+		except socket.error, e:
+			if e[0] == errno.EAGAIN:
+				return Exception(e[1])
+			else:
+				# TODO: not other exceptions.
+				raise Exception(e)
+		return ret
+
 	def run(self, node_port, dryrun):
-		self.open(self.host)
+		import errno
 
-		# XXX Some iPals require you to hit Enter a few times first
-		self.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
+		power_on = False
 
-		# Login
-		self.ifThenSend("Password >", self.password, ExceptionPassword)
-		self.transport.write("\r\n\r\n")
+		print "open socket"
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		try:
+			print "connect"
+			s.connect((self.host, 9100))
+		except socket.error, e:
+			s.close()
+			if e[0] == errno.ECONNREFUSED:
+				# cannot connect to remote host
+				return Exception(e[1])
+			else:
+				# TODO: what other conditions are there?
+				raise Exception(e)
+				
+		# get current status
+		print "Checking status"
+		s.send(self.format_msg("", 'O'))
+		ret = self.recv_noblock(s, 8)
+		print "Current status is '%s'" % ret
+				
+		if node_port < len(ret):
+			status = ret[node_port]
+			if status == '1':
+				# up
+				power_on = True
+			elif status == '0':
+				# down
+				power_on = False
+			else:
+				raise Exception("Unknown status for PCU socket %s : %s" % (node_port, ret))
+		else:
+			raise Exception("Mismatch between configured port and PCU status: %s %s" % (node_port, ret))
+			
 
-		if not dryrun: # P# - Pulse relay
-			self.ifThenSend("Enter >", 
-							"P%d" % node_port, 
-							ExceptionNotFound)
-		# Get the next prompt
-		self.ifElse("Enter >", ExceptionTimeout)
+		if not dryrun:
+			print "Pulsing %s" % node_port
+			if power_on:
+				s.send(self.format_msg("%s" % node_port, 'P'))
+			else:
+				# NOTE: turn power on before pulsing the port.
+				print "power was off, so turning on then pulsing..."
+				s.send(self.format_msg("%s" % node_port, 'E'))
+				s.send(self.format_msg("%s" % node_port, 'P'))
 
-		self.close()
+			print "Receiving response."
+			ret = self.recv_noblock(s, 8)
+			print "Current status is '%s'" % ret
+
+			if node_port < len(ret):
+				status = ret[node_port]
+				if status == '1':
+					# up
+					power_on = True
+				elif status == '0':
+					# down
+					power_on = False
+				else:
+					raise Exception("Unknown status for PCU socket %s : %s" % (node_port, ret))
+			else:
+				raise Exception("Mismatch between configured port and PCU status: %s %s" % (node_port, ret))
+
+			if power_on:
+				return 0
+			else:
+				return "Failed Power On"
+
+		s.close()
 		return 0
+
+# TELNET version of protocol...
+#		#self.open(self.host)
+#		## XXX Some iPals require you to hit Enter a few times first
+#		#self.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
+#		# Login
+#		self.ifThenSend("Password >", self.password, ExceptionPassword)
+#		self.transport.write("\r\n\r\n")
+#		if not dryrun: # P# - Pulse relay
+#			print "node_port %s" % node_port
+#			self.ifThenSend("Enter >", 
+#							"P7", # % node_port, 
+#							ExceptionNotFound)
+#			print "send newlines"
+#			self.transport.write("\r\n\r\n")
+#			print "after new lines"
+#		# Get the next prompt
+#		print "wait for enter"
+#		self.ifElse("Enter >", ExceptionTimeout)
+#		print "closing "
+#		self.close()
+#		return 0
 
 class APCEurope(PCUControl):
 	def run(self, node_port, dryrun):
@@ -460,6 +551,23 @@ class APC(PCUControl):
 			return "Unknown reboot sequence for APC PCU"
 		else:
 			return ret
+
+class IntelAMT(PCUControl):
+	def run(self, node_port, dryrun):
+		import soltesz
+
+		cmd = soltesz.CMD()
+		cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
+
+		if dryrun:
+			# NOTE: -p checks the power state of the host.
+			# TODO: parse the output to find out if it's ok or not.
+			cmd_str += " -p http://%s:16992/RemoteControlService  -user admin -pass '%s' " % (self.host, self.password )
+		else:
+			cmd_str += " -A http://%s:16992/RemoteControlService -user admin -pass '%s' " % (self.host, self.password )
+			
+		print cmd_str
+		return cmd.system(cmd_str, self.TELNET_TIMEOUT)
 
 class DRACRacAdm(PCUControl):
 	def run(self, node_port, dryrun):
@@ -681,7 +789,7 @@ class BayTechCtrlC(PCUControl):
 		except pexpect.EOF:
 			raise ExceptionPrompt("EOF before 'Enter Request' Prompt")
 		except pexpect.TIMEOUT:
-			raise ExceptionPrompt("Timeout before 'Enter Request' Prompt")
+			raise ExceptionPrompt("Timeout before Prompt")
 
 		return 0
 
@@ -1045,7 +1153,6 @@ def reboot(nodename):
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
-	print "this is a test of reboot_policy()"
 
 	pcu = plc.getpcu(nodename)
 	if not pcu:
@@ -1062,7 +1169,6 @@ def reboot_policy(nodename, continue_probe, dryrun):
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
-	print "reboot_test"
 	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
 
 	if ret != 0:
@@ -1078,7 +1184,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 	try:
 		# DataProbe iPal (many sites)
 		if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
-			ipal = IPAL(values, verbose, ['23'])
+			ipal = IPAL(values, verbose, ['23', '80', '9100'])
 			rb_ret = ipal.reboot(values[nodename], dryrun)
 				
 		# APC Masterswitch (Berkeley)
@@ -1161,6 +1267,10 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 		elif continue_probe and values['model'].find("WTI IPS-4") >= 0:
 				wti = WTIIPS4(values, verbose, ['23'])
 				rb_ret = wti.reboot(values[nodename], dryrun)
+
+		elif continue_probe and values['model'].find("Intel AMT") >= 0:
+				amt = IntelAMT(values, verbose, ['16992'])
+				rb_ret = amt.reboot(values[nodename], dryrun)
 
 		# BlackBox PSExxx-xx (e.g. PSE505-FR)
 		elif continue_probe and \
