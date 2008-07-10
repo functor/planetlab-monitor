@@ -8,6 +8,7 @@ import os, sys
 import xml, xmlrpclib
 import errno, time, traceback
 import urllib2
+import urllib
 import threading, popen2
 import array, struct
 #from socket import *
@@ -878,15 +879,23 @@ class ePowerSwitchGood(PCUControl):
 			# failing here means the User/passwd is wrong (hopefully)
 			raise ExceptionPassword("Incorrect username/password")
 
-		# TODO: after verifying that the user/password is correct, we should
-		# actually reboot the given node.
-
+		# NOTE: after verifying that the user/password is correct, 
+		# 		actually reboot the given node.
 		if not dryrun:
-			# add data to handler,
-			# fetch url one more time on cmd.html, econtrol.html or whatever.
-			pass
+			try:
+				data = urllib.urlencode({'P%d' % node_port : "r"})
+				req = urllib2.Request(self.url + "cmd.html")
+				req.add_header("Authorization", authheader)
+				# add data to handler,
+				f = urllib2.urlopen(req, data)
+				if self.verbose: print f.read()
+			except:
+				import traceback; traceback.print_exc()
 
-		if self.verbose: print f.read()
+				# fetch url one more time on cmd.html, econtrol.html or whatever.
+				# pass
+		else:
+			if self.verbose: print f.read()
 
 		self.close()
 		return 0
@@ -1281,6 +1290,8 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			if values['pcu_id'] in [1089, 1071, 1046, 1035, 1118]:
 				eps = ePowerSwitchGood(values, verbose, ['80'])
 			elif values['pcu_id'] in [1003]:
+				# OLD EPOWER
+				print "OLD EPOWER"
 				eps = ePowerSwitch(values, verbose, ['80'])
 			else:
 				eps = ePowerSwitchGood(values, verbose, ['80'])
