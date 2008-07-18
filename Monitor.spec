@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 4
+%define taglevel 5
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,9 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Fri Jul 18 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-5
+- Incremental improvements
+
 * Mon May 19 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-4
 - tagging everything for OneLab tech-transfer.
 - 
