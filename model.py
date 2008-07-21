@@ -61,7 +61,7 @@ class LogRoll:
 					cmp = re.compile(filter[key])
 					res = cmp.search(log.__getattribute__(key))
 					if res != None:
-						print "found match in log: %s  %s ~=~ %s" % (log, key, filter[key])
+						#print "found match in log: %s  %s ~=~ %s" % (log, key, filter[key])
 						if log.time > time.time() - timerange:
 							print "returning log b/c it occured within time."
 							return log

@@ -10,12 +10,16 @@ import soltesz
 
 from monitor_policy import *
 import rt
+import sys
 
 import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
+from clean_policy import *
+
 def reboot(hostname):
+	print "calling reboot!!! %s " % hostname
 
 	l_nodes = api.GetNodes(hostname)
 	if len(l_nodes) == 0:
@@ -32,19 +36,23 @@ def reboot(hostname):
 	if ad_dbTickets == None:
 		raise Exception("Could not find cached dbTickets")
 
+	print "starting new thing"
+	mon = MonitorMergeDiagnoseSendEscellate(hostname, True)
+	mon.run()
+
 	#print "merge"
-	merge = Merge( [node['hostname'] for node in l_nodes])
-	record_list = merge.run()
-	#print "rt"
-	rt = RT(record_list, ad_dbTickets, l_ticket_blacklist)
-	record_list = rt.run()
-	#print "diagnose"
-	diag = Diagnose(record_list)
-	diagnose_out = diag.run()
+	#merge = Merge( [node['hostname'] for node in l_nodes])
+	#record_list = merge.run()
+	##print "rt"
+	#rt = RT(record_list, ad_dbTickets, l_ticket_blacklist)
+	#record_list = rt.run()
+	##print "diagnose"
+	#diag = Diagnose(record_list)
+	#diagnose_out = diag.run()
 	#print diagnose_out
 	#print "action"
-	action = Action(diagnose_out)
-	action.run()
+	#action = Action(diagnose_out)
+	#action.run()
 
 	return True
 
@@ -91,7 +99,10 @@ def reboot2(hostname):
 
 
 def main():
-	pass
+	for host in sys.argv[1:]:
+		reboot(host)
 
+print "hello?"
 if __name__ == '__main__':
+	print "calling main"
 	main()

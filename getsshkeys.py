@@ -154,7 +154,7 @@ class SSHKnownHosts:
 
 		key = key.strip()
 		# TODO: check for '==' at end of key.
-		if key[-1] != '=':
+		if len(key) > 0 and key[-1] != '=':
 			print "Host with corrupt key! for %s %s" % (node['boot_state'], node['hostname'])
 
 		s_date = time.strftime("%Y/%m/%d_%H:%M:%S",time.gmtime(time.time()))

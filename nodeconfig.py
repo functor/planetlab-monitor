@@ -32,16 +32,16 @@ def main():
 
 		try:
 			n = api.GetNodes(node)[0]
-			print n
+			#print n
 			net = api.GetNodeNetworks(n['nodenetwork_ids'])[0]
-			print net
+			#print net
 
 			node_keys = ['boot_state', 'key', 'last_updated', 'last_contact']
 			for k in node_keys:
 				if 'last' in k:
-					print "%15s == %s" % (k, diff_time(net[k]))
+					print "%15s == %s" % (k, diff_time(n[k]))
 				else:
-					print "%15s == %s" % (k, net[k])
+					print "%15s == %s" % (k, n[k])
 
 			static_keys = ['method', 'ip', 'gateway', 'network', 'broadcast', 'netmask', 'dns1', 'dns2', 'mac', 'is_primary']
 			for k in static_keys:
@@ -51,6 +51,7 @@ def main():
 			#	print k, "==" , net[k]
 		except:
 			print "Error with %s" % node
+			import traceback; print traceback.print_exc()
 			pass
 
 	# commands:

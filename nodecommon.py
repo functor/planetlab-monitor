@@ -6,6 +6,7 @@ RED  	= esc + "[1;31m"
 GREEN	= esc + "[1;32m"
 YELLOW	= esc + "[1;33m"
 BLUE	= esc + "[1;34m"
+LIGHTBLUE	= esc + "[1;36m"
 NORMAL  = esc + "[0;39m"
 
 def red(str):
@@ -16,6 +17,9 @@ def yellow(str):
 
 def green(str):
 	return GREEN + str + NORMAL
+
+def lightblue(str):
+	return LIGHTBLUE + str + NORMAL
 
 def blue(str):
 	return BLUE + str + NORMAL
@@ -37,12 +41,16 @@ def color_pcu_state(fbnode):
 		if values == None:
 			return fbnode['pcu']
 	else:
-		return fbnode['pcu']
+		if 'pcu' not in fbnode:
+			return 'NOPCU'
+		else:
+			return fbnode['pcu']
 
 	if 'reboot' in values:
 		rb = values['reboot']
 		if rb == 0 or rb == "0":
 			return fbnode['pcu'] + "OK  "
+			#return fbnode['pcu'] + "OK  "
 			#return green(fbnode['pcu'])
 		elif "NetDown" == rb  or "Not_Run" == rb:
 			return fbnode['pcu'] + "DOWN"
@@ -55,8 +63,10 @@ def color_pcu_state(fbnode):
 		return fbnode['pcu'] + "BAD "
 
 def color_boot_state(l):
-	if    l == "dbg": return yellow("dbg ")
-	elif  l == "dbg ": return yellow(l)
+	if    l == "dbg": return yellow("debg")
+	elif  l == "dbg ": return yellow("debg")
+	elif  l == "diag": return lightblue(l)
+	elif  l == "disable": return red("dsbl")
 	elif  l == "down": return red(l)
 	elif  l == "boot": return green(l)
 	elif  l == "rins": return blue(l)
@@ -64,6 +74,7 @@ def color_boot_state(l):
 		return l
 
 def diff_time(timestamp):
+	import math
 	now = time.time()
 	if timestamp == None:
 		return "unknown"
@@ -71,26 +82,26 @@ def diff_time(timestamp):
 	# return the number of seconds as a difference from current time.
 	t_str = ""
 	if diff < 60: # sec in min.
-		t = diff // 1
-		t_str = "%s sec ago" % t
+		t = diff / 1
+		t_str = "%s sec ago" % int(math.ceil(t))
 	elif diff < 60*60: # sec in hour
-		t = diff // (60)
-		t_str = "%s min ago" % int(t)
+		t = diff / (60)
+		t_str = "%s min ago" % int(math.ceil(t))
 	elif diff < 60*60*24: # sec in day
-		t = diff // (60*60)
-		t_str = "%s hrs ago" % int(t)
+		t = diff / (60*60)
+		t_str = "%s hrs ago" % int(math.ceil(t))
 	elif diff < 60*60*24*7: # sec in week
-		t = diff // (60*60*24)
-		t_str = "%s days ago" % int(t)
-	elif diff < 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7)
-		t_str = "%s wks ago" % int(t)
+		t = diff / (60*60*24)
+		t_str = "%s days ago" % int(math.ceil(t))
+	elif diff <= 60*60*24*30: # approx sec in month
+		t = diff / (60*60*24*7)
+		t_str = "%s wks ago" % int(math.ceil(t))
 	elif diff > 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7*30)
+		t = diff / (60*60*24*30)
 		t_str = "%s mnths ago" % int(t)
 	return t_str
 
-def nodegroup_display(node, fb):
+def nodegroup_display(node, fb, conf=None):
 	if node['hostname'] in fb['nodes']:
 		node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])
 	else:
@@ -106,14 +117,15 @@ def nodegroup_display(node, fb):
 		node['kernel'] = fb['nodes'][node['hostname']]['values']['kernel']
 		
 	if '2.6' not in node['kernel']: node['kernel'] = ""
-	node['boot_state']	= color_boot_state(node['boot_state'])
-	node['current'] 	= color_boot_state(node['current'])
+	if conf and not conf.nocolor:
+	    node['boot_state']	= color_boot_state(node['boot_state'])
+	    node['current'] 	= color_boot_state(node['current'])
 	#node['boot_state']	= node['boot_state']
 	#node['current'] 	= node['current']
 	node['pcu'] = fb['nodes'][node['hostname']]['values']['pcu']
 	node['lastupdate'] = diff_time(node['last_contact'])
 
-	return "%(hostname)-38s %(boot_state)5s %(current)5s %(pcu)6s %(key)45s %(kernel)32s %(lastupdate)12s " % node
+	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)20.20s... %(kernel)43s %(lastupdate)12s " % node
 
 from model import *
 import soltesz
@@ -143,3 +155,16 @@ def node_end_record(node):
 	soltesz.dbDump("act_all", act_all)
 	del act_all
 	return True
+
+def datetime_fromstr(str):
+	if '-' in str:
+		try:
+			tup = time.strptime(str, "%Y-%m-%d")
+		except:
+			tup = time.strptime(str, "%Y-%m-%d-%H:%M")
+	elif '/' in str:
+		tup = time.strptime(str, "%m/%d/%Y")
+	else:
+		tup = time.strptime(str, "%m/%d/%Y")
+	ret = datetime.fromtimestamp(time.mktime(tup))
+	return ret

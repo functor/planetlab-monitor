@@ -297,7 +297,7 @@ class IPAL(PCUControl):
 			ret = s.recv(count, socket.MSG_DONTWAIT)
 		except socket.error, e:
 			if e[0] == errno.EAGAIN:
-				return Exception(e[1])
+				raise Exception(e[1])
 			else:
 				# TODO: not other exceptions.
 				raise Exception(e)
@@ -317,7 +317,7 @@ class IPAL(PCUControl):
 			s.close()
 			if e[0] == errno.ECONNREFUSED:
 				# cannot connect to remote host
-				return Exception(e[1])
+				raise Exception(e[1])
 			else:
 				# TODO: what other conditions are there?
 				raise Exception(e)
@@ -327,6 +327,10 @@ class IPAL(PCUControl):
 		s.send(self.format_msg("", 'O'))
 		ret = self.recv_noblock(s, 8)
 		print "Current status is '%s'" % ret
+
+		if ret == '':
+			raise Exception("Status returned 'another session already open' %s : %s" % (node_port, ret))
+			
 				
 		if node_port < len(ret):
 			status = ret[node_port]
@@ -343,14 +347,14 @@ class IPAL(PCUControl):
 			
 
 		if not dryrun:
-			print "Pulsing %s" % node_port
 			if power_on:
+				print "Pulsing %s" % node_port
 				s.send(self.format_msg("%s" % node_port, 'P'))
 			else:
-				# NOTE: turn power on before pulsing the port.
-				print "power was off, so turning on then pulsing..."
+				# NOTE: turn power on ; do not pulse the port.
+				print "Power was off, so turning on ..."
 				s.send(self.format_msg("%s" % node_port, 'E'))
-				s.send(self.format_msg("%s" % node_port, 'P'))
+				#s.send(self.format_msg("%s" % node_port, 'P'))
 
 			print "Receiving response."
 			ret = self.recv_noblock(s, 8)

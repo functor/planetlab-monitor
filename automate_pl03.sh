@@ -4,14 +4,16 @@ set -e
 cd $HOME/monitor/
 DATE=`date +%Y-%m-%d-%T`
 
-
 if [ -f $HOME/monitor/SKIP ] ; then 
+	#	echo "SKIPPING Monitor"
+	#	exit
 	# TODO: should be possible to kill the old version if 
 	# desired and prevent lingering instances of automate.
 	if [ -z "$1" ] ; then 
 		echo "KILLING Monitor"
-		./kill.cmd.sh `cat $HOME/monitor/SKIP`
+		PID=`cat $HOME/monitor/SKIP`
 		rm -f $HOME/monitor/SKIP
+		./kill.cmd.sh $PID
 	else 
 		# skipping monitor
 		echo "SKIPPING Monitor"
@@ -22,7 +24,9 @@ echo $$ > $HOME/monitor/SKIP
 #########################
 # 1. FINDBAD NODES 
 rm -f pdb/production.findbad2.pkl
-./findbad.py --cachenodes --debug=0 --dbname="findbad2" $DATE
+./findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE
+
+ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs kill
 
 ########################
 # COPY to golf for diagnose.py and action.py
@@ -43,6 +47,8 @@ cp badcsv.txt /plc/data/var/www/html/monitor/
 rm -f pdb/production.findbadpcus2.pkl
 ./findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE		
 
+./sitebad.py --increment
+
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs kill
 
@@ -57,7 +63,7 @@ cp pdb/production.findbadpcus2.pkl pdb/production.findbadpcus.pkl
 ./pkl2php.py -i idTickets -o idTickets
 
 for f in findbad act_all findbadpcus l_plcnodes; do 
-	cp pdb/production.$f.pkl archive-pdb/`date +%F`.production.$f.pkl
+	cp pdb/production.$f.pkl archive-pdb/`date +%F-%H:%M`.production.$f.pkl
 done
 
 rm -f $HOME/monitor/SKIP

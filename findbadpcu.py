@@ -24,30 +24,6 @@ import signal
 #
 #orig_sig_handler = signal.signal(signal.SIGCHLD, sig_handler)
 
-from config import config
-from optparse import OptionParser
-parser = OptionParser()
-parser.set_defaults(filename=None, 
-					increment=False, 
-					pcuid=None,
-					dbname="findbadpcus", 
-					cachenodes=False,
-					refresh=False,
-					)
-parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
-					help="Provide the input file for the node list")
-parser.add_option("", "--pcuid", dest="pcuid", metavar="id", 
-					help="Provide the id for a single pcu")
-parser.add_option("", "--cachenodes", action="store_true",
-					help="Cache node lookup from PLC")
-parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
-					help="Specify the name of the database to which the information is saved")
-parser.add_option("", "--refresh", action="store_true", dest="refresh",
-					help="Refresh the cached values")
-parser.add_option("-i", "--increment", action="store_true", dest="increment", 
-					help="Increment round number to force refresh or retry")
-config = config(parser)
-config.parse_args()
 
 # QUERY all nodes.
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
@@ -286,7 +262,7 @@ def collectPingAndSSH(pcuname, cohash):
 		#### RUN NMAP ###############################
 		if continue_probe:
 			nmap = soltesz.CMD()
-			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,16992 %s | grep Host:" % pcu_name(values))
+			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % pcu_name(values))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
 		else:
@@ -415,17 +391,40 @@ def main():
 
 	return 0
 
-import logging
-logger = logging.getLogger("monitor")
-logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler("monitor.log", mode = 'a')
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
-
 
 if __name__ == '__main__':
+	import logging
+	logger = logging.getLogger("monitor")
+	logger.setLevel(logging.DEBUG)
+	fh = logging.FileHandler("monitor.log", mode = 'a')
+	fh.setLevel(logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	fh.setFormatter(formatter)
+	logger.addHandler(fh)
+	from config import config
+	from optparse import OptionParser
+	parser = OptionParser()
+	parser.set_defaults(filename=None, 
+						increment=False, 
+						pcuid=None,
+						dbname="findbadpcus", 
+						cachenodes=False,
+						refresh=False,
+						)
+	parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
+						help="Provide the input file for the node list")
+	parser.add_option("", "--pcuid", dest="pcuid", metavar="id", 
+						help="Provide the id for a single pcu")
+	parser.add_option("", "--cachenodes", action="store_true",
+						help="Cache node lookup from PLC")
+	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
+						help="Specify the name of the database to which the information is saved")
+	parser.add_option("", "--refresh", action="store_true", dest="refresh",
+						help="Refresh the cached values")
+	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
+						help="Increment round number to force refresh or retry")
+	config = config(parser)
+	config.parse_args()
 	try:
 		# NOTE: evidently, there is a bizarre interaction between iLO and ssh
 		# when LANG is set... Do not know why.  Unsetting LANG, fixes the problem.

@@ -19,6 +19,7 @@ api = plc.PLC(auth.auth, auth.plc)
 import policy
 
 from config import config as cfg
+import config as config2
 from optparse import OptionParser
 
 from nodecommon import *
@@ -32,7 +33,8 @@ from model import *
 import bootman 		# debug nodes
 import monitor		# down nodes with pcu
 import reboot		# down nodes without pcu
-reboot.verbose = 0
+from emailTxt import mailtxt
+#reboot.verbose = 0
 import sys
 
 class Reboot(object):
@@ -50,7 +52,7 @@ class Reboot(object):
 		m = PersistMessage(host, mailtxt.pcudown_one[0] % args,
 								 mailtxt.pcudown_one[1] % args, True, db='pcu_persistmessages')
 
-		loginbase = plc.siteId(hostname)
+		loginbase = plc.siteId(host)
 		m.send([policy.TECHEMAIL % loginbase])
 
 	def pcu(self, host):
@@ -59,8 +61,8 @@ class Reboot(object):
 		if self.fbnode['pcu'] == "PCU": 
 			self.action = "reboot.reboot('%s')" % host
 
-			pflags = PersistFlags(host, 1*60*60*24, db='pcu_persistflags')
-			if not pflags.getRecentFlag('pcutried'): # or not pflags.getFlag('pcufailed'):
+			pflags = PersistFlags(host, 2*60*60*24, db='pcu_persistflags')
+			if not pflags.getRecentFlag('pcutried'):
 				pflags.setRecentFlag('pcutried')
 				try:
 					ret = reboot.reboot(host)
@@ -87,10 +89,11 @@ class Reboot(object):
 
 					pflags.setRecentFlag('pcumessagesent')
 					pflags.save()
+					# NOTE: this will result in just one message sent at a time.
+					return True
 
 				else:
-					pass # just skip it?
-
+					return False
 		else:
 			self.action = "None"
 			return False
@@ -130,6 +133,26 @@ class RebootDown(Reboot):
 		self.action = "None"
 		return False    # this always fails, since the node will be down.
 
+def set_node_to_rins(host, fb):
+
+	node = api.GetNodes(host, ['boot_state', 'last_contact', 'last_updated', 'date_created'])
+	record = {'observation' : node[0], 
+			  'model' : 'USER_REQUEST', 
+			  'action' : 'api.UpdateNode(%s, {"boot_state" : "rins"})' % host, 
+			  'time' : time.time()}
+	l = Log(host, record)
+
+	ret = api.UpdateNode(host, {'boot_state' : 'rins'})
+	if ret:
+		# it's nice to see the current status rather than the previous status on the console
+		node = api.GetNodes(host)[0]
+		print l
+		print "%-2d" % (i-1), nodegroup_display(node, fb)
+		return l
+	else:
+		print "FAILED TO UPDATE NODE BOOT STATE : %s" % host
+		return None
+
 
 try:
 	rebootlog = soltesz.dbLoad("rebootlog")
@@ -141,7 +164,7 @@ parser.set_defaults(nodegroup=None,
 					node=None,
 					nodelist=None,
 					nodeselect=None,
-					timewait=30,
+					timewait=0,
 					skip=0,
 					rins=False,
 					reboot=False,
@@ -209,7 +232,7 @@ if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
 	import os
 	file = "findbad.txt"
-	config.setFileFromList(file, hostnames)
+	config2.setFileFromList(file, hostnames)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 fb = soltesz.dbLoad("findbad")
@@ -219,7 +242,6 @@ count = 1
 for host in hostnames:
 
 	#if 'echo' in host or 'hptest-1' in host: continue
-
 	try:
 		try:
 			node = api.GetNodes(host)[0]
@@ -259,26 +281,6 @@ for host in hostnames:
 			print "recently rebooted %s.  skipping... " % host
 			continue
 
-		if config.rins:
-			# reset the boot_state to 'rins'
-			node = api.GetNodes(host, ['boot_state', 'last_contact', 'last_updated', 'date_created'])
-			record = {'observation' : node[0], 
-					  'model' : 'USER_REQUEST', 
-					  'action' : 'api.UpdateNode(%s, {"boot_state" : "rins"})' % host, 
-					  'time' : time.time()}
-			l = Log(host, record)
-
-			ret = api.UpdateNode(host, {'boot_state' : 'rins'})
-			if ret:
-				# it's nice to see the current status rather than the previous status on the console
-				node = api.GetNodes(host)[0]
-				print l
-				print "%-2d" % (i-1), nodegroup_display(node, fb)
-				rebootlog.add(l)
-			else:
-				print "FAILED TO UPDATE NODE BOOT STATE : %s" % host
-
-
 		if config.reboot:
 
 			fbnode = fb['nodes'][host]['values']
@@ -288,9 +290,17 @@ for host in hostnames:
 				o = RebootDebug(fbnode)
 
 			elif observed_state == "boot" :
+				if config.rins:
+					l = set_node_to_rins(host, fb)
+					if l: rebootlog.add(l)
+
 				o = RebootBoot(fbnode)
 
 			elif observed_state == "down":
+				if config.rins:
+					l = set_node_to_rins(host, fb)
+					if l: rebootlog.add(l)
+
 				o = RebootDown(fbnode)
 
 
@@ -316,6 +326,12 @@ for host in hostnames:
 						  'time' : time.time()}
 
 				print "ALL METHODS OF RESTARTING %s FAILED" % host
+				args = {}
+				args['hostname'] = host
+				m = PersistMessage(host, "ALL FAIL for %(hostname)s" % args,
+											 "nada", False, db='suspect_persistmessages')
+				m.reset()
+				m.send(['monitor-list@lists.planet-lab.org'])
 
 			l = Log(host, record)
 			print l

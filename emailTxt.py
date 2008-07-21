@@ -30,17 +30,17 @@ If the machine has booted successfully, you may check it more quickly by logging
 
     sudo /usr/sbin/vps ax
 
-If you have a BootCD older than 3.0, you will need to create a new BootCD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create burn a new BootImage to CD or USB.  You can find instructions for this at the Technical Contact's Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
 If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
-After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
-
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+
+#If no one responds, then after a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
 
 	newdown_two=("""PlanetLab node(s) down: %(loginbase)s""", 
 """
@@ -114,11 +114,11 @@ Instructions to perform the steps necessary for a BootCD upgrade are available i
 
 If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
 
-After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
-
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+#After a week, we will disable your site's ability to create new slices.  Because this action will directly affect your site's registered PI, we will also CC the PI for help at that time.
+
 	newbootcd_two=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", # : %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
 
@@ -196,7 +196,7 @@ Monitor restarted NM on the following machines:
 """As part of our machine monitoring and maintenance, we tried to use the PCU
 registered below, but could not for the following reason at the link below:
 
-	https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php#id%(pcu_id)s
+	https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php?id=%(pcu_id)s
 
 We need your help resolving this issue in two ways:  
 
@@ -228,7 +228,7 @@ Thank you very much for your help,
 registered below, and though it appears to succeed, we do not subsequently
 observe the associated nodes rebooting:
 
-    https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php#id%(pcu_id)s
+    https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php?id=%(pcu_id)s
 
 %(hostname_list)s
 
@@ -333,7 +333,7 @@ BootManager.log output follows:
 	baddisk = ("""Bad Disk on PlanetLab node %(hostname)s""", 
 			   """As part of PlanetLab node monitoring, we noticed %(hostname)s has a number of disk or media related I/O errors, that prevent it from either booting or reliably running as a PlanetLab node.
 
-Please verify the integrity of the disk, and order a replacment if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
+Please verify the integrity of the disk, and order a replacement if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
 
 Thanks.
 
@@ -373,8 +373,31 @@ Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
+	plnode_cfg=(""" Please Verify Network Configuration for PlanetLab node %(hostname)s""", 
+"""Hello,
+
+As part of PlanetLab node monitoring, we noticed that %(hostname)s has a network configuration error related to DNS or hostname lookups.  Often this can happen either due local configuraiton changes, or a misconfiguration of the node's DNS servers.  To resolve the issue we require your assistance.  All that is needed is to visit:
+
+	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+
+Find the primary node network entry and confirm that the settings are correct.  
+
+If you use 'static' network configuration, verify that the DNS servers are correct.  If you are using 'dhcp' then you will need to confirm that the information returned for the node will allow it to perform lookups on it's own hostname.
+
+If you change the network settings, then select, "Download -> Download plnode.txt file for %(hostname)s" menu.  This will generate a new configuration file for your node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machine.  If you are using an All-in-One boot image, then you will need to download the All-in-One image instead, burn it to the appropriate media (CD or USB) and reboot.
+
+Please let us know if you need any assistance.
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+
+BootManager.log output follows:
+---------------------------------------------------------
+%(bmlog)s
+""")
+
 	plnode_cfg=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
-				"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
+"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
 	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
 

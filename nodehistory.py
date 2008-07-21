@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta
 import calendar
 
+import sys
 import time
 from model import *
 from nodecommon import *
@@ -28,41 +29,6 @@ parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
 config = config(parser)
 config.parse_args()
 
-def datetime_fromstr(str):
-    if '-' in str:
-        tup = time.strptime(str, "%Y-%m-%d")
-    elif '/' in str:
-        tup = time.strptime(str, "%m/%d/%Y")
-    else:
-        tup = time.strptime(str, "%m/%d/%Y")
-    return datetime.fromtimestamp(calendar.timegm(tup))
-
-def diff_time(timestamp):
-	now = time.time()
-	if timestamp == None:
-		return "unknown"
-	diff = now - timestamp
-	# return the number of seconds as a difference from current time.
-	t_str = ""
-	if diff < 60: # sec in min.
-		t = diff
-		t_str = "%s sec ago" % t
-	elif diff < 60*60: # sec in hour
-		t = diff // (60)
-		t_str = "%s min ago" % int(t)
-	elif diff < 60*60*24: # sec in day
-		t = diff // (60*60)
-		t_str = "%s hours ago" % int(t)
-	elif diff < 60*60*24*7: # sec in week
-		t = diff // (60*60*24)
-		t_str = "%s days ago" % int(t)
-	elif diff < 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7)
-		t_str = "%s weeks ago" % int(t)
-	elif diff > 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7*30)
-		t_str = "%s months ago" % int(t)
-	return t_str
 
 def fb_print_nodeinfo(fbnode, verbose, date=None):
 	if verbose: print "              state |  ssh  |  pcu  | bootcd | category | kernel"
@@ -77,7 +43,8 @@ def fb_print_nodeinfo(fbnode, verbose, date=None):
 	else:
 		fbnode['bootcd'] = "unknown"
 	fbnode['state'] = color_boot_state(get_current_state(fbnode))
-	fbnode['kernel'] = fbnode['kernel'].split()[2]
+	if len(fbnode['kernel'].split()) >= 3:
+		fbnode['kernel'] = fbnode['kernel'].split()[2]
 	print "    %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 
 def pcu_print_info(pcuinfo, hostname):
@@ -113,12 +80,36 @@ if config.fromtime:
 else:
 	begin = "2007-11-06"
 
+if config.node is None and len(config.args) > 0:
+	config.node = config.args[0]
+elif config.node is None:
+	print "Add a hostname to arguments"
+	print "exit."
+	sys.exit(1)
+
 d = datetime_fromstr(begin)
 tdelta = timedelta(1)
 verbose = 1
 
+def get_filefromglob(d, str):
+	import os
+	import glob
+	# TODO: This is aweful.
+	path = "archive-pdb"
+	archive = soltesz.SPickle(path)
+	glob_str = "%s*.%s.pkl" % (d.strftime("%Y-%m-%d"), str)
+	os.chdir(path)
+	#print glob_str
+	file = glob.glob(glob_str)[0]
+	#print "loading %s" % file
+	os.chdir("..")
+	return file[:-4]
+	#fb = archive.load(file[:-4])
+	
+
 while True:
-	file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
+	file = get_filefromglob(d, "production.findbad")
+	#file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
 	
 	try:
 		fb = archive.load(file)
@@ -128,7 +119,10 @@ while True:
 
 		del fb
 		verbose = 0
+	except KeyboardInterrupt:
+		sys.exit(1)
 	except:
+		#import traceback; print traceback.print_exc()
 		print d.strftime("%Y-%m-%d"), "No record"
 
 	d = d + tdelta

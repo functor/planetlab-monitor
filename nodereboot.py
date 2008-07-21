@@ -2,7 +2,6 @@
 
 # Attempt to reboot a node in debug state.
 
-
 import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
@@ -33,6 +32,10 @@ class Sopen(subprocess.Popen):
 from Rpyc import SocketConnection, Async
 from Rpyc.Utils import *
 
+def get_fbnode(node):
+	fb = soltesz.dbLoad("findbad")
+	fbnode = fb['nodes'][node]['values']
+	return fbnode
 
 class NodeConnection:
 	def __init__(self, connection, node, config):
@@ -106,8 +109,8 @@ class NodeConnection:
 		try: ReadNodeConfiguration.Run(bm.VARS, bm.LOG)
 		except Exception, x:
 			bm_continue = False
-			if not config.quiet: print "exception"
-			if not config.quiet: print x
+			print "exception"
+			print x
 			print "   Possibly, unable to find valid configuration file"
 
 		if bm_continue:
@@ -133,6 +136,9 @@ class NodeConnection:
 			return True
 		else:
 			return False
+
+	def set_nodestate(self, state='boot'):
+		return api.UpdateNode(self.node, {'boot_state' : state})
 
 	def restart_node(self, state='boot'):
 		api.UpdateNode(self.node, {'boot_state' : state})
@@ -196,6 +202,7 @@ class PlanetLabSession:
 		args['user'] = 'root'
 		args['hostname'] = self.node
 		args['monitordir'] = "/home/soltesz/monitor"
+		ssh_port = 22
 
 		if self.nosetup:
 			print "Skipping setup"
@@ -223,19 +230,31 @@ class PlanetLabSession:
 
 		t1 = time.time()
 		# KILL any already running servers.
-		cmd = """ssh %(user)s@%(hostname)s """ + \
-			 """'ps ax | grep Rpyc | grep -v grep | awk "{print \$1}" | xargs kill 2> /dev/null' """
-		cmd = cmd % args
-		if self.verbose: print cmd
-		# TODO: Add timeout
-		print localos.system(cmd,timeout)
+		ssh = soltesz.SSH(args['user'], args['hostname'], ssh_port)
+		(ov,ev) = ssh.run_noexcept2("""<<\EOF
+            rm -f out.log
+            echo "kill server" >> out.log
+            ps ax | grep Rpyc | grep -v grep | awk '{print $1}' | xargs kill 2> /dev/null ; 
+            echo "export" >> out.log
+            export PYTHONPATH=$HOME  ;
+            echo "start server" >> out.log
+            python Rpyc/Servers/forking_server.py &> server.log &
+            echo "done" >> out.log
+EOF""")
+		#cmd = """ssh %(user)s@%(hostname)s """ + \
+		#	 """'ps ax | grep Rpyc | grep -v grep | awk "{print \$1}" | xargs kill 2> /dev/null' """
+		#cmd = cmd % args
+		#if self.verbose: print cmd
+		## TODO: Add timeout
+		#print localos.system(cmd,timeout)
 
-		# START a new rpyc server.
-		cmd = """ssh -n %(user)s@%(hostname)s "export PYTHONPATH=\$HOME; """ + \
-			 """python Rpyc/Servers/forking_server.py &> server.log < /dev/null &" """ 
-		cmd = cmd % args
-		if self.verbose: print cmd
-		print localos.system(cmd,timeout)
+		## START a new rpyc server.
+		#cmd = """ssh -n %(user)s@%(hostname)s "export PYTHONPATH=\$HOME; """ + \
+		#	 """python Rpyc/Servers/forking_server.py &> server.log < /dev/null &" """ 
+		#cmd = cmd % args
+		#if self.verbose: print cmd
+		#print localos.system(cmd,timeout)
+		print ssh.ret
 
 		# TODO: Add timeout
 		# This was tricky to make synchronous.  The combination of ssh-clients-4.7p1, 
@@ -250,7 +269,8 @@ class PlanetLabSession:
 		self.command = Sopen(cmd, shell=True, stdout=subprocess.PIPE)
 		# TODO: the read() here may block indefinitely.  Need a better
 		# approach therefore, that includes a timeout.
-		ret = self.command.stdout.read(5)
+		#ret = self.command.stdout.read(5)
+		ret = soltesz.read_t(self.command.stdout, 5)
 
 		t2 = time.time()
 		if 'READY' in ret:
@@ -285,6 +305,24 @@ def index_to_id(steps,index):
 		return "done"
 
 def reboot(hostname, config=None, forced_action=None):
+
+	# NOTE: Nothing works if the bootcd is REALLY old.
+	#       So, this is the first step.
+	fbnode = get_fbnode(hostname)
+	if fbnode['category'] == "OLDBOOTCD":
+		print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
+		args = {}
+		args['hostname_list'] = "    %s" % hostname
+
+		m = PersistMessage(hostname, "Please Update Boot Image for %s" % hostname,
+							mailtxt.newbootcd_one[1] % args, True, db='bootcd_persistmessages')
+
+		loginbase = plc.siteId(hostname)
+		m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+
+		print "\tDisabling %s due to out-of-date BOOTCD" % hostname
+		api.UpdateNode(hostname, {'boot_state' : 'disable'})
+		return True
 
 	node = hostname
 	print "Creating session for %s" % node
@@ -356,10 +394,13 @@ def reboot(hostname, config=None, forced_action=None):
 		steps = [
 			('scsierror'  , 'SCSI error : <\d+ \d+ \d+ \d+> return code = 0x\d+'),
 			('ioerror'    , 'end_request: I/O error, dev sd\w+, sector \d+'),
+			('ccisserror' , 'cciss: cmd \w+ has CHECK CONDITION  byte \w+ = \w+'),
+
 			('buffererror', 'Buffer I/O error on device dm-\d, logical block \d+'),
 			('atareadyerror'   , 'ata\d+: status=0x\d+ { DriveReady SeekComplete Error }'),
 			('atacorrecterror' , 'ata\d+: error=0x\d+ { UncorrectableError }'),
 			('sdXerror'   , 'sd\w: Current: sense key: Medium Error'),
+			('ext3error'   , 'EXT3-fs error (device dm-\d+): ext3_find_entry: reading directory #\d+ offset \d+'),
 			('floppytimeout','floppy0: floppy timeout called'),
 			('floppyerror',  'end_request: I/O error, dev fd\w+, sector \d+'),
 
@@ -401,11 +442,17 @@ def reboot(hostname, config=None, forced_action=None):
 
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.set_nodestate('diag')
 			return False
 
 	print "...Downloading bm.log from %s" % node
 	log = conn.get_bootmanager_log()
 	child = fdpexpect.fdspawn(log)
+
+	try:
+		if config.collect: return True
+	except:
+		pass
 
 	time.sleep(1)
 
@@ -447,8 +494,11 @@ def reboot(hostname, config=None, forced_action=None):
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
+			('downloadfail' , 'Unable to download main tarball /boot-alpha/bootstrapfs-planetlab-i386.tar.bz2 from server.'),
 			('disktoosmall' , 'The total usable disk size of all disks is insufficient to be usable as a PlanetLab node.'),
-			('hardwarefail' , 'Hardware requirements not met'),
+			('hardwarerequirefail' , 'Hardware requirements not met'),
+			('mkfsfail'	    , 'while running: Running mkfs.ext2 -q  -m 0 -j /dev/planetlab/vservers failed'),
+			('nofilereference', "No such file or directory: '/tmp/mnt/sysimg//vservers/.vref/planetlab-f8-i386/etc/hosts'"),
 			('chrootfail'   , 'Running chroot /tmp/mnt/sysimg'),
 			('modulefail'   , 'Unable to get list of system modules'),
 			('writeerror'   , 'write error: No space left on device'),
@@ -476,9 +526,8 @@ def reboot(hostname, config=None, forced_action=None):
 	#  By using the sequence identifier, we guarantee that there will be no
 	#  frequent loops.  I'm guessing there is a better way to track loops,
 	#  though.
-	if not config.force and ( pflags.getFlag(s) or pflags.isRecent() ):
-		pflags.resetFlag(s)
-		pflags.setRecent()
+	if not config.force and pflags.getRecentFlag(s):
+		pflags.setRecentFlag(s)
 		pflags.save() 
 		print "... flag is set or it has already run recently. Skipping %s" % node
 		return True
@@ -509,6 +558,10 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
 			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-exception-mkfsfail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-exception-noinstall-update-debug-done",
 			]:
 		sequences.update({n : "restart_bootmanager_rins"})
 
@@ -527,6 +580,7 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-nospace-exception-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
 			]:
 		sequences.update({n : "restart_node_rins"})
 
@@ -535,30 +589,40 @@ def reboot(hostname, config=None, forced_action=None):
 			 "bminit-cfg-auth-implementerror-bootcheckfail-update-debug-done",
 			 "bminit-cfg-auth-implementerror-bootcheckfail-update-implementerror-bootupdatefail-done",
 			 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
+			 "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
 			 ]:
 		sequences.update({n: "restart_node_boot"})
 
 	# update_node_config_email
 	for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
 			"bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
-			"bminit-cfg-exception-nodehostname-update-debug-done",
 			]:
 		sequences.update({n : "update_node_config_email"})
 
+	for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", ]:
+		sequences.update({n : "nodenetwork_email"})
+
 	# update_bootcd_email
-	for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarefail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-exception-hardwarefail-update-debug-done",
+	for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-exception-hardwarerequirefail-update-debug-done",
 			]:
 		sequences.update({n : "update_bootcd_email"})
 
+	for n in [ "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
+			]:
+		sequences.update({n: "suspect_error_email"})
+
 	# update_hardware_email
-	sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarefail-update-debug-done" : "update_hardware_email"})
+	sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
+	sequences.update({"bminit-cfg-auth-getplc-hardware-disktoosmall-exception-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
 
 	# broken_hardware_email
-	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarefail-update-debug-done" : "broken_hardware_email"})
+	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
+
+	flag_set = True
 
 	
 	if s not in sequences:
@@ -575,6 +639,10 @@ def reboot(hostname, config=None, forced_action=None):
 		m.send(['monitor-list@lists.planet-lab.org'])
 
 		conn.restart_bootmanager('boot')
+
+		# NOTE: Do not set the pflags value for this sequence if it's unknown.
+		# This way, we can check it again after we've fixed it.
+		flag_set = False
 
 	else:
 
@@ -596,6 +664,19 @@ def reboot(hostname, config=None, forced_action=None):
 			else:
 				# there was some failure to synchronize the keys.
 				print "...Unable to repair node keys on %s" % node
+
+		elif sequences[s] == "suspect_error_email":
+			args = {}
+			args['hostname'] = hostname
+			args['sequence'] = s
+			args['bmlog'] = conn.get_bootmanager_log().read()
+			m = PersistMessage(hostname, "Suspicous error from BootManager on %s" % args,
+										 mailtxt.unknownsequence[1] % args, False, db='suspect_persistmessages')
+			m.reset()
+			m.send(['monitor-list@lists.planet-lab.org'])
+
+			conn.restart_bootmanager('boot')
+
 		elif sequences[s] == "update_node_config_email":
 			print "...Sending message to UPDATE NODE CONFIG"
 			args = {}
@@ -605,6 +686,19 @@ def reboot(hostname, config=None, forced_action=None):
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 			conn.dump_plconf_file()
+			conn.set_nodestate('diag')
+
+		elif sequences[s] == "nodenetwork_email":
+			print "...Sending message to LOOK AT NODE NETWORK"
+			args = {}
+			args['hostname'] = hostname
+			args['bmlog'] = conn.get_bootmanager_log().read()
+			m = PersistMessage(hostname,  mailtxt.plnode_network[0] % args,  mailtxt.plnode_cfg[1] % args, 
+								True, db='nodenet_persistmessages')
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.dump_plconf_file()
+			conn.set_nodestate('diag')
 
 		elif sequences[s] == "update_bootcd_email":
 			print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
@@ -618,6 +712,9 @@ def reboot(hostname, config=None, forced_action=None):
 
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+
+			#print "\tDisabling %s due to out-of-date BOOTCD" % hostname
+			#conn.set_nodestate('disable')
 
 		elif sequences[s] == "broken_hardware_email":
 			# MAKE An ACTION record that this host has failed hardware.  May
@@ -633,6 +730,7 @@ def reboot(hostname, config=None, forced_action=None):
 
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.set_nodestate('disable')
 
 		elif sequences[s] == "update_hardware_email":
 			print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
@@ -644,9 +742,11 @@ def reboot(hostname, config=None, forced_action=None):
 
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.set_nodestate('disable')
 
-	pflags.setFlag(s)
-	pflags.save() 
+	if flag_set:
+		pflags.setRecentFlag(s)
+		pflags.save() 
 
 	return True
 	
@@ -657,7 +757,7 @@ def main():
 	from config import config
 	from optparse import OptionParser
 	parser = OptionParser()
-	parser.set_defaults(node=None, nodelist=None, child=False, nosetup=False, verbose=False, force=None, quiet=False)
+	parser.set_defaults(node=None, nodelist=None, child=False, collect=False, nosetup=False, verbose=False, force=None, quiet=False)
 	parser.add_option("", "--child", dest="child", action="store_true", 
 						help="This is the child mode of this process.")
 	parser.add_option("", "--force", dest="force", metavar="boot_state",
@@ -666,6 +766,8 @@ def main():
 						help="Extra quiet output messages.")
 	parser.add_option("", "--verbose", dest="verbose", action="store_true", 
 						help="Extra debug output messages.")
+	parser.add_option("", "--collect", dest="collect", action="store_true", 
+						help="No action, just collect dmesg, and bm.log")
 	parser.add_option("", "--nosetup", dest="nosetup", action="store_true", 
 						help="Do not perform the orginary setup phase.")
 	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 

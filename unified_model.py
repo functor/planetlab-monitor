@@ -6,11 +6,14 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-import config
 import mailer
 import time
+from nodecommon import *
+
+from const import *
 
 def gethostlist(hostlist_file):
+	import config
 	return config.getListFromFile(hostlist_file)
 	
 	#nodes = api.GetNodes({'peer_id' : None}, ['hostname'])
@@ -110,8 +113,14 @@ class Message(object):
 class Recent(object):
 	def __init__(self, withintime):
 		self.withintime = withintime
-		self.time = time.time()
-		self.action_taken = False
+
+		try:
+			self.time = self.__getattribute__('time')
+		except:
+			self.time = time.time()- 7*24*60*60
+
+		#self.time = time.time()
+		#self.action_taken = False
 
 	def isRecent(self):
 		if self.time + self.withintime < time.time():
@@ -152,6 +161,8 @@ class PersistFlags(Recent):
 			obj = super(PersistFlags, typ).__new__(typ, *args, **kwargs)
 			for key in kwargs.keys():
 				obj.__setattr__(key, kwargs[key])
+			obj.time = time.time()
+			obj.action_taken = False
 
 		obj.db = db
 		return obj
@@ -178,6 +189,10 @@ class PersistFlags(Recent):
 			self.__setattr__(name, False)
 			return False
 
+	def resetRecentFlag(self, name):
+		self.resetFlag(name)
+		self.unsetRecent()
+
 	def setRecentFlag(self, name):
 		self.setFlag(name)
 		self.setRecent()
@@ -190,6 +205,14 @@ class PersistFlags(Recent):
 		except:
 			self.__setattr__(name, False)
 			return False
+
+	def checkattr(self, name):
+		try:
+			x = self.__getattribute__(name)
+			return True
+		except:
+			return False
+		
 
 class PersistMessage(Message):
 	def __new__(typ, id, subject, message, via_rt, **kwargs):
@@ -215,6 +238,9 @@ class PersistMessage(Message):
 			obj.actiontracker = Recent(3*60*60*24)
 			obj.ticket_id = None
 
+		if 'ticket_id' in kwargs and kwargs['ticket_id'] is not None:
+			obj.ticket_id = kwargs['ticket_id']
+
 		obj.db = db
 		return obj
 
@@ -237,8 +263,7 @@ class PersistMessage(Message):
 			soltesz.dbDump(self.db, pm)
 		else:
 			# NOTE: only send a new message every week, regardless.
-			print "Not sending to host b/c not within window of 6 days"
-			pass
+			print "Not sending to host b/c not within window of %s days" % (self.actiontracker.withintime // 60*60*24)
 
 class MonitorMessage(object):
 	def __new__(typ, id, *args, **kwargs):
@@ -342,13 +367,11 @@ class PersistSitePenalty(SitePenalty):
 
 	def __init__(self, id, index, **kwargs):
 		self.id = id
-		#SitePenalty.__init__(self, self.index)
 
 	def save(self):
 		pm = soltesz.dbLoad(self.db)
 		pm[self.id] = self
 		soltesz.dbDump(self.db, pm)
-
 
 
 class Target:
@@ -385,10 +408,140 @@ class Target:
 
 		return con_or_true
 
+class Record(object):
+
+	def __init__(self, hostname, data):
+		self.hostname = hostname
+		self.data = data
+		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+		self.loginbase = self.plcdb_hn2lb[self.hostname]
+		return
+
+
+	def stageIswaitforever(self):
+		if 'waitforever' in self.data['stage']:
+			return True
+		else:
+			return False
+
+	def severity(self):
+		category = self.data['category']
+		prev_category = self.data['prev_category']
+		val = cmpCategoryVal(category, prev_category)
+		return val 
+
+	def improved(self):
+		return self.severity() > 0
+	
+	def end_record(self):
+		return node_end_record(self.hostname)
+
+	def reset_stage(self):
+		self.data['stage'] = 'findbad'
+		return True
+	
+	def getCategory(self):
+		return self.data['category'].lower()
+
+	def getState(self):
+		return self.data['state'].lower()
+
+	def getDaysDown(cls, diag_record):
+		daysdown = -1
+		if diag_record['comonstats']['uptime'] != "null":
+			#print "uptime %s" % (int(float(diag_record['comonstats']['uptime'])) // (60*60*24))
+			daysdown = - int(float(diag_record['comonstats']['uptime'])) // (60*60*24)
+		elif diag_record['comonstats']['sshstatus'] != "null":
+			daysdown = int(diag_record['comonstats']['sshstatus']) // (60*60*24)
+		elif diag_record['comonstats']['lastcotop'] != "null":
+			daysdown = int(diag_record['comonstats']['lastcotop']) // (60*60*24)
+		else:
+			now = time.time()
+			last_contact = diag_record['plcnode']['last_contact']
+			if last_contact == None:
+				# the node has never been up, so give it a break
+				daysdown = -1
+			else:
+				diff = now - last_contact
+				daysdown = diff // (60*60*24)
+		return daysdown
+	getDaysDown = classmethod(getDaysDown)
+
+	def getStrDaysDown(cls, diag_record):
+		daysdown = cls.getDaysDown(diag_record)
+		if daysdown > 0:
+			return "%d days down"%daysdown
+		elif daysdown == -1:
+			return "Unknown number of days"
+		else:
+			return "%d days up"% -daysdown
+	getStrDaysDown = classmethod(getStrDaysDown)
+
+	def takeAction(self):
+		pp = PersistSitePenalty(self.hostname, 0, db='persistpenalty_hostnames')
+		if 'improvement' in self.data['stage'] or self.improved():
+			print "decreasing penalty for %s"%self.hostname
+			pp.decrease()
+		else:
+			print "increasing penalty for %s"%self.hostname
+			pp.increase()
+		pp.apply(self.hostname)
+		pp.save()
+
+	def _format_diaginfo(self):
+		info = self.data['info']
+		if self.data['stage'] == 'monitor-end-record':
+			hlist = "    %s went from '%s' to '%s'\n" % (info[0], info[1], info[2]) 
+		else:
+			hlist = "    %s %s - %s\n" % (info[0], info[2], info[1]) #(node,ver,daysdn)
+		return hlist
+
+	def getMessage(self, ticket_id=None):
+		self.data['args']['hostname'] = self.hostname
+		self.data['args']['loginbase'] = self.loginbase
+		self.data['args']['hostname_list'] = self._format_diaginfo()
+		message = PersistMessage(self.hostname, 
+								 self.data['message'][0] % self.data['args'],
+								 self.data['message'][1] % self.data['args'],
+								 True, db='monitor_persistmessages',
+								 ticket_id=ticket_id)
+		return message
+	
+	def getContacts(self):
+		from config import config
+		#print "policy"
+		config = config()
+
+		roles = self.data['email']
+
+		if not config.mail and not config.debug and config.bcc:
+			roles = ADMIN
+		if config.mail and config.debug:
+			roles = ADMIN
+
+		# build targets
+		contacts = []
+		if ADMIN & roles:
+			contacts += [config.email]
+		if TECH & roles:
+			contacts += [TECHEMAIL % self.loginbase]
+		if PI & roles:
+			contacts += [PIEMAIL % self.loginbase]
+		if USER & roles:
+			slices = plc.slices(self.loginbase)
+			if len(slices) >= 1:
+				for slice in slices:
+					contacts += [SLICEMAIL % slice]
+				print "SLIC: %20s : %d slices" % (self.loginbase, len(slices))
+			else:
+				print "SLIC: %20s : 0 slices" % self.loginbase
+
+		return contacts
+
+
 class NodeRecord:
 	def __init__(self, hostname, target):
 		self.hostname = hostname
-		self.pcu = PCU(hostname)
 		self.ticket = None
 		self.target = target
 		if hostname in fb['nodes']:
@@ -396,13 +549,28 @@ class NodeRecord:
 		else:
 			raise Exception("Hostname not in scan database")
 
-	def get(self):
-		pass
+	def stageIswaitforever(self):
+		if 'waitforever' in self.data['stage']:
+			return True
+		else:
+			return False
+
 	def severity(self):
 		category = self.data['category']
 		prev_category = self.data['prev_category']
 		val = cmpCategoryVal(category, prev_category)
 		return val 
+
+	def improved(self):
+		return self.severity() > 0
+	
+	def end_record(self):
+		return node_end_record(self.hostname)
+
+	def reset_stage(self):
+		self.data['stage'] = 'findbad'
+		return True
+
 	def open_tickets(self):
 		if self.ticket and self.ticket.status['status'] == 'open':
 			return 1
@@ -452,12 +620,13 @@ class NodeRecord:
 if __name__ == "__main__":
 	#r = RT()
 	#r.email("test", "body of test message", ['soltesz@cs.princeton.edu'])
-	from emailTxt import mailtxt
-	soltesz.dbDump("persistmessages", {});
-	args = {'url_list': 'http://www.planet-lab.org/bootcds/planet1.usb\n','hostname': 'planet1','hostname_list': ' blahblah -  days down\n'}
-	m = PersistMessage("blue", "test 1", mailtxt.newdown_one[1] % args, True)
-	m.send(['soltesz@cs.utk.edu'])
-	m = PersistMessage("blue", "test 1 - part 2", mailtxt.newalphacd_one[1] % args, True)
+	#from emailTxt import mailtxt
+	print "loaded"
+	#soltesz.dbDump("persistmessages", {});
+	#args = {'url_list': 'http://www.planet-lab.org/bootcds/planet1.usb\n','hostname': 'planet1','hostname_list': ' blahblah -  days down\n'}
+	#m = PersistMessage("blue", "test 1", mailtxt.newdown_one[1] % args, True)
+	#m.send(['soltesz@cs.utk.edu'])
+	#m = PersistMessage("blue", "test 1 - part 2", mailtxt.newalphacd_one[1] % args, True)
 	# TRICK timer to thinking some time has passed.
-	m.actiontracker.time = time.time() - 6*60*60*24
-	m.send(['soltesz@cs.utk.edu'])
+	#m.actiontracker.time = time.time() - 6*60*60*24
+	#m.send(['soltesz@cs.utk.edu'])

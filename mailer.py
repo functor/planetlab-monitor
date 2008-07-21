@@ -8,6 +8,7 @@
 from emailTxt import *
 import smtplib
 from config import config
+import calendar
 import logging
 import os
 import time
@@ -50,7 +51,7 @@ def getTicketStatus(ticket_id):
 	if ticket_id == None or ticket_id == "":
 		return {}
 
-	cmd = "rt show -t ticket -f id,subject,status,queue %s" % (ticket_id)
+	cmd = "rt show -t ticket -f id,subject,status,queue,created %s" % (ticket_id)
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split('\n')
@@ -59,8 +60,10 @@ def getTicketStatus(ticket_id):
 		if len(line) == 0: continue
 		vals = line.split(':')
 		key = vals[0]
-		r_values[key] = "".join(vals[1:])
+		r_values[key] = ":".join(vals[1:])
 		r_values[key] = r_values[key].strip()
+
+	r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
 	return r_values
 
 def setAdminCCViaRT(ticket_id, to):

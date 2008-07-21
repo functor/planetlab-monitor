@@ -4,16 +4,20 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
+import sys
 import soltesz
-fb = soltesz.dbLoad("findbad")
-fbpcu = soltesz.dbLoad("findbadpcus")
 from nodecommon import *
 from policy import Diagnose
+import glob
+import os
+from reboot import pcu_name
 
 import time
 import re
 
-
+#fb = {}
+fb = soltesz.dbLoad("findbad")
+fbpcu = {}
 
 def daysdown_print_nodeinfo(fbnode, hostname):
 	fbnode['hostname'] = hostname
@@ -22,19 +26,28 @@ def daysdown_print_nodeinfo(fbnode, hostname):
 
 	print "%(intdaysdown)5s %(hostname)-44s | %(state)10.10s | %(daysdown)s" % fbnode
 
-def fb_print_nodeinfo(fbnode, hostname):
+def fb_print_nodeinfo(fbnode, hostname, fields=None):
 	fbnode['hostname'] = hostname
 	fbnode['checked'] = diff_time(fbnode['checked'])
 	if fbnode['bootcd']:
 		fbnode['bootcd'] = fbnode['bootcd'].split()[-1]
 	else:
 		fbnode['bootcd'] = "unknown"
-	if 'ERROR' in fbnode['category']:
-		fbnode['kernel'] = ""
-	else:
-		fbnode['kernel'] = fbnode['kernel'].split()[2]
 	fbnode['pcu'] = color_pcu_state(fbnode)
-	print "%(hostname)-39s | %(checked)11.11s | %(state)10.10s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+
+	if not fields:
+		if 'ERROR' in fbnode['category']:
+			fbnode['kernel'] = ""
+		else:
+			fbnode['kernel'] = fbnode['kernel'].split()[2]
+		fbnode['boot_state'] = fbnode['plcnode']['boot_state']
+
+		print "%(hostname)-39s | %(checked)11.11s | %(boot_state)5.5s| %(state)8.8s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+	else:
+		format = ""
+		for f in fields:
+			format += "%%(%s)s " % f
+		print format % fbnode
 
 def verify(constraints, data):
 	"""
@@ -55,8 +68,10 @@ def verify(constraints, data):
 				value_re = re.compile(con[key])
 				con_and_true = con_and_true & (value_re.search(data[key]) is not None)
 			elif key not in data:
-				print "missing key %s" % key
-				con_and_true = False
+				print "missing key %s" % key,
+				pass
+				#print "missing key %s" % key
+				#con_and_true = False
 
 		con_or_true = con_or_true | con_and_true
 
@@ -87,35 +102,52 @@ def _pcu_in(fbdata):
 				return True
 	return False
 
-def pcu_select(str_query):
+def pcu_select(str_query, nodelist=None):
 	pcunames = []
-	if str_query is None: return pcunames
+	nodenames = []
+	if str_query is None: return (nodenames, pcunames)
 
 	#print str_query
 	dict_query = query_to_dict(str_query)
 	#print dict_query
 
 	for node in fb['nodes'].keys():
+		if nodelist is not None: 
+			if node not in nodelist: continue
 	
 		fb_nodeinfo  = fb['nodes'][node]['values']
 		if _pcu_in(fb_nodeinfo):
 			pcuinfo = fbpcu['nodes']['id_%s' % fb_nodeinfo['plcnode']['pcu_ids'][0]]['values']
 			if verify(dict_query, pcuinfo):
-				pcunames.append(node)
-	
-	return pcunames
+				nodenames.append(node)
+				str = "cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
+							(pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
+				pcunames.append(str)
+	return (nodenames, pcunames)
 
-def node_select(str_query):
+def node_select(str_query, nodelist=None):
 	hostnames = []
 	if str_query is None: return hostnames
 
 	#print str_query
 	dict_query = query_to_dict(str_query)
 	#print dict_query
+	global fb
 
 	for node in fb['nodes'].keys():
+		if nodelist is not None: 
+			if node not in nodelist: continue
 	
 		fb_nodeinfo  = fb['nodes'][node]['values']
+
+		if fb_nodeinfo == []:
+			#print node, "has lost values"
+			continue
+			#sys.exit(1)
+		fb_nodeinfo['pcu'] = color_pcu_state(fb_nodeinfo)
+		fb_nodeinfo['hostname'] = node
+		if 'plcnode' in fb_nodeinfo:
+			fb_nodeinfo.update(fb_nodeinfo['plcnode'])
 
 		if verify(dict_query, fb_nodeinfo):
 			#print node #fb_nodeinfo
@@ -128,29 +160,64 @@ def node_select(str_query):
 
 
 def main():
+	global fb
+	global fbpcu
+
 	from config import config
 	from optparse import OptionParser
 	parser = OptionParser()
-	parser.set_defaults(node=None, select=None, pcuselect=None, nodelist=None, daysdown=None)
+	parser.set_defaults(node=None, fromtime=None, select=None, list=None, pcuselect=None, nodelist=None, daysdown=None, fields=None)
 	parser.add_option("", "--daysdown", dest="daysdown", action="store_true",
 						help="List the node state and days down...")
 	parser.add_option("", "--select", dest="select", metavar="key=value", 
 						help="List all nodes with the given key=value pattern")
+	parser.add_option("", "--fields", dest="fields", metavar="key,list,...", 
+						help="a list of keys to display for each entry.")
+	parser.add_option("", "--list", dest="list", action="store_true", 
+						help="Write only the hostnames as output.")
 	parser.add_option("", "--pcuselect", dest="pcuselect", metavar="key=value", 
 						help="List all nodes with the given key=value pattern")
 	parser.add_option("", "--nodelist", dest="nodelist", metavar="nodelist.txt", 
 						help="A list of nodes to bring out of debug mode.")
+	parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
+					help="Specify a starting date from which to begin the query.")
 	config = config(parser)
 	config.parse_args()
+	
+	if config.fromtime:
+		path = "archive-pdb"
+		archive = soltesz.SPickle(path)
+		d = datetime_fromstr(config.fromtime)
+		glob_str = "%s*.production.findbad.pkl" % d.strftime("%Y-%m-%d")
+		os.chdir(path)
+		#print glob_str
+		file = glob.glob(glob_str)[0]
+		#print "loading %s" % file
+		os.chdir("..")
+		fb = archive.load(file[:-4])
+	else:
+		fb = soltesz.dbLoad("findbad")
+
+	fbpcu = soltesz.dbLoad("findbadpcus")
 
 	if config.nodelist:
 		nodelist = config.getListFromFile(config.nodelist)
-	elif config.select is not None:
-		nodelist = node_select(config.select)
-	elif config.pcuselect is not None:
-		nodelist = pcu_select(config.pcuselect)
 	else:
 		nodelist = fb['nodes'].keys()
+
+	pculist = None
+	if config.select is not None and config.pcuselect is not None:
+		nodelist = node_select(config.select, nodelist)
+		nodelist, pculist = pcu_select(config.pcuselect, nodelist)
+	elif config.select is not None:
+		nodelist = node_select(config.select, nodelist)
+	elif config.pcuselect is not None:
+		nodelist, pculist = pcu_select(config.pcuselect, nodelist)
+
+
+	if pculist:
+		for pcu in pculist:
+			print pcu
 
 	for node in nodelist:
 		config.node = node
@@ -160,15 +227,23 @@ def main():
 
 		fb_nodeinfo  = fb['nodes'][node]['values']
 
-		if config.daysdown:
-			daysdown_print_nodeinfo(fb_nodeinfo, node)
+		if config.list:
+			print node
 		else:
-			if config.select:
-				fb_print_nodeinfo(fb_nodeinfo, node)
-			elif not config.select and 'state' in fb_nodeinfo:
-				fb_print_nodeinfo(fb_nodeinfo, node)
+			if config.daysdown:
+				daysdown_print_nodeinfo(fb_nodeinfo, node)
 			else:
-				pass
+				if config.select:
+					if config.fields:
+						fields = config.fields.split(",")
+					else:
+						fields = None
+
+					fb_print_nodeinfo(fb_nodeinfo, node, fields)
+				elif not config.select and 'state' in fb_nodeinfo:
+					fb_print_nodeinfo(fb_nodeinfo, node)
+				else:
+					pass
 		
 if __name__ == "__main__":
 	main()

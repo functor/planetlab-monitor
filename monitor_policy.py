@@ -42,6 +42,8 @@ PI=2
 USER=4
 ADMIN=8
 
+from unified_model import *
+
 class Merge:
 	def __init__(self, l_merge):
 		self.merge_list = l_merge
@@ -396,12 +398,13 @@ class Diagnose:
 
 		# NOTE: these settings can be overridden by command line arguments,
 		#       or the state of a record, i.e. if already in RT's Support Queue.
-		nodes_up = self.getUpAtSite(loginbase, d_diag_site)
+		pf = PersistFlags(loginbase, 1, db='site_persitflags')
+		nodes_up = pf.nodes_up
 		if nodes_up < MINUP:
 			d_diag_site[loginbase]['config']['squeeze'] = True
 
 		max_slices = self.getMaxSlices(loginbase)
-		num_nodes = self.getNumNodes(loginbase)
+		num_nodes = pf.nodes_total #self.getNumNodes(loginbase)
 		# NOTE: when max_slices == 0, this is either a new site (the old way)
 		#       or an old disabled site from previous monitor (before site['enabled'])
 		if nodes_up < num_nodes and max_slices != 0:
@@ -867,6 +870,7 @@ class Action:
 			if config.policysavedb:
 				print "Saving Databases... act_all"
 				soltesz.dbDump("act_all", self.act_all)
+				soltesz.dbDump("diagnose_out", self.diagnose_db)
 			sys.exit(1)
 
 		#print_stats("sites_observed", stats)
@@ -882,6 +886,7 @@ class Action:
 			# TODO: remove 'diagnose_out', 
 			#	or at least the entries that were acted on.
 			soltesz.dbDump("act_all", self.act_all)
+			soltesz.dbDump("diagnose_out", self.diagnose_db)
 
 	def accumSites(self):
 		"""
@@ -1058,6 +1063,7 @@ class Action:
 				if ticket_id == 0:
 					# error.
 					print "ticket_id == 0 for %s %s" % (loginbase, act_record['nodename'])
+					import os
 					os._exit(1)
 					pass
 
@@ -1084,8 +1090,8 @@ class Action:
 				i_nodes_actedon += 1
 		
 		if config.policysavedb:
-			print "Saving Databases... act_all, diagnose_out"
-			soltesz.dbDump("act_all", self.act_all)
+			#print "Saving Databases... act_all, diagnose_out"
+			#soltesz.dbDump("act_all", self.act_all)
 			# remove site record from diagnose_out, it's in act_all as done.
 			del self.diagnose_db[loginbase]
 			#soltesz.dbDump("diagnose_out", self.diagnose_db)

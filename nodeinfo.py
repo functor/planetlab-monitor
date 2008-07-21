@@ -86,7 +86,8 @@ def fb_print_nodeinfo(fbnode):
 		fbnode['state'] = color_boot_state(get_current_state(fbnode))
 	else:
 		fbnode['state'] = "none"
-	fbnode['kernel'] = fbnode['kernel'].split()[2]
+	if len(fbnode['kernel'].split()) > 2:
+		fbnode['kernel'] = fbnode['kernel'].split()[2]
 	print "\t       %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 
 def act_print_nodeinfo(actnode, header):

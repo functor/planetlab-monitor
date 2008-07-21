@@ -5,11 +5,11 @@ import plc
 import sys
 import os
 
-def getconf(hostname):
+def getconf(hostname, force=False, media=None):
 	api = plc.PLC(auth.auth, auth.plc)
 	n = api.GetNodes(hostname)
 	filename = "bootcd-alpha/" + hostname + ".txt"
-	if not os.path.exists(filename):
+	if not os.path.exists(filename) or force:
 		f = open("bootcd-alpha/" + hostname + ".txt", 'w')
 		f.write( api.AdmGenerateNodeConfFile(n[0]['node_id']) )
 		f.close()
@@ -20,8 +20,18 @@ def getconf(hostname):
 		pass
 
 	args = {}
-	args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
-	args['url_list'] += "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+	if not media:
+		args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
+		args['url_list'] += "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+	else:
+		if media == "usb":
+			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
+		elif media == "iso":
+			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+		else:
+			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
+			args['url_list'] += "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+			
 	#print "http://pl-virtual-03.cs.princeton.edu/bootcds/%s.usb\n" % hostname
 
 	return args
@@ -30,16 +40,18 @@ if __name__ == '__main__':
 	from config import config as cfg
 	from optparse import OptionParser
 	parser = OptionParser()
-	parser.set_defaults(media='both')
+	parser.set_defaults(media='both', force=False)
 	parser.add_option("", "--media", dest="media", metavar="usb, iso, both", 
 						help="""Which media to generate the message for.""")
+	parser.add_option("", "--force", dest="force", action="store_true", 
+						help="""Force the recreation of the usb images.""")
 
 	config = cfg(parser)
 	config.parse_args()
 
 	ret = {'url_list' : ''} 
 	for i in config.args:
-		conf = getconf(i)
+		conf = getconf(i, config.force, config.media)
 		ret['url_list'] += conf['url_list']
 		ret['hostname'] = i
 
@@ -68,7 +80,7 @@ Thank you,
 
 """ % ret
 
-	elif config.media == "cd":
+	elif config.media == "iso":
 		print """
 Hello,
 

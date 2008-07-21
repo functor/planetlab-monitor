@@ -165,45 +165,26 @@ class Sopen(subprocess.Popen):
 	def kill(self, signal = signal.SIGTERM):
 		os.kill(self.pid, signal)
 
+def read_t(stream, count, timeout=COMMAND_TIMEOUT*2):
+	lin, lout, lerr = select([stream], [], [], timeout)
+	if len(lin) == 0:
+		raise ExceptionTimeout("TIMEOUT Running: %s" % cmd)
+
+	return stream.read(count)
+
 class CMD:
 	def __init__(self):
 		pass
 
 	def run_noexcept(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
+		#print "CMD.run_noexcept(%s)" % cmd
 		try:
 			return CMD.run(self,cmd,timeout)
 		except ExceptionTimeout:
 			import traceback; print traceback.print_exc()
 			return ("", "SCRIPTTIMEOUT")
 			
-
-#		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-#		#(f_in, f_out, f_err) = os.popen3(cmd)
-#		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
-#		lout, lin, lerr = select([f_out,f_err], [], [], timeout)
-#		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
-#			# Reached a timeout!  Nuke process so it does not hang.
-#			s.kill(signal.SIGKILL)
-#			return ("", "SCRIPTTIMEOUT")
-#		o_value = f_out.read()
-#		e_value = ""
-#		if o_value == "":	# An error has occured
-#			e_value = f_err.read()
-#
-#		o_value = o_value.strip()
-#		e_value = e_value.strip()
-#
-#		f_out.close()
-#		f_in.close()
-#		f_err.close()
-#		try:
-#			s.kill()
-#		except OSError:
-#			# no such process, due to it already exiting...
-#			pass
-#
-#		return (o_value, e_value)
 	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):
 		(o,e) = self.run(cmd, timeout)
 		self.output = o
@@ -214,10 +195,59 @@ class CMD:
 
 	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
+		#print "CMD.run(%s)" % cmd
 		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 		self.s = s
 		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
-		lout, lin, lerr = select([f_out,f_err], [], [], timeout)
+		#print "calling select(%s)" % timeout
+		lout, lin, lerr = select([f_out], [], [f_err], timeout)
+		#print "TIMEOUT!!!!!!!!!!!!!!!!!!!"
+		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
+			# Reached a timeout!  Nuke process so it does not hang.
+			#print "KILLING"
+			s.kill(signal.SIGKILL)
+			raise ExceptionTimeout("TIMEOUT Running: %s" % cmd)
+		else:
+			#print "RETURNING"
+			#print len(lin), len(lout), len(lerr)
+			pass
+
+		o_value = ""
+		e_value = ""
+
+		#print "reading from f_out"
+		if len(lout) > 0: o_value = f_out.read()
+		#print "reading from f_err"
+		if len(lerr) > 0: e_value = f_err.read()
+
+		#print "striping output"
+		o_value = o_value.strip()
+		e_value = e_value.strip()
+
+		#print "OUTPUT", o_value, e_value
+
+		#print "closing files"
+		f_out.close()
+		f_in.close()
+		f_err.close()
+		try:
+			#print "s.kill()"
+			s.kill()
+			#print "after s.kill()"
+		except OSError:
+			# no such process, due to it already exiting...
+			pass
+
+		#print o_value, e_value
+		return (o_value, e_value)
+
+	def runargs(self, args, timeout=COMMAND_TIMEOUT*2):
+
+		#print "CMD.run(%s)" % " ".join(args)
+		s = Sopen(args, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+		self.s = s
+		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
+		lout, lin, lerr = select([f_out], [], [f_err], timeout)
 		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
 			# Reached a timeout!  Nuke process so it does not hang.
 			s.kill(signal.SIGKILL)
@@ -243,10 +273,11 @@ class CMD:
 
 
 class SSH(CMD):
-	def __init__(self, user, host, options = ssh_options):
+	def __init__(self, user, host, port=22, options = ssh_options):
 		self.options = options
 		self.user = user
 		self.host = host
+		self.port = port
 		return
 
 	def __options_to_str(self):
@@ -256,14 +287,15 @@ class SSH(CMD):
 		return options
 
 	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
-		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
+		cmd = "ssh -p %s %s %s@%s '%s'" % (self.port, self.__options_to_str(), 
 									self.user, self.host, cmd)
+		#print "SSH.run(%s)" % cmd
 		return CMD.run(self, cmd, timeout)
 
 	def get_file(self, rmt_filename, local_filename=None):
 		if local_filename == None:
 			local_filename = "./"
-		cmd = "scp -B %s %s@%s:%s %s" % (self.__options_to_str(), 
+		cmd = "scp -P %s -B %s %s@%s:%s %s" % (self.port, self.__options_to_str(), 
 									self.user, self.host, 
 									rmt_filename, local_filename)
 		# output :
@@ -272,12 +304,35 @@ class SSH(CMD):
 		return CMD.run_noexcept(self, cmd)
 
 	def run_noexcept(self, cmd):
-		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
+		cmd = "ssh -p %s %s %s@%s '%s'" % (self.port, self.__options_to_str(), 
 									self.user, self.host, cmd)
+		#print "SSH.run_noexcept(%s)" % cmd
 		return CMD.run_noexcept(self, cmd)
 
+	def run_noexcept2(self, cmd, timeout=COMMAND_TIMEOUT*2):
+		cmd = "ssh -p %s %s %s@%s %s" % (self.port, self.__options_to_str(), 
+									self.user, self.host, cmd)
+		#print "SSH.run_noexcept2(%s)" % cmd
+		r = CMD.run_noexcept(self, cmd, timeout)
+
+		# XXX: this may be resulting in deadlocks... not sure.
+		#if self.s.returncode is None:
+		#	#self.s.kill()
+		#	self.s.kill(signal.SIGKILL)
+		#	self.s.wait()
+		#	self.ret = self.s.returncode
+		self.ret = -1
+
+		return r
+
+	def system2(self, cmd, timeout=COMMAND_TIMEOUT*2):
+		cmd = "ssh -p %s %s %s@%s %s" % (self.port, self.__options_to_str(), 
+									self.user, self.host, cmd)
+		#print "SSH.system2(%s)" % cmd
+		return CMD.system(self, cmd, timeout)
+
 	def runE(self, cmd):
-		cmd = "ssh %s %s@%s '%s'" % (self.__options_to_str(), 
+		cmd = "ssh -p %s %s %s@%s '%s'" % (self.port, self.__options_to_str(), 
 									self.user, self.host, cmd)
 		if ( DEBUG == 1 ):
 			print cmd,

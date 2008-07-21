@@ -19,6 +19,7 @@ api = plc.PLC(auth.auth, auth.plc)
 
 from optparse import OptionParser
 from sets import Set
+from nodequery import verify,query_to_dict,node_select
 
 from nodecommon import *
 import soltesz
@@ -31,16 +32,24 @@ def main():
 	parser.set_defaults(nodegroup="Alpha",
 						node=None,
 						nodelist=None,
-						list=False,
+						list=True,
 						add=False,
+                        nocolor=False,
 						notng=False,
 						delete=False,
+						nodeselect=None,
 						)
 	parser.add_option("", "--not", dest="notng", action="store_true", 
 						help="All nodes NOT in nodegroup.")
 	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
 						help="Specify a nodegroup to perform actions on")
+	parser.add_option("", "--nodeselect", dest="nodeselect", metavar="querystring",
+						help="Specify a query to perform on findbad db")
+	parser.add_option("", "--site", dest="site", metavar="site name",
+						help="Specify a site to view node status")
 
+	parser.add_option("", "--nocolor", dest="nocolor", action="store_true", 
+						help="Enable color")
 	parser.add_option("", "--list", dest="list", action="store_true", 
 						help="List all nodes in the given nodegroup")
 	parser.add_option("", "--add", dest="add", action="store_true", 
@@ -70,6 +79,22 @@ def main():
 		#nodelist = api.GetNodes(hostlist)
 		group_str = "Given"
 
+	elif config.site:
+		site = api.GetSites(config.site)
+		if len (site) > 0:
+			site = site[0]
+			nodelist = api.GetNodes(site['node_ids'])
+		else:
+			nodelist = []
+
+		group_str = config.site
+
+	elif config.nodeselect:
+		hostlist = node_select(config.nodeselect)
+		nodelist = api.GetNodes(hostlist)
+
+		group_str = "selection"
+		
 	else:
 		ng = api.GetNodeGroups({'name' : config.nodegroup})
 		nodelist = api.GetNodes(ng[0]['node_ids'])
@@ -99,7 +124,7 @@ def main():
 		i = 1
 		for node in nodelist:
 			print "%-2d" % i, 
-			print nodegroup_display(node, fb)
+			print nodegroup_display(node, fb, config)
 			i += 1
 
 	elif config.add and config.nodegroup:
