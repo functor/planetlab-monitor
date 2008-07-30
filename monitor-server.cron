@@ -1,0 +1,5 @@
+# Runs every three hours to poll all nodes and PCUs, as well as take some
+# automated actions for debug nodes.
+
+01 6,9,12,15,18,21 * * * root /usr/share/monitor-server/automate.sh
+
