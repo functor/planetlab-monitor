@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Redirection Interface version 1.15.1-->
+<definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:idr="http://schemas.intel.com/platform/client/Redirection/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/Redirection/2004/01">
+    <types>
+        <!-- Common namespace -->
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd" />
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Redirection/2004/01" elementFormDefault="qualified">
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+
+            <!-- Intel(r) AMT 2.0 -->
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="TimeType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="IPv4AddressType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:complexType name="IderSessionLogEntryType">
+                <xs:sequence>
+                    <xs:element name="ConsoleAddress" type="idr:IPv4AddressType"/>
+                    <xs:element name="Port" type="xs:unsignedShort"/>
+                    <xs:element name="TimeStamp" type="idr:TimeType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="FirmwareVersionType">
+                <xs:sequence>
+                    <xs:element name="Description" type="xs:string"/>
+                    <xs:element name="Version" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <!-- Intel(r) AMT 2.0 -->
+            <xs:element name="SetRedirectionListenerState">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetRedirectionListenerStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="idr:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetRedirectionListenerState">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetRedirectionListenerStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="idr:PT_STATUS"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetIderSessionLog">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetIderSessionLogResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="idr:PT_STATUS"/>
+                        <xs:element name="LogData" type="idr:IderSessionLogEntryType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+        </xs:schema>
+    </types>
+
+    <!-- Intel(r) AMT 2.0 -->
+    <message name="SetRedirectionListenerStateIn">
+        <part name="parameters" element="idr:SetRedirectionListenerState"/>
+    </message>
+    <message name="SetRedirectionListenerStateOut">
+        <part name="parameters" element="idr:SetRedirectionListenerStateResponse"/>
+    </message>
+    <message name="GetRedirectionListenerStateIn">
+        <part name="parameters" element="idr:GetRedirectionListenerState"/>
+    </message>
+    <message name="GetRedirectionListenerStateOut">
+        <part name="parameters" element="idr:GetRedirectionListenerStateResponse"/>
+    </message>
+    <message name="GetIderSessionLogIn">
+        <part name="parameters" element="idr:GetIderSessionLog"/>
+    </message>
+    <message name="GetIderSessionLogOut">
+        <part name="parameters" element="idr:GetIderSessionLogResponse"/>
+    </message>
+
+    <portType name="RedirectionSoapPortType">
+
+        <!-- Intel(r) AMT 2.0 -->
+        <operation name="SetRedirectionListenerState">
+            <input message="idr:SetRedirectionListenerStateIn"/>
+            <output message="idr:SetRedirectionListenerStateOut"/>
+        </operation>
+        <operation name="GetRedirectionListenerState">
+            <input message="idr:GetRedirectionListenerStateIn"/>
+            <output message="idr:GetRedirectionListenerStateOut"/>
+        </operation>
+        <operation name="GetIderSessionLog">
+            <input message="idr:GetIderSessionLogIn"/>
+            <output message="idr:GetIderSessionLogOut"/>
+        </operation>
+
+    </portType>
+
+    <binding name="RedirectionSoapBinding" type="idr:RedirectionSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <!-- Intel(r) AMT 2.0 -->
+        <operation name="SetRedirectionListenerState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/Redirection/2004/01/SetRedirectionListenerState"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetRedirectionListenerState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/Redirection/2004/01/GetRedirectionListenerState"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetIderSessionLog">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/Redirection/2004/01/GetIderSessionLog"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+    </binding>
+
+    <service name="RedirectionService">
+        <port name="RedirectionSoapPortType" binding="idr:RedirectionSoapBinding">
+            <soap:address location="http://hostname:16992/RedirectionService"/>
+        </port>
+    </service>
+
+</definitions>

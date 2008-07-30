@@ -1,0 +1,1029 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Intel(R) AMT Circuit Breaker Interface version 1.00.0-->
+<wsdl:definitions 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"    
+    xmlns:net="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01"     
+    xmlns:cb="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker" 
+    targetNamespace="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker">
+    
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01" elementFormDefault="qualified">
+            <xs:simpleType name="InterfaceHandleType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker" elementFormDefault="qualified">
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+            <xs:import namespace="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01"/>
+
+            <!-- Private Type definition -->
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="TimeType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="IPv4AddressStringType">
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="IPv6AddressStringType">
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="((([\dA-Fa-f]{1,4}:){7}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){6}:[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){5}:([\dA-Fa-f]{1,4}:)?[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){4}:([\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){3}:([\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){2}:([\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){6}(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | (([\dA-Fa-f]{1,4}:){0,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | (::([\dA-Fa-f]{1,4}:){0,5}(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | ([\dA-Fa-f]{1,4}::([\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4}) | (::([\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){1,7}:))"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:element name="FilterName">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Null terminated string of maximum of 16 characters
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="16"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="PolicyName">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Null terminated string of maximum of 16 characters
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="16"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <!-- Policy types -->
+            <xs:complexType name="CircuitBreakerAntiSpoofingFilterType">
+                <xs:sequence>
+                    <xs:element name="ActionEventOnMatch" type="xs:boolean"/>
+                    <xs:element name="ActionCount" type="xs:boolean"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerDefaultFilterType">
+                <xs:complexContent>
+                    <xs:extension base="cb:CircuitBreakerAntiSpoofingFilterType">
+                        <xs:sequence>
+                            <xs:element name="ActionDrop" type="xs:boolean"/>
+                        </xs:sequence>
+                    </xs:extension>
+                </xs:complexContent>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPolicyType">
+                <xs:sequence>
+                    <xs:element ref="cb:PolicyName" minOccurs="0"/>
+                    <xs:element name="PolicyPrecedence" type="xs:unsignedInt"/>
+                    <xs:element name="AntiSpoofingFilter" type="cb:CircuitBreakerAntiSpoofingFilterType" minOccurs="0"/>
+                    <xs:element name="FilterCreationHandles" type="xs:unsignedInt" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element name="DefaultTXFilter" type="cb:CircuitBreakerDefaultFilterType"/>
+                    <xs:element name="DefaultRXFilter" type="cb:CircuitBreakerDefaultFilterType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPolicyInfoType">
+                <xs:sequence>
+                    <xs:element name="Policy" type="cb:CircuitBreakerPolicyType"/>
+                    <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+            <!-- Filter types -->
+            <xs:complexType name="CircuitBreakerIPv4AddressAndMaskType">
+                <xs:sequence>
+                    <xs:element name="IPAddressDirection" type="cb:CircuitBreakerFilterIPAddressDirectionType"/>
+                    <xs:element name="Address" type="cb:IPv4AddressStringType"/>
+                    <xs:element name="AddressMask" type="cb:IPv4AddressStringType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPv6AddressAndMaskType">
+                <xs:sequence>
+                    <xs:element name="IPAddressDirection" type="cb:CircuitBreakerFilterIPAddressDirectionType"/>
+                    <xs:element name="Address" type="cb:IPv6AddressStringType"/>
+                    <xs:element name="AddressMask" type="cb:IPv6AddressStringType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPLayeredPortSimpleType">
+                <xs:sequence>
+                    <xs:element name="SourcePort" type="xs:unsignedShort"/>
+                    <xs:element name="DestinationPort" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPLayeredPortRangeType">
+                <xs:sequence>
+                    <xs:element name="PortMin" type="xs:unsignedShort"/>
+                    <xs:element name="PortMax" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPLayeredPortType">
+                <xs:sequence>
+                    <xs:choice>
+                        <xs:element name="IPLayeredPortSimple" type="cb:CircuitBreakerIPLayeredPortSimpleType"/>
+                        <xs:element name="IPLayeredPortRangeSource" type="cb:CircuitBreakerIPLayeredPortRangeType"/>
+                        <xs:element name="IPLayeredPortRangeDestination" type="cb:CircuitBreakerIPLayeredPortRangeType"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPLayeredTCPFlagsType">
+                <xs:sequence>
+                    <xs:element name="TCP_FLAG_FIN" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_SYN" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_RST" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_PUSH" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_ACK" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_URG" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_ECNE" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_CWR" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_NS" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_Reserved1" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_Reserved2" type="xs:boolean" minOccurs="0"/>
+                    <xs:element name="TCP_FLAG_Reserved3" type="xs:boolean" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:simpleType name="CircuitBreakerFilterDirectionType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Transmit"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Receive"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="CircuitBreakerFilterIPAddressDirectionType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Source"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Destination"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="CircuitBreakerProfileType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Pass With Statistics"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Drop With Statistics"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>"2 = Rate Limit"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="3">
+                        <xs:annotation>
+                            <xs:documentation>"3 = Pass"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:documentation>"4 = Drop"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:complexType name="CircuitBreakerIPv4Type">
+                <xs:sequence>
+                    <xs:element name="IPv4Desc" type="cb:CircuitBreakerIPv4AddressAndMaskType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPv6Type">
+                <xs:sequence>
+                    <xs:element name="IPv6Desc" type="cb:CircuitBreakerIPv6AddressAndMaskType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerIPPacketType">
+                <xs:sequence>
+                    <xs:choice>
+                        <xs:element name="IPv4" type="cb:CircuitBreakerIPv4Type"/>
+                        <xs:element name="IPv6" type="cb:CircuitBreakerIPv6Type"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPacketUDPType">
+                <xs:sequence>
+                    <xs:element name="IPPacket" type="cb:CircuitBreakerIPPacketType"/>
+                    <xs:element name="IPLayeredPort" type="cb:CircuitBreakerIPLayeredPortType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPacketTCPType">
+                <xs:complexContent>
+                    <xs:extension base="cb:CircuitBreakerPacketUDPType">
+                        <xs:sequence>
+                            <xs:element name="TCPFlags" type="cb:CircuitBreakerIPLayeredTCPFlagsType" minOccurs="0"/>
+                        </xs:sequence>
+                    </xs:extension>
+                </xs:complexContent>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPacketIPType">
+                <xs:sequence>
+                    <xs:element name="IPPacket" type="cb:CircuitBreakerIPPacketType"/>
+                    <xs:element name="NextProtocol" type="xs:unsignedByte" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPacketETHType">
+                <xs:sequence>
+                    <xs:element name="EthernetFrameType" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerPacketType">
+                <xs:sequence>
+                    <xs:choice>
+                        <xs:element name="PacketTCP" type="cb:CircuitBreakerPacketTCPType"/>
+                        <xs:element name="PacketUDP" type="cb:CircuitBreakerPacketUDPType"/>
+                        <xs:element name="PacketIP" type="cb:CircuitBreakerPacketIPType"/>
+                        <xs:element name="PacketETH" type="cb:CircuitBreakerPacketETHType"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerFilterType">
+                <xs:sequence>
+                    <xs:element ref="cb:FilterName" minOccurs="0"/>
+                    <xs:element name="FilterDirection" type="cb:CircuitBreakerFilterDirectionType"/>
+                    <xs:element name="FilterProfile" type="cb:CircuitBreakerProfileType"/>
+                    <xs:element name="FilterProfileData" type="xs:unsignedInt"/>
+                    <xs:element name="FilterPacket" type="cb:CircuitBreakerPacketType"/>
+                    <xs:element name="ActionEventOnMatch" type="xs:boolean"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerFilterInfoType">
+                <xs:sequence>
+                    <xs:element name="Filter" type="cb:CircuitBreakerFilterType"/>
+                    <xs:element name="FilterCreationHandle" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+            <!-- Capabilities type -->
+            <xs:complexType name="CircuitBreakerCapabilitiesType">
+                <xs:sequence>
+                    <xs:element name="HardwareDescription" type="xs:string"/>
+                    <xs:element name="HardwareID" type="xs:unsignedInt"/>
+                    <xs:element name="IPv4_MaxTxFilters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv4_MaxTxCounters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv4_MaxRxFilters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv4_MaxRxCounters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv4_AntiSpoofingCapable" type="xs:boolean"/>
+                    <xs:element name="IPv6_MaxTxFilters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv6_MaxTxCounters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv6_MaxRxFilters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv6_MaxRxCounters" type="xs:unsignedShort"/>
+                    <xs:element name="IPv6_AntiSpoofingCapable" type="xs:boolean"/>
+                    <xs:element name="IPv6_To_IPv4_Ratio" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerFilterStatisticsType">
+                <xs:sequence>
+                    <xs:element name="FilterCreationHandle" type="xs:unsignedInt"/>
+                    <xs:element name="ReadCount" type="xs:unsignedInt"/>
+                    <xs:element name="FilterMatched" type="xs:boolean"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerHardwarePolicyType">
+                <xs:sequence>
+                    <xs:element name="HardwareID" type="xs:unsignedInt"/>
+                    <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:simpleType name="CircuitBreakerApplicationType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Circuit Breaker API"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Agent Presence"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="3">
+                        <xs:annotation>
+                            <xs:documentation>"3 = Environment Detection"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:documentation>"4 = Heuristic Circuit Breaker"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+
+            <!-- Intel(r) AMT 2.5 -->
+
+            <!-- Intel(r) AMT 3.0 -->
+            <xs:complexType name="TimedCounterType">
+                <xs:sequence>
+                    <xs:element name="Threshold" type="xs:unsignedInt"/>
+                    <xs:element name="ClearTime" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="BlockedPortInfoType">
+                <xs:sequence>
+                    <xs:element name="PortBlocked" type="xs:unsignedShort"/>
+                    <xs:element name="ProtocolBlocked" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="HcbOptionsType">
+                <xs:sequence>
+                    <!-- Conditions -->
+                    <xs:element name="FastConnectionRate" type="cb:TimedCounterType" minOccurs="0"/>
+                    <xs:element name="SlowConnectionRate" type="cb:TimedCounterType" minOccurs="0"/>
+                    <!-- Actions -->
+                    <xs:element name="BlockAll" type="xs:boolean"/>
+                    <xs:element name="BlockOffensivePort" type="xs:boolean"/>
+                    <xs:element name="PolicyCreationHandle" type="xs:unsignedInt" minOccurs="0"/>
+                    <!-- Options -->
+                    <xs:element name="EncounterTimeout" type="xs:unsignedShort"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:simpleType name="HcbStateType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Running"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Timed Encounter"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>"2 = Permanent Encounter"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="3">
+                        <xs:annotation>
+                            <xs:documentation>"3 = Disabled"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="HcbTriggerReasonType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Slow Worm Detection "</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Fast Worm Detection "</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>"2 = DoS Detection "</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+
+            <!-- Policy message part elements -->
+            <xs:element name="CbPolicyCreate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Policy" type="cb:CircuitBreakerPolicyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyCreateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGet">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGetResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="Policy" type="cb:CircuitBreakerPolicyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyDelete">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyDeleteResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyEnumerate">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyEnumerateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="Policies" type="cb:CircuitBreakerPolicyInfoType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyEnable">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EnablePolicies" type="cb:CircuitBreakerHardwarePolicyType" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyEnableResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="ActivePolicies" type="cb:CircuitBreakerHardwarePolicyType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyDisable">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="HardwareID" type="xs:unsignedInt" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyDisableResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGetEnabled">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AppType" type="cb:CircuitBreakerApplicationType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGetEnabledResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="HwPolicies" type="cb:CircuitBreakerHardwarePolicyType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGetActiveStatistics">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="HardwareID" type="xs:unsignedInt"/>
+                        <xs:element name="ResetStatisticsOnRead" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbPolicyGetActiveStatisticsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                        <xs:element name="ActivationTime" type="cb:TimeType"/>
+                        <xs:element name="LastResetTime" type="cb:TimeType"/>
+                        <xs:element name="Statistics" type="cb:CircuitBreakerFilterStatisticsType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <!-- Filter message part elements -->
+            <xs:element name="CbFilterCreate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Filter" type="cb:CircuitBreakerFilterType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterCreateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="FilterCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterGet">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FilterCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterGetResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="Filter" type="cb:CircuitBreakerFilterType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterDelete">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FilterCreationHandle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterDeleteResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterEnumerate">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbFilterEnumerateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="Filters" type="cb:CircuitBreakerFilterInfoType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <!-- Capabilities message part elements -->
+            <xs:element name="CbQueryCapabilities">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CbQueryCapabilitiesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cb:PT_STATUS"/>
+                        <xs:element name="MaxSupportedPolicies" type="xs:unsignedInt"/>
+                        <xs:element name="MaxSupportedFilters" type="xs:unsignedInt"/>
+                        <xs:element name="Capabilities" type="cb:CircuitBreakerCapabilitiesType" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.5 -->
+            
+            <!-- Intel(r) AMT 3.0 -->
+            <xs:element name="SetHcbOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                        <xs:element name="HcbOptions" type="cb:HcbOptionsType" minOccurs="0"/>
+                    </xs:sequence>                
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetHcbOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHcbOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHcbOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="HcbOptions" type="cb:HcbOptionsType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ClearHcbState">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ClearHcbStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHcbState">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHcbStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="HcbState" type="cb:HcbStateType"/>
+                        <xs:element name="BlockedAll" type="xs:boolean"/>
+                        <xs:element name="TimeStamp" type="cb:TimeType" minOccurs="0"/>
+                        <xs:element name="HcbTriggerReason" type="cb:HcbTriggerReasonType" minOccurs="0"/>
+                        <xs:element name="BlockedPortInfo" type="cb:BlockedPortInfoType" minOccurs="0"/>
+                        <xs:element name="EnabledCbPolicy" type="xs:unsignedInt" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="CbPolicyCreateIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyCreate"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyCreateOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyCreateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyGet"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyGetResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyDeleteIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyDelete"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyDeleteOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyDeleteResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyEnumerateIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyEnumerate"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyEnumerateOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyEnumerateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyEnableIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyEnable"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyEnableOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyEnableResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyDisableIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyDisable"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyDisableOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyDisableResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetEnabledIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyGetEnabled"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetEnabledOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyGetEnabledResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetActiveStatisticsIn">
+        <wsdl:part name="parameters" element="cb:CbPolicyGetActiveStatistics"/>
+    </wsdl:message>
+    <wsdl:message name="CbPolicyGetActiveStatisticsOut">
+        <wsdl:part name="parameters" element="cb:CbPolicyGetActiveStatisticsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterCreateIn">
+        <wsdl:part name="parameters" element="cb:CbFilterCreate"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterCreateOut">
+        <wsdl:part name="parameters" element="cb:CbFilterCreateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterGetIn">
+        <wsdl:part name="parameters" element="cb:CbFilterGet"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterGetOut">
+        <wsdl:part name="parameters" element="cb:CbFilterGetResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterDeleteIn">
+        <wsdl:part name="parameters" element="cb:CbFilterDelete"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterDeleteOut">
+        <wsdl:part name="parameters" element="cb:CbFilterDeleteResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterEnumerateIn">
+        <wsdl:part name="parameters" element="cb:CbFilterEnumerate"/>
+    </wsdl:message>
+    <wsdl:message name="CbFilterEnumerateOut">
+        <wsdl:part name="parameters" element="cb:CbFilterEnumerateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CbQueryCapabilitiesIn">
+        <wsdl:part name="parameters" element="cb:CbQueryCapabilities"/>
+    </wsdl:message>
+    <wsdl:message name="CbQueryCapabilitiesOut">
+        <wsdl:part name="parameters" element="cb:CbQueryCapabilitiesResponse"/>
+    </wsdl:message>
+
+    <!-- Intel(r) AMT 2.5 -->
+
+    <!-- Intel(r) AMT 3.0 -->
+    <wsdl:message name="SetHcbOptionsIn">
+        <wsdl:part name="parameters" element="cb:SetHcbOptions"/>
+    </wsdl:message>
+    <wsdl:message name="SetHcbOptionsOut">
+        <wsdl:part name="parameters" element="cb:SetHcbOptionsResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="GetHcbOptionsIn">
+        <wsdl:part name="parameters" element="cb:GetHcbOptions"/>
+    </wsdl:message>
+    <wsdl:message name="GetHcbOptionsOut">
+        <wsdl:part name="parameters" element="cb:GetHcbOptionsResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="ClearHcbStateIn">
+        <wsdl:part name="parameters" element="cb:ClearHcbState"/>
+    </wsdl:message>
+    <wsdl:message name="ClearHcbStateOut">
+        <wsdl:part name="parameters" element="cb:ClearHcbStateResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="GetHcbStateIn">
+        <wsdl:part name="parameters" element="cb:GetHcbState"/>
+    </wsdl:message>
+    <wsdl:message name="GetHcbStateOut">
+        <wsdl:part name="parameters" element="cb:GetHcbStateResponse"/>
+    </wsdl:message>
+
+    <wsdl:portType name="CircuitBreakerInterface">
+        <!-- Circuit Breaker Filter Class Operations -->
+        <wsdl:operation name="CbPolicyCreate">
+            <wsdl:input message="cb:CbPolicyCreateIn"/>
+            <wsdl:output message="cb:CbPolicyCreateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGet">
+            <wsdl:input message="cb:CbPolicyGetIn"/>
+            <wsdl:output message="cb:CbPolicyGetOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyDelete">
+            <wsdl:input message="cb:CbPolicyDeleteIn"/>
+            <wsdl:output message="cb:CbPolicyDeleteOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyEnumerate">
+            <wsdl:input message="cb:CbPolicyEnumerateIn"/>
+            <wsdl:output message="cb:CbPolicyEnumerateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyEnable">
+            <wsdl:input message="cb:CbPolicyEnableIn"/>
+            <wsdl:output message="cb:CbPolicyEnableOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyDisable">
+            <wsdl:input message="cb:CbPolicyDisableIn"/>
+            <wsdl:output message="cb:CbPolicyDisableOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGetEnabled">
+            <wsdl:input message="cb:CbPolicyGetEnabledIn"/>
+            <wsdl:output message="cb:CbPolicyGetEnabledOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGetActiveStatistics">
+            <wsdl:input message="cb:CbPolicyGetActiveStatisticsIn"/>
+            <wsdl:output message="cb:CbPolicyGetActiveStatisticsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterCreate">
+            <wsdl:input message="cb:CbFilterCreateIn"/>
+            <wsdl:output message="cb:CbFilterCreateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterGet">
+            <wsdl:input message="cb:CbFilterGetIn"/>
+            <wsdl:output message="cb:CbFilterGetOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterDelete">
+            <wsdl:input message="cb:CbFilterDeleteIn"/>
+            <wsdl:output message="cb:CbFilterDeleteOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterEnumerate">
+            <wsdl:input message="cb:CbFilterEnumerateIn"/>
+            <wsdl:output message="cb:CbFilterEnumerateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CbQueryCapabilities">
+            <wsdl:input message="cb:CbQueryCapabilitiesIn"/>
+            <wsdl:output message="cb:CbQueryCapabilitiesOut"/>
+        </wsdl:operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+
+        <!-- Intel(r) AMT 3.0 -->
+        <wsdl:operation name="SetHcbOptions">
+            <wsdl:input message="cb:SetHcbOptionsIn"/>
+            <wsdl:output message="cb:SetHcbOptionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetHcbOptions">
+            <wsdl:input message="cb:GetHcbOptionsIn"/>
+            <wsdl:output message="cb:GetHcbOptionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ClearHcbState">
+            <wsdl:input message="cb:ClearHcbStateIn"/>
+            <wsdl:output message="cb:ClearHcbStateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetHcbState">
+            <wsdl:input message="cb:GetHcbStateIn"/>
+            <wsdl:output message="cb:GetHcbStateOut"/>
+        </wsdl:operation>
+
+    </wsdl:portType>
+    <wsdl:binding name="CircuitBreakerSoapBinding" type="cb:CircuitBreakerInterface">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="CbPolicyCreate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyCreate"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGet">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyGet"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyDelete">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyDelete"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyEnumerate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyEnumerate"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyEnable">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyEnable"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyDisable">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyDisable"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGetEnabled">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyGetEnabled"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbPolicyGetActiveStatistics">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbPolicyGetActiveStatistics"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterCreate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbFilterCreate"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterGet">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbFilterGet"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterDelete">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbFilterDelete"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbFilterEnumerate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbFilterEnumerate"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CbQueryCapabilities">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/CircuitBreaker/CbQueryCapabilities"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        
+        <!-- Intel(r) AMT 2.5 -->
+
+        <!-- Intel(r) AMT 3.0 -->
+        <wsdl:operation name="SetHcbOptions">
+            <soap:operation soapAction="http://schemas.intel.com/2006/01/management/PC/CircuitBreaker/SetHcbOptions"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetHcbOptions">
+            <soap:operation soapAction="http://schemas.intel.com/2006/01/management/PC/CircuitBreaker/GetHcbOptions"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="ClearHcbState">
+            <soap:operation soapAction="http://schemas.intel.com/2006/01/management/PC/CircuitBreaker/ClearHcbState"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetHcbState">
+            <soap:operation soapAction="http://schemas.intel.com/2006/01/management/PC/CircuitBreaker/GetHcbState"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+    </wsdl:binding>
+    <wsdl:service name="CircuitBreakerService">
+        <wsdl:port name="CircuitBreakerInterface" binding="cb:CircuitBreakerSoapBinding">
+            <soap:address location="http://hostname:16992/CircuitBreakerService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

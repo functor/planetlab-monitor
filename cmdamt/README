@@ -1,0 +1,34 @@
+//----------------------------------------------------------------------------
+//
+//  Copyright (C) Intel Corporation, 2003 - 2007.
+//
+//  File:       README 
+//
+//  Contents:   Intel(R) Active Management Technology (Intel(R) AMT):
+//              A short description of the Remote Control 
+//              sample code for the usage of developers
+//
+//----------------------------------------------------------------------------
+
+Remote Control sample application:
+----------------------------------
+This sample application demonstrates how to retrieve information 
+about the Intel® AMT device capabilities and the power state 
+of the remote machine, and how to control remotely the boot 
+and power state of the managed PC.
+
+
+How to run the sample (X32 and X64 environment):
+------------------------------------------------
+1. Run "make" from a command prompt. "remoteControl" should be created.
+2. Make sure that the Intel(R) AMT device has been activated on the target
+   machine.
+3. Use the generated executable as described in the command usage (type the 
+   command to obtain the usage instructions).
+
+Notes:
+------
+1. This sample uses gSOAP library. 
+2. In order to compile the sample code it is essential to put the directories
+   ThirdParty, Include, Lib, Src and Samples in the same structure as in the
+   Intel® AMT SDK.

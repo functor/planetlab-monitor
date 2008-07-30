@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology UserNotification Interface -->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:emi="http://schemas.intel.com/platform/client/EventManager/2004/01" 
+    xmlns:uni="http://schemas.intel.com/platform/client/UserNotification/2006/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/UserNotification/2006/01">
+
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd"/>
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/EventManager/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="EventManagerInterface.xsd" />
+        </xs:schema>        
+        
+    </wsdl:types>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <wsdl:message name="SubscribeForGeneralAlertIn">
+        <wsdl:part name="parameters" element="emi:SubscribeForGeneralAlert"/>
+    </wsdl:message>
+    <wsdl:message name="SubscribeForGeneralAlertOut">
+        <wsdl:part name="parameters" element="emi:SubscribeForGeneralAlertResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateGeneralAlertSubscriptionsIn">
+        <wsdl:part name="parameters" element="emi:EnumerateGeneralAlertSubscriptions"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateGeneralAlertSubscriptionsOut">
+        <wsdl:part name="parameters" element="emi:EnumerateGeneralAlertSubscriptionsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetGeneralAlertSubscriptionIn">
+        <wsdl:part name="parameters" element="emi:GetGeneralAlertSubscription"/>
+    </wsdl:message>
+    <wsdl:message name="GetGeneralAlertSubscriptionOut">
+        <wsdl:part name="parameters" element="emi:GetGeneralAlertSubscriptionResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CancelAlertSubscriptionIn">
+        <wsdl:part name="parameters" element="emi:CancelAlertSubscription"/>
+    </wsdl:message>
+    <wsdl:message name="CancelAlertSubscriptionOut">
+        <wsdl:part name="parameters" element="emi:CancelAlertSubscriptionResponse"/>
+    </wsdl:message>
+
+    <wsdl:portType name="UserNotificationSoapPortType">
+
+        <!-- Intel(r) AMT 2.5 -->
+        <wsdl:operation name="SubscribeForGeneralAlert">
+            <wsdl:input message="uni:SubscribeForGeneralAlertIn"/>
+            <wsdl:output message="uni:SubscribeForGeneralAlertOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateGeneralAlertSubscriptions">
+            <wsdl:input message="uni:EnumerateGeneralAlertSubscriptionsIn"/>
+            <wsdl:output message="uni:EnumerateGeneralAlertSubscriptionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetGeneralAlertSubscription">
+            <wsdl:input message="uni:GetGeneralAlertSubscriptionIn"/>
+            <wsdl:output message="uni:GetGeneralAlertSubscriptionOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CancelAlertSubscription">
+            <wsdl:input message="uni:CancelAlertSubscriptionIn"/>
+            <wsdl:output message="uni:CancelAlertSubscriptionOut"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding name="UserNotificationSoapBinding" type="uni:UserNotificationSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <wsdl:operation name="SubscribeForGeneralAlert">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/SubscribeForGeneralAlert" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateGeneralAlertSubscriptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/EnumerateGeneralAlertSubscriptions" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetGeneralAlertSubscription">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/GetGeneralAlertSubscription" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CancelAlertSubscription">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/CancelAlertSubscription"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="UserNotificationService">
+        <wsdl:port name="UserNotificationSoapPortType" binding="uni:UserNotificationSoapBinding">
+            <soap:address location="http://hostname:16992/UserNotificationService"/>
+        </wsdl:port>
+    </wsdl:service>
+
+</wsdl:definitions>

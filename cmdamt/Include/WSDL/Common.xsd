@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01"
+    elementFormDefault="qualified">
+    
+    <xs:simpleType name="PT_STATUS">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="HostNameType">
+        <xs:restriction base="xs:string">
+            <xs:annotation>
+                <xs:documentation>String of maximum of 32 characters (not including null)</xs:documentation>
+            </xs:annotation>
+            <xs:minLength value="0"/>
+            <xs:maxLength value="64"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="URLType">
+        <xs:simpleContent>
+            <xs:extension base="xs:anyURI">
+                <xs:anyAttribute namespace="##other" processContents="lax"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:simpleType name="IPv4AddressType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="IPv4AddressStringType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IPv6AddressStringType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="((([\dA-Fa-f]{1,4}:){7}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){6}:[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){5}:([\dA-Fa-f]{1,4}:)?[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){4}:([\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){3}:([\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){2}:([\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){6}(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | (([\dA-Fa-f]{1,4}:){0,5}:(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | (::([\dA-Fa-f]{1,4}:){0,5}(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}) | ([\dA-Fa-f]{1,4}::([\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4}) | (::([\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4}) | (([\dA-Fa-f]{1,4}:){1,7}:))"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="NodeAddressType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="HostName" type="cmn:HostNameType"/>
+                <xs:element name="IPv4Address" type="cmn:IPv4AddressStringType"/>
+                <xs:element name="IPv6Address" type="cmn:IPv6AddressStringType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="InterfaceHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    
+    <xs:simpleType name="GuidBuf">
+        <xs:restriction base="xs:base64Binary">
+            <xs:length value="16"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+</xs:schema>

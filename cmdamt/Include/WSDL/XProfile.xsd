@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    xmlns:xcfg="http://schemas.intel.com/platform/client/XProfiles/2006/01"
+    targetNamespace="http://schemas.intel.com/platform/client/XProfiles/2006/01"
+    elementFormDefault="qualified">
+
+    <!-- Imported namespaces -->
+    <xs:import namespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" schemaLocation="SecurityAdministrationInterface.xsd"/>
+
+    <!-- Schema definition -->
+
+    <xs:complexType name="UserCredentialsType">
+        <xs:sequence>
+            <xs:element name="Username" type="xs:string"/>
+            <xs:element name="Password" type="xs:string"/>
+            <xs:element name="Domain" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="CertNameOptionsType">
+        <xs:restriction base="xs:string">
+            <xs:annotation>
+                <xs:documentation>NameMatch = Certificate name must match exactly, DomainSuffix = Domain name must end in specified name</xs:documentation>
+            </xs:annotation>
+            <xs:enumeration value="CertNameMatch"/>
+            <xs:enumeration value="DomainSuffixMatch"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="CertificateNameType">
+        <xs:sequence>
+            <xs:element name="ServerOrCertName" type="xs:string"/>
+            <xs:element name="Options" type="xcfg:CertNameOptionsType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ManualPACType">
+        <xs:sequence>
+            <xs:element name="PACData" type="xs:base64Binary"/>
+            <xs:element name="Password" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+  
+    <xs:complexType name="ServerIdentityType">
+        <xs:sequence>
+            <xs:element name="CertificateIssuer" type="sai:CertificateHandleType" minOccurs="0"/>
+            <xs:element name="ServerNameOptions" type="xcfg:CertificateNameType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileTLSType">
+        <xs:sequence>
+            <xs:element name="Username" type="xs:string"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileTTLS_MSCHAPv2Type">
+        <xs:sequence>
+            <xs:element name="RoamingIdentity" type="xs:string" minOccurs="0"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfilePEAP_MSCHAPv2Type">
+        <xs:sequence>
+            <xs:element name="RoamingIdentity" type="xs:string" minOccurs="0"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileEAP_GTCType">
+        <xs:sequence>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileEAPFAST_MSCHAPv2Type">
+        <xs:sequence>
+            <xs:element name="RoamingIdentity" type="xs:string" minOccurs="0"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+            <xs:element name="ProtectedAccessCredentials" type="xcfg:ManualPACType" minOccurs="0"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileEAPFAST_GTCType">
+        <xs:sequence>
+            <xs:element name="RoamingIdentity" type="xs:string" minOccurs="0"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+            <xs:element name="ProtectedAccessCredentials" type="xcfg:ManualPACType" minOccurs="0"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileEAPFAST_TLSType">
+        <xs:sequence>
+            <xs:element name="RoamingIdentity" type="xs:string" minOccurs="0"/>
+            <xs:element name="ServerIdentity" type="xcfg:ServerIdentityType"/>
+            <xs:element name="UserCredentials" type="xcfg:UserCredentialsType"/>
+            <xs:element name="ProtectedAccessCredentials" type="xcfg:ManualPACType" minOccurs="0"/>
+            <xs:element name="ClientCertificate" type="sai:CertificateHandleType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="XProfileType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="TLS" type="xcfg:XProfileTLSType"/>
+                <xs:element name="TTLS_MSCHAPv2" type="xcfg:XProfileTTLS_MSCHAPv2Type"/>
+                <xs:element name="PEAP_MSCHAPv2" type="xcfg:XProfilePEAP_MSCHAPv2Type"/>
+                <xs:element name="EAP_GTC" type="xcfg:XProfileEAP_GTCType"/>
+                <xs:element name="EAPFAST_MSCHAPv2" type="xcfg:XProfileEAPFAST_MSCHAPv2Type"/>
+                <xs:element name="EAPFAST_GTC" type="xcfg:XProfileEAPFAST_GTCType"/>
+                <xs:element name="EAPFAST_TLS" type="xcfg:XProfileEAPFAST_TLSType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

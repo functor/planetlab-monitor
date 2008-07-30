@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Firmware Update Interface -->
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:fwu="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01">
+    <types>
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01" elementFormDefault="qualified">
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+			</xs:simpleType>
+            <xs:simpleType name="FirmwareUpdateStateType">
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="FirmwareStatusSuccess"/>
+                    <xs:enumeration value="FirmwareUpdateRejectedSkuFailure"/>
+                    <xs:enumeration value="FirmwareUpdateRejectedVersionFailure"/>
+                    <xs:enumeration value="FirmwareUpdateRejectedSignatureFailure"/>
+                    <xs:enumeration value="FirmwareUpdateRejectedGeneralFailure"/>
+                    <xs:enumeration value="FirmwareLoadingImage"/>
+                    <xs:enumeration value="FirmwareAuthenticatingImage"/>
+                    <xs:enumeration value="FirmwareProcessing"/>
+                    <xs:enumeration value="FirmwareUpdatingCodePartition"/>
+                    <xs:enumeration value="FirmwareUpdatingRecoveryPartition"/>
+                    <xs:enumeration value="FirmwareFlashPartitionCodeInvalid"/>
+                    <xs:enumeration value="FirmwareFlashPartitionRecoveryInvalid"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:complexType name="FirmwareVersionType">
+                <xs:sequence>
+                    <xs:element name="Description" type="xs:string"/>
+                    <xs:element name="Version" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>                    
+            <xs:element name="GetCoreVersion">
+                <xs:complexType>
+                    <xs:sequence>
+                         </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCoreVersionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="fwu:PT_STATUS"/>
+                        <xs:element name="Version" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCodeVersions">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCodeVersionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="fwu:PT_STATUS"/>
+                        <xs:element name="BiosVersion" type="xs:string"/>
+                        <xs:element name="Versions" type="fwu:FirmwareVersionType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetFirmwareUpdateState">
+                <xs:complexType>
+                    <xs:sequence>
+                         </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetFirmwareUpdateStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="fwu:PT_STATUS"/>
+                        <xs:element name="FirmwareUpdateState" type="fwu:FirmwareUpdateStateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </types>
+    <message name="GetCoreVersionIn">
+        <part name="parameters" element="fwu:GetCoreVersion"/>
+    </message>
+    <message name="GetCoreVersionOut">
+        <part name="parameters" element="fwu:GetCoreVersionResponse"/>
+    </message>
+    <message name="GetCodeVersionsIn">
+        <part name="parameters" element="fwu:GetCodeVersions"/>
+    </message>
+    <message name="GetCodeVersionsOut">
+        <part name="parameters" element="fwu:GetCodeVersionsResponse"/>
+    </message>
+    <message name="GetFirmwareUpdateStateIn">
+        <part name="parameters" element="fwu:GetFirmwareUpdateState"/>
+    </message>
+    <message name="GetFirmwareUpdateStateOut">
+        <part name="parameters" element="fwu:GetFirmwareUpdateStateResponse"/>
+    </message>
+    <portType name="FirmwareUpdateSoapPortType">
+        <operation name="GetCoreVersion">
+            <input message="fwu:GetCoreVersionIn"/>
+            <output message="fwu:GetCoreVersionOut"/>
+        </operation>
+        <operation name="GetCodeVersions">
+            <input message="fwu:GetCodeVersionsIn"/>
+            <output message="fwu:GetCodeVersionsOut"/>
+        </operation>
+        <operation name="GetFirmwareUpdateState">
+            <input message="fwu:GetFirmwareUpdateStateIn"/>
+            <output message="fwu:GetFirmwareUpdateStateOut"/>
+        </operation>
+    </portType>
+    <binding name="FirmwareUpdateSoapBinding" type="fwu:FirmwareUpdateSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="GetCoreVersion">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01/GetCoreVersion"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetCodeVersions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01/GetCodeVersions"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetFirmwareUpdateState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/FirmwareUpdate/2004/01/GetFirmwareUpdateState"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+    <service name="FirmwareUpdateService">
+        <port name="FirmwareUpdateSoapPortType" binding="fwu:FirmwareUpdateSoapBinding">
+            <soap:address location="http://hostname:16992/FirmwareUpdateService"/>
+        </port>
+    </service>
+</definitions>

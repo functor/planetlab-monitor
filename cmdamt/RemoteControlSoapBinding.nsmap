@@ -1,0 +1,27 @@
+
+#include "soapH.h"
+SOAP_NMAC struct Namespace namespaces[] =
+{
+	{"SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/", "http://www.w3.org/*/soap-envelope", NULL},
+	{"SOAP-ENC", "http://schemas.xmlsoap.org/soap/encoding/", "http://www.w3.org/*/soap-encoding", NULL},
+	{"xsi", "http://www.w3.org/2001/XMLSchema-instance", "http://www.w3.org/*/XMLSchema-instance", NULL},
+	{"xsd", "http://www.w3.org/2001/XMLSchema", "http://www.w3.org/*/XMLSchema", NULL},
+	{"cmn", "http://schemas.intel.com/platform/client/Common/2006/01", NULL, NULL},
+	{"cstr", "http://schemas.intel.com/platform/client/CertStore/2006/01", NULL, NULL},
+	{"xcfg", "http://schemas.intel.com/platform/client/XProfiles/2006/01", NULL, NULL},
+	{"apl", "http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal", NULL, NULL},
+	{"apr", "http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote", NULL, NULL},
+	{"cb", "http://schemas.intel.com/2004/12/management/PC/CircuitBreaker", NULL, NULL},
+	{"emi", "http://schemas.intel.com/platform/client/EventManager/2004/01", NULL, NULL},
+	{"hwa", "http://schemas.intel.com/platform/client/HardwareAsset/2004/01", NULL, NULL},
+	{"idr", "http://schemas.intel.com/platform/client/Redirection/2004/01", NULL, NULL},
+	{"inf", "http://schemas.intel.com/platform/client/GeneralInfo/2004/01", NULL, NULL},
+	{"net", "http://schemas.intel.com/platform/client/NetworkAdministration/2004/01", NULL, NULL},
+	{"rci", "http://schemas.intel.com/platform/client/RemoteControl/2004/01", NULL, NULL},
+	{"sai", "http://schemas.intel.com/platform/client/SecurityAdministration/2004/01", NULL, NULL},
+	{"str", "http://schemas.intel.com/platform/client/Storage/2004/01", NULL, NULL},
+	{"stra", "http://schemas.intel.com/platform/client/StorageAdministration/2004/01", NULL, NULL},
+	{"tim", "http://schemas.intel.com/platform/client/NetworkTime/2004/01", NULL, NULL},
+	{"wcxs", "http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01", NULL, NULL},
+	{NULL, NULL, NULL, NULL}
+};

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"     
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"     
+    xmlns:cstr="http://schemas.intel.com/platform/client/CertStore/2006/01"    
+    xmlns:eac="http://schemas.intel.com/platform/client/EAC/2006/01"
+    targetNamespace="http://schemas.intel.com/platform/client/EAC/2006/01"
+    elementFormDefault="qualified">
+
+    <!-- Imported namespaces -->
+    <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01" schemaLocation="Common.xsd"/>
+    <xs:import namespace="http://schemas.intel.com/platform/client/CertStore/2006/01" schemaLocation="CertStore.xsd"/>
+    <xs:import namespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" schemaLocation="SecurityAdministrationInterface.xsd"/>
+
+    
+    <!-- Data Types -->
+    
+    <xs:simpleType name="PostureTypeType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PostureAvpTypeFull"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="PostureUpdateType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PostureUpdateBootCounters"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Commands -->
+
+    <xs:element name="SetPostureSigner">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SignCertificateHandle" type="sai:CertificateHandleType" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="SetPostureSignerResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPostureSigner">
+        <xs:complexType>
+            <xs:sequence>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPostureSignerResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                <xs:element name="SignCertificateHandle" type="sai:CertificateHandleType" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetEACStatus">
+        <xs:complexType>
+            <xs:sequence>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetEACStatusResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                <xs:element name="Enabled" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="EnableEAC">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Enabled" type="xs:boolean"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="EnableEACResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="UpdatePostureState">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="PostureUpdate" type="eac:PostureUpdateType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="UpdatePostureStateResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPosture">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="PostureType" type="eac:PostureTypeType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPostureResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                <xs:element name="SignedPosture" type="xs:base64Binary"/>
+                <xs:element name="PostureChangeHash" type="xs:base64Binary"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPostureHash">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="PostureType" type="eac:PostureTypeType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetPostureHashResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                <xs:element name="PostureChangeHash" type="xs:base64Binary"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+
+</xs:schema>

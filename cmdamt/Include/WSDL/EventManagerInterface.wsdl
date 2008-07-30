@@ -1,0 +1,780 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Event Manager Interface version 1.15.0-->
+<wsdl:definitions 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    xmlns:emi="http://schemas.intel.com/platform/client/EventManager/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/EventManager/2004/01">
+
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd" />
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd" />
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/EventManager/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="EventManagerInterface.xsd" />
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:element name="SubscribeForAlert">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="SubscriptionInfo" type="emi:AlertSubscriptionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SubscribeForAlertResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="SubscriptionHandle" type="emi:AlertSubscriptionHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateAlertSubscriptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                        <xs:element name="AlertSubscriptionPolicyID" type="emi:AlertSubscriptionPolicyIDType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateAlertSubscriptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="TotalSubscriptionCount" type="xs:unsignedInt"/>
+                        <xs:element name="SubscriptionsReturned" type="xs:unsignedInt"/>
+                        <xs:element name="SubscriptionHandles" type="emi:AlertSubscriptionHandleArrayType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAlertSubscription">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="SubscriptionID" type="emi:AlertSubscriptionHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAlertSubscriptionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="SubscriptionInfo" type="emi:AlertSubscriptionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateAlertPolicies">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateAlertPoliciesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="TotalPolicyCount" type="xs:unsignedInt"/>
+                        <xs:element name="PoliciesReturned" type="xs:unsignedInt"/>
+                        <xs:element name="PolicyHandles" type="emi:AlertSubscriptionPolicyIDArrayType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAlertCommunityString">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Length" type="xs:unsignedByte"/>
+                        <xs:element name="CommunityString" type="emi:ByteStr"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAlertCommunityStringResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAlertCommunityString">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAlertCommunityStringResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="Length" type="xs:unsignedByte"/>
+                        <xs:element name="CommunityString" type="emi:ByteStr"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddEventFilter">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EventFilter" type="emi:EventFilterType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddEventFilterResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="EventFilterHandle" type="emi:EventFilterHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateEventFilters">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                        <xs:element name="AlertSubscriptionPolicyID" type="emi:AlertSubscriptionPolicyIDType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateEventFiltersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="TotalEventFilterCount" type="xs:unsignedInt"/>
+                        <xs:element name="FiltersReturned" type="xs:unsignedInt"/>
+                        <xs:element name="Filters" type="emi:EventFilterHandleArrayType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEventFilter">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EventFilterHandle" type="emi:EventFilterHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEventFilterResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="EventFilter" type="emi:EventFilterType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateEventFilter">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EventFilterHandle" type="emi:EventFilterHandleType"/>
+                        <xs:element name="EventFilter" type="emi:EventFilterType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateEventFilterResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>                        
+            <xs:element name="RemoveEventFilter">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EventFilterHandle" type="emi:EventFilterHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoveEventFilterResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ReadEventLogRecords">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ReadEventLogRecordsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="TotalRecordCount" type="xs:unsignedInt"/>
+                        <xs:element name="RecordsReturned" type="xs:unsignedInt"/>
+                        <xs:element name="EventRecords" type="emi:EventLogRecordArrayType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetEventLogStatus">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEventLogStatusResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="NumberOfFreeRecords" type="xs:unsignedInt"/>
+                        <xs:element name="NumberOfRecords" type="xs:unsignedInt"/>
+                        <xs:element name="Time" type="emi:TimeType"/>
+                        <xs:element name="IsFrozen" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ClearEventLog">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ClearEventLogResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="FreezeEventLog">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="NewState" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="FreezeEventLogResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEventLogTimestampClock">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Time" type="emi:TimeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEventLogTimestampClockResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEventLogTimestampClock">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEventLogTimestampClockResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="Time" type="emi:TimeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateSensors">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateSensorsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="TotalCount" type="xs:unsignedInt"/>
+                        <xs:element name="HandleCount" type="xs:unsignedInt"/>
+                        <xs:element name="Handles" type="emi:SensorHandleArrayType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetSensorAttributes">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="emi:SensorHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetSensorAttributesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="emi:PT_STATUS"/>
+                        <xs:element name="Attributes" type="emi:SensorAttributesType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.5 -->
+
+        </xs:schema>
+    </wsdl:types>
+    
+    <!-- Intel(r) AMT 1.0 -->
+    <wsdl:message name="SubscribeForAlertIn">
+        <wsdl:part name="parameters" element="emi:SubscribeForAlert"/>
+    </wsdl:message>
+    <wsdl:message name="SubscribeForAlertOut">
+        <wsdl:part name="parameters" element="emi:SubscribeForAlertResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateAlertSubscriptionsIn">
+        <wsdl:part name="parameters" element="emi:EnumerateAlertSubscriptions"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateAlertSubscriptionsOut">
+        <wsdl:part name="parameters" element="emi:EnumerateAlertSubscriptionsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetAlertSubscriptionIn">
+        <wsdl:part name="parameters" element="emi:GetAlertSubscription"/>
+    </wsdl:message>
+    <wsdl:message name="GetAlertSubscriptionOut">
+        <wsdl:part name="parameters" element="emi:GetAlertSubscriptionResponse"/>
+    </wsdl:message>
+    <wsdl:message name="CancelAlertSubscriptionIn">
+        <wsdl:part name="parameters" element="emi:CancelAlertSubscription"/>
+    </wsdl:message>
+    <wsdl:message name="CancelAlertSubscriptionOut">
+        <wsdl:part name="parameters" element="emi:CancelAlertSubscriptionResponse"/>
+    </wsdl:message>
+    <wsdl:message name="AddEventFilterIn">
+        <wsdl:part name="parameters" element="emi:AddEventFilter"/>
+    </wsdl:message>
+    <wsdl:message name="AddEventFilterOut">
+        <wsdl:part name="parameters" element="emi:AddEventFilterResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateEventFiltersIn">
+        <wsdl:part name="parameters" element="emi:EnumerateEventFilters"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateEventFiltersOut">
+        <wsdl:part name="parameters" element="emi:EnumerateEventFiltersResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventFilterIn">
+        <wsdl:part name="parameters" element="emi:GetEventFilter"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventFilterOut">
+        <wsdl:part name="parameters" element="emi:GetEventFilterResponse"/>
+    </wsdl:message>
+    <wsdl:message name="UpdateEventFilterIn">
+        <wsdl:part name="parameters" element="emi:UpdateEventFilter"/>
+    </wsdl:message>
+    <wsdl:message name="UpdateEventFilterOut">
+        <wsdl:part name="parameters" element="emi:UpdateEventFilterResponse"/>
+    </wsdl:message>
+    <wsdl:message name="RemoveEventFilterIn">
+        <wsdl:part name="parameters" element="emi:RemoveEventFilter"/>
+    </wsdl:message>
+    <wsdl:message name="RemoveEventFilterOut">
+        <wsdl:part name="parameters" element="emi:RemoveEventFilterResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ReadEventLogRecordsIn">
+        <wsdl:part name="parameters" element="emi:ReadEventLogRecords"/>
+    </wsdl:message>
+    <wsdl:message name="ReadEventLogRecordsOut">
+        <wsdl:part name="parameters" element="emi:ReadEventLogRecordsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ClearEventLogIn">
+        <wsdl:part name="parameters" element="emi:ClearEventLog"/>
+    </wsdl:message>
+    <wsdl:message name="ClearEventLogOut">
+        <wsdl:part name="parameters" element="emi:ClearEventLogResponse"/>
+    </wsdl:message>
+    <wsdl:message name="SetEventLogTimestampClockIn">
+        <wsdl:part name="parameters" element="emi:SetEventLogTimestampClock"/>
+    </wsdl:message>
+    <wsdl:message name="SetEventLogTimestampClockOut">
+        <wsdl:part name="parameters" element="emi:SetEventLogTimestampClockResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventLogTimestampClockIn">
+        <wsdl:part name="parameters" element="emi:GetEventLogTimestampClock"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventLogTimestampClockOut">
+        <wsdl:part name="parameters" element="emi:GetEventLogTimestampClockResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateSensorsIn">
+        <wsdl:part name="parameters" element="emi:EnumerateSensors"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateSensorsOut">
+        <wsdl:part name="parameters" element="emi:EnumerateSensorsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetSensorAttributesIn">
+        <wsdl:part name="parameters" element="emi:GetSensorAttributes"/>
+    </wsdl:message>
+    <wsdl:message name="GetSensorAttributesOut">
+        <wsdl:part name="parameters" element="emi:GetSensorAttributesResponse"/>
+    </wsdl:message>
+    <wsdl:message name="FreezeEventLogIn">
+        <wsdl:part name="parameters" element="emi:FreezeEventLog"/>
+    </wsdl:message>
+    <wsdl:message name="FreezeEventLogOut">
+        <wsdl:part name="parameters" element="emi:FreezeEventLogResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateAlertPoliciesIn">
+        <wsdl:part name="parameters" element="emi:EnumerateAlertPolicies"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateAlertPoliciesOut">
+        <wsdl:part name="parameters" element="emi:EnumerateAlertPoliciesResponse"/>
+    </wsdl:message>
+    <wsdl:message name="SetAlertCommunityStringIn">
+        <wsdl:part name="parameters" element="emi:SetAlertCommunityString"/>
+    </wsdl:message>
+    <wsdl:message name="SetAlertCommunityStringOut">
+        <wsdl:part name="parameters" element="emi:SetAlertCommunityStringResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetAlertCommunityStringIn">
+        <wsdl:part name="parameters" element="emi:GetAlertCommunityString"/>
+    </wsdl:message>
+    <wsdl:message name="GetAlertCommunityStringOut">
+        <wsdl:part name="parameters" element="emi:GetAlertCommunityStringResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventLogStatusIn">
+        <wsdl:part name="parameters" element="emi:GetEventLogStatus"/>
+    </wsdl:message>
+    <wsdl:message name="GetEventLogStatusOut">
+        <wsdl:part name="parameters" element="emi:GetEventLogStatusResponse"/>
+    </wsdl:message>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <wsdl:message name="SubscribeForGeneralAlertIn">
+        <wsdl:part name="parameters" element="emi:SubscribeForGeneralAlert"/>
+    </wsdl:message>
+    <wsdl:message name="SubscribeForGeneralAlertOut">
+        <wsdl:part name="parameters" element="emi:SubscribeForGeneralAlertResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateGeneralAlertSubscriptionsIn">
+        <wsdl:part name="parameters" element="emi:EnumerateGeneralAlertSubscriptions"/>
+    </wsdl:message>
+    <wsdl:message name="EnumerateGeneralAlertSubscriptionsOut">
+        <wsdl:part name="parameters" element="emi:EnumerateGeneralAlertSubscriptionsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetGeneralAlertSubscriptionIn">
+        <wsdl:part name="parameters" element="emi:GetGeneralAlertSubscription"/>
+    </wsdl:message>
+    <wsdl:message name="GetGeneralAlertSubscriptionOut">
+        <wsdl:part name="parameters" element="emi:GetGeneralAlertSubscriptionResponse"/>
+    </wsdl:message>
+
+    <wsdl:portType name="EventManagerSoapPortType">
+        <!-- Intel(r) AMT 1.0 -->
+        <wsdl:operation name="SubscribeForAlert">
+            <wsdl:input message="emi:SubscribeForAlertIn"/>
+            <wsdl:output message="emi:SubscribeForAlertOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateAlertSubscriptions">
+            <wsdl:input message="emi:EnumerateAlertSubscriptionsIn"/>
+            <wsdl:output message="emi:EnumerateAlertSubscriptionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetAlertSubscription">
+            <wsdl:input message="emi:GetAlertSubscriptionIn"/>
+            <wsdl:output message="emi:GetAlertSubscriptionOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateAlertPolicies">
+            <wsdl:input message="emi:EnumerateAlertPoliciesIn"/>
+            <wsdl:output message="emi:EnumerateAlertPoliciesOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="CancelAlertSubscription">
+            <wsdl:input message="emi:CancelAlertSubscriptionIn"/>
+            <wsdl:output message="emi:CancelAlertSubscriptionOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="SetAlertCommunityString">
+            <wsdl:input message="emi:SetAlertCommunityStringIn"/>
+            <wsdl:output message="emi:SetAlertCommunityStringOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetAlertCommunityString">
+            <wsdl:input message="emi:GetAlertCommunityStringIn"/>
+            <wsdl:output message="emi:GetAlertCommunityStringOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="AddEventFilter">
+            <wsdl:input message="emi:AddEventFilterIn"/>
+            <wsdl:output message="emi:AddEventFilterOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateEventFilters">
+            <wsdl:input message="emi:EnumerateEventFiltersIn"/>
+            <wsdl:output message="emi:EnumerateEventFiltersOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventFilter">
+            <wsdl:input message="emi:GetEventFilterIn"/>
+            <wsdl:output message="emi:GetEventFilterOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="UpdateEventFilter">
+            <wsdl:input message="emi:UpdateEventFilterIn"/>
+            <wsdl:output message="emi:UpdateEventFilterOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="RemoveEventFilter">
+            <wsdl:input message="emi:RemoveEventFilterIn"/>
+            <wsdl:output message="emi:RemoveEventFilterOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventLogStatus">
+            <wsdl:input message="emi:GetEventLogStatusIn"/>
+            <wsdl:output message="emi:GetEventLogStatusOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ReadEventLogRecords">
+            <wsdl:input message="emi:ReadEventLogRecordsIn"/>
+            <wsdl:output message="emi:ReadEventLogRecordsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ClearEventLog">
+            <wsdl:input message="emi:ClearEventLogIn"/>
+            <wsdl:output message="emi:ClearEventLogOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="FreezeEventLog">
+            <wsdl:input message="emi:FreezeEventLogIn"/>
+            <wsdl:output message="emi:FreezeEventLogOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="SetEventLogTimestampClock">
+            <wsdl:input message="emi:SetEventLogTimestampClockIn"/>
+            <wsdl:output message="emi:SetEventLogTimestampClockOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventLogTimestampClock">
+            <wsdl:input message="emi:GetEventLogTimestampClockIn"/>
+            <wsdl:output message="emi:GetEventLogTimestampClockOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateSensors">
+            <wsdl:input message="emi:EnumerateSensorsIn"/>
+            <wsdl:output message="emi:EnumerateSensorsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetSensorAttributes">
+            <wsdl:input message="emi:GetSensorAttributesIn"/>
+            <wsdl:output message="emi:GetSensorAttributesOut"/>
+        </wsdl:operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <wsdl:operation name="SubscribeForGeneralAlert">
+            <wsdl:input message="emi:SubscribeForGeneralAlertIn"/>
+            <wsdl:output message="emi:SubscribeForGeneralAlertOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateGeneralAlertSubscriptions">
+            <wsdl:input message="emi:EnumerateGeneralAlertSubscriptionsIn"/>
+            <wsdl:output message="emi:EnumerateGeneralAlertSubscriptionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetGeneralAlertSubscription">
+            <wsdl:input message="emi:GetGeneralAlertSubscriptionIn"/>
+            <wsdl:output message="emi:GetGeneralAlertSubscriptionOut"/>
+        </wsdl:operation>
+
+    </wsdl:portType>
+
+    <wsdl:binding name="EventManagerSoapBinding" type="emi:EventManagerSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <!-- Intel(r) AMT 1.0 -->
+        <wsdl:operation name="EnumerateEventFilters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/EnumerateEventFilters"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetAlertSubscription">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/GetAlertSubscription"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="SetAlertCommunityString">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/SetAlertCommunityString"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetAlertCommunityString">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/GetAlertCommunityString"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="AddEventFilter">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/AddEventFilter"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="SubscribeForAlert">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/SubscribeForAlert"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateAlertSubscriptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/EnumerateAlertSubscriptions"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateAlertPolicies">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/EnumerateAlertPolicies"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="CancelAlertSubscription">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/CancelAlertSubscription"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventFilter">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/GetEventFilter"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="UpdateEventFilter">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/UpdateEventFilter"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="RemoveEventFilter">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/RemoveEventFilter"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventLogStatus">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/GetEventLogStatus"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="ReadEventLogRecords">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/ReadEventLogRecords"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="ClearEventLog">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/ClearEventLog"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="FreezeEventLog">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2004/01/FreezeEventLog"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="SetEventLogTimestampClock">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/ptai/2004/01/SetEventLogTimestampClock"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetEventLogTimestampClock">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/ptai/2004/01/GetEventLogTimestampClock"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateSensors">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/ptai/2004/01/EnumerateSensors"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetSensorAttributes">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/ptai/2004/01/GetSensorAttributes"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <wsdl:operation name="SubscribeForGeneralAlert">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/SubscribeForGeneralAlert"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnumerateGeneralAlertSubscriptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/EnumerateGeneralAlertSubscriptions"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetGeneralAlertSubscription">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EventManager/2006/01/GetGeneralAlertSubscription"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+    </wsdl:binding>
+    <wsdl:service name="EventManagerService">
+        <wsdl:port name="EventManagerSoapPort" binding="emi:EventManagerSoapBinding">
+            <soap:address location="http://hostname:16992/EventManagerService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

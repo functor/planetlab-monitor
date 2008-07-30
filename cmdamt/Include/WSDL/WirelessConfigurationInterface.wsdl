@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Wireless Profiles Configuration Interface version 0.6RC6-->
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:wcxs="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01"
+    targetNamespace="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01"
+    elementFormDefault="qualified">
+    
+    <types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd" />
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/XProfiles/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="XProfile.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd"/>
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="WirelessConfigurationInterface.xsd" />
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01" />
+
+            <!-- Intel(r) AMT 2.5 -->
+            <xs:element name="AddWirelessProfileRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Profile" type="wcxs:ProfileType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddWirelessProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetWirelessProfileRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ProfileName" type="wcxs:ProfileNameType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetWirelessProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="Profile" type="wcxs:ProfileType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoveWirelessProfileRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ProfileName" type="wcxs:ProfileNameType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoveWirelessProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateWirelessProfileRequest">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Profile" type="wcxs:ProfileType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateWirelessProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateWirelessProfilesRequest">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateWirelessProfilesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="ProfilesNames" type="wcxs:ProfileNameType" minOccurs="0" maxOccurs="64"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>                      
+            <xs:element name="GetWirelessCapabilitiesRequest">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetWirelessCapabilitiesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="WirelessCapabilities" type="wcxs:WirelessCapabilitiesType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetWirelessSettingsRequest">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetWirelessSettingsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="cmn:PT_STATUS"/>
+                        <xs:element name="WirelessSettings" type="wcxs:WirelessSettingsType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            
+        </xs:schema>
+    </types>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <message name="AddWirelessProfileIn">
+        <part name="parameters" element="wcxs:AddWirelessProfileRequest"/>
+    </message>
+    <message name="AddWirelessProfileOut">
+        <part name="parameters" element="wcxs:AddWirelessProfileResponse"/>
+    </message>
+    <message name="GetWirelessProfileIn">
+        <part name="parameters" element="wcxs:GetWirelessProfileRequest"/>
+    </message>
+    <message name="GetWirelessProfileOut">
+        <part name="parameters" element="wcxs:GetWirelessProfileResponse"/>
+    </message>
+    <message name="RemoveWirelessProfileIn">
+        <part name="parameters" element="wcxs:RemoveWirelessProfileRequest"/>
+    </message>
+    <message name="RemoveWirelessProfileOut">
+        <part name="parameters" element="wcxs:RemoveWirelessProfileResponse"/>
+    </message>
+    <message name="UpdateWirelessProfileIn">
+        <part name="parameters" element="wcxs:UpdateWirelessProfileRequest"/>
+    </message>
+    <message name="UpdateWirelessProfileOut">
+        <part name="parameters" element="wcxs:UpdateWirelessProfileResponse"/>
+    </message>
+    <message name="EnumerateWirelessProfilesIn">
+        <part name="parameters" element="wcxs:EnumerateWirelessProfilesRequest"/>
+    </message>
+    <message name="EnumerateWirelessProfilesOut">
+        <part name="parameters" element="wcxs:EnumerateWirelessProfilesResponse"/>
+    </message>
+    <message name="GetWirelessCapabilitiesIn">
+        <part name="parameters" element="wcxs:GetWirelessCapabilitiesRequest"/>
+    </message>
+    <message name="GetWirelessCapabilitiesOut">
+        <part name="parameters" element="wcxs:GetWirelessCapabilitiesResponse"/>
+    </message>
+    <message name="GetWirelessSettingsIn">
+        <part name="parameters" element="wcxs:GetWirelessSettingsRequest"/>
+    </message>
+    <message name="GetWirelessSettingsOut">
+        <part name="parameters" element="wcxs:GetWirelessSettingsResponse"/>
+    </message>    
+
+    <!-- Intel(r) AMT 2.5 -->
+    <portType name="WirelessConfigurationSoapPortType">
+        <operation name="AddWirelessProfile">
+            <input message="wcxs:AddWirelessProfileIn"/>
+            <output message="wcxs:AddWirelessProfileOut"/>
+        </operation>
+        <operation name="GetWirelessProfile">
+            <input message="wcxs:GetWirelessProfileIn"/>
+            <output message="wcxs:GetWirelessProfileOut"/>
+        </operation>
+        <operation name="RemoveWirelessProfile">
+            <input message="wcxs:RemoveWirelessProfileIn"/>
+            <output message="wcxs:RemoveWirelessProfileOut"/>
+        </operation>
+        <operation name="UpdateWirelessProfile">
+            <input message="wcxs:UpdateWirelessProfileIn"/>
+            <output message="wcxs:UpdateWirelessProfileOut"/>
+        </operation>
+        <operation name="EnumerateWirelessProfiles">
+            <input message="wcxs:EnumerateWirelessProfilesIn"/>
+            <output message="wcxs:EnumerateWirelessProfilesOut"/>
+        </operation>
+        <operation name="GetWirelessCapabilities">
+            <input message="wcxs:GetWirelessCapabilitiesIn"/>
+            <output message="wcxs:GetWirelessCapabilitiesOut"/>
+        </operation>
+        <operation name="GetWirelessSettings">
+            <input message="wcxs:GetWirelessSettingsIn"/>
+            <output message="wcxs:GetWirelessSettingsOut"/>
+        </operation>
+    </portType>
+    
+    <!-- Binding Types -->
+    <binding name="WirelessConfigurationSoapBinding" type="wcxs:WirelessConfigurationSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <operation name="AddWirelessProfile">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/AddWirelessProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetWirelessProfile">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/GetWirelessProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="RemoveWirelessProfile">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/RemoveWirelessProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="UpdateWirelessProfile">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/UpdateWirelessProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnumerateWirelessProfiles">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/EnumerateWirelessProfiles"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetWirelessCapabilities">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/GetWirelessCapabilities"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetWirelessSettings">
+            <soap:operation
+                soapAction="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01/GetWirelessSettings"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>        
+        
+     </binding>
+    
+     <!-- Service Types -->
+     <service name="WirelessConfigurationService">
+          <port name="WirelessConfigurationSoapPortType" binding="wcxs:WirelessConfigurationSoapBinding">
+               <soap:address location="http://hostname:16992/WirelessConfigurationService"/>
+          </port>
+     </service>
+</definitions>

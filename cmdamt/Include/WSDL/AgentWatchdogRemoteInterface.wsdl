@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Intel(R) AMT Agent Presence Remote Interface version 1.00.0-->
+<wsdl:definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:apr="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote"
+    targetNamespace="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote">
+    <wsdl:types>
+        <xs:schema targetNamespace="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote" elementFormDefault="qualified">
+
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:complexType name="GUID">
+                <xs:sequence>
+                    <xs:element name="Byte" type="xs:unsignedByte" minOccurs="16" maxOccurs="16"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="AgentDescription">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Null terminated string of maximum of 16 characters
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="16"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:simpleType name="WatchdogState">
+                <xs:restriction base="xs:unsignedByte">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Bit Field:
+                            Bit 0 set           = NOT_STARTED
+                            Bit 1 set           = STOPPED
+                            Bit 2 set           = RUNNING
+                            Bit 3 set           = EXPIRED
+                            Bit 4 set           = SUSPEND
+                            All bits(0-7) set   = ANY
+                            Valid values: 1..31, 255
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:complexType name="ConsoleWatchdogEntryType">
+                <xs:sequence>
+                    <xs:element name="AgentID" type="apr:GUID"/>
+                    <xs:element ref="apr:AgentDescription" minOccurs="0"/>
+                    <xs:element name="AgentHeartbeatTime" type="xs:unsignedShort"/>
+                    <xs:element name="AgentStartupTime" type="xs:unsignedShort"/>
+                    <xs:element name="NumActions" type="xs:unsignedInt"/>
+                    <xs:element name="State" type="apr:WatchdogState"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:simpleType name="CbActionType">
+                <xs:restriction base="xs:unsignedShort">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Activate CB Policy"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Deactivate CB Policy"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:complexType name="ConsoleWatchdogActionType">
+                <xs:sequence>
+                    <xs:element name="OldState" type="apr:WatchdogState"/>
+                    <xs:element name="NewState" type="apr:WatchdogState"/>
+                    <xs:element name="ActionEventOnTransition" type="xs:boolean"/>
+                    <xs:element name="ActionCb" type="apr:CbActionType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="CircuitBreakerHardwarePolicyType">
+                <xs:sequence>
+                    <xs:element name="HardwareID" type="xs:unsignedInt"/>
+                    <xs:element name="PolicyCreationHandle" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="AgentPresenceCapabilitiesType">
+                <xs:sequence>
+                    <xs:element name="MaxTotalAgents" type="xs:unsignedInt"/>
+                    <xs:element name="MaxTotalActions" type="xs:unsignedInt"/>
+                    <xs:element name="MinGuaranteedActionListSize" type="xs:unsignedInt"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:element name="ConsoleWatchdogCreate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apr:GUID"/>
+                        <xs:element ref="apr:AgentDescription" minOccurs="0"/>
+                        <xs:element name="AgentHeartbeatTime" type="xs:unsignedShort"/>
+                        <xs:element name="AgentStartupTime" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogCreateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogDelete">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apr:GUID"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogDeleteResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogEnumerate">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogEnumerateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                        <xs:element name="ConsoleWatchdogEntries" type="apr:ConsoleWatchdogEntryType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogSetActions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apr:GUID"/>
+                        <xs:element name="ConsoleWatchdogActions" type="apr:ConsoleWatchdogActionType" minOccurs="1" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogSetActionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogGetActions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apr:GUID"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogGetActionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                        <xs:element name="ConsoleWatchdogActions" type="apr:ConsoleWatchdogActionType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogSetCbPolicy">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="HwPolicies" type="apr:CircuitBreakerHardwarePolicyType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogSetCbPolicyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogGetCbPolicy">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogGetCbPolicyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                        <xs:element name="HwPolicies" type="apr:CircuitBreakerHardwarePolicyType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogQueryCapabilities">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ConsoleWatchdogQueryCapabilitiesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apr:PT_STATUS"/>
+                        <xs:element name="Capabilities" type="apr:AgentPresenceCapabilitiesType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="ConsoleWatchdogCreateIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogCreate"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogCreateOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogCreateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogDeleteIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogDelete"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogDeleteOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogDeleteResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogEnumerateIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogEnumerate"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogEnumerateOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogEnumerateResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogSetActionsIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogSetActions"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogSetActionsOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogSetActionsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogGetActionsIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogGetActions"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogGetActionsOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogGetActionsResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogSetCbPolicyIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogSetCbPolicy"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogSetCbPolicyOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogSetCbPolicyResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogGetCbPolicyIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogGetCbPolicy"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogGetCbPolicyOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogGetCbPolicyResponse"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogQueryCapabilitiesIn">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogQueryCapabilities"/>
+    </wsdl:message>
+    <wsdl:message name="ConsoleWatchdogQueryCapabilitiesOut">
+        <wsdl:part name="parameters" element="apr:ConsoleWatchdogQueryCapabilitiesResponse"/>
+    </wsdl:message>
+    <portType name="AgentWatchdogRemoteSoapPortType">
+        <wsdl:operation name="ConsoleWatchdogCreate">
+            <wsdl:input message="apr:ConsoleWatchdogCreateIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogCreateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogDelete">
+            <wsdl:input message="apr:ConsoleWatchdogDeleteIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogDeleteOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogEnumerate">
+            <wsdl:input message="apr:ConsoleWatchdogEnumerateIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogEnumerateOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogSetActions">
+            <wsdl:input message="apr:ConsoleWatchdogSetActionsIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogSetActionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogGetActions">
+            <wsdl:input message="apr:ConsoleWatchdogGetActionsIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogGetActionsOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogSetCbPolicy">
+            <wsdl:input message="apr:ConsoleWatchdogSetCbPolicyIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogSetCbPolicyOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogGetCbPolicy">
+            <wsdl:input message="apr:ConsoleWatchdogGetCbPolicyIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogGetCbPolicyOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogQueryCapabilities">
+            <wsdl:input message="apr:ConsoleWatchdogQueryCapabilitiesIn"/>
+            <wsdl:output message="apr:ConsoleWatchdogQueryCapabilitiesOut"/>
+        </wsdl:operation>
+    </portType>
+    <binding name="AgentWatchdogRemoteSoapBinding" type="apr:AgentWatchdogRemoteSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="ConsoleWatchdogCreate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogCreate"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogDelete">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogDelete"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogEnumerate">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogEnumerate"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogSetActions">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogSetActions"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogGetActions">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogGetActions"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogSetCbPolicy">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogSetCbPolicy"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogGetCbPolicy">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogGetCbPolicy"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="ConsoleWatchdogQueryCapabilities">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogRemote/ConsoleWatchdogQueryCapabilities"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+    </binding>
+    <service name="AgentWatchdogRemoteService">
+        <port name="AgentWatchdogRemoteSoapPort" binding="apr:AgentWatchdogRemoteSoapBinding">
+            <soap:address location="http://hostname:16992/AgentWatchdogRemoteService"/>
+        </port>
+    </service>
+</wsdl:definitions>

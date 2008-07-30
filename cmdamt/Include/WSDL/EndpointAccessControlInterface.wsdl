@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Event Manager Interface version 1.15.0-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    xmlns:eac="http://schemas.intel.com/platform/client/EAC/2006/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/EAC/2006/01">
+
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd"/>
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/EAC/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="EndpointAccessControlInterface.xsd"/>
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+            <xs:import namespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"/>
+        </xs:schema>
+        
+    </wsdl:types>
+
+    <wsdl:message name="GetEACStatusIn">
+        <wsdl:part name="parameters" element="eac:GetEACStatus"/>
+    </wsdl:message>
+    <wsdl:message name="GetEACStatusOut">
+        <wsdl:part name="parameters" element="eac:GetEACStatusResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureIn">
+        <wsdl:part name="parameters" element="eac:GetPosture"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureOut">
+        <wsdl:part name="parameters" element="eac:GetPostureResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureHashIn">
+        <wsdl:part name="parameters" element="eac:GetPostureHash"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureHashOut">
+        <wsdl:part name="parameters" element="eac:GetPostureHashResponse"/>
+    </wsdl:message>
+
+    <wsdl:portType name="EndpointAccessControlSoapPortType">
+        <wsdl:operation name="GetPosture">
+            <wsdl:input message="eac:GetPostureIn"/>
+            <wsdl:output message="eac:GetPostureOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetPostureHash">
+            <wsdl:input message="eac:GetPostureHashIn"/>
+            <wsdl:output message="eac:GetPostureHashOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetEACStatus">
+            <wsdl:input message="eac:GetEACStatusIn"/>
+            <wsdl:output message="eac:GetEACStatusOut"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding name="EndpointAccessControlSoapBinding" type="eac:EndpointAccessControlSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <wsdl:operation name="GetPosture">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/GetPosture"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetPostureHash">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/GetPostureHash"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetEACStatus">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/GetEACStatus"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <wsdl:service name="EndpointAccessControlService">
+        <wsdl:port name="EndpointAccessControlSoapPort" binding="eac:EndpointAccessControlSoapBinding">
+            <soap:address location="http://hostname:16992/EndpointAccessControlService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

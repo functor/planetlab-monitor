@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    xmlns:emi="http://schemas.intel.com/platform/client/EventManager/2004/01"
+    targetNamespace="http://schemas.intel.com/platform/client/EventManager/2004/01"
+    elementFormDefault="qualified">
+
+    <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01" schemaLocation="Common.xsd"/>
+    <xs:import namespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" schemaLocation="SecurityAdministrationInterface.xsd"/>
+
+    <!-- Intel(r) AMT 1.0 -->
+    <xs:simpleType name="TimeType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="AlertSubscriptionPolicyIDType">
+        <xs:restriction base="xs:unsignedByte"/>
+    </xs:simpleType>
+    <xs:complexType name="AlertSubscriptionPolicyIDArrayType">
+        <xs:sequence>
+            <xs:element name="AlertSubscriptionPolicyID" type="emi:AlertSubscriptionPolicyIDType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="AlertSubscriptionHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="EventFilterHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="EventSeverityType">
+        <xs:restriction base="xs:unsignedByte">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:documentation>"0 = Unspecified"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>"1 = Monitor"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:documentation>"2 = Information"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="4">
+                <xs:annotation>
+                    <xs:documentation>"4 = OK (return to OK condition)"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="8">
+                <xs:annotation>
+                    <xs:documentation>"8 = Non-critical condition"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="16">
+                <xs:annotation>
+                    <xs:documentation>"16 = Critical condition"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="32">
+                <xs:annotation>
+                    <xs:documentation>"32 = Non-recoverable condition"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="PT_STATUS">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="IPv4AddressType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:simpleType name="SensorHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    <xs:complexType name="ByteData">
+        <xs:sequence>
+            <xs:element name="Byte" type="xs:unsignedByte" minOccurs="8" maxOccurs="8"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EventLogRecordType">
+        <xs:sequence>
+            <xs:element name="TimeStamp" type="emi:TimeType"/>
+            <xs:element name="DeviceAddress" type="xs:unsignedByte"/>
+            <xs:element name="EventSensorType" type="xs:unsignedByte"/>
+            <xs:element name="EventType" type="xs:unsignedByte"/>
+            <xs:element name="EventOffset" type="xs:unsignedByte"/>
+            <xs:element name="EventSourceType" type="xs:unsignedByte"/>
+            <xs:element name="EventSeverity" type="emi:EventSeverityType"/>
+            <xs:element name="SensorNumber" type="xs:unsignedByte"/>
+            <xs:element name="Entity" type="xs:unsignedByte"/>
+            <xs:element name="EntityInstance" type="xs:unsignedByte"/>
+            <xs:element name="EventData" type="emi:ByteData" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EventFilterType">
+        <xs:sequence>
+            <xs:element name="FilterConfiguration" type="xs:unsignedByte"/>
+            <xs:element name="FilterAction" type="xs:unsignedByte"/>
+            <xs:element name="AlertSubscriptionPolicyID" type="emi:AlertSubscriptionPolicyIDType"/>
+            <xs:element name="DeviceAddress" type="xs:unsignedByte"/>
+            <xs:element name="EventSensorType" type="xs:unsignedByte"/>
+            <xs:element name="EventType" type="xs:unsignedByte"/>
+            <xs:element name="EventOffset" type="xs:unsignedByte"/>
+            <xs:element name="EventSourceType" type="xs:unsignedByte"/>
+            <xs:element name="EventSeverity" type="emi:EventSeverityType"/>
+            <xs:element name="SensorNumber" type="xs:unsignedByte"/>
+            <xs:element name="Entity" type="xs:unsignedByte"/>
+            <xs:element name="EntityInstance" type="xs:unsignedByte"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AlertSubscriptionType">
+        <xs:sequence>
+            <xs:element name="AlertSubscriptionPolicyID" type="emi:AlertSubscriptionPolicyIDType"/>
+            <xs:element name="DestinationAddress" type="emi:IPv4AddressType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AlertSubscriptionHandleArrayType">
+        <xs:sequence>
+            <xs:element name="AlertSubscriptionHandle" type="emi:AlertSubscriptionHandleType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EventFilterHandleArrayType">
+        <xs:sequence>
+            <xs:element name="EventFilterHandle" type="emi:EventFilterHandleType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EventLogRecordArrayType">
+        <xs:sequence>
+            <xs:element name="EventLogRecord" type="emi:EventLogRecordType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SensorHandleArrayType">
+        <xs:sequence>
+            <xs:element name="SensorHandle" type="emi:SensorHandleType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SensorAttributesType">
+        <xs:sequence>
+            <xs:element name="IsLegacySensor" type="xs:boolean"/>
+            <xs:element name="AssertionEvent" type="xs:boolean"/>
+            <xs:element name="DeassertionEvent" type="xs:boolean"/>
+            <xs:element name="Index" type="xs:unsignedByte"/>
+            <xs:element name="DeviceAddress" type="xs:unsignedByte"/>
+            <xs:element name="EventSensorType" type="xs:unsignedByte"/>
+            <xs:element name="EventType" type="xs:unsignedByte"/>
+            <xs:element name="EventOffset" type="xs:unsignedByte"/>
+            <xs:element name="EventSourceType" type="xs:unsignedByte"/>
+            <xs:element name="EventSeverity" type="emi:EventSeverityType"/>
+            <xs:element name="SensorNumber" type="xs:unsignedByte"/>
+            <xs:element name="Entity" type="xs:unsignedByte"/>
+            <xs:element name="EntityInstance" type="xs:unsignedByte"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ByteStr">
+        <xs:sequence>
+            <xs:element name="Byte" type="xs:unsignedByte" minOccurs="1" maxOccurs="16"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="CancelAlertSubscription">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SubscriptionHandle" type="emi:AlertSubscriptionHandleType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CancelAlertSubscriptionResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Status" type="emi:PT_STATUS"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <xs:complexType name="AlertCredentialsType">
+        <xs:sequence>
+            <xs:element name="Username" type="xs:string"/>
+            <xs:element name="Password" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="AlertAuthOptionsType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Kerberos" />
+            <xs:enumeration value="Digest" />
+            <xs:enumeration value="Basic" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CommunityStringType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="16"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <xs:complexType name="AlertSubscriptionSNMPType">
+        <xs:sequence>
+            <xs:element name="Address" type="cmn:NodeAddressType"/>
+            <xs:element name="CommunityString" type="emi:CommunityStringType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AlertSubscriptionSoapType">
+        <xs:sequence>
+            <xs:element name="Address" type="cmn:URLType"/>
+            <xs:element name="ClientCredentials" type="sai:CertificateHandleType" minOccurs="0"/>
+            <xs:element name="UserCredentials" type="emi:AlertCredentialsType" minOccurs="0"/>
+            <xs:element name="AlertAuthOptions" type="emi:AlertAuthOptionsType" minOccurs="0" maxOccurs="3"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AlertSubscriptionGeneralType">
+        <xs:sequence>
+            <xs:element name="PolicyID" type="emi:AlertSubscriptionPolicyIDType"/>
+            <xs:choice>
+                <xs:element name="AlertSubscriptionSNMP" type="emi:AlertSubscriptionSNMPType"/>
+                <xs:element name="AlertSubscriptionSoap" type="emi:AlertSubscriptionSoapType"/>
+            </xs:choice>
+            <xs:any minOccurs="0" namespace="##other" processContents="lax" />            
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="SubscribeForGeneralAlert">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SubscriptionInfo" type="emi:AlertSubscriptionGeneralType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="SubscribeForGeneralAlertResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Status" type="emi:PT_STATUS"/>
+                <xs:element name="SubscriptionHandle" type="emi:AlertSubscriptionHandleType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="EnumerateGeneralAlertSubscriptions">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="PolicyID" type="emi:AlertSubscriptionPolicyIDType" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="EnumerateGeneralAlertSubscriptionsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Status" type="emi:PT_STATUS"/>
+                <xs:element name="SubscriptionHandle" type="emi:AlertSubscriptionHandleType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetGeneralAlertSubscription">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SubscriptionHandle" type="emi:AlertSubscriptionHandleType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="GetGeneralAlertSubscriptionResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Status" type="emi:PT_STATUS"/>
+                <xs:element name="SubscriptionInfo" type="emi:AlertSubscriptionGeneralType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

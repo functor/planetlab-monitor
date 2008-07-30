@@ -1,0 +1,591 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Intel(R) Active Management Technology Storage Administration Interface version 1.15.0-->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:atls="http://tempuri.org/vc/atl/server/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:stra="http://schemas.intel.com/platform/client/StorageAdministration/2004/01" targetNamespace="http://schemas.intel.com/platform/client/StorageAdministration/2004/01">
+	<types>
+		<xsd:schema targetNamespace="http://schemas.intel.com/platform/client/StorageAdministration/2004/01" elementFormDefault="qualified">
+			<xsd:simpleType name="PT_STATUS">
+				<xsd:restriction base="xsd:unsignedInt"/>
+			</xsd:simpleType>
+			<xsd:simpleType name="StorageApplicationHandleType">
+				<xsd:restriction base="xsd:unsignedInt"/>
+			</xsd:simpleType>
+			<xsd:simpleType name="ISVS_APP_ATTR_TYPE">
+				<xsd:restriction base="xsd:unsignedInt">
+					<xsd:enumeration value="0">
+						<xsd:annotation>
+							<xsd:documentation>ISVS_APP_ATTR_TYPE_NONE = 0</xsd:documentation>
+						</xsd:annotation>
+					</xsd:enumeration>
+					<xsd:enumeration value="1">
+						<xsd:annotation>
+							<xsd:documentation>ISVS_APP_ATTR_TYPE_SNRP = 1</xsd:documentation>
+						</xsd:annotation>
+					</xsd:enumeration>
+				</xsd:restriction>
+			</xsd:simpleType>
+			<xsd:complexType name="StorageEaclEntryType">
+				<xsd:sequence>
+					<xsd:element name="EnterpriseName" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:simpleType name="StorageEaclEntryHandleType">
+				<xsd:restriction base="xsd:unsignedInt"/>
+			</xsd:simpleType>
+			<xsd:complexType name="StorageEaclEntryHandleListType">
+				<xsd:sequence>
+					<xsd:element name="Handle" type="stra:StorageEaclEntryHandleType" minOccurs="0" maxOccurs="8"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="StorageAllocEntryType">
+				<xsd:sequence>
+					<xsd:element name="AttrType" type="stra:ISVS_APP_ATTR_TYPE"/>
+					<xsd:element name="StorageAllocSnrpEntry" type="stra:StorageAllocSnrpEntryType"/>
+					<xsd:element name="IsPartner" type="xsd:boolean"/>
+					<xsd:element name="TotalAllocationSize" type="xsd:unsignedInt"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="StorageAllocSnrpEntryType">
+				<xsd:sequence>
+					<xsd:element name="ApplicationName" type="xsd:string"/>
+					<xsd:element name="VendorName" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:simpleType name="StorageAllocEntryHandleType">
+				<xsd:restriction base="xsd:unsignedInt"/>
+			</xsd:simpleType>
+			<xsd:complexType name="StorageAllocEntryHandleListType">
+				<xsd:sequence>
+					<xsd:element name="Handle" type="stra:StorageAllocEntryHandleType" minOccurs="0" maxOccurs="32"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="GUID">
+				<xsd:sequence>
+					<xsd:element name="Byte" type="xsd:unsignedByte" minOccurs="16" maxOccurs="16"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="GlobalStorageAttributesType">
+				<xsd:sequence>
+					<xsd:element name="TotalStorage" type="xsd:unsignedInt"/>
+					<xsd:element name="TotalAllocatedStorage" type="xsd:unsignedInt"/>
+					<xsd:element name="MaxPartnerStorage" type="xsd:unsignedInt"/>
+					<xsd:element name="TotalPartnerAllocatedStorage" type="xsd:unsignedInt"/>
+					<xsd:element name="MaxNonPartnerStorage" type="xsd:unsignedInt"/>
+					<xsd:element name="MaxFpaclEntries" type="xsd:unsignedShort"/>
+					<xsd:element name="MaxAslEntries" type="xsd:unsignedShort"/>
+					<xsd:element name="MaxEaclEntries" type="xsd:unsignedShort"/>
+					<xsd:element name="MaxGroupsPerBlock" type="xsd:unsignedShort"/>
+					<xsd:element name="MaxMembersPerGroup" type="xsd:unsignedShort"/>
+					<xsd:element name="MaxNonPartnerTotalAllocationSize" type="xsd:unsignedShort"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="StorageApplicationHandleListType">
+				<xsd:sequence>
+					<xsd:element name="Handle" type="stra:StorageApplicationHandleType" minOccurs="0" maxOccurs="32"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="StorageSnrpApplicationAttributeType">
+				<xsd:sequence>
+					<xsd:element name="UUID" type="stra:GUID"/>
+					<xsd:element name="VendorName" type="xsd:string"/>
+					<xsd:element name="ApplicationName" type="xsd:string"/>
+					<xsd:element name="EnterpriseName" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="StorageApplicationAttributesType">
+				<xsd:sequence>
+					<xsd:element name="AttrType" type="stra:ISVS_APP_ATTR_TYPE"/>
+					<xsd:element name="ApplicationAttr" type="stra:StorageSnrpApplicationAttributeType"/>
+					<xsd:element name="CurrentAllocationSize" type="xsd:unsignedInt"/>
+					<xsd:element name="ActiveSession" type="xsd:boolean"/>
+					<xsd:element name="Partner" type="xsd:boolean"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:element name="GetGlobalStorageAttributes">
+				<xsd:complexType>
+				</xsd:complexType>
+			</xsd:element>			
+			<xsd:element name="GetGlobalStorageAttributesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Attributes" type="stra:GlobalStorageAttributesType" minOccurs="0"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="SetGlobalStorageAttributes">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="MaxPartnerStorage" type="xsd:unsignedInt" minOccurs="0"/>
+						<xsd:element name="MaxNonPartnerTotalAllocationSize" type="xsd:unsignedShort" minOccurs="0"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="SetGlobalStorageAttributesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminGetRegisteredApplications">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StartIndex" type="xsd:unsignedInt"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminGetRegisteredApplicationsResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="TotalCount" type="xsd:unsignedInt"/>
+						<xsd:element name="HandlesCount" type="xsd:unsignedInt"/>
+						<xsd:element name="ApplicationHandles" type="stra:StorageApplicationHandleListType" minOccurs="0"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminGetApplicationAttributes">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageApplicationHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminGetApplicationAttributesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Attributes" type="stra:StorageApplicationAttributesType" minOccurs="0"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminRemoveApplication">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageApplicationHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AdminRemoveApplicationResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AddStorageEaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Entry" type="stra:StorageEaclEntryType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AddStorageEaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Handle" type="stra:StorageEaclEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="EnumerateStorageEaclEntries">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StartIndex" type="xsd:unsignedShort"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="EnumerateStorageEaclEntriesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="TotalCount" type="xsd:unsignedShort"/>
+						<xsd:element name="HandlesCount" type="xsd:unsignedShort"/>
+						<xsd:element name="Handles" type="stra:StorageEaclEntryHandleListType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="GetStorageEaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageEaclEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="GetStorageEaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Entry" type="stra:StorageEaclEntryType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="RemoveStorageEaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageEaclEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="RemoveStorageEaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AddStorageFpaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Entry" type="stra:StorageAllocEntryType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="AddStorageFpaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Handle" type="stra:StorageAllocEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="EnumerateStorageAllocEntries">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StartIndex" type="xsd:unsignedShort"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="EnumerateStorageAllocEntriesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="TotalCount" type="xsd:unsignedShort"/>
+						<xsd:element name="HandlesCount" type="xsd:unsignedShort"/>
+						<xsd:element name="Handles" type="stra:StorageAllocEntryHandleListType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="GetStorageAllocEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageAllocEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="GetStorageAllocEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+						<xsd:element name="Entry" type="stra:StorageAllocEntryType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="UpdateStorageFpaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageAllocEntryHandleType"/>
+						<xsd:element name="NewAllocationSize" type="xsd:unsignedInt"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="UpdateStorageFpaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="RemoveStorageFpaclEntry">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="Handle" type="stra:StorageAllocEntryHandleType"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="RemoveStorageFpaclEntryResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="StatusCode" type="stra:PT_STATUS"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+	</types>
+	<message name="GetGlobalStorageAttributesIn">
+		<part name="parameters" element="stra:GetGlobalStorageAttributes"/>
+	</message>
+	<message name="GetGlobalStorageAttributesOut">
+		<part name="parameters" element="stra:GetGlobalStorageAttributesResponse"/>
+	</message>
+	<message name="SetGlobalStorageAttributesIn">
+		<part name="parameters" element="stra:SetGlobalStorageAttributes"/>
+	</message>
+	<message name="SetGlobalStorageAttributesOut">
+		<part name="parameters" element="stra:SetGlobalStorageAttributesResponse"/>
+	</message>
+	<message name="AdminGetRegisteredApplicationsIn">
+		<part name="parameters" element="stra:AdminGetRegisteredApplications"/>
+	</message>
+	<message name="AdminGetRegisteredApplicationsOut">
+		<part name="parameters" element="stra:AdminGetRegisteredApplicationsResponse"/>
+	</message>
+	<message name="AdminGetApplicationAttributesIn">
+		<part name="parameters" element="stra:AdminGetApplicationAttributes"/>
+	</message>
+	<message name="AdminGetApplicationAttributesOut">
+		<part name="parameters" element="stra:AdminGetApplicationAttributesResponse"/>
+	</message>
+	<message name="AdminRemoveApplicationIn">
+		<part name="parameters" element="stra:AdminRemoveApplication"/>
+	</message>
+	<message name="AdminRemoveApplicationOut">
+		<part name="parameters" element="stra:AdminRemoveApplicationResponse"/>
+	</message>
+	<message name="AddStorageEaclEntryIn">
+		<part name="parameters" element="stra:AddStorageEaclEntry"/>
+	</message>
+	<message name="AddStorageEaclEntryOut">
+		<part name="parameters" element="stra:AddStorageEaclEntryResponse"/>
+	</message>
+	<message name="EnumerateStorageEaclEntriesIn">
+		<part name="parameters" element="stra:EnumerateStorageEaclEntries"/>
+	</message>
+	<message name="EnumerateStorageEaclEntriesOut">
+		<part name="parameters" element="stra:EnumerateStorageEaclEntriesResponse"/>
+	</message>
+	<message name="GetStorageEaclEntryIn">
+		<part name="parameters" element="stra:GetStorageEaclEntry"/>
+	</message>
+	<message name="GetStorageEaclEntryOut">
+		<part name="parameters" element="stra:GetStorageEaclEntryResponse"/>
+	</message>
+	<message name="RemoveStorageEaclEntryIn">
+		<part name="parameters" element="stra:RemoveStorageEaclEntry"/>
+	</message>
+	<message name="RemoveStorageEaclEntryOut">
+		<part name="parameters" element="stra:RemoveStorageEaclEntryResponse"/>
+	</message>
+	<message name="AddStorageFpaclEntryIn">
+		<part name="parameters" element="stra:AddStorageFpaclEntry"/>
+	</message>
+	<message name="AddStorageFpaclEntryOut">
+		<part name="parameters" element="stra:AddStorageFpaclEntryResponse"/>
+	</message>
+	<message name="EnumerateStorageAllocEntriesIn">
+		<part name="parameters" element="stra:EnumerateStorageAllocEntries"/>
+	</message>
+	<message name="EnumerateStorageAllocEntriesOut">
+		<part name="parameters" element="stra:EnumerateStorageAllocEntriesResponse"/>
+	</message>
+	<message name="GetStorageAllocEntryIn">
+		<part name="parameters" element="stra:GetStorageAllocEntry"/>
+	</message>
+	<message name="GetStorageAllocEntryOut">
+		<part name="parameters" element="stra:GetStorageAllocEntryResponse"/>
+	</message>
+	<message name="UpdateStorageFpaclEntryIn">
+		<part name="parameters" element="stra:UpdateStorageFpaclEntry"/>
+	</message>
+	<message name="UpdateStorageFpaclEntryOut">
+		<part name="parameters" element="stra:UpdateStorageFpaclEntryResponse"/>
+	</message>
+	<message name="RemoveStorageFpaclEntryIn">
+		<part name="parameters" element="stra:RemoveStorageFpaclEntry"/>
+	</message>
+	<message name="RemoveStorageFpaclEntryOut">
+		<part name="parameters" element="stra:RemoveStorageFpaclEntryResponse"/>
+	</message>
+	<portType name="StorageAdministrationSoapPortType">
+		<operation name="GetGlobalStorageAttributes">
+			<input message="stra:GetGlobalStorageAttributesIn"/>
+			<output message="stra:GetGlobalStorageAttributesOut"/>
+		</operation>
+		<operation name="SetGlobalStorageAttributes">
+			<input message="stra:SetGlobalStorageAttributesIn"/>
+			<output message="stra:SetGlobalStorageAttributesOut"/>
+		</operation>
+		<operation name="AdminGetRegisteredApplications">
+			<input message="stra:AdminGetRegisteredApplicationsIn"/>
+			<output message="stra:AdminGetRegisteredApplicationsOut"/>
+		</operation>
+		<operation name="AdminGetApplicationAttributes">
+			<input message="stra:AdminGetApplicationAttributesIn"/>
+			<output message="stra:AdminGetApplicationAttributesOut"/>
+		</operation>
+		<operation name="AdminRemoveApplication">
+			<input message="stra:AdminRemoveApplicationIn"/>
+			<output message="stra:AdminRemoveApplicationOut"/>
+		</operation>
+		<operation name="AddStorageEaclEntry">
+			<input message="stra:AddStorageEaclEntryIn"/>
+			<output message="stra:AddStorageEaclEntryOut"/>
+		</operation>
+		<operation name="EnumerateStorageEaclEntries">
+			<input message="stra:EnumerateStorageEaclEntriesIn"/>
+			<output message="stra:EnumerateStorageEaclEntriesOut"/>
+		</operation>
+		<operation name="GetStorageEaclEntry">
+			<input message="stra:GetStorageEaclEntryIn"/>
+			<output message="stra:GetStorageEaclEntryOut"/>
+		</operation>
+		<operation name="RemoveStorageEaclEntry">
+			<input message="stra:RemoveStorageEaclEntryIn"/>
+			<output message="stra:RemoveStorageEaclEntryOut"/>
+		</operation>
+		<operation name="AddStorageFpaclEntry">
+			<input message="stra:AddStorageFpaclEntryIn"/>
+			<output message="stra:AddStorageFpaclEntryOut"/>
+		</operation>
+		<operation name="EnumerateStorageAllocEntries">
+			<input message="stra:EnumerateStorageAllocEntriesIn"/>
+			<output message="stra:EnumerateStorageAllocEntriesOut"/>
+		</operation>
+		<operation name="GetStorageAllocEntry">
+			<input message="stra:GetStorageAllocEntryIn"/>
+			<output message="stra:GetStorageAllocEntryOut"/>
+		</operation>
+		<operation name="UpdateStorageFpaclEntry">
+			<input message="stra:UpdateStorageFpaclEntryIn"/>
+			<output message="stra:UpdateStorageFpaclEntryOut"/>
+		</operation>
+		<operation name="RemoveStorageFpaclEntry">
+			<input message="stra:RemoveStorageFpaclEntryIn"/>
+			<output message="stra:RemoveStorageFpaclEntryOut"/>
+		</operation>
+	</portType>
+	<binding name="StorageAdministrationSoapBinding" type="stra:StorageAdministrationSoapPortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="GetGlobalStorageAttributes">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/GetGlobalStorageAttributes"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="SetGlobalStorageAttributes">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/SetGlobalStorageAttributes"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="AdminGetRegisteredApplications">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/AdminGetRegisteredApplications"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="AdminGetApplicationAttributes">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/AdminGetApplicationAttributes"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="AdminRemoveApplication">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/AdminRemoveApplication"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="AddStorageEaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/AddStorageEaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="EnumerateStorageEaclEntries">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/EnumerateStorageEaclEntries"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="GetStorageEaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/GetStorageEaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="RemoveStorageEaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/RemoveStorageEaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="AddStorageFpaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/AddStorageFpaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="EnumerateStorageAllocEntries">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/EnumerateStorageAllocEntries"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="GetStorageAllocEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/GetStorageAllocEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="UpdateStorageFpaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/UpdateStorageFpaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+		<operation name="RemoveStorageFpaclEntry">
+			<soap:operation soapAction="http://schemas.intel.com/platform/client/StorageAdministration/2004/01/RemoveStorageFpaclEntry"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+		</operation>
+	</binding>
+	<service name="StorageAdministrationService">
+		<port name="StorageAdministrationSoapPort" binding="stra:StorageAdministrationSoapBinding">
+			<soap:address location="http://hostname:16992/StorageAdministrationService"/>
+		</port>
+	</service>
+</definitions>

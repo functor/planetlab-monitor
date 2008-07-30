@@ -1,0 +1,784 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Network Administration Interface version 1.15.0-->
+<definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:xcfg="http://schemas.intel.com/platform/client/XProfiles/2006/01"
+    xmlns:net="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01">
+    <types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd" />
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/XProfiles/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="XProfile.xsd" />
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd" />
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01" elementFormDefault="qualified">
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+            <xs:import namespace="http://schemas.intel.com/platform/client/XProfiles/2006/01"/>
+
+            <!-- Private Type definition -->
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="IPv4AddressType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="DhcpModeType">
+                <xs:restriction base="xs:unsignedInt">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>DhcpModeInvalid = 0</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>DhcpModeDisabled = 1</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>DhcpModeEnabled = 2</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:complexType name="StaticIPv4ParametersType">
+                <xs:sequence>
+                    <xs:element name="LocalAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="SubnetMask" type="net:IPv4AddressType"/>
+                    <xs:element name="DefaultGatewayAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="PrimaryDnsAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="SecondaryDnsAddress" type="net:IPv4AddressType"/>
+                    <!-- ignored -->
+                    <xs:element name="DomainName" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="IPv4ParametersType">
+                <xs:sequence>
+                    <xs:element name="LocalAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="SubnetMask" type="net:IPv4AddressType"/>
+                    <xs:element name="DefaultGatewayAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="PrimaryDnsAddress" type="net:IPv4AddressType"/>
+                    <xs:element name="SecondaryDnsAddress" type="net:IPv4AddressType"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <!-- Intel(r) AMT 2.5 -->
+            <xs:simpleType name="MACAddressType">
+                <xs:restriction base="xs:string">
+                    <!-- Example: 00-0C-F1-30-2D-DE -->
+                    <xs:pattern value="([0-9a-fA-F][0-9a-fA-F]-){5}([0-9a-fA-F][0-9a-fA-F])"/>                    
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="InterfaceModeType">
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="SEPARATE_MAC_ADDRESS"/>
+                    <xs:enumeration value="SHARED_MAC_ADDRESS"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="LinkPolicyType">
+                <xs:restriction base="xs:unsignedByte"/>
+                <!--
+                    AVAILABLE_ON_AC_S0	= 0x01,
+                    AVAILABLE_ON_AC_SX	= 0x0E,
+                    AVAILABLE_ON_DC_S0	= 0x10,
+                    AVAILABLE_ON_DC_SX	= 0xE0
+                -->
+            </xs:simpleType>
+            <xs:simpleType name="InterfaceHandleType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:complexType name="InterfaceDescriptorSetType">
+                <xs:sequence>
+                    <xs:element name="InterfaceMode" type="net:InterfaceModeType"/>
+                    <xs:element name="LinkPolicy" type="net:LinkPolicyType"/>
+                    <xs:element name="IPv4Parameters" type="net:IPv4ParametersType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="InterfaceDescriptorGetType">
+                <xs:sequence>
+                    <xs:element name="HardwareAddressDescription" type="xs:string"/>
+                    <xs:element name="MACAddress" type="net:MACAddressType"/>
+                    <xs:element name="InterfaceMode" type="net:InterfaceModeType"/>
+                    <xs:element name="LinkPolicy" type="net:LinkPolicyType"/>
+                    <xs:element name="DhcpEnabled" type="xs:boolean"/>
+                    <xs:element name="IPv4Parameters" type="net:IPv4ParametersType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <!-- API Definition -->
+            <xs:element name="SetHostName">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="HostName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetHostNameResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHostName">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHostNameResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                        <xs:element name="HostName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetDomainName">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="DomainName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetDomainNameResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetDomainName">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetDomainNameResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                        <xs:element name="DomainName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTcpIpParameters">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="DhcpMode" type="net:DhcpModeType" minOccurs="1" maxOccurs="1"/>
+                        <xs:element name="StaticIPv4Parameters" type="net:StaticIPv4ParametersType" minOccurs="0" maxOccurs="1"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTcpIpParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTcpIpParameters">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTcpIpParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                        <xs:element name="DhcpMode" type="net:DhcpModeType"/>
+                        <xs:element name="StaticIPv4Parameters" type="net:StaticIPv4ParametersType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetVlanParameters">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="cmn:InterfaceHandleType" minOccurs="0"/>
+                        <xs:element name="VlanMode" type="xs:boolean"/>
+                        <xs:element name="VlanTag" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetVlanParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetVlanParameters">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="cmn:InterfaceHandleType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetVlanParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                        <xs:element name="VlanMode" type="xs:boolean"/>
+                        <xs:element name="VlanTag" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetPingResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetPingResponseResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPingResponse">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPingResponseResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="net:PT_STATUS"/>
+                        <xs:element name="enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.5 -->
+            <xs:element name="EnumerateInterfaces">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateInterfacesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="InterfaceHandles" type="net:InterfaceHandleType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetInterfaceSettings">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetInterfaceSettingsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="InterfaceDescriptor" type="net:InterfaceDescriptorGetType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetInterfaceSettings">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="net:InterfaceHandleType"/>
+                        <xs:element name="InterfaceDescriptor" type="net:InterfaceDescriptorSetType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetInterfaceSettingsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XWiredProfile">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="cmn:InterfaceHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XWiredProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="XProfile" type="xcfg:XProfileType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Set8021XWiredProfile">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="cmn:InterfaceHandleType"/>
+                        <xs:element name="XProfile" type="xcfg:XProfileType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Set8021XWiredProfileResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.6 -->
+            <xs:element name="Set8021XActiveS0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Set8021XActiveS0Response">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XActiveS0">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XActiveS0Response">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="Set8021XPxeTimeout">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Timeout" type="xs:unsignedInt" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Set8021XPxeTimeoutResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XPxeTimeout">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Get8021XPxeTimeoutResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Timeout" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+
+        </xs:schema>
+    </types>
+    <message name="SetHostNameIn">
+        <part name="parameters" element="net:SetHostName"/>
+    </message>
+    <message name="SetHostNameOut">
+        <part name="parameters" element="net:SetHostNameResponse"/>
+    </message>
+    <message name="GetHostNameIn">
+        <part name="parameters" element="net:GetHostName"/>
+    </message>
+    <message name="GetHostNameOut">
+        <part name="parameters" element="net:GetHostNameResponse"/>
+    </message>
+    <message name="SetDomainNameIn">
+        <part name="parameters" element="net:SetDomainName"/>
+    </message>
+    <message name="SetDomainNameOut">
+        <part name="parameters" element="net:SetDomainNameResponse"/>
+    </message>
+    <message name="GetDomainNameIn">
+        <part name="parameters" element="net:GetDomainName"/>
+    </message>
+    <message name="GetDomainNameOut">
+        <part name="parameters" element="net:GetDomainNameResponse"/>
+    </message>
+    <message name="SetTcpIpParametersIn">
+        <part name="parameters" element="net:SetTcpIpParameters"/>
+    </message>
+    <message name="SetTcpIpParametersOut">
+        <part name="parameters" element="net:SetTcpIpParametersResponse"/>
+    </message>
+    <message name="GetTcpIpParametersIn">
+        <part name="parameters" element="net:GetTcpIpParameters"/>
+    </message>
+    <message name="GetTcpIpParametersOut">
+        <part name="parameters" element="net:GetTcpIpParametersResponse"/>
+    </message>
+    <message name="SetVlanParametersIn">
+        <part name="parameters" element="net:SetVlanParameters"/>
+    </message>
+    <message name="SetVlanParametersOut">
+        <part name="parameters" element="net:SetVlanParametersResponse"/>
+    </message>
+    <message name="GetVlanParametersIn">
+        <part name="parameters" element="net:GetVlanParameters"/>
+    </message>
+    <message name="GetVlanParametersOut">
+        <part name="parameters" element="net:GetVlanParametersResponse"/>
+    </message>
+    <message name="SetPingResponseIn">
+        <part name="parameters" element="net:SetPingResponse"/>
+    </message>
+    <message name="SetPingResponseOut">
+        <part name="parameters" element="net:SetPingResponseResponse"/>
+    </message>
+    <message name="GetPingResponseIn">
+        <part name="parameters" element="net:GetPingResponse"/>
+    </message>
+    <message name="GetPingResponseOut">
+        <part name="parameters" element="net:GetPingResponseResponse"/>
+    </message>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <message name="EnumerateInterfacesIn">
+        <part name="parameters" element="net:EnumerateInterfaces"/>
+    </message>
+    <message name="EnumerateInterfacesOut">
+        <part name="parameters" element="net:EnumerateInterfacesResponse"/>
+    </message>
+    <message name="GetInterfaceSettingsIn">
+        <part name="parameters" element="net:GetInterfaceSettings"/>
+    </message>
+    <message name="GetInterfaceSettingsOut">
+        <part name="parameters" element="net:GetInterfaceSettingsResponse"/>
+    </message>
+    <message name="SetInterfaceSettingsIn">
+        <part name="parameters" element="net:SetInterfaceSettings"/>
+    </message>
+    <message name="SetInterfaceSettingsOut">
+        <part name="parameters" element="net:SetInterfaceSettingsResponse"/>
+    </message>
+    <message name="Get8021XWiredProfileIn">
+        <part name="parameters" element="net:Get8021XWiredProfile"/>
+    </message>
+    <message name="Get8021XWiredProfileOut">
+        <part name="parameters" element="net:Get8021XWiredProfileResponse"/>
+    </message>
+    <message name="Set8021XWiredProfileIn">
+        <part name="parameters" element="net:Set8021XWiredProfile"/>
+    </message>
+    <message name="Set8021XWiredProfileOut">
+        <part name="parameters" element="net:Set8021XWiredProfileResponse"/>
+    </message>
+
+    <!-- Intel(r) AMT 2.6 -->
+    <message name="Set8021XActiveS0In">
+        <part name="parameters" element="net:Set8021XActiveS0"/>
+    </message>
+    <message name="Set8021XActiveS0Out">
+        <part name="parameters" element="net:Set8021XActiveS0Response"/>
+    </message>
+    <message name="Get8021XActiveS0In">
+        <part name="parameters" element="net:Get8021XActiveS0"/>
+    </message>
+    <message name="Get8021XActiveS0Out">
+        <part name="parameters" element="net:Get8021XActiveS0Response"/>
+    </message>
+    <message name="Set8021XPxeTimeoutIn">
+        <part name="parameters" element="net:Set8021XPxeTimeout"/>
+    </message>
+    <message name="Set8021XPxeTimeoutOut">
+        <part name="parameters" element="net:Set8021XPxeTimeoutResponse"/>
+    </message>
+    <message name="Get8021XPxeTimeoutIn">
+        <part name="parameters" element="net:Get8021XPxeTimeout"/>
+    </message>
+    <message name="Get8021XPxeTimeoutOut">
+        <part name="parameters" element="net:Get8021XPxeTimeoutResponse"/>
+    </message>
+    
+    <portType name="NetworkAdministrationSoapPortType">
+        <operation name="SetHostName">
+            <input message="net:SetHostNameIn"/>
+            <output message="net:SetHostNameOut"/>
+        </operation>
+        <operation name="GetHostName">
+            <input message="net:GetHostNameIn"/>
+            <output message="net:GetHostNameOut"/>
+        </operation>
+        <operation name="SetDomainName">
+            <input message="net:SetDomainNameIn"/>
+            <output message="net:SetDomainNameOut"/>
+        </operation>
+        <operation name="GetDomainName">
+            <input message="net:GetDomainNameIn"/>
+            <output message="net:GetDomainNameOut"/>
+        </operation>
+        <operation name="SetTcpIpParameters">
+            <input message="net:SetTcpIpParametersIn"/>
+            <output message="net:SetTcpIpParametersOut"/>
+        </operation>
+        <operation name="GetTcpIpParameters">
+            <input message="net:GetTcpIpParametersIn"/>
+            <output message="net:GetTcpIpParametersOut"/>
+        </operation>
+        <operation name="SetVlanParameters">
+            <input message="net:SetVlanParametersIn"/>
+            <output message="net:SetVlanParametersOut"/>
+        </operation>
+        <operation name="GetVlanParameters">
+            <input message="net:GetVlanParametersIn"/>
+            <output message="net:GetVlanParametersOut"/>
+        </operation>
+        <operation name="SetPingResponse">
+            <input message="net:SetPingResponseIn"/>
+            <output message="net:SetPingResponseOut"/>
+        </operation>
+        <operation name="GetPingResponse">
+            <input message="net:GetPingResponseIn"/>
+            <output message="net:GetPingResponseOut"/>
+        </operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <operation name="EnumerateInterfaces">
+            <input message="net:EnumerateInterfacesIn"/>
+            <output message="net:EnumerateInterfacesOut"/>
+        </operation>
+        <operation name="GetInterfaceSettings">
+            <input message="net:GetInterfaceSettingsIn"/>
+            <output message="net:GetInterfaceSettingsOut"/>
+        </operation>
+        <operation name="SetInterfaceSettings">
+            <input message="net:SetInterfaceSettingsIn"/>
+            <output message="net:SetInterfaceSettingsOut"/>
+        </operation>
+        <operation name="Get8021XWiredProfile">
+            <input message="net:Get8021XWiredProfileIn"/>
+            <output message="net:Get8021XWiredProfileOut"/>
+        </operation>
+        <operation name="Set8021XWiredProfile">
+            <input message="net:Set8021XWiredProfileIn"/>
+            <output message="net:Set8021XWiredProfileOut"/>
+        </operation>
+
+        <!-- Intel(r) AMT 2.6 -->
+        <operation name="Set8021XActiveS0">
+            <input message="net:Set8021XActiveS0In"/>
+            <output message="net:Set8021XActiveS0Out"/>
+        </operation>
+        <operation name="Get8021XActiveS0">
+            <input message="net:Get8021XActiveS0In"/>
+            <output message="net:Get8021XActiveS0Out"/>
+        </operation>
+        <operation name="Set8021XPxeTimeout">
+            <input message="net:Set8021XPxeTimeoutIn"/>
+            <output message="net:Set8021XPxeTimeoutOut"/>
+        </operation>
+        <operation name="Get8021XPxeTimeout">
+            <input message="net:Get8021XPxeTimeoutIn"/>
+            <output message="net:Get8021XPxeTimeoutOut"/>
+        </operation>
+
+    </portType>
+    <binding name="NetworkAdministrationSoapBinding" type="net:NetworkAdministrationSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="SetHostName">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/SetHostName"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetHostName">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/GetHostName"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetDomainName">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/SetDomainName"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetDomainName">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/GetDomainName"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTcpIpParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/SetTcpIpParameters"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTcpIpParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/GetTcpIpParameters"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetVlanParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/SetVlanParameters"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetVlanParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/GetVlanParameters"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetPingResponse">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/SetPingResponse"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetPingResponse">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2004/01/GetPingResponse"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <operation name="EnumerateInterfaces">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/EnumerateInterfaces"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetInterfaceSettings">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/GetInterfaceSettings"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetInterfaceSettings">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/SetInterfaceSettings"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="Set8021XWiredProfile">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Set8021XWiredProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>        
+        <operation name="Get8021XWiredProfile">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Get8021XWiredProfile"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <!-- Intel(r) AMT 2.6 -->
+        <operation name="Set8021XActiveS0">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Set8021XActiveS0" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="Get8021XActiveS0">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Get8021XActiveS0" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>        
+        <operation name="Set8021XPxeTimeout">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Set8021XPxeTimeout" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="Get8021XPxeTimeout">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkAdministration/2006/01/Get8021XPxeTimeout" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        
+    </binding>
+    <service name="NetworkAdministrationService">
+        <port name="NetworkAdministrationSoapPortType" binding="net:NetworkAdministrationSoapBinding">
+            <soap:address location="http://hostname:16992/NetworkAdministrationService"/>
+        </port>
+    </service>
+</definitions>

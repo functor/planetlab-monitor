@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    elementFormDefault="qualified">
+    
+    <xs:simpleType name="PT_STATUS">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    
+    <xs:simpleType name="UserAclRealmType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:documentation>InvalidRealm = 0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>Reserved = 1</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:documentation>RedirectionRealm = 2</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:documentation>PTAdministrationRealm = 3</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="4">
+                <xs:annotation>
+                    <xs:documentation>HardwareAssetRealm = 4</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="5">
+                <xs:annotation>
+                    <xs:documentation>RemoteControlRealm = 5</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="6">
+                <xs:annotation>
+                    <xs:documentation>StorageRealm = 6</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="7">
+                <xs:annotation>
+                    <xs:documentation>EventManagerRealm = 7</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="8">
+                <xs:annotation>
+                    <xs:documentation>StorageAdminRealm = 8</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="9">
+                <xs:annotation>
+                    <xs:documentation>AgentPresenceLocalRealm = 9</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="10">
+                <xs:annotation>
+                    <xs:documentation>AgentPresenceRemoteRealm = 10</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="11">
+                <xs:annotation>
+                    <xs:documentation>CircuitBreakerRealm = 11</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="12">
+                <xs:annotation>
+                    <xs:documentation>NetworkTimeRealm = 12</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="13">
+                <xs:annotation>
+                    <xs:documentation>GeneralInfoRealm = 13</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="14">
+                <xs:annotation>
+                    <xs:documentation>FirmwareUpdateRealm = 14</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="15">
+                <xs:annotation>
+                    <xs:documentation>EITRealm = 15</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="16">
+                <xs:annotation>
+                    <xs:documentation>LocalUNRealm = 16</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="17">
+                <xs:annotation>
+                    <xs:documentation>EndpointAccessControlRealm = 17</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="18">
+                <xs:annotation>
+                    <xs:documentation>EndpointAccessControlAdminRealm = 18</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="19">
+                <xs:annotation>
+                    <xs:documentation>EventLogReaderRealm = 19</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="UserAclEntryHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    
+    <xs:simpleType name="AclStringType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="16"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="AclPasswordStringType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="UserAclEntryType">
+        <xs:sequence>
+            <xs:element name="Username" type="sai:AclStringType"/>
+            <xs:element name="Password" type="sai:AclPasswordStringType"/>
+            <xs:element name="Realms" type="sai:UserAclRealmListType"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="AdminAclEntryType">
+        <xs:sequence>
+            <xs:element name="Username" type="sai:AclStringType"/>
+            <xs:element name="Password" type="sai:AclPasswordStringType"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="UserAclEntryHandleListType">
+        <xs:sequence>
+            <xs:element name="Handle" type="sai:UserAclEntryHandleType" minOccurs="0" maxOccurs="7"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="UserAclRealmListType">
+        <xs:sequence>
+            <xs:element name="Realm" type="sai:UserAclRealmType" minOccurs="0" maxOccurs="16"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:simpleType name="IPv4AddressType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    
+    <xs:simpleType name="RsaKeyEncodingType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="30">
+                <xs:annotation>
+                    <xs:documentation>RsaKeyEncodingTypeInvalid = 30</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="31">
+                <xs:annotation>
+                    <xs:documentation>RsaKeyEncodingTypeSshv2Mpint = 31</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="RsaCertificateEncodingType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="10">
+                <xs:annotation>
+                    <xs:documentation>RsaCertificateEncodingTypeInvalid = 10</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="11">
+                <xs:annotation>
+                    <xs:documentation>RsaCertificateEncodingTypeX509 = 11</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="RngKeyEncodingType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="20">
+                <xs:annotation>
+                    <xs:documentation>RngKeyEncodingTypeInvalid = 20</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="21">
+                <xs:annotation>
+                    <xs:documentation>RngKeyEncodingTypeBare = 21</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="RsaKeyType">
+        <xs:sequence>
+            <xs:element name="Encoding" type="sai:RsaKeyEncodingType"/>
+            <xs:element name="Length" type="xs:unsignedInt"/>
+            <xs:element name="Value" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="RngKeyType">
+        <xs:sequence>
+            <xs:element name="Type" type="sai:RngKeyEncodingType"/>
+            <xs:element name="Length" type="xs:unsignedInt"/>
+            <xs:element name="Data" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CertificateChainType">
+        <xs:sequence>
+            <xs:element name="Encoding" type="sai:RsaCertificateEncodingType"/>
+            <xs:element name="Length" type="xs:unsignedInt"/>
+            <xs:element name="Value" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="UpdateCoreUrlKeyType">
+        <xs:sequence>
+            <xs:element name="KeyLength" type="xs:unsignedInt"/>
+            <xs:element name="KeyAlgorithm" type="xs:unsignedInt"/>
+            <xs:element name="KeyData" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="AmtVersion">
+        <xs:sequence>
+            <xs:element name="major" type="xs:unsignedByte"/>
+            <xs:element name="minor" type="xs:unsignedByte"/>
+            <xs:element name="micro" type="xs:unsignedShort"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:simpleType name="ProvisioningModeType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:documentation>"0 = ProvisioningModeCurrent"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>"1 = ProvisioningModeEnterprise"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:documentation>"2 = ProvisioningModeSmallBusiness"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <!-- Intel(r) AMT 2.0 -->
+    <xs:simpleType name="AccessPermissionType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="LocalAccessPermission"/>
+            <xs:enumeration value="NetworkAccessPermission"/>
+            <xs:enumeration value="AnyAccessPermission"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="UserEntryDigestType">
+        <xs:sequence>
+            <xs:element name="Username" type="sai:AclStringType"/>
+            <xs:element name="DigestPassword">                    
+                    <xs:simpleType>
+                        <xs:restriction base="xs:base64Binary">
+                            <xs:length value="16"/>
+                        </xs:restriction>
+                    </xs:simpleType>
+            </xs:element>                                       
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="UserEntryKerberosType">
+        <xs:sequence>
+            <xs:element name="Sid" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="UserAclEntryExType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="DigestUser" type="sai:UserEntryDigestType"/>
+                <xs:element name="KerberosUser" type="sai:UserEntryKerberosType"/>
+            </xs:choice>
+            <xs:element name="AccessPermission" type="sai:AccessPermissionType"/>
+            <xs:element name="Realms" type="sai:UserAclRealmListType"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AdminAclEntryExType">
+        <xs:sequence>
+            <xs:element name="Username" type="sai:AclStringType"/>
+            <xs:element name="DigestPassword">
+                <xs:simpleType>
+                    <xs:restriction base="xs:base64Binary">
+                        <xs:length value="16"/>
+                    </xs:restriction>
+                </xs:simpleType>                    
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="KerberosSpnProtocolType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="HTTP"/>
+            <xs:enumeration value="HTTPS"/>
+            <xs:enumeration value="SOL_IDER"/>
+            <xs:enumeration value="SOL_IDER_SSL"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:element name="SpnString">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:minLength value="0"/>
+                <xs:maxLength value="266"/> <!-- sizeof(FQDN) + sizeof "HTTP\" + 6 (for ":PORT_NUMBER") -->
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:complexType name="KerberosSpnType">
+        <xs:sequence>
+            <xs:element name="SpnProtocolIndex" type="sai:KerberosSpnProtocolType"/>
+            <xs:element ref="sai:SpnString"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="KerberosEncryptionType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="HMAC_RC4"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:element name="KerberosRealmName">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:minLength value="1"/>
+                <xs:maxLength value="63"/> <!-- 64 incl null -->
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    <xs:complexType name="KerberosOptionsType">
+        <xs:sequence>
+            <xs:element ref="sai:KerberosRealmName"/>
+            <xs:element name="KerberosSpn" type="sai:KerberosSpnType" minOccurs="1" maxOccurs="4"/>
+            <xs:element name="KerberosKeyVersion" type="xs:unsignedInt"/>
+            <xs:element name="KerberosEncryption" type="sai:KerberosEncryptionType"/>
+            <xs:element name="KerberosMasterKey">
+                <xs:simpleType>
+                    <xs:restriction base="xs:base64Binary">
+                        <xs:length value="16"/>
+                    </xs:restriction>
+                </xs:simpleType>                    
+            </xs:element>
+            <xs:element name="KerberosMaximumClockTolerance">
+                <xs:simpleType>
+                    <xs:restriction base="xs:unsignedInt">
+                            <xs:minInclusive value="1"/>
+                    </xs:restriction>
+                </xs:simpleType>                    
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:simpleType name="PowerStateType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="PowerStateS0"/>
+            <xs:enumeration value="PowerStateS1"/>
+            <xs:enumeration value="PowerStateS2"/>
+            <xs:enumeration value="PowerStateS3"/>
+            <xs:enumeration value="PowerStateS4"/>
+            <xs:enumeration value="PowerStateS5"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="EnabledInterfacesType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="WebUI"/>
+            <xs:enumeration value="SerialOverLAN"/>
+            <xs:enumeration value="IdeRedirection"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="InterfaceType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NetworkInterface"/>
+            <xs:enumeration value="LocalHostInterface"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="TlsAthenticationType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NoAuth"/>
+            <xs:enumeration value="ServerAuth"/>
+            <xs:enumeration value="MutualAuth"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="TlsOptionsType">
+        <xs:sequence>
+            <xs:element name="Interface" type="sai:InterfaceType"/>
+            <xs:element name="TlsAuthentication" type="sai:TlsAthenticationType"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:simpleType name="CertificateHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+    
+    <xs:complexType name="CertificateType">
+        <xs:sequence>
+            <xs:element name="X509cert" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="CrlType">
+        <xs:sequence>
+            <xs:element name="CrlUrl" type="xs:string"/>
+            <xs:element name="SerialNumber" type="xs:base64Binary" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="PkiCapsType">
+        <xs:sequence>
+            <xs:element name="CrlStoreSize" type="xs:unsignedInt"/>
+            <xs:element name="RootCertMaxSize" type="xs:unsignedInt"/>
+            <xs:element name="RootCertMaxInstances" type="xs:unsignedInt"/>
+            <xs:element name="FqdnSuffixMaxEntries" type="xs:unsignedInt"/>
+            <xs:element name="FqdnSuffixMaxEntryLength" type="xs:unsignedInt"/>
+            <xs:element name="CertChainMaxSize" type="xs:unsignedInt"/>
+            <xs:element name="SupportedKeyLengths" type="xs:unsignedInt" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Intel(r) AMT 2.2 -->
+    <xs:simpleType name="ProvisioningTLSModeType">
+        <xs:restriction base="xs:unsignedByte">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:documentation>"0 = Not Ready"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>"1 = PSK"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:documentation>"2 = PKI"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="MEBxPasswordType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="0"/>
+            <xs:maxLength value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ProvisioningOTPType">
+        <xs:restriction base="xs:base64Binary">
+            <xs:minLength value="8"/>
+            <xs:maxLength value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="FriendlyNameType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="CertHashEntryType">
+        <xs:sequence>
+            <xs:element name="Default" type="xs:boolean" />
+            <xs:element name="Active" type="xs:boolean" />
+            <xs:element name="HashType" type="sai:HashTypeType" />
+            <xs:element name="Hash" type="xs:base64Binary" />
+            <xs:element name="FriendlyName" type="sai:FriendlyNameType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:simpleType name="HashTypeType">
+        <xs:restriction base="xs:unsignedByte">
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>"1 = SHA-1-160"</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="ProvisioningAuditRecordType">
+        <xs:sequence>
+            <xs:element name="ProvisioningTLSMode" type="sai:ProvisioningTLSModeType" />
+            <xs:element name="SecureDNS" type="xs:boolean" />
+            <xs:element name="HostInitiated" type="xs:boolean" />
+            <xs:element name="ProvServerFQDN" type="xs:string" minOccurs="0"/>
+            <xs:element name="SelectedHashType" type="sai:HashTypeType" />
+            <xs:element name="SelectedHashData" type="xs:base64Binary" />
+            <xs:element name="CaCertSerials" type="xs:base64Binary" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="AdditionalCaSerialNums" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="IsOemDefault" type="xs:boolean" />
+            <xs:element name="IsTimeValid" type="xs:boolean" />
+            <xs:element name="ProvServerIP" type="sai:IPv4AddressType" />
+            <xs:element name="TlsStartTime" type="xs:unsignedInt" />
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!-- Intel(r) AMT 2.5 -->
+    <xs:complexType name="EnvironmentDetectionDomainType">
+        <xs:sequence>
+            <xs:element name="values" type="xs:string" minOccurs="0" maxOccurs="5" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EnvironmentDetectionType">
+        <xs:sequence>
+            <xs:element name="LocalDomains" type="sai:EnvironmentDetectionDomainType"/>
+            <xs:element name="ExternalCircuitBreakerPolicy" type="xs:unsignedInt" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:simpleType name="HTTPAuthOptionType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NoAuth"/>
+            <xs:enumeration value="Auth"/>
+            <xs:enumeration value="Disable"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="GlobalPowerPolicyType">
+        <xs:sequence>
+            <xs:element name="IdleWakeTimeout" type="xs:unsignedInt"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+</xs:schema>

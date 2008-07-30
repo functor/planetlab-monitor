@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xcfg="http://schemas.intel.com/platform/client/XProfiles/2006/01"
+    xmlns:wcxs="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01"
+    targetNamespace="http://schemas.intel.com/platform/client/WirelessConfiguration/2006/01"
+    elementFormDefault="qualified">
+
+    <!-- Import XProfiles -->
+    <xs:import namespace="http://schemas.intel.com/platform/client/XProfiles/2006/01" schemaLocation="XProfile.xsd"/>
+
+    <!-- Schema definition -->
+
+    <!-- WLAN Profile Identification  -->
+    <xs:simpleType name="ProfileNameType">
+        <xs:restriction base="xs:string">
+           <!--  String with size 1-35, must not contain these chars: \ / : * ? < > | " -->
+            <xs:minLength value="1"/>
+            <xs:maxLength value="35"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Profile Priority  -->
+    <xs:simpleType name="ProfilePriorityType">
+        <xs:restriction base="xs:unsignedByte">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="255"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+
+    <!-- WEP Definition -->
+
+    <xs:simpleType name="KeyIndexType">
+        <xs:restriction base="xs:unsignedInt">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="3"/>
+            <xs:enumeration value="4"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="RawKey64Type">
+        <xs:restriction base="xs:base64Binary">
+            <xs:annotation>
+                <xs:documentation>64 bit Key</xs:documentation>
+            </xs:annotation>
+            <xs:length value="8"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="RawKey128Type">
+        <xs:restriction base="xs:base64Binary">
+            <xs:annotation>
+                <xs:documentation>128 bit Key</xs:documentation>
+            </xs:annotation>
+            <xs:length value="16"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="RawKey256Type">
+        <xs:restriction base="xs:base64Binary">
+            <xs:annotation>
+                <xs:documentation>256 bit Key</xs:documentation>
+            </xs:annotation>
+            <xs:length value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="PassPhrase5Type">
+        <xs:restriction base="xs:string">
+            <xs:annotation>
+                <xs:documentation>5 chars Passphrase</xs:documentation>
+            </xs:annotation>
+            <xs:length value="5"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="PassPhraseWEP128Type">
+        <xs:restriction base="xs:string">
+            <xs:annotation>
+                <xs:documentation>13 chars Passphrase</xs:documentation>
+            </xs:annotation>
+            <xs:length value="13"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="PassPhrase63Type">
+        <xs:restriction base="xs:string">
+            <xs:annotation>
+                <xs:documentation>8-63 chars Passphrase</xs:documentation>
+            </xs:annotation>
+            <xs:minLength value="8"/>
+            <xs:maxLength value="63"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="WEP64Type">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="PassPhrase" type="wcxs:PassPhrase5Type"/>
+                <xs:element name="RawKey" type="wcxs:RawKey64Type"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="WEP128Type">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="PassPhrase" type="wcxs:PassPhraseWEP128Type"/>
+                <xs:element name="RawKey" type="wcxs:RawKey128Type"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DataEncryptionWEPXType">
+        <xs:sequence>
+            <xs:element name="KeyIndex" type="wcxs:KeyIndexType"/>
+            <xs:choice>
+                <xs:element name="WEP64" type="wcxs:WEP64Type"/>
+                <xs:element name="WEP128" type="wcxs:WEP128Type"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- DataEncryptionType -->
+
+    <xs:complexType name="DataEncryptionWEPType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="PassPhrase" type="wcxs:PassPhrase63Type"/>
+                <xs:element name="RawKey" type="wcxs:RawKey128Type"/>
+                <xs:element name="XProfile" type="xcfg:XProfileType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DataEncryptionTKIPType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="PassPhrase" type="wcxs:PassPhrase63Type"/>
+                <xs:element name="RawKey" type="wcxs:RawKey256Type"/>
+                <xs:element name="XProfile" type="xcfg:XProfileType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+
+    <xs:complexType name="DataEncryptionCCMPType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="PassPhrase" type="wcxs:PassPhrase63Type"/>
+                <xs:element name="RawKey" type="wcxs:RawKey256Type"/>
+                <xs:element name="XProfile" type="xcfg:XProfileType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+
+    <!-- NetworkAuthenticationType -->
+
+    <xs:complexType name="ProfileSecuritySettingWPAType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="DataEncryptionTKIP" type="wcxs:DataEncryptionTKIPType"/>
+                <xs:element name="DataEncryptionCCMP" type="wcxs:DataEncryptionCCMPType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProfileSecuritySettingRSNType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="DataEncryptionTKIP" type="wcxs:DataEncryptionTKIPType"/>
+                <xs:element name="DataEncryptionCCMP" type="wcxs:DataEncryptionCCMPType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name = "ProfileSecuritySettingsType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="WPA" type="wcxs:ProfileSecuritySettingWPAType"/>
+                <xs:element name="RSN" type="wcxs:ProfileSecuritySettingRSNType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProfileType">
+        <xs:sequence>
+            <xs:element name="ProfileName" type="wcxs:ProfileNameType"/>
+            <xs:element name="Priority" type="wcxs:ProfilePriorityType"/>
+            <xs:element name="SSID" minOccurs="0" maxOccurs="1">
+                <xs:simpleType>
+                    <xs:restriction base="xs:base64Binary">
+                        <xs:minLength value="1"/>
+                        <xs:maxLength value="32"/>
+                        <!-- 33 incl null -->
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="Security" type="wcxs:ProfileSecuritySettingsType"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:simpleType name="FeatureType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="802.11a"/>
+            <xs:enumeration value="802.11b"/>
+            <xs:enumeration value="802.11g"/>
+            <xs:enumeration value="802.11n"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="WirelessCapabilitiesType">
+        <xs:sequence>
+            <xs:element name="SupportedFeatures" type="wcxs:FeatureType" minOccurs="1" maxOccurs="4"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="WirelessSettingsType">
+        <xs:sequence>
+            <xs:element name="RadioOn" type="xs:boolean"/>
+            <xs:element name="ActiveProfile" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
+

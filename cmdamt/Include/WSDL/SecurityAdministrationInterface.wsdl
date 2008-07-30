@@ -1,0 +1,2905 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Security Administration Interface version 1.15.1-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01" 
+    xmlns:cstr="http://schemas.intel.com/platform/client/CertStore/2006/01"
+    xmlns:sai="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01"
+    targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01">
+
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/CertStore/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="CertStore.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd"/>
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+            <xs:import namespace="http://schemas.intel.com/platform/client/CertStore/2006/01"/>
+
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:element name="AddUserAclEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Entry" type="sai:UserAclEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddUserAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAdminAclEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Entry" type="sai:AdminAclEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAdminAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateUserAclEntries">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StartIndex" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateUserAclEntriesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="TotalCount" type="xs:unsignedInt"/>
+                        <xs:element name="HandleCount" type="xs:unsignedInt"/>
+                        <xs:element name="Handles" type="sai:UserAclEntryHandleListType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetUserAclEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetUserAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Entry" type="sai:UserAclEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAdminAclEntry">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAdminAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Username" type="sai:AclStringType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateUserAclEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                        <xs:element name="Entry" type="sai:UserAclEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateUserAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoveUserAclEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoveUserAclEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTlsEnabled">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTlsEnabledResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSKeyAndCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PrivateKey" type="sai:RsaKeyType" minOccurs="0"/>
+                        <xs:element name="CertificateChain" type="sai:CertificateChainType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSKeyAndCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetRngKey">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Key" type="sai:RngKeyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetRngKeyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertificateChain" type="sai:CertificateChainType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTLSCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTLSCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="CertificateChain" type="sai:CertificateChainType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateCoreFromUrl">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="tftpServerIp" type="sai:IPv4AddressType"/>
+                        <xs:element name="tftpServerName" type="xs:string" minOccurs="0"/>
+                        <xs:element name="tftpServerPort" type="xs:unsignedShort"/>
+                        <xs:element name="MagicPacketPort" type="xs:unsignedShort"/>
+                        <xs:element name="packagePath" type="xs:string"/>
+                        <xs:element name="AmtAppVersion" type="sai:AmtVersion"/>
+                        <xs:element name="UpdateAppVersion" type="sai:AmtVersion"/>
+                        <xs:element name="MgmtConsoleAddr" type="sai:IPv4AddressType"/>
+                        <xs:element name="Key" type="sai:UpdateCoreUrlKeyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateCoreFromUrlResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningMode">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningModeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="ProvisioningMode" type="sai:ProvisioningModeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetProvisioningMode">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ProvisioningMode" type="sai:ProvisioningModeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetProvisioningModeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Unprovision">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ProvisioningMode" type="sai:ProvisioningModeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UnprovisionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CommitChanges">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CommitChangesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ResetFlashWearOutProtection">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ResetFlashWearOutProtectionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCoreVersion">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCoreVersionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Version" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.0 -->
+            <xs:element name="AddUserAclEntryEx">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EntryEx" type="sai:UserAclEntryExType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddUserAclEntryExResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetUserAclEntryEx">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetUserAclEntryExResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="EntryEx" type="sai:UserAclEntryExType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateUserAclEntryEx">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                        <xs:element name="EntryEx" type="sai:UserAclEntryExType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="UpdateUserAclEntryExResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAdminAclEntryEx">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EntryEx" type="sai:AdminAclEntryExType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAdminAclEntryExResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetDigestRealm">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetDigestRealmResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="DigestRealm" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetKerberosOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="KerberosOptions" type="sai:KerberosOptionsType" minOccurs="0" maxOccurs="1"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetKerberosOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetKerberosOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetKerberosOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="KerberosOptions" type="sai:KerberosOptionsType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEnabledInterfaces">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="EnabledInterfaces" type="sai:EnabledInterfacesType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEnabledInterfacesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEnabledInterfaces">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEnabledInterfacesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="EnabledInterfaces" type="sai:EnabledInterfacesType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTlsOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="TlsOptions" type="sai:TlsOptionsType" minOccurs="0" maxOccurs="2"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTlsOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTlsOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTlsOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="TlsOptions" type="sai:TlsOptionsType" minOccurs="0" maxOccurs="2"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddTrustedRootCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Certificate" type="sai:CertificateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddTrustedRootCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTrustedRootCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTrustedRootCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Certificate" type="sai:CertificateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="DeleteTrustedRootCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="DeleteTrustedRootCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateTrustedRootCertificates">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateTrustedRootCertificatesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTrustedFqdnCN">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FqdnSuffix" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTrustedFqdnCNResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTrustedFqdnCN">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTrustedFqdnCNResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="FqdnSuffix" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetCRL">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Crl" type="sai:CrlType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetCRLResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCRL">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCRLResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="Crl" type="sai:CrlType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetServerCertificateReq">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetServerCertificateReqResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="CertReq" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPkiCapabilities">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPkiCapabilitiesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="PkiCaps" type="sai:PkiCapsType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetPowerSavingOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="ActiveStateAC" type="sai:PowerStateType"/>
+                        <xs:element name="WakeOnNetAccessThresholdAC" type="sai:PowerStateType" minOccurs="0"/>
+                        <xs:element name="WakeOnNetAccessSleepTimer" type="xs:unsignedShort" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetPowerSavingOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPowerSavingOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPowerSavingOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="ActiveStateAC" type="sai:PowerStateType"/>
+                        <xs:element name="WakeOnNetAccessThresholdAC" type="sai:PowerStateType" minOccurs="0"/>
+                        <xs:element name="WakeOnNetAccessSleepTimer" type="xs:unsignedShort" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSPSK">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PID">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:base64Binary">
+                                    <xs:length value="8"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="PPS">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:base64Binary">
+                                    <xs:length value="32"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSPSKResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="PartialUnprovision">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="PartialUnprovisionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Intel(r) AMT 2.2 -->
+            <xs:element name="SetMEBxPassword">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Password" type="sai:MEBxPasswordType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetMEBxPasswordResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetProvisioningServerOTP">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="OTP" type="sai:ProvisioningOTPType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetProvisioningServerOTPResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningServerOTP">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningServerOTPResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="OTP" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateCertificateHashEntries">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumerateCertificateHashEntriesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Handles" type="xs:unsignedInt" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCertificateHashEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCertificateHashEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="CertHashEntry" type="sai:CertHashEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddCertificateHashEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHashEntry" type="sai:CertHashEntryType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AddCertificateHashEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Handle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="DeleteCertificateHashEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="DeleteCertificateHashEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnableCertificateHashEntry">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="xs:unsignedInt"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnableCertificateHashEntryResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetZeroTouchConfigurationMode">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetZeroTouchConfigurationModeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetZeroTouchConfigurationMode">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetZeroTouchConfigurationModeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningAuditRecord">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningAuditRecordResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="ProvisioningAuditRecord" type="sai:ProvisioningAuditRecordType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningPID">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningPIDResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="PID" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ExtendProvisioningPeriod">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Duration" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ExtendProvisioningPeriodResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <!-- Intel(r) AMT 2.5 -->
+            <xs:element name="GetRealmAuthOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Realm" type="sai:UserAclRealmType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetRealmAuthOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                        <xs:element name="HTTPAuthOption" type="sai:HTTPAuthOptionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetRealmAuthOptions">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Realm" type="sai:UserAclRealmType"/>
+                        <xs:element name="HTTPAuthOption" type="sai:HTTPAuthOptionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetRealmAuthOptionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="sai:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEnvironmentDetection">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Params" type="sai:EnvironmentDetectionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetEnvironmentDetectionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEnvironmentDetection">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEnvironmentDetectionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Params" type="sai:EnvironmentDetectionType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumeratePowerPackages">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnumeratePowerPackagesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="PolicyGUID" type="cmn:GuidBuf" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetActivePowerPackage">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetActivePowerPackageResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="PolicyGUID" type="cmn:GuidBuf"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPowerPackage">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PolicyGUID" type="cmn:GuidBuf"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPowerPackageResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="PolicyDescriptor" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetActivePowerPackage">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="PolicyGUID" type="cmn:GuidBuf"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetActivePowerPackageResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetGlobalPowerPolicy">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="GlobalPowerPolicy" type="sai:GlobalPowerPolicyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetGlobalPowerPolicyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetGlobalPowerPolicy">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetGlobalPowerPolicyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="GlobalPowerPolicy" type="sai:GlobalPowerPolicyType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreAddKey">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="KeyPair" type="cstr:KeyPairType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreAddKeyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="KeyPairHandle" type="cstr:KeyPairHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreEnumerateKeys">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FindByCert" type="sai:CertificateHandleType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreEnumerateKeysResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="KeyPairHandles" type="sai:CertificateHandleType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetKey">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="KeyPairHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetKeyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="PublicKey" type="cstr:KeyPairType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreRemoveKey">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="KeyPairHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreRemoveKeyResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreAddCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Certificate" type="sai:CertificateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreAddCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreEnumerateCertificates">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FindByDNName" type="xs:string" minOccurs="0"/>
+                        <xs:element name="FindByUsage" type="xs:string" minOccurs="0"/>
+                        <xs:element name="FindByIssuer" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreEnumerateCertificatesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="CertHandles" type="sai:CertificateHandleType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Certificate" type="sai:CertificateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreRemoveCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreRemoveCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetPKCS10Request">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="KeyPairHandle" type="sai:CertificateHandleType"/>
+                        <xs:element name="DNName" type="xs:string" minOccurs="0"/>
+                        <xs:element name="Usage" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreGetPKCS10RequestResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="CertificateRequest" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreUpdateCertificate">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType"/>
+                        <xs:element name="Certificate" type="sai:CertificateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CertStoreUpdateCertificateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSCredentials">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetTLSCredentialsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTLSCredentials">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetTLSCredentialsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="CertHandle" type="sai:CertificateHandleType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnableVpnRouting">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Enable" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="EnableVpnRoutingResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="SetConfigurationServerFQDN">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="fqdn" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetConfigurationServerFQDNResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetConfigurationServerFQDN">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetConfigurationServerFQDNResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="fqdn" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>             
+            
+            <!-- Intel(r) AMT 3.0 -->
+            <xs:element name="SetAclEnabledState">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SetAclEnabledStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAclEnabledState">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Handle" type="sai:UserAclEntryHandleType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAclEnabledStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Enabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>        
+        </xs:schema>
+    </wsdl:types>
+
+    <!-- Intel(r) AMT 1.0 -->
+    <message name="AddUserAclEntryIn">
+        <part name="parameters" element="sai:AddUserAclEntry"/>
+    </message>
+    <message name="AddUserAclEntryOut">
+        <part name="parameters" element="sai:AddUserAclEntryResponse"/>
+    </message>
+    <message name="EnumerateUserAclEntriesIn">
+        <part name="parameters" element="sai:EnumerateUserAclEntries"/>
+    </message>
+    <message name="EnumerateUserAclEntriesOut">
+        <part name="parameters" element="sai:EnumerateUserAclEntriesResponse"/>
+    </message>
+    <message name="GetUserAclEntryIn">
+        <part name="parameters" element="sai:GetUserAclEntry"/>
+    </message>
+    <message name="GetUserAclEntryOut">
+        <part name="parameters" element="sai:GetUserAclEntryResponse"/>
+    </message>
+    <message name="UpdateUserAclEntryIn">
+        <part name="parameters" element="sai:UpdateUserAclEntry"/>
+    </message>
+    <message name="UpdateUserAclEntryOut">
+        <part name="parameters" element="sai:UpdateUserAclEntryResponse"/>
+    </message>
+    <message name="RemoveUserAclEntryIn">
+        <part name="parameters" element="sai:RemoveUserAclEntry"/>
+    </message>
+    <message name="RemoveUserAclEntryOut">
+        <part name="parameters" element="sai:RemoveUserAclEntryResponse"/>
+    </message>
+    <message name="SetAdminAclEntryIn">
+        <part name="parameters" element="sai:SetAdminAclEntry"/>
+    </message>
+    <message name="SetAdminAclEntryOut">
+        <part name="parameters" element="sai:SetAdminAclEntryResponse"/>
+    </message>
+    <message name="GetAdminAclEntryIn">
+        <part name="parameters" element="sai:GetAdminAclEntry"/>
+    </message>
+    <message name="GetAdminAclEntryOut">
+        <part name="parameters" element="sai:GetAdminAclEntryResponse"/>
+    </message>
+    <message name="SetTLSKeyAndCertificateIn">
+        <part name="parameters" element="sai:SetTLSKeyAndCertificate"/>
+    </message>
+    <message name="SetTLSKeyAndCertificateOut">
+        <part name="parameters" element="sai:SetTLSKeyAndCertificateResponse"/>
+    </message>
+    <message name="SetTLSCertificateIn">
+        <part name="parameters" element="sai:SetTLSCertificate"/>
+    </message>
+    <message name="SetTLSCertificateOut">
+        <part name="parameters" element="sai:SetTLSCertificateResponse"/>
+    </message>
+    <message name="GetTLSCertificateIn">
+        <part name="parameters" element="sai:GetTLSCertificate"/>
+    </message>
+    <message name="GetTLSCertificateOut">
+        <part name="parameters" element="sai:GetTLSCertificateResponse"/>
+    </message>
+    <message name="SetRngKeyIn">
+        <part name="parameters" element="sai:SetRngKey"/>
+    </message>
+    <message name="SetRngKeyOut">
+        <part name="parameters" element="sai:SetRngKeyResponse"/>
+    </message>
+    <message name="SetTlsEnabledIn">
+        <part name="parameters" element="sai:SetTlsEnabled"/>
+    </message>
+    <message name="SetTlsEnabledOut">
+        <part name="parameters" element="sai:SetTlsEnabledResponse"/>
+    </message>
+    <message name="UpdateCoreFromUrlIn">
+        <part name="parameters" element="sai:UpdateCoreFromUrl"/>
+    </message>
+    <message name="UpdateCoreFromUrlOut">
+        <part name="parameters" element="sai:UpdateCoreFromUrlResponse"/>
+    </message>
+    <message name="GetProvisioningModeIn">
+        <part name="parameters" element="sai:GetProvisioningMode"/>
+    </message>
+    <message name="GetProvisioningModeOut">
+        <part name="parameters" element="sai:GetProvisioningModeResponse"/>
+    </message>
+    <message name="SetProvisioningModeIn">
+        <part name="parameters" element="sai:SetProvisioningMode"/>
+    </message>
+    <message name="SetProvisioningModeOut">
+        <part name="parameters" element="sai:SetProvisioningModeResponse"/>
+    </message>
+    <message name="UnprovisionIn">
+        <part name="parameters" element="sai:Unprovision"/>
+    </message>
+    <message name="UnprovisionOut">
+        <part name="parameters" element="sai:UnprovisionResponse"/>
+    </message>
+    <message name="CommitChangesIn">
+        <part name="parameters" element="sai:CommitChanges"/>
+    </message>
+    <message name="CommitChangesOut">
+        <part name="parameters" element="sai:CommitChangesResponse"/>
+    </message>
+    <message name="ResetFlashWearOutProtectionIn">
+        <part name="parameters" element="sai:ResetFlashWearOutProtection"/>
+    </message>
+    <message name="ResetFlashWearOutProtectionOut">
+        <part name="parameters" element="sai:ResetFlashWearOutProtectionResponse"/>
+    </message>
+    <message name="GetCoreVersionIn">
+        <part name="parameters" element="sai:GetCoreVersion"/>
+    </message>
+    <message name="GetCoreVersionOut">
+        <part name="parameters" element="sai:GetCoreVersionResponse"/>
+    </message>
+
+    <!-- Intel(r) AMT 2.0 -->
+    <message name="AddUserAclEntryExIn">
+        <part name="parameters" element="sai:AddUserAclEntryEx"/>
+    </message>
+    <message name="AddUserAclEntryExOut">
+        <part name="parameters" element="sai:AddUserAclEntryExResponse"/>
+    </message>
+    <message name="GetUserAclEntryExIn">
+        <part name="parameters" element="sai:GetUserAclEntryEx"/>
+    </message>
+    <message name="GetUserAclEntryExOut">
+        <part name="parameters" element="sai:GetUserAclEntryExResponse"/>
+    </message>
+    <message name="UpdateUserAclEntryExIn">
+        <part name="parameters" element="sai:UpdateUserAclEntryEx"/>
+    </message>
+    <message name="UpdateUserAclEntryExOut">
+        <part name="parameters" element="sai:UpdateUserAclEntryExResponse"/>
+    </message>
+    <message name="SetAdminAclEntryExIn">
+        <part name="parameters" element="sai:SetAdminAclEntryEx"/>
+    </message>
+    <message name="SetAdminAclEntryExOut">
+        <part name="parameters" element="sai:SetAdminAclEntryExResponse"/>
+    </message>
+    <message name="GetDigestRealmIn">
+        <part name="parameters" element="sai:GetDigestRealm"/>
+    </message>
+    <message name="GetDigestRealmOut">
+        <part name="parameters" element="sai:GetDigestRealmResponse"/>
+    </message>
+    <message name="SetKerberosOptionsIn">
+        <part name="parameters" element="sai:SetKerberosOptions"/>
+    </message>
+    <message name="SetKerberosOptionsOut">
+        <part name="parameters" element="sai:SetKerberosOptionsResponse"/>
+    </message>
+    <message name="GetKerberosOptionsIn">
+        <part name="parameters" element="sai:GetKerberosOptions"/>
+    </message>
+    <message name="GetKerberosOptionsOut">
+        <part name="parameters" element="sai:GetKerberosOptionsResponse"/>
+    </message>
+    <message name="SetEnabledInterfacesIn">
+        <part name="parameters" element="sai:SetEnabledInterfaces"/>
+    </message>
+    <message name="SetEnabledInterfacesOut">
+        <part name="parameters" element="sai:SetEnabledInterfacesResponse"/>
+    </message>
+    <message name="GetEnabledInterfacesIn">
+        <part name="parameters" element="sai:GetEnabledInterfaces"/>
+    </message>
+    <message name="GetEnabledInterfacesOut">
+        <part name="parameters" element="sai:GetEnabledInterfacesResponse"/>
+    </message>
+    <message name="SetTlsOptionsIn">
+        <part name="parameters" element="sai:SetTlsOptions"/>
+    </message>
+    <message name="SetTlsOptionsOut">
+        <part name="parameters" element="sai:SetTlsOptionsResponse"/>
+    </message>
+    <message name="GetTlsOptionsIn">
+        <part name="parameters" element="sai:GetTlsOptions"/>
+    </message>
+    <message name="GetTlsOptionsOut">
+        <part name="parameters" element="sai:GetTlsOptionsResponse"/>
+    </message>
+    <message name="AddTrustedRootCertificateIn">
+        <part name="parameters" element="sai:AddTrustedRootCertificate"/>
+    </message>
+    <message name="AddTrustedRootCertificateOut">
+        <part name="parameters" element="sai:AddTrustedRootCertificateResponse"/>
+    </message>
+    <message name="GetTrustedRootCertificateIn">
+        <part name="parameters" element="sai:GetTrustedRootCertificate"/>
+    </message>
+    <message name="GetTrustedRootCertificateOut">
+        <part name="parameters" element="sai:GetTrustedRootCertificateResponse"/>
+    </message>
+    <message name="DeleteTrustedRootCertificateIn">
+        <part name="parameters" element="sai:DeleteTrustedRootCertificate"/>
+    </message>
+    <message name="DeleteTrustedRootCertificateOut">
+        <part name="parameters" element="sai:DeleteTrustedRootCertificateResponse"/>
+    </message>
+    <message name="EnumerateTrustedRootCertificatesIn">
+        <part name="parameters" element="sai:EnumerateTrustedRootCertificates"/>
+    </message>
+    <message name="EnumerateTrustedRootCertificatesOut">
+        <part name="parameters" element="sai:EnumerateTrustedRootCertificatesResponse"/>
+    </message>
+    <message name="SetTrustedFqdnCNIn">
+        <part name="parameters" element="sai:SetTrustedFqdnCN"/>
+    </message>
+    <message name="SetTrustedFqdnCNOut">
+        <part name="parameters" element="sai:SetTrustedFqdnCNResponse"/>
+    </message>
+    <message name="GetTrustedFqdnCNIn">
+        <part name="parameters" element="sai:GetTrustedFqdnCN"/>
+    </message>
+    <message name="GetTrustedFqdnCNOut">
+        <part name="parameters" element="sai:GetTrustedFqdnCNResponse"/>
+    </message>
+    <message name="SetCRLIn">
+        <part name="parameters" element="sai:SetCRL"/>
+    </message>
+    <message name="SetCRLOut">
+        <part name="parameters" element="sai:SetCRLResponse"/>
+    </message>
+    <message name="GetCRLIn">
+        <part name="parameters" element="sai:GetCRL"/>
+    </message>
+    <message name="GetCRLOut">
+        <part name="parameters" element="sai:GetCRLResponse"/>
+    </message>
+    <message name="GetServerCertificateReqIn">
+        <part name="parameters" element="sai:GetServerCertificateReq"/>
+    </message>
+    <message name="GetServerCertificateReqOut">
+        <part name="parameters" element="sai:GetServerCertificateReqResponse"/>
+    </message>
+    <message name="GetPkiCapabilitiesIn">
+        <part name="parameters" element="sai:GetPkiCapabilities"/>
+    </message>
+    <message name="GetPkiCapabilitiesOut">
+        <part name="parameters" element="sai:GetPkiCapabilitiesResponse"/>
+    </message>
+    <message name="SetPowerSavingOptionsIn">
+        <part name="parameters" element="sai:SetPowerSavingOptions"/>
+    </message>
+    <message name="SetPowerSavingOptionsOut">
+        <part name="parameters" element="sai:SetPowerSavingOptionsResponse"/>
+    </message>
+    <message name="GetPowerSavingOptionsIn">
+        <part name="parameters" element="sai:GetPowerSavingOptions"/>
+    </message>
+    <message name="GetPowerSavingOptionsOut">
+        <part name="parameters" element="sai:GetPowerSavingOptionsResponse"/>
+    </message>
+    <message name="SetTLSPSKIn">
+        <part name="parameters" element="sai:SetTLSPSK"/>
+    </message>
+    <message name="SetTLSPSKOut">
+        <part name="parameters" element="sai:SetTLSPSKResponse"/>
+    </message>
+    <message name="PartialUnprovisionIn">
+        <part name="parameters" element="sai:PartialUnprovision"/>
+    </message>
+    <message name="PartialUnprovisionOut">
+        <part name="parameters" element="sai:PartialUnprovisionResponse"/>
+    </message>
+
+    <!-- Intel(r) AMT 2.2 -->
+    <message name="SetMEBxPasswordIn">
+        <part name="parameters" element="sai:SetMEBxPassword"/>
+    </message>
+    <message name="SetMEBxPasswordOut">
+        <part name="parameters" element="sai:SetMEBxPasswordResponse"/>
+    </message>
+    <message name="SetProvisioningServerOTPIn">
+        <part name="parameters" element="sai:SetProvisioningServerOTP"/>
+    </message>
+    <message name="SetProvisioningServerOTPOut">
+        <part name="parameters" element="sai:SetProvisioningServerOTPResponse"/>
+    </message>
+    <message name="GetProvisioningServerOTPIn">
+        <part name="parameters" element="sai:GetProvisioningServerOTP"/>
+    </message>
+    <message name="GetProvisioningServerOTPOut">
+        <part name="parameters" element="sai:GetProvisioningServerOTPResponse"/>
+    </message>
+    <message name="EnumerateCertificateHashEntriesIn">
+        <part name="parameters" element="sai:EnumerateCertificateHashEntries"/>
+    </message>
+    <message name="EnumerateCertificateHashEntriesOut">
+        <part name="parameters" element="sai:EnumerateCertificateHashEntriesResponse"/>
+    </message>
+    <message name="GetCertificateHashEntryIn">
+        <part name="parameters" element="sai:GetCertificateHashEntry"/>
+    </message>
+    <message name="GetCertificateHashEntryOut">
+        <part name="parameters" element="sai:GetCertificateHashEntryResponse"/>
+    </message>
+    <message name="AddCertificateHashEntryIn">
+        <part name="parameters" element="sai:AddCertificateHashEntry"/>
+    </message>
+    <message name="AddCertificateHashEntryOut">
+        <part name="parameters" element="sai:AddCertificateHashEntryResponse"/>
+    </message>
+    <message name="DeleteCertificateHashEntryIn">
+        <part name="parameters" element="sai:DeleteCertificateHashEntry"/>
+    </message>
+    <message name="DeleteCertificateHashEntryOut">
+        <part name="parameters" element="sai:DeleteCertificateHashEntryResponse"/>
+    </message>
+    <message name="EnableCertificateHashEntryIn">
+        <part name="parameters" element="sai:EnableCertificateHashEntry"/>
+    </message>
+    <message name="EnableCertificateHashEntryOut">
+        <part name="parameters" element="sai:EnableCertificateHashEntryResponse"/>
+    </message>
+    <message name="GetZeroTouchConfigurationModeIn">
+        <part name="parameters" element="sai:GetZeroTouchConfigurationMode"/>
+    </message>
+    <message name="GetZeroTouchConfigurationModeOut">
+        <part name="parameters" element="sai:GetZeroTouchConfigurationModeResponse"/>
+    </message>
+    <message name="SetZeroTouchConfigurationModeIn">
+        <part name="parameters" element="sai:SetZeroTouchConfigurationMode"/>
+    </message>
+    <message name="SetZeroTouchConfigurationModeOut">
+        <part name="parameters" element="sai:SetZeroTouchConfigurationModeResponse"/>
+    </message>
+    <message name="GetProvisioningAuditRecordIn">
+        <part name="parameters" element="sai:GetProvisioningAuditRecord"/>
+    </message>
+    <message name="GetProvisioningAuditRecordOut">
+        <part name="parameters" element="sai:GetProvisioningAuditRecordResponse"/>
+    </message>
+    <message name="GetProvisioningPIDIn">
+        <part name="parameters" element="sai:GetProvisioningPID"/>
+    </message>
+    <message name="GetProvisioningPIDOut">
+        <part name="parameters" element="sai:GetProvisioningPIDResponse"/>
+    </message>
+    <message name="ExtendProvisioningPeriodIn">
+        <part name="parameters" element="sai:ExtendProvisioningPeriod"/>
+    </message>
+    <message name="ExtendProvisioningPeriodOut">
+        <part name="parameters" element="sai:ExtendProvisioningPeriodResponse"/>
+    </message>
+
+    <!-- Intel(r) AMT 2.5 -->
+    <message name="GetRealmAuthOptionsIn">
+        <part name="parameters" element="sai:GetRealmAuthOptions"/>
+    </message>
+    <message name="GetRealmAuthOptionsOut">
+        <part name="parameters" element="sai:GetRealmAuthOptionsResponse"/>
+    </message>
+    <message name="SetRealmAuthOptionsIn">
+        <part name="parameters" element="sai:SetRealmAuthOptions"/>
+    </message>
+    <message name="SetRealmAuthOptionsOut">
+        <part name="parameters" element="sai:SetRealmAuthOptionsResponse"/>
+    </message>
+    <message name="SetEnvironmentDetectionIn">
+        <part name="parameters" element="sai:SetEnvironmentDetection"/>
+    </message>
+    <message name="SetEnvironmentDetectionOut">
+        <part name="parameters" element="sai:SetEnvironmentDetectionResponse"/>
+    </message>
+    <message name="GetEnvironmentDetectionIn">
+        <part name="parameters" element="sai:GetEnvironmentDetection"/>
+    </message>
+    <message name="GetEnvironmentDetectionOut">
+        <part name="parameters" element="sai:GetEnvironmentDetectionResponse"/>
+    </message>
+    <message name="EnumeratePowerPackagesIn">
+        <part name="parameters" element="sai:EnumeratePowerPackages"/>
+    </message>
+    <message name="EnumeratePowerPackagesOut">
+        <part name="parameters" element="sai:EnumeratePowerPackagesResponse"/>
+    </message>
+    <message name="GetActivePowerPackageIn">
+        <part name="parameters" element="sai:GetActivePowerPackage"/>
+    </message>
+    <message name="GetActivePowerPackageOut">
+        <part name="parameters" element="sai:GetActivePowerPackageResponse"/>
+    </message>
+    <message name="GetPowerPackageIn">
+        <part name="parameters" element="sai:GetPowerPackage"/>
+    </message>
+    <message name="GetPowerPackageOut">
+        <part name="parameters" element="sai:GetPowerPackageResponse"/>
+    </message>
+    <message name="SetActivePowerPackageIn">
+        <part name="parameters" element="sai:SetActivePowerPackage"/>
+    </message>
+    <message name="SetActivePowerPackageOut">
+        <part name="parameters" element="sai:SetActivePowerPackageResponse"/>
+    </message>
+    <message name="SetGlobalPowerPolicyIn">
+        <part name="parameters" element="sai:SetGlobalPowerPolicy"/>
+    </message>
+    <message name="SetGlobalPowerPolicyOut">
+        <part name="parameters" element="sai:SetGlobalPowerPolicyResponse"/>
+    </message>
+    <message name="GetGlobalPowerPolicyIn">
+        <part name="parameters" element="sai:GetGlobalPowerPolicy"/>
+    </message>
+    <message name="GetGlobalPowerPolicyOut">
+        <part name="parameters" element="sai:GetGlobalPowerPolicyResponse"/>
+    </message>
+    <message name="CertStoreAddKeyIn">
+        <part name="parameters" element="sai:CertStoreAddKey"/>
+    </message>
+    <message name="CertStoreAddKeyOut">
+        <part name="parameters" element="sai:CertStoreAddKeyResponse"/>
+    </message>
+    <message name="CertStoreEnumerateKeyIn">
+        <part name="parameters" element="sai:CertStoreEnumerateKeys"/>
+    </message>
+    <message name="CertStoreEnumerateKeyOut">
+        <part name="parameters" element="sai:CertStoreEnumerateKeysResponse"/>
+    </message>
+    <message name="CertStoreGetKeyIn">
+        <part name="parameters" element="sai:CertStoreGetKey"/>
+    </message>
+    <message name="CertStoreGetKeyOut">
+        <part name="parameters" element="sai:CertStoreGetKeyResponse"/>
+    </message>
+    <message name="CertStoreRemoveKeyIn">
+        <part name="parameters" element="sai:CertStoreRemoveKey"/>
+    </message>
+    <message name="CertStoreRemoveKeyOut">
+        <part name="parameters" element="sai:CertStoreRemoveKeyResponse"/>
+    </message>
+    <message name="CertStoreAddCertificateIn">
+        <part name="parameters" element="sai:CertStoreAddCertificate"/>
+    </message>
+    <message name="CertStoreAddCertificateOut">
+        <part name="parameters" element="sai:CertStoreAddCertificateResponse"/>
+    </message>
+    <message name="CertStoreEnumerateCertificatesIn">
+        <part name="parameters" element="sai:CertStoreEnumerateCertificates"/>
+    </message>
+    <message name="CertStoreEnumerateCertificatesOut">
+        <part name="parameters" element="sai:CertStoreEnumerateCertificatesResponse"/>
+    </message>
+    <message name="CertStoreGetCertificateIn">
+        <part name="parameters" element="sai:CertStoreGetCertificate"/>
+    </message>
+    <message name="CertStoreGetCertificateOut">
+        <part name="parameters" element="sai:CertStoreGetCertificateResponse"/>
+    </message>
+    <message name="CertStoreRemoveCertificateIn">
+        <part name="parameters" element="sai:CertStoreRemoveCertificate"/>
+    </message>
+    <message name="CertStoreRemoveCertificateOut">
+        <part name="parameters" element="sai:CertStoreRemoveCertificateResponse"/>
+    </message>
+    <message name="CertStoreEnumerateKeysIn">
+        <part name="parameters" element="sai:CertStoreEnumerateKeys"/>
+    </message>
+    <message name="CertStoreEnumerateKeysOut">
+        <part name="parameters" element="sai:CertStoreEnumerateKeysResponse"/>
+    </message>
+    <message name="CertStoreGetPKCS10RequestIn">
+        <part name="parameters" element="sai:CertStoreGetPKCS10Request"/>
+    </message>
+    <message name="CertStoreGetPKCS10RequestOut">
+        <part name="parameters" element="sai:CertStoreGetPKCS10RequestResponse"/>
+    </message>
+    <message name="CertStoreUpdateCertificateIn">
+        <part name="parameters" element="sai:CertStoreUpdateCertificate"/>
+    </message>
+    <message name="CertStoreUpdateCertificateOut">
+        <part name="parameters" element="sai:CertStoreUpdateCertificateResponse"/>
+    </message>
+    <message name="SetTLSCredentialsIn">
+        <part name="parameters" element="sai:SetTLSCredentials"/>
+    </message>
+    <message name="SetTLSCredentialsOut">
+        <part name="parameters" element="sai:SetTLSCredentialsResponse"/>
+    </message>
+    <message name="GetTLSCredentialsIn">
+        <part name="parameters" element="sai:GetTLSCredentials"/>
+    </message>
+    <message name="GetTLSCredentialsOut">
+        <part name="parameters" element="sai:GetTLSCredentialsResponse"/>
+    </message>
+    <message name="EnableVpnRoutingIn">
+        <part name="parameters" element="sai:EnableVpnRouting"/>
+    </message>
+    <message name="EnableVpnRoutingOut">
+        <part name="parameters" element="sai:EnableVpnRoutingResponse"/>
+    </message>
+    <message name="GetConfigurationServerFQDNIn">
+        <part name="parameters" element="sai:GetConfigurationServerFQDN"/>
+    </message>
+    <message name="GetConfigurationServerFQDNOut">
+        <part name="parameters" element="sai:GetConfigurationServerFQDNResponse"/>
+    </message>
+    <message name="SetConfigurationServerFQDNIn">
+        <part name="parameters" element="sai:SetConfigurationServerFQDN"/>
+    </message>
+    <message name="SetConfigurationServerFQDNOut">
+        <part name="parameters" element="sai:SetConfigurationServerFQDNResponse"/>
+    </message>   
+    
+    <!-- Intel(r) AMT 3.0 -->
+    <message name="SetAclEnabledStateIn">
+        <part name="parameters" element="sai:SetAclEnabledState"/>
+    </message>
+    <message name="SetAclEnabledStateOut">
+        <part name="parameters" element="sai:SetAclEnabledStateResponse"/>
+    </message>
+    <message name="GetAclEnabledStateIn">
+        <part name="parameters" element="sai:GetAclEnabledState"/>
+    </message>
+    <message name="GetAclEnabledStateOut">
+        <part name="parameters" element="sai:GetAclEnabledStateResponse"/>
+    </message>
+
+    <portType name="SecurityAdministrationSoapPortType">
+
+        <!-- Intel(r) AMT 1.0 -->
+        <operation name="ResetFlashWearOutProtection">
+            <input message="sai:ResetFlashWearOutProtectionIn"/>
+            <output message="sai:ResetFlashWearOutProtectionOut"/>
+        </operation>
+        <operation name="GetAdminAclEntry">
+            <input message="sai:GetAdminAclEntryIn"/>
+            <output message="sai:GetAdminAclEntryOut"/>
+        </operation>
+        <operation name="SetAdminAclEntry">
+            <input message="sai:SetAdminAclEntryIn"/>
+            <output message="sai:SetAdminAclEntryOut"/>
+        </operation>
+        <operation name="AddUserAclEntry">
+            <input message="sai:AddUserAclEntryIn"/>
+            <output message="sai:AddUserAclEntryOut"/>
+        </operation>
+        <operation name="EnumerateUserAclEntries">
+            <input message="sai:EnumerateUserAclEntriesIn"/>
+            <output message="sai:EnumerateUserAclEntriesOut"/>
+        </operation>
+        <operation name="GetUserAclEntry">
+            <input message="sai:GetUserAclEntryIn"/>
+            <output message="sai:GetUserAclEntryOut"/>
+        </operation>
+        <operation name="UpdateUserAclEntry">
+            <input message="sai:UpdateUserAclEntryIn"/>
+            <output message="sai:UpdateUserAclEntryOut"/>
+        </operation>
+        <operation name="RemoveUserAclEntry">
+            <input message="sai:RemoveUserAclEntryIn"/>
+            <output message="sai:RemoveUserAclEntryOut"/>
+        </operation>
+        <operation name="SetTlsEnabled">
+            <input message="sai:SetTlsEnabledIn"/>
+            <output message="sai:SetTlsEnabledOut"/>
+        </operation>
+        <operation name="SetRngKey">
+            <input message="sai:SetRngKeyIn"/>
+            <output message="sai:SetRngKeyOut"/>
+        </operation>
+        <operation name="SetTLSKeyAndCertificate">
+            <input message="sai:SetTLSKeyAndCertificateIn"/>
+            <output message="sai:SetTLSKeyAndCertificateOut"/>
+        </operation>
+        <operation name="SetTLSCertificate">
+            <input message="sai:SetTLSCertificateIn"/>
+            <output message="sai:SetTLSCertificateOut"/>
+        </operation>
+        <operation name="GetTLSCertificate">
+            <input message="sai:GetTLSCertificateIn"/>
+            <output message="sai:GetTLSCertificateOut"/>
+        </operation>
+        <operation name="UpdateCoreFromUrl">
+            <input message="sai:UpdateCoreFromUrlIn"/>
+            <output message="sai:UpdateCoreFromUrlOut"/>
+        </operation>
+        <operation name="GetProvisioningMode">
+            <input message="sai:GetProvisioningModeIn"/>
+            <output message="sai:GetProvisioningModeOut"/>
+        </operation>
+        <operation name="SetProvisioningMode">
+            <input message="sai:SetProvisioningModeIn"/>
+            <output message="sai:SetProvisioningModeOut"/>
+        </operation>
+        <operation name="Unprovision">
+            <input message="sai:UnprovisionIn"/>
+            <output message="sai:UnprovisionOut"/>
+        </operation>
+        <operation name="CommitChanges">
+            <input message="sai:CommitChangesIn"/>
+            <output message="sai:CommitChangesOut"/>
+        </operation>
+        <operation name="GetCoreVersion">
+            <input message="sai:GetCoreVersionIn"/>
+            <output message="sai:GetCoreVersionOut"/>
+        </operation>
+
+        <!-- Intel(r) AMT 2.0 -->
+        <operation name="AddUserAclEntryEx">
+            <input message="sai:AddUserAclEntryExIn"/>
+            <output message="sai:AddUserAclEntryExOut"/>
+        </operation>
+        <operation name="GetUserAclEntryEx">
+            <input message="sai:GetUserAclEntryExIn"/>
+            <output message="sai:GetUserAclEntryExOut"/>
+        </operation>
+        <operation name="UpdateUserAclEntryEx">
+            <input message="sai:UpdateUserAclEntryExIn"/>
+            <output message="sai:UpdateUserAclEntryExOut"/>
+        </operation>
+        <operation name="SetAdminAclEntryEx">
+            <input message="sai:SetAdminAclEntryExIn"/>
+            <output message="sai:SetAdminAclEntryExOut"/>
+        </operation>
+        <operation name="GetDigestRealm">
+            <input message="sai:GetDigestRealmIn"/>
+            <output message="sai:GetDigestRealmOut"/>
+        </operation>
+        <operation name="SetKerberosOptions">
+            <input message="sai:SetKerberosOptionsIn"/>
+            <output message="sai:SetKerberosOptionsOut"/>
+        </operation>
+        <operation name="GetKerberosOptions">
+            <input message="sai:GetKerberosOptionsIn"/>
+            <output message="sai:GetKerberosOptionsOut"/>
+        </operation>
+        <operation name="SetEnabledInterfaces">
+            <input message="sai:SetEnabledInterfacesIn"/>
+            <output message="sai:SetEnabledInterfacesOut"/>
+        </operation>
+        <operation name="GetEnabledInterfaces">
+            <input message="sai:GetEnabledInterfacesIn"/>
+            <output message="sai:GetEnabledInterfacesOut"/>
+        </operation>
+        <operation name="SetTlsOptions">
+            <input message="sai:SetTlsOptionsIn"/>
+            <output message="sai:SetTlsOptionsOut"/>
+        </operation>
+        <operation name="GetTlsOptions">
+            <input message="sai:GetTlsOptionsIn"/>
+            <output message="sai:GetTlsOptionsOut"/>
+        </operation>
+        <operation name="AddTrustedRootCertificate">
+            <input message="sai:AddTrustedRootCertificateIn"/>
+            <output message="sai:AddTrustedRootCertificateOut"/>
+        </operation>
+        <operation name="GetTrustedRootCertificate">
+            <input message="sai:GetTrustedRootCertificateIn"/>
+            <output message="sai:GetTrustedRootCertificateOut"/>
+        </operation>
+        <operation name="DeleteTrustedRootCertificate">
+            <input message="sai:DeleteTrustedRootCertificateIn"/>
+            <output message="sai:DeleteTrustedRootCertificateOut"/>
+        </operation>
+        <operation name="EnumerateTrustedRootCertificates">
+            <input message="sai:EnumerateTrustedRootCertificatesIn"/>
+            <output message="sai:EnumerateTrustedRootCertificatesOut"/>
+        </operation>
+        <operation name="SetTrustedFqdnCN">
+            <input message="sai:SetTrustedFqdnCNIn"/>
+            <output message="sai:SetTrustedFqdnCNOut"/>
+        </operation>
+        <operation name="GetTrustedFqdnCN">
+            <input message="sai:GetTrustedFqdnCNIn"/>
+            <output message="sai:GetTrustedFqdnCNOut"/>
+        </operation>
+        <operation name="SetCRL">
+            <input message="sai:SetCRLIn"/>
+            <output message="sai:SetCRLOut"/>
+        </operation>
+        <operation name="GetCRL">
+            <input message="sai:GetCRLIn"/>
+            <output message="sai:GetCRLOut"/>
+        </operation>
+        <operation name="GetServerCertificateReq">
+            <input message="sai:GetServerCertificateReqIn"/>
+            <output message="sai:GetServerCertificateReqOut"/>
+        </operation>
+        <operation name="GetPkiCapabilities">
+            <input message="sai:GetPkiCapabilitiesIn"/>
+            <output message="sai:GetPkiCapabilitiesOut"/>
+        </operation>
+        <operation name="SetPowerSavingOptions">
+            <input message="sai:SetPowerSavingOptionsIn"/>
+            <output message="sai:SetPowerSavingOptionsOut"/>
+        </operation>
+        <operation name="GetPowerSavingOptions">
+            <input message="sai:GetPowerSavingOptionsIn"/>
+            <output message="sai:GetPowerSavingOptionsOut"/>
+        </operation>
+        <operation name="SetTLSPSK">
+            <input message="sai:SetTLSPSKIn"/>
+            <output message="sai:SetTLSPSKOut"/>
+        </operation>
+        <operation name="PartialUnprovision">
+            <input message="sai:PartialUnprovisionIn"/>
+            <output message="sai:PartialUnprovisionOut"/>
+        </operation>
+
+        <!-- Intel(r) AMT 2.2 -->
+        <operation name="SetMEBxPassword">
+            <input message="sai:SetMEBxPasswordIn"/>
+            <output message="sai:SetMEBxPasswordOut"/>
+        </operation>
+        <operation name="SetProvisioningServerOTP">
+            <input message="sai:SetProvisioningServerOTPIn"/>
+            <output message="sai:SetProvisioningServerOTPOut"/>
+        </operation>
+        <operation name="GetProvisioningServerOTP">
+            <input message="sai:GetProvisioningServerOTPIn"/>
+            <output message="sai:GetProvisioningServerOTPOut"/>
+        </operation>
+        <operation name="EnumerateCertificateHashEntries">
+            <input message="sai:EnumerateCertificateHashEntriesIn"/>
+            <output message="sai:EnumerateCertificateHashEntriesOut"/>
+        </operation>
+        <operation name="GetCertificateHashEntry">
+            <input message="sai:GetCertificateHashEntryIn"/>
+            <output message="sai:GetCertificateHashEntryOut"/>
+        </operation>
+        <operation name="AddCertificateHashEntry">
+            <input message="sai:AddCertificateHashEntryIn"/>
+            <output message="sai:AddCertificateHashEntryOut"/>
+        </operation>
+        <operation name="DeleteCertificateHashEntry">
+            <input message="sai:DeleteCertificateHashEntryIn"/>
+            <output message="sai:DeleteCertificateHashEntryOut"/>
+        </operation>
+        <operation name="EnableCertificateHashEntry">
+            <input message="sai:EnableCertificateHashEntryIn"/>
+            <output message="sai:EnableCertificateHashEntryOut"/>
+        </operation>
+        <operation name="GetZeroTouchConfigurationMode">
+            <input message="sai:GetZeroTouchConfigurationModeIn"/>
+            <output message="sai:GetZeroTouchConfigurationModeOut"/>
+        </operation>
+        <operation name="SetZeroTouchConfigurationMode">
+            <input message="sai:SetZeroTouchConfigurationModeIn"/>
+            <output message="sai:SetZeroTouchConfigurationModeOut"/>
+        </operation>
+        <operation name="GetProvisioningAuditRecord">
+            <input message="sai:GetProvisioningAuditRecordIn"/>
+            <output message="sai:GetProvisioningAuditRecordOut"/>
+        </operation>
+        <operation name="GetProvisioningPID">
+            <input message="sai:GetProvisioningPIDIn"/>
+            <output message="sai:GetProvisioningPIDOut"/>
+        </operation>
+        <operation name="ExtendProvisioningPeriod">
+            <input message="sai:ExtendProvisioningPeriodIn"/>
+            <output message="sai:ExtendProvisioningPeriodOut"/>
+        </operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <operation name="GetRealmAuthOptions">
+            <input message="sai:GetRealmAuthOptionsIn"/>
+            <output message="sai:GetRealmAuthOptionsOut"/>
+        </operation>
+        <operation name="SetRealmAuthOptions">
+            <input message="sai:SetRealmAuthOptionsIn"/>
+            <output message="sai:SetRealmAuthOptionsOut"/>
+        </operation>
+        <operation name="SetEnvironmentDetection">
+            <input message="sai:SetEnvironmentDetectionIn"/>
+            <output message="sai:SetEnvironmentDetectionOut"/>
+        </operation>
+        <operation name="GetEnvironmentDetection">
+            <input message="sai:GetEnvironmentDetectionIn"/>
+            <output message="sai:GetEnvironmentDetectionOut"/>
+        </operation>
+        <operation name="EnumeratePowerPackages">
+            <input message="sai:EnumeratePowerPackagesIn"/>
+            <output message="sai:EnumeratePowerPackagesOut"/>
+        </operation>
+        <operation name="GetPowerPackage">
+            <input message="sai:GetPowerPackageIn"/>
+            <output message="sai:GetPowerPackageOut"/>
+        </operation>
+        <operation name="GetActivePowerPackage">
+            <input message="sai:GetActivePowerPackageIn"/>
+            <output message="sai:GetActivePowerPackageOut"/>
+        </operation>
+        <operation name="SetActivePowerPackage">
+            <input message="sai:SetActivePowerPackageIn"/>
+            <output message="sai:SetActivePowerPackageOut"/>
+        </operation>
+        <operation name="SetGlobalPowerPolicy">
+            <input message="sai:SetGlobalPowerPolicyIn"/>
+            <output message="sai:SetGlobalPowerPolicyOut"/>
+        </operation>
+        <operation name="GetGlobalPowerPolicy">
+            <input message="sai:GetGlobalPowerPolicyIn"/>
+            <output message="sai:GetGlobalPowerPolicyOut"/>
+        </operation>
+        <operation name="CertStoreAddKey">
+            <input message="sai:CertStoreAddKeyIn"/>
+            <output message="sai:CertStoreAddKeyOut"/>
+        </operation>
+        <operation name="CertStoreGetKey">
+            <input message="sai:CertStoreGetKeyIn"/>
+            <output message="sai:CertStoreGetKeyOut"/>
+        </operation>
+        <operation name="CertStoreEnumerateKeys">
+            <input message="sai:CertStoreEnumerateKeysIn"/>
+            <output message="sai:CertStoreEnumerateKeysOut"/>
+        </operation>
+        <operation name="CertStoreRemoveKey">
+            <input message="sai:CertStoreRemoveKeyIn"/>
+            <output message="sai:CertStoreRemoveKeyOut"/>
+        </operation>
+        <operation name="CertStoreGetPKCS10Request">
+            <input message="sai:CertStoreGetPKCS10RequestIn"/>
+            <output message="sai:CertStoreGetPKCS10RequestOut"/>
+        </operation>
+        <operation name="CertStoreAddCertificate">
+            <input message="sai:CertStoreAddCertificateIn"/>
+            <output message="sai:CertStoreAddCertificateOut"/>
+        </operation>
+        <operation name="CertStoreGetCertificate">
+            <input message="sai:CertStoreGetCertificateIn"/>
+            <output message="sai:CertStoreGetCertificateOut"/>
+        </operation>
+        <operation name="CertStoreUpdateCertificate">
+            <input message="sai:CertStoreUpdateCertificateIn"/>
+            <output message="sai:CertStoreUpdateCertificateOut"/>
+        </operation>
+        <operation name="CertStoreEnumerateCertificates">
+            <input message="sai:CertStoreEnumerateCertificatesIn"/>
+            <output message="sai:CertStoreEnumerateCertificatesOut"/>
+        </operation>
+        <operation name="CertStoreRemoveCertificate">
+            <input message="sai:CertStoreRemoveCertificateIn"/>
+            <output message="sai:CertStoreRemoveCertificateOut"/>
+        </operation>
+        <operation name="SetTLSCredentials">
+            <input message="sai:SetTLSCredentialsIn"/>
+            <output message="sai:SetTLSCredentialsOut"/>
+        </operation>
+        <operation name="GetTLSCredentials">
+            <input message="sai:GetTLSCredentialsIn"/>
+            <output message="sai:GetTLSCredentialsOut"/>
+        </operation>
+        <operation name="EnableVpnRouting">
+            <input message="sai:EnableVpnRoutingIn"/>
+            <output message="sai:EnableVpnRoutingOut"/>
+        </operation>
+        <operation name="GetConfigurationServerFQDN">
+            <input message="sai:GetConfigurationServerFQDNIn"/>
+            <output message="sai:GetConfigurationServerFQDNOut"/>
+        </operation>
+        <operation name="SetConfigurationServerFQDN">
+            <input message="sai:SetConfigurationServerFQDNIn"/>
+            <output message="sai:SetConfigurationServerFQDNOut"/>
+        </operation>
+        
+        <!-- Intel(r) AMT 3.0 -->
+        <operation name="SetAclEnabledState">
+            <input message="sai:SetAclEnabledStateIn"/>
+            <output message="sai:SetAclEnabledStateOut"/>
+        </operation>
+        <operation name="GetAclEnabledState">
+            <input message="sai:GetAclEnabledStateIn"/>
+            <output message="sai:GetAclEnabledStateOut"/>
+        </operation>
+    </portType>
+
+    <binding name="SecurityAdministrationSoapBinding" type="sai:SecurityAdministrationSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <!-- Intel(r) AMT 1.0 -->
+        <operation name="ResetFlashWearOutProtection">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/ResetFlashWearOutProtection" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetAdminAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetAdminAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetAdminAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetAdminAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="AddUserAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/AddUserAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnumerateUserAclEntries">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/EnumerateUserAclEntries" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetUserAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetUserAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="UpdateUserAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/UpdateUserAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="RemoveUserAclEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/RemoveUserAclEntry" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTlsEnabled">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTlsEnabled" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetRngKey">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetRngKey" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTLSKeyAndCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTLSKeyAndCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTLSCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTLSCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTLSCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetTLSCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="UpdateCoreFromUrl">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/UpdateCoreFromUrl" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningMode">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetProvisioningMode" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetProvisioningMode">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetProvisioningMode" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="Unprovision">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/Unprovision" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CommitChanges">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/CommitChanges" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetCoreVersion">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetCoreVersion" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <!-- Intel(r) AMT 2.0 -->
+        <operation name="AddUserAclEntryEx">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/AddUserAclEntryEx" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetUserAclEntryEx">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetUserAclEntryEx" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="UpdateUserAclEntryEx">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/UpdateUserAclEntryEx" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetAdminAclEntryEx">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetAdminAclEntryEx" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetDigestRealm">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetDigestRealm" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetKerberosOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetKerberosOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetKerberosOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetKerberosOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetEnabledInterfaces">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetEnabledInterfaces" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetEnabledInterfaces">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetEnabledInterfaces" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTlsOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTlsOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTlsOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetTlsOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="AddTrustedRootCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/AddTrustedRootCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTrustedRootCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetTrustedRootCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="DeleteTrustedRootCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/DeleteTrustedRootCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnumerateTrustedRootCertificates">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/EnumerateTrustedRootCertificates" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTrustedFqdnCN">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTrustedFqdnCN" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTrustedFqdnCN">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetTrustedFqdnCN" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetCRL">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetCRL" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetCRL">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetCRL" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetServerCertificateReq">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetServerCertificateReq" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetPkiCapabilities">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetPkiCapabilities" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetPowerSavingOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetPowerSavingOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetPowerSavingOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/GetPowerSavingOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTLSPSK">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/SetTLSPSK" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="PartialUnprovision">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01/PartialUnprovision" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <!-- Intel(r) AMT 2.2 -->
+        <operation name="SetMEBxPassword">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetMEBxPassword" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetProvisioningServerOTP">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetProvisioningServerOTP" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningServerOTP">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetProvisioningServerOTP" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnumerateCertificateHashEntries">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/EnumerateCertificateHashEntries" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetCertificateHashEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetCertificateHashEntry" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="AddCertificateHashEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/AddCertificateHashEntry" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="DeleteCertificateHashEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/DeleteCertificateHashEntry" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnableCertificateHashEntry">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/EnableCertificateHashEntry" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetZeroTouchConfigurationMode">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetZeroTouchConfigurationMode" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetZeroTouchConfigurationMode">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetZeroTouchConfigurationMode" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningAuditRecord">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetProvisioningAuditRecord" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningPID">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetProvisioningPID" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="ExtendProvisioningPeriod">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/ExtendProvisioningPeriod" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <!-- Intel(r) AMT 2.5 -->
+        <operation name="GetRealmAuthOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetRealmAuthOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetRealmAuthOptions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetRealmAuthOptions" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetEnvironmentDetection">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetEnvironmentDetection" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetEnvironmentDetection">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetEnvironmentDetection" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnumeratePowerPackages">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/EnumeratePowerPackages" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetPowerPackage">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetPowerPackage" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetActivePowerPackage">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetActivePowerPackage" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetActivePowerPackage">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetActivePowerPackage" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetGlobalPowerPolicy">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetGlobalPowerPolicy" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetGlobalPowerPolicy">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetGlobalPowerPolicy" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreAddKey">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreAddKey" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreEnumerateKeys">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreEnumerateKeys" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreGetKey">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreGetKey" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreRemoveKey">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreRemoveKey" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreAddCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreAddCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreGetCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreGetCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreEnumerateCertificates">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreEnumerateCertificates" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreRemoveCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreRemoveCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreGetPKCS10Request">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreGetPKCS10Request" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="CertStoreUpdateCertificate">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/CertStoreUpdateCertificate" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetTLSCredentials">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetTLSCredentials" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetTLSCredentials">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetTLSCredentials" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="EnableVpnRouting">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/EnableVpnRouting" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+        <operation name="GetConfigurationServerFQDN">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetConfigurationServerFQDN" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="SetConfigurationServerFQDN">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetConfigurationServerFQDN" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>        
+
+        <!-- Intel(r) AMT 3.0 -->
+        <operation name="SetAclEnabledState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/SetAclEnabledState" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetAclEnabledState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/SecurityAdministration/2006/01/GetAclEnabledState" />
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+    </binding>
+    <service name="SecurityAdministrationService">
+        <port name="SecurityAdministrationSoapPortType" binding="sai:SecurityAdministrationSoapBinding">
+            <soap:address location="http://hostname:16992/SecurityAdministrationService"/>
+        </port>
+    </service>
+</wsdl:definitions>

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Hardware Asset Interface version 1.15.0-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:hwa="http://schemas.intel.com/platform/client/HardwareAsset/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/HardwareAsset/2004/01">
+     <wsdl:types>
+          <xs:schema targetNamespace="http://schemas.intel.com/platform/client/HardwareAsset/2004/01" elementFormDefault="qualified">
+               <xs:simpleType name="PT_STATUS">
+                    <xs:restriction base="xs:unsignedInt"/>
+               </xs:simpleType>
+               <xs:simpleType name="AssetTypeType">
+                    <xs:restriction base="xs:unsignedInt">
+                         <xs:enumeration value="2">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeBIOS = 2</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                         <xs:enumeration value="3">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeComputerSystem = 3</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                         <xs:enumeration value="4">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeBaseboard = 4</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                         <xs:enumeration value="5">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeProcessor = 5</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                         <xs:enumeration value="6">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeMemoryModule = 6</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                         <xs:enumeration value="7">
+                              <xs:annotation>
+                                   <xs:documentation>AssetTypeFRU = 7</xs:documentation>
+                              </xs:annotation>
+                         </xs:enumeration>
+                        <xs:enumeration value="8">
+                            <xs:annotation>
+                                <xs:documentation>AssetTypeMediaDevice = 8</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="9">
+                            <xs:annotation>
+                                <xs:documentation>AssetTypePortableBattery = 9</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+               </xs:simpleType>
+               <xs:complexType name="AssetTypeArrayType">
+                    <xs:sequence>
+                         <xs:element name="AssetType" type="hwa:AssetTypeType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="AssetDataArrayType">
+                    <xs:sequence>
+                         <xs:element name="AssetData" type="hwa:AssetDataType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="AssetDataType">
+                    <xs:sequence>
+                         <xs:element name="AssetType" type="hwa:AssetTypeType"/>
+                         <xs:element name="AssetSize" type="xs:unsignedInt"/>
+                         <xs:element name="AssetData" type="xs:base64Binary" nillable="true"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="PT_BIOS">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="Vendor" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Version" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="ReleaseDate" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="padding" type="xs:unsignedByte"/>
+                         <xs:element name="Characteristics" type="hwa:PT_BIOS_CHARACTERISTICS"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:simpleType name="PT_BIOS_CHARACTERISTICS">
+                    <xs:restriction base="xs:unsignedInt"/>
+               </xs:simpleType>
+               <xs:complexType name="PT_COMPUTER_SYSTEM">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="Manufacturer" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Product" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Version" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="SerialNumber" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="UUID" type="hwa:GUID"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="GUID">
+                    <xs:sequence>
+                         <xs:element name="GUIDbyte" type="xs:unsignedByte" minOccurs="16" maxOccurs="16"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="PT_BASEBOARD">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="Manufacturer" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Product" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Version" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="SerialNumber" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="AssetTag" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Replaceable" type="xs:unsignedByte"/>
+                         <xs:element name="Padding" type="xs:unsignedByte" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="PT_PROCESSOR">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="ID" type="xs:unsignedInt" minOccurs="2" maxOccurs="2"/>
+                         <xs:element name="MaxSocketSpeed" type="xs:unsignedShort"/>
+                         <xs:element name="CurrentSpeed" type="xs:unsignedShort"/>
+                         <xs:element name="Status" type="hwa:PT_PROCESSOR_STATUS"/>
+                         <xs:element name="Type" type="hwa:PT_PROCESSOR_TYPE"/>
+                         <xs:element name="Family" type="hwa:PT_PROCESSOR_FAMILY"/>
+                         <xs:element name="UpgradeInformation" type="hwa:PT_PROCESSOR_UPGRADE"/>
+                         <xs:element name="SocketPopluated" type="xs:unsignedByte"/>
+                         <xs:element name="SocketDesignation" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Manufacturer" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="Version" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:simpleType name="PT_PROCESSOR_TYPE">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:simpleType name="PT_PROCESSOR_FAMILY">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:simpleType name="PT_PROCESSOR_STATUS">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:simpleType name="PT_PROCESSOR_UPGRADE">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:complexType name="PT_MEMORY_MODULE">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="Size" type="xs:unsignedShort"/>
+                         <xs:element name="FormFactor" type="hwa:PT_MEMORY_FORM_FACTOR"/>
+                         <xs:element name="Type" type="hwa:PT_MEMORY_TYPE"/>
+                         <xs:element name="TypeDetail" type="hwa:PT_MEMORY_TYPE_DETAIL"/>
+                         <xs:element name="Speed" type="xs:unsignedShort"/>
+                         <xs:element name="Manufacturer" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="SerialNumber" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="AssetTag" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                         <xs:element name="PartNumber" type="xs:unsignedByte" minOccurs="65" maxOccurs="65"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:simpleType name="PT_MEMORY_FORM_FACTOR">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:simpleType name="PT_MEMORY_TYPE">
+                    <xs:restriction base="xs:unsignedByte"/>
+               </xs:simpleType>
+               <xs:simpleType name="PT_MEMORY_TYPE_DETAIL">
+                    <xs:restriction base="xs:unsignedShort"/>
+               </xs:simpleType>
+               <xs:complexType name="PT_FRU">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="VendorID" type="xs:unsignedShort"/>
+                         <xs:element name="DeviceID" type="xs:unsignedShort"/>
+                         <xs:element name="RevisionID" type="xs:unsignedByte"/>
+                         <xs:element name="ProgIf" type="xs:unsignedByte"/>
+                         <xs:element name="Subclass" type="xs:unsignedByte"/>
+                         <xs:element name="BaseClass" type="xs:unsignedByte"/>
+                         <xs:element name="SubvendorID" type="xs:unsignedShort"/>
+                         <xs:element name="SubsystemID" type="xs:unsignedShort"/>
+                         <xs:element name="DeviceLocation" type="xs:unsignedShort"/>
+                         <xs:element name="Padding" type="xs:unsignedByte" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:complexType name="PT_MEDIA_DEVICE">
+                    <xs:sequence>
+                         <xs:element name="StructureVersion" type="xs:unsignedInt"/>
+                         <xs:element name="ModelNumber" type="xs:unsignedByte" minOccurs="40" maxOccurs="40"/>
+                         <xs:element name="SerialNumber" type="xs:unsignedByte" minOccurs="20" maxOccurs="20"/>
+                         <xs:element name="Capabilities" type="xs:unsignedShort" minOccurs="3" maxOccurs="3"/>
+                         <xs:element name="MaxMediaSize" type="xs:unsignedInt" minOccurs="2" maxOccurs="2"/>
+                         <xs:element name="Padding" type="xs:unsignedByte" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+               </xs:complexType>
+               <xs:element name="EnumerateAssetTypes">
+                    <xs:complexType>
+                    </xs:complexType>
+               </xs:element>
+               <xs:element name="EnumerateAssetTypesResponse">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="Status" type="hwa:PT_STATUS"/>
+                              <xs:element name="Count" type="xs:unsignedInt"/>
+                              <xs:element name="AssetTypes" type="hwa:AssetTypeArrayType"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+               <xs:element name="GetAssetData">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="AssetType" type="hwa:AssetTypeType"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+               <xs:element name="GetAssetDataResponse">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="Status" type="hwa:PT_STATUS"/>
+                              <xs:element name="Count" type="xs:unsignedInt"/>
+                              <xs:element name="AssetData" type="hwa:AssetDataArrayType"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+          </xs:schema>
+     </wsdl:types>
+     <message name="EnumerateAssetTypesIn">
+          <part name="parameters" element="hwa:EnumerateAssetTypes"/>
+     </message>
+     <message name="EnumerateAssetTypesOut">
+          <part name="parameters" element="hwa:EnumerateAssetTypesResponse"/>
+     </message>
+     <message name="GetAssetDataIn">
+          <part name="parameters" element="hwa:GetAssetData"/>
+     </message>
+     <message name="GetAssetDataOut">
+          <part name="parameters" element="hwa:GetAssetDataResponse"/>
+     </message>
+     <portType name="HardwareAssetSoapPortType">
+          <operation name="EnumerateAssetTypes">
+               <input message="hwa:EnumerateAssetTypesIn"/>
+               <output message="hwa:EnumerateAssetTypesOut"/>
+          </operation>
+          <operation name="GetAssetData">
+               <input message="hwa:GetAssetDataIn"/>
+               <output message="hwa:GetAssetDataOut"/>
+          </operation>
+     </portType>
+     <binding name="HardwareAssetSoapBinding" type="hwa:HardwareAssetSoapPortType">
+          <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+          <operation name="EnumerateAssetTypes">
+               <soap:operation soapAction="http://schemas.intel.com/platform/client/HardwareAsset/2004/01/EnumerateAssetTypes"/>
+               <input>
+                    <soap:body use="literal"/>
+               </input>
+               <output>
+                    <soap:body use="literal"/>
+               </output>
+          </operation>
+          <operation name="GetAssetData">
+               <soap:operation soapAction="http://schemas.intel.com/platform/client/HardwareAsset/2004/01/GetAssetData"/>
+               <input>
+                    <soap:body use="literal"/>
+               </input>
+               <output>
+                    <soap:body use="literal"/>
+               </output>
+          </operation>
+     </binding>
+     <service name="HardwareAssetService">
+          <port name="HardwareAssetSoapPort" binding="hwa:HardwareAssetSoapBinding">
+               <soap:address location="http://hostname:16992/HardwareAssetService"/>
+          </port>
+     </service>
+</wsdl:definitions>

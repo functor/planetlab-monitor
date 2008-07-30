@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology NetworkTime Interface version 1.15.1-->
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:tim="http://schemas.intel.com/platform/client/NetworkTime/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/NetworkTime/2004/01">
+     <types>
+          <xs:schema targetNamespace="http://schemas.intel.com/platform/client/NetworkTime/2004/01" elementFormDefault="qualified">          
+          
+               <xs:simpleType name="PT_STATUS">
+                    <xs:restriction base="xs:unsignedInt"/>
+               </xs:simpleType>               
+               <xs:simpleType name="TimeType">
+                    <xs:restriction base="xs:unsignedInt"/>
+               </xs:simpleType>
+
+               <xs:element name="GetLowAccuracyTimeSynch">
+                    <xs:complexType>
+                         <xs:sequence>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+               <xs:element name="GetLowAccuracyTimeSynchResponse">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="StatusCode" type="tim:PT_STATUS"/>
+                              <xs:element name="Ta0" type="tim:TimeType"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+
+               <xs:element name="SetHighAccuracyTimeSynch">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="Ta0" type="tim:TimeType"/>
+                              <xs:element name="Tm1" type="tim:TimeType"/>
+                              <xs:element name="Tm2" type="tim:TimeType"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>
+               <xs:element name="SetHighAccuracyTimeSynchResponse">
+                    <xs:complexType>
+                         <xs:sequence>
+                              <xs:element name="StatusCode" type="tim:PT_STATUS"/>
+                         </xs:sequence>
+                    </xs:complexType>
+               </xs:element>               
+               
+          </xs:schema>
+     </types>
+     
+     <message name="GetLowAccuracyTimeSynchIn">
+          <part name="parameters" element="tim:GetLowAccuracyTimeSynch"/>
+     </message>
+     <message name="GetLowAccuracyTimeSynchOut">
+          <part name="parameters" element="tim:GetLowAccuracyTimeSynchResponse"/>
+     </message>
+     <message name="SetHighAccuracyTimeSynchIn">
+          <part name="parameters" element="tim:SetHighAccuracyTimeSynch"/>
+     </message>
+     <message name="SetHighAccuracyTimeSynchOut">
+          <part name="parameters" element="tim:SetHighAccuracyTimeSynchResponse"/>
+     </message>
+
+     <portType name="NetworkTimeSoapPortType">
+
+          <operation name="GetLowAccuracyTimeSynch">
+               <input message="tim:GetLowAccuracyTimeSynchIn"/>
+               <output message="tim:GetLowAccuracyTimeSynchOut"/>
+          </operation>
+          <operation name="SetHighAccuracyTimeSynch">
+               <input message="tim:SetHighAccuracyTimeSynchIn"/>
+               <output message="tim:SetHighAccuracyTimeSynchOut"/>
+          </operation>
+
+     </portType>
+     
+     <binding name="NetworkTimeSoapBinding" type="tim:NetworkTimeSoapPortType">
+          <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+          <operation name="GetLowAccuracyTimeSynch">
+               <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkTime/2004/01/GetLowAccuracyTimeSynch" style="document"/>
+               <input>
+                    <soap:body use="literal"/>
+               </input>
+               <output>
+                    <soap:body use="literal"/>
+               </output>
+          </operation>
+          <operation name="SetHighAccuracyTimeSynch">
+               <soap:operation soapAction="http://schemas.intel.com/platform/client/NetworkTime/2004/01/SetHighAccuracyTimeSynch" style="document"/>
+               <input>
+                    <soap:body use="literal"/>
+               </input>
+               <output>
+                    <soap:body use="literal"/>
+               </output>
+          </operation>
+          
+     </binding>
+     
+     <service name="NetworkTimeService">
+          <port name="NetworkTimeSoapPortType" binding="tim:NetworkTimeSoapBinding">
+               <soap:address location="http://hostname:16992/NetworkTimeService"/>
+          </port>
+     </service>
+     
+</definitions>

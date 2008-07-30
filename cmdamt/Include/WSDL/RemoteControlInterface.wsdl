@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Remote Control Interface version 1.15.0-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:rci="http://schemas.intel.com/platform/client/RemoteControl/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/RemoteControl/2004/01">
+    <wsdl:types>
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/RemoteControl/2004/01" elementFormDefault="qualified">
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:simpleType name="SystemPowerStateType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="SystemCapabilitiesSupportedType">
+                <xs:restriction base="xs:unsignedByte"/>
+            </xs:simpleType>
+            <xs:simpleType name="SpecialCommandsSupportedType">
+                <xs:restriction base="xs:unsignedShort"/>
+            </xs:simpleType>
+            <xs:simpleType name="SystemFirmwareCapabilitiesType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="OemDefinedCapabilitiesType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:simpleType name="RemoteControlCommandType">
+                <xs:restriction base="xs:unsignedByte">
+                    <xs:enumeration value="16">
+                        <xs:annotation>
+                            <xs:documentation>"0x10 = Reset"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="17">
+                        <xs:annotation>
+                            <xs:documentation>"0x11 = PowerUp"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="18">
+                        <xs:annotation>
+                            <xs:documentation>"0x12 = PowerDown"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="19">
+                        <xs:annotation>
+                            <xs:documentation>"0x13 = PowerCycleReset"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="33">
+                        <xs:annotation>
+                            <xs:documentation>"0x21 = SetBootOptions"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="SpecialCommandType">
+                <xs:restriction base="xs:unsignedByte">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0x00 = NOP"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"0x01 = ForcePxeBoot"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>"0x02 = ForceHardDriveBoot"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="3">
+                        <xs:annotation>
+                            <xs:documentation>"0x03 = ForceHardDriveSafeBootMode"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="4">
+                        <xs:annotation>
+                            <xs:documentation>"0x04 = ForceDiagnosticsBoot"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="5">
+                        <xs:annotation>
+                            <xs:documentation>"0x05 = ForceCdOrDvdBoot"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="193">
+                        <xs:annotation>
+                            <xs:documentation>"0xC1 = IntelOemCommand"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType name="BootOptionsType">
+                <xs:restriction base="xs:unsignedShort"/>
+            </xs:simpleType>
+            <xs:simpleType name="SpecialCommandParameterType">
+                <xs:restriction base="xs:unsignedShort"/>
+            </xs:simpleType>
+            <xs:simpleType name="OemParametersType">
+                <xs:restriction base="xs:unsignedShort"/>
+            </xs:simpleType>
+
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:element name="GetRemoteControlCapabilities">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetRemoteControlCapabilitiesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="rci:PT_STATUS"/>
+                        <xs:element name="IanaOemNumber" type="xs:unsignedInt"/>
+                        <xs:element name="OemDefinedCapabilities" type="rci:OemDefinedCapabilitiesType"/>
+                        <xs:element name="SpecialCommandsSupported" type="rci:SpecialCommandsSupportedType"/>
+                        <xs:element name="SystemCapabilitiesSupported" type="rci:SystemCapabilitiesSupportedType"/>
+                        <xs:element name="SystemFirmwareCapabilities" type="rci:SystemFirmwareCapabilitiesType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoteControl">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Command" type="rci:RemoteControlCommandType"/>
+                        <xs:element name="IanaOemNumber" type="xs:unsignedInt"/>
+                        <xs:element name="SpecialCommand" type="rci:SpecialCommandType" minOccurs="0"/>
+                        <xs:element name="SpecialCommandParameter" type="rci:SpecialCommandParameterType" minOccurs="0"/>
+                        <xs:element name="BootOptions" type="rci:BootOptionsType" minOccurs="0"/>
+                        <xs:element name="OEMparameters" type="rci:OemParametersType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="RemoteControlResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="rci:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetSystemPowerState">
+                <xs:complexType>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetSystemPowerStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="rci:PT_STATUS"/>
+                        <xs:element name="SystemPowerState" type="rci:SystemPowerStateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </wsdl:types>
+
+    <!-- Intel(r) AMT 1.0 -->
+    <message name="GetRemoteControlCapabilitiesIn">
+        <part name="parameters" element="rci:GetRemoteControlCapabilities"/>
+    </message>
+    <message name="GetRemoteControlCapabilitiesOut">
+        <part name="parameters" element="rci:GetRemoteControlCapabilitiesResponse"/>
+    </message>
+    <message name="RemoteControlIn">
+        <part name="parameters" element="rci:RemoteControl"/>
+    </message>
+    <message name="RemoteControlOut">
+        <part name="parameters" element="rci:RemoteControlResponse"/>
+    </message>
+    <message name="GetSystemPowerStateIn">
+        <part name="parameters" element="rci:GetSystemPowerState"/>
+    </message>
+    <message name="GetSystemPowerStateOut">
+        <part name="parameters" element="rci:GetSystemPowerStateResponse"/>
+    </message>
+
+    <portType name="RemoteControlSoapPortType">
+        <!-- Intel(r) AMT 1.0 -->
+        <operation name="GetRemoteControlCapabilities">
+            <input message="rci:GetRemoteControlCapabilitiesIn"/>
+            <output message="rci:GetRemoteControlCapabilitiesOut"/>
+        </operation>
+        <operation name="RemoteControl">
+            <input message="rci:RemoteControlIn"/>
+            <output message="rci:RemoteControlOut"/>
+        </operation>
+        <operation name="GetSystemPowerState">
+            <input message="rci:GetSystemPowerStateIn"/>
+            <output message="rci:GetSystemPowerStateOut"/>
+        </operation>
+    </portType>
+    <binding name="RemoteControlSoapBinding" type="rci:RemoteControlSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <!-- Intel(r) AMT 1.0 -->
+        <operation name="GetRemoteControlCapabilities">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/RemoteControl/2004/01/GetRemoteControlCapabilities"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="RemoteControl">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/RemoteControl/2004/01/RemoteControl"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetSystemPowerState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/RemoteControl/2004/01/GetSystemPowerState"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+    <service name="RemoteControlService">
+        <port name="RemoteControlSoapPort" binding="rci:RemoteControlSoapBinding">
+            <soap:address location="http://hostname:16992/RemoteControlService"/>
+        </port>
+    </service>
+</wsdl:definitions>

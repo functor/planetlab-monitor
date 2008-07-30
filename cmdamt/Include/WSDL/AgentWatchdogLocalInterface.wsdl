@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Intel(R) AMT Agent Presence Local Interface version 1.00.0-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:apl="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal" 
+    targetNamespace="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal">
+    <wsdl:types>
+        <xs:schema targetNamespace="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal" elementFormDefault="qualified">
+
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            <xs:complexType name="GUID">
+                <xs:sequence>
+                    <xs:element name="Byte" type="xs:unsignedByte" minOccurs="16" maxOccurs="16"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <!-- Intel(r) AMT 1.0 -->
+            <xs:element name="AgentWatchdogRegister">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apl:GUID"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AgentWatchdogRegisterResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apl:PT_STATUS"/>
+                        <xs:element name="SessionSequenceNumber" type="xs:unsignedInt"/>
+                        <xs:element name="AgentHeartbeatTime" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AgentWatchdogHeartbeat">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apl:GUID"/>
+                        <xs:element name="SessionSequenceNumber" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AgentWatchdogHeartbeatResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apl:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AgentWatchdogShutdown">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="AgentID" type="apl:GUID"/>
+                        <xs:element name="SessionSequenceNumber" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="AgentWatchdogShutdownResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Status" type="apl:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </wsdl:types>
+
+    <!-- Intel(r) AMT 1.0 -->
+    <wsdl:message name="AgentWatchdogRegisterIn">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogRegister"/>
+    </wsdl:message>
+    <wsdl:message name="AgentWatchdogRegisterOut">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogRegisterResponse"/>
+    </wsdl:message>
+    <wsdl:message name="AgentWatchdogHeartbeatIn">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogHeartbeat"/>
+    </wsdl:message>
+    <wsdl:message name="AgentWatchdogHeartbeatOut">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogHeartbeatResponse"/>
+    </wsdl:message>
+    <wsdl:message name="AgentWatchdogShutdownIn">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogShutdown"/>
+    </wsdl:message>
+    <wsdl:message name="AgentWatchdogShutdownOut">
+        <wsdl:part name="parameters" element="apl:AgentWatchdogShutdownResponse"/>
+    </wsdl:message>
+    
+    <portType name="AgentWatchdogLocalSoapPortType">
+        <!-- Intel(r) AMT 1.0 -->
+        <wsdl:operation name="AgentWatchdogShutdown">
+            <wsdl:input message="apl:AgentWatchdogShutdownIn"/>
+            <wsdl:output message="apl:AgentWatchdogShutdownOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="AgentWatchdogHeartbeat">
+            <wsdl:input message="apl:AgentWatchdogHeartbeatIn"/>
+            <wsdl:output message="apl:AgentWatchdogHeartbeatOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="AgentWatchdogRegister">
+            <wsdl:input message="apl:AgentWatchdogRegisterIn"/>
+            <wsdl:output message="apl:AgentWatchdogRegisterOut"/>
+        </wsdl:operation>
+    </portType>
+    
+    <binding name="AgentWatchdogLocalSoapBinding" type="apl:AgentWatchdogLocalSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <!-- Intel(r) AMT 1.0 -->
+        <wsdl:operation name="AgentWatchdogShutdown">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal/AgentWatchdogShutdown"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="AgentWatchdogHeartbeat">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal/AgentWatchdogHeartbeat"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+        <wsdl:operation name="AgentWatchdogRegister">
+            <soap:operation soapAction="http://schemas.intel.com/2004/12/management/PC/AgentWatchdogLocal/AgentWatchdogRegister"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </wsdl:operation>
+    </binding>
+    <service name="AgentWatchdogLocalService">
+        <port name="AgentWatchdogLocalSoapPort" binding="apl:AgentWatchdogLocalSoapBinding">
+            <soap:address location="http://hostname:16992/AgentWatchdogLocalService"/>
+        </port>
+    </service>
+</wsdl:definitions>

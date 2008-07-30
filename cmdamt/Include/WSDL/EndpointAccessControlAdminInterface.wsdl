@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology Event Manager Interface version 1.15.0-->
+<wsdl:definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:eac="http://schemas.intel.com/platform/client/EAC/2006/01" 
+    xmlns:eaca="http://schemas.intel.com/platform/client/EACAdmin/2006/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/EACAdmin/2006/01">
+
+    <wsdl:types>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd"/>
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/SecurityAdministration/2004/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="SecurityAdministrationInterface.xsd"/>
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/EAC/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="EndpointAccessControlInterface.xsd" />
+        </xs:schema>
+        
+    </wsdl:types>
+
+    <wsdl:message name="GetEACStatusIn">
+        <wsdl:part name="parameters" element="eac:GetEACStatus"/>
+    </wsdl:message>
+    <wsdl:message name="GetEACStatusOut">
+        <wsdl:part name="parameters" element="eac:GetEACStatusResponse"/>
+    </wsdl:message>
+    <wsdl:message name="SetPostureSignerIn">
+        <wsdl:part name="parameters" element="eac:SetPostureSigner"/>
+    </wsdl:message>
+    <wsdl:message name="SetPostureSignerOut">
+        <wsdl:part name="parameters" element="eac:SetPostureSignerResponse"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureSignerIn">
+        <wsdl:part name="parameters" element="eac:GetPostureSigner"/>
+    </wsdl:message>
+    <wsdl:message name="GetPostureSignerOut">
+        <wsdl:part name="parameters" element="eac:GetPostureSignerResponse"/>
+    </wsdl:message>
+    <wsdl:message name="EnableEACIn">
+        <wsdl:part name="parameters" element="eac:EnableEAC"/>
+    </wsdl:message>
+    <wsdl:message name="EnableEACOut">
+        <wsdl:part name="parameters" element="eac:EnableEACResponse"/>
+    </wsdl:message>
+    <wsdl:message name="UpdatePostureStateIn">
+        <wsdl:part name="parameters" element="eac:UpdatePostureState"/>
+    </wsdl:message>
+    <wsdl:message name="UpdatePostureStateOut">
+        <wsdl:part name="parameters" element="eac:UpdatePostureStateResponse"/>
+    </wsdl:message>
+
+    <wsdl:portType name="EndpointAccessControlAdminSoapPortType">
+        <wsdl:operation name="SetPostureSigner">
+            <wsdl:input message="eaca:SetPostureSignerIn"/>
+            <wsdl:output message="eaca:SetPostureSignerOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetPostureSigner">
+            <wsdl:input message="eaca:GetPostureSignerIn"/>
+            <wsdl:output message="eaca:GetPostureSignerOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="GetEACStatus">
+            <wsdl:input message="eaca:GetEACStatusIn"/>
+            <wsdl:output message="eaca:GetEACStatusOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="EnableEAC">
+            <wsdl:input message="eaca:EnableEACIn"/>
+            <wsdl:output message="eaca:EnableEACOut"/>
+        </wsdl:operation>
+        <wsdl:operation name="UpdatePostureState">
+            <wsdl:input message="eaca:UpdatePostureStateIn"/>
+            <wsdl:output message="eaca:UpdatePostureStateOut"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <wsdl:binding name="EndpointAccessControlAdminSoapBinding" type="eaca:EndpointAccessControlAdminSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <wsdl:operation name="SetPostureSigner">
+            <soap:operation  soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/SetPostureSigner"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetPostureSigner">
+            <soap:operation  soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/GetPostureSigner"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="GetEACStatus">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/GetEACStatus"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="EnableEAC">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/EnableEAC"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="UpdatePostureState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EAC/2006/01/UpdatePostureState"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <wsdl:service name="EndpointAccessControlAdminService">
+        <wsdl:port name="EndpointAccessControlSoapPort" binding="eaca:EndpointAccessControlAdminSoapBinding">
+            <soap:address location="http://hostname:16992/EndpointAccessControlAdminService"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

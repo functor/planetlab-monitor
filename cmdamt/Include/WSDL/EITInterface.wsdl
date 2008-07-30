@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology EIT Interface -->
+<definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"
+    xmlns:eit="http://schemas.intel.com/platform/client/EIT/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/EIT/2004/01">
+
+    <types>
+        <!-- Common namespace -->
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01">
+
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>
+            
+        </xs:schema>
+
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/EIT/2004/01">
+
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+
+            <xs:simpleType name="RegionType">
+                <xs:restriction base="xs:unsignedInt">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = Region A"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = Region B"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>
+
+            <xs:element name="ReadBuff">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Region" type="eit:RegionType"/>
+                        <xs:element name="Offset" type="xs:unsignedInt"/>
+                        <xs:element name="Length" type="xs:unsignedInt"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="ReadBuffResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                        <xs:element name="Data" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="WriteBuff">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Region" type="eit:RegionType"/>
+                        <xs:element name="Offset" type="xs:unsignedInt"/>
+                        <xs:element name="Data" type="xs:base64Binary"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="WriteBuffResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="cmn:PT_STATUS"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+        </xs:schema>
+    </types>
+
+    <message name="ReadBuffIn">
+        <part name="parameters" element="eit:ReadBuff"/>
+    </message>
+    <message name="ReadBuffOut">
+        <part name="parameters" element="eit:ReadBuffResponse"/>
+    </message>
+    <message name="WriteBuffIn">
+        <part name="parameters" element="eit:WriteBuff"/>
+    </message>
+    <message name="WriteBuffOut">
+        <part name="parameters" element="eit:WriteBuffResponse"/>
+    </message>
+
+    <portType name="EITSoapPortType">
+
+        <operation name="ReadBuff">
+            <input message="eit:ReadBuffIn"/>
+            <output message="eit:ReadBuffOut"/>
+        </operation>
+        <operation name="WriteBuff">
+            <input message="eit:WriteBuffIn"/>
+            <output message="eit:WriteBuffOut"/>
+        </operation>
+
+    </portType>
+
+    <binding name="EITSoapBinding" type="eit:EITSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <operation name="ReadBuff">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EIT/2004/01/ReadBuff" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="WriteBuff">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/EIT/2004/01/WriteBuff" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+
+    </binding>
+
+    <service name="EITService">
+        <port name="EITSoapPortType" binding="eit:EITSoapBinding">
+            <soap:address location="http://hostname:16992/EITService"/>
+        </port>
+    </service>
+
+</definitions>

@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intel(R) Active Management Technology GeneralInfo Interface version 1.15.1-->
+<definitions 
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cmn="http://schemas.intel.com/platform/client/Common/2006/01"     
+    xmlns:inf="http://schemas.intel.com/platform/client/GeneralInfo/2004/01" 
+    targetNamespace="http://schemas.intel.com/platform/client/GeneralInfo/2004/01">
+    <types>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/Common/2006/01" elementFormDefault="qualified">
+            <xs:include schemaLocation="Common.xsd" />
+        </xs:schema>
+        
+        <xs:schema targetNamespace="http://schemas.intel.com/platform/client/GeneralInfo/2004/01" elementFormDefault="qualified">
+            
+            <!-- Imported namespaces -->
+            <xs:import namespace="http://schemas.intel.com/platform/client/Common/2006/01"/>
+
+            <!-- Private Type definition -->
+            <xs:simpleType name="PT_STATUS">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>            
+               <xs:simpleType name="TimeType">
+                    <xs:restriction base="xs:unsignedInt"/>
+               </xs:simpleType>
+            <xs:simpleType name="IPv4AddressType">
+                <xs:restriction base="xs:unsignedInt"/>
+            </xs:simpleType>            
+            <xs:complexType name="IderSessionLogEntryType">
+                <xs:sequence>
+                    <xs:element name="ConsoleAddress" type="inf:IPv4AddressType"/>
+                    <xs:element name="Port" type="xs:unsignedShort"/>
+                    <xs:element name="TimeStamp" type="inf:TimeType"/>
+                </xs:sequence>
+            </xs:complexType>        
+            <xs:complexType name="FirmwareVersionType">
+                <xs:sequence>
+                    <xs:element name="Description" type="xs:string"/>
+                    <xs:element name="Version" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>        
+            <xs:simpleType name="ProvisioningModeType">
+                <xs:restriction base="xs:unsignedInt">
+                    <xs:enumeration value="0">
+                        <xs:annotation>
+                            <xs:documentation>"0 = ProvisioningModeCurrent"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="1">
+                        <xs:annotation>
+                            <xs:documentation>"1 = ProvisioningModeEnterprise"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                    <xs:enumeration value="2">
+                        <xs:annotation>
+                            <xs:documentation>"2 = ProvisioningModeSmallBusiness"</xs:documentation>
+                        </xs:annotation>
+                    </xs:enumeration>
+                </xs:restriction>
+            </xs:simpleType>            
+            <xs:simpleType name="ProvisioningStateType">
+                    <xs:restriction base="xs:string">
+                         <xs:enumeration value="ProvisioningStatePre" />
+                         <xs:enumeration value="ProvisioningStateIn" />
+                         <xs:enumeration value="ProvisioningStatePost" />
+                   </xs:restriction>                    
+            </xs:simpleType>  
+            <xs:simpleType name="PasswordModelType">
+                    <xs:restriction base="xs:string">
+                         <xs:enumeration value="PasswordModelCoupled" />
+                         <xs:enumeration value="PasswordModelSeperate" />
+                         <xs:enumeration value="PasswordModelSeperateHash" />
+                   </xs:restriction>                    
+            </xs:simpleType>
+               <xs:simpleType name="EnabledInterfacesType">
+                    <xs:restriction base="xs:string">
+                         <xs:enumeration value="WebUI" />
+                         <xs:enumeration value="SerialOverLAN" />
+                         <xs:enumeration value="IdeRedirection" />
+                   </xs:restriction>                    
+               </xs:simpleType>     
+
+            <!-- Msg IO Types -->
+
+            <xs:element name="GetCoreVersion">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCoreVersionResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="Version" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetCodeVersions">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetCodeVersionsResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="BiosVersion" type="xs:string"/>
+                        <xs:element name="Versions" type="inf:FirmwareVersionType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetProvisioningMode">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningModeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="ProvisioningMode" type="inf:ProvisioningModeType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetProvisioningState">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetProvisioningStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="ProvisioningState" type="inf:ProvisioningStateType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetVlanParameters">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InterfaceHandle" type="cmn:InterfaceHandleType" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetVlanParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="VlanMode" type="xs:boolean"/>
+                        <xs:element name="VlanTag" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetHostName">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetHostNameResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="HostName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetConfigServerInfo">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetConfigServerInfoResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="Ip" type="inf:IPv4AddressType"/>
+                        <xs:element name="Port" type="xs:unsignedShort"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetAdminAclEntryStatus">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAdminAclEntryStatusResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="IsDefault" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetAdminNetAclEntryStatus">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetAdminNetAclEntryStatusResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="IsDefault" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetPasswordModel">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetPasswordModelResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="PasswordModel" type="inf:PasswordModelType"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetEnabledInterfaces">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetEnabledInterfacesResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="EnabledInterfaces" type="inf:EnabledInterfacesType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetNetworkState">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetNetworkStateResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="IsEnabled" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetSecurityParameters">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetSecurityParametersResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="EnterpriseMode" type="xs:boolean"/>
+                        <xs:element name="TlsEnabled" type="xs:boolean"/>
+                        <xs:element name="HwCryptoEnabled" type="xs:boolean"/>
+                        <xs:element name="ProvisioningState" type="inf:ProvisioningStateType"/>
+                        <xs:element name="NetworkInterfaceEnabled" type="xs:boolean"/>
+                        <xs:element name="SOLEnabled" type="xs:boolean"/>
+                        <xs:element name="IDEREnabled" type="xs:boolean"/>
+                        <xs:element name="FWUpdateEnabled" type="xs:boolean"/>
+                        <xs:element name="LinkIsUp" type="xs:boolean"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            <xs:element name="GetIderSessionLog">
+                <xs:complexType>
+                    <xs:sequence>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="GetIderSessionLogResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="StatusCode" type="inf:PT_STATUS"/>
+                        <xs:element name="LogData" type="inf:IderSessionLogEntryType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>            
+            
+        </xs:schema>
+    </types>
+    
+    <message name="GetCoreVersionIn">
+        <part name="parameters" element="inf:GetCoreVersion"/>
+    </message>
+    <message name="GetCoreVersionOut">
+        <part name="parameters" element="inf:GetCoreVersionResponse"/>
+    </message>
+    <message name="GetCodeVersionsIn">
+        <part name="parameters" element="inf:GetCodeVersions"/>
+    </message>
+    <message name="GetCodeVersionsOut">
+        <part name="parameters" element="inf:GetCodeVersionsResponse"/>
+    </message>
+    <message name="GetProvisioningModeIn">
+        <part name="parameters" element="inf:GetProvisioningMode"/>
+    </message>
+    <message name="GetProvisioningModeOut">
+        <part name="parameters" element="inf:GetProvisioningModeResponse"/>
+    </message>
+    <message name="GetProvisioningStateIn">
+        <part name="parameters" element="inf:GetProvisioningState"/>
+    </message>
+    <message name="GetProvisioningStateOut">
+        <part name="parameters" element="inf:GetProvisioningStateResponse"/>
+    </message>
+    <message name="GetVlanParametersIn">
+        <part name="parameters" element="inf:GetVlanParameters"/>
+    </message>
+    <message name="GetVlanParametersOut">
+        <part name="parameters" element="inf:GetVlanParametersResponse"/>
+    </message>
+    <message name="GetHostNameIn">
+        <part name="parameters" element="inf:GetHostName"/>
+    </message>
+    <message name="GetHostNameOut">
+        <part name="parameters" element="inf:GetHostNameResponse"/>
+    </message>
+    <message name="GetConfigServerInfoIn">
+        <part name="parameters" element="inf:GetConfigServerInfo"/>
+    </message>
+    <message name="GetConfigServerInfoOut">
+        <part name="parameters" element="inf:GetConfigServerInfoResponse"/>
+    </message>
+    <message name="GetAdminAclEntryStatusIn">
+        <part name="parameters" element="inf:GetAdminAclEntryStatus"/>
+    </message>
+    <message name="GetAdminAclEntryStatusOut">
+        <part name="parameters" element="inf:GetAdminAclEntryStatusResponse"/>
+    </message>
+    <message name="GetAdminNetAclEntryStatusIn">
+        <part name="parameters" element="inf:GetAdminNetAclEntryStatus"/>
+    </message>
+    <message name="GetAdminNetAclEntryStatusOut">
+        <part name="parameters" element="inf:GetAdminNetAclEntryStatusResponse"/>
+    </message>
+    <message name="GetPasswordModelIn">
+        <part name="parameters" element="inf:GetPasswordModel"/>
+    </message>
+    <message name="GetPasswordModelOut">
+        <part name="parameters" element="inf:GetPasswordModelResponse"/>
+    </message>
+    <message name="GetEnabledInterfacesIn">
+        <part name="parameters" element="inf:GetEnabledInterfaces"/>
+    </message>
+    <message name="GetEnabledInterfacesOut">
+        <part name="parameters" element="inf:GetEnabledInterfacesResponse"/>
+    </message>
+    <message name="GetNetworkStateIn">
+        <part name="parameters" element="inf:GetNetworkState"/>
+    </message>
+    <message name="GetNetworkStateOut">
+        <part name="parameters" element="inf:GetNetworkStateResponse"/>
+    </message>
+    <message name="GetSecurityParametersIn">
+        <part name="parameters" element="inf:GetSecurityParameters"/>
+    </message>
+    <message name="GetSecurityParametersOut">
+        <part name="parameters" element="inf:GetSecurityParametersResponse"/>
+    </message>
+    <message name="GetIderSessionLogIn">
+        <part name="parameters" element="inf:GetIderSessionLog"/>
+    </message>
+    <message name="GetIderSessionLogOut">
+        <part name="parameters" element="inf:GetIderSessionLogResponse"/>
+    </message>
+    
+    <portType name="GeneralInfoSoapPortType">
+        <operation name="GetCoreVersion">
+            <input message="inf:GetCoreVersionIn"/>
+            <output message="inf:GetCoreVersionOut"/>
+        </operation>
+        <operation name="GetCodeVersions">
+            <input message="inf:GetCodeVersionsIn"/>
+            <output message="inf:GetCodeVersionsOut"/>
+        </operation>
+        <operation name="GetProvisioningMode">
+            <input message="inf:GetProvisioningModeIn"/>
+            <output message="inf:GetProvisioningModeOut"/>
+        </operation>
+        <operation name="GetProvisioningState">
+            <input message="inf:GetProvisioningStateIn"/>
+            <output message="inf:GetProvisioningStateOut"/>
+        </operation>
+        <operation name="GetVlanParameters">
+            <input message="inf:GetVlanParametersIn"/>
+            <output message="inf:GetVlanParametersOut"/>
+        </operation>
+        <operation name="GetHostName">
+            <input message="inf:GetHostNameIn"/>
+            <output message="inf:GetHostNameOut"/>
+        </operation>
+        <operation name="GetConfigServerInfo">
+            <input message="inf:GetConfigServerInfoIn"/>
+            <output message="inf:GetConfigServerInfoOut"/>
+        </operation>
+        <operation name="GetAdminAclEntryStatus">
+            <input message="inf:GetAdminAclEntryStatusIn"/>
+            <output message="inf:GetAdminAclEntryStatusOut"/>
+        </operation>
+        <operation name="GetAdminNetAclEntryStatus">
+            <input message="inf:GetAdminNetAclEntryStatusIn"/>
+            <output message="inf:GetAdminNetAclEntryStatusOut"/>
+        </operation>
+        <operation name="GetPasswordModel">
+            <input message="inf:GetPasswordModelIn"/>
+            <output message="inf:GetPasswordModelOut"/>
+        </operation>
+        <operation name="GetEnabledInterfaces">
+            <input message="inf:GetEnabledInterfacesIn"/>
+            <output message="inf:GetEnabledInterfacesOut"/>
+        </operation>
+        <operation name="GetNetworkState">
+            <input message="inf:GetNetworkStateIn"/>
+            <output message="inf:GetNetworkStateOut"/>
+        </operation>
+        <operation name="GetSecurityParameters">
+            <input message="inf:GetSecurityParametersIn"/>
+            <output message="inf:GetSecurityParametersOut"/>
+        </operation>
+        <operation name="GetIderSessionLog">
+            <input message="inf:GetIderSessionLogIn"/>
+            <output message="inf:GetIderSessionLogOut"/>
+        </operation>
+    </portType>
+    
+    <binding name="GeneralInfoSoapBinding" type="inf:GeneralInfoSoapPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        
+        <operation name="GetCoreVersion">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetCoreVersion" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetCodeVersions">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetCodeVersions" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningMode">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetProvisioningMode" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetProvisioningState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetProvisioningState" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetVlanParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetVlanParameters" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetHostName">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetHostName" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetConfigServerInfo">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetConfigServerInfo" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetAdminAclEntryStatus">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetAdminAclEntryStatus" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetAdminNetAclEntryStatus">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetAdminNetAclEntryStatus" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetPasswordModel">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetPasswordModel" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetEnabledInterfaces">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetEnabledInterfaces" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetNetworkState">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetNetworkState" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetSecurityParameters">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetSecurityParameters" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="GetIderSessionLog">
+            <soap:operation soapAction="http://schemas.intel.com/platform/client/GeneralInfo/2004/01/GetIderSessionLog" style="document"/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        
+    </binding>
+    
+    <service name="GeneralInfoService">
+        <port name="GeneralInfoSoapPortType" binding="inf:GeneralInfoSoapBinding">
+            <soap:address location="http://hostname:16992/GeneralInfoService"/>
+        </port>
+    </service>
+    
+</definitions>

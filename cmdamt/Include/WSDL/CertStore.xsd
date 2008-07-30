@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:cstr="http://schemas.intel.com/platform/client/CertStore/2006/01"
+    targetNamespace="http://schemas.intel.com/platform/client/CertStore/2006/01"
+    elementFormDefault="qualified">
+    
+    <!-- Import ... -->
+    
+
+    <!-- Schema definition -->
+
+    <xs:simpleType name="KeyPairHandleType">
+        <xs:restriction base="xs:unsignedInt"/>
+    </xs:simpleType>
+
+    <xs:complexType name="RSAKeyPairType">
+        <xs:sequence>
+            <xs:element name="DERKey" type="xs:base64Binary"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="KeyPairType">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="RSAKeyPair" type="cstr:RSAKeyPairType"/>                
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+    
+</xs:schema>
