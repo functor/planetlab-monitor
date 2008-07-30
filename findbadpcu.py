@@ -8,6 +8,7 @@ import socket
 
     
 import signal
+import traceback
 
 #old_handler = signal.getsignal(signal.SIGCHLD)
 
@@ -78,7 +79,6 @@ def get_pcu(pcuname):
 				if i['pcu_id'] == pcuname:
 					l_pcu = i
 		except:
-			import traceback
 			traceback.print_exc()
 			l_pcu = None
 
@@ -97,7 +97,6 @@ def get_nodes(node_ids):
 				if n['node_id'] in node_ids:
 					l_node.append(n)
 		except:
-			import traceback
 			traceback.print_exc()
 			l_node = None
 
@@ -155,7 +154,6 @@ def get_plc_site_values(site_id):
 					d_site = site
 					break
 		except:
-			import traceback
 			traceback.print_exc()
 			values = None
 
@@ -194,7 +192,6 @@ def collectPingAndSSH(pcuname, cohash):
 				continue_probe = False
 		except:
 			b_except = True
-			import traceback
 			traceback.print_exc()
 			continue_probe = False
 
@@ -289,7 +286,6 @@ def collectPingAndSSH(pcuname, cohash):
 		print values
 		errors = values
 		print "____________________________________"
-		import traceback
 		errors['traceback'] = traceback.format_exc()
 		print errors['traceback']
 
@@ -433,7 +429,6 @@ if __name__ == '__main__':
 		main()
 		time.sleep(1)
 	except Exception, err:
-		import traceback
 		traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."

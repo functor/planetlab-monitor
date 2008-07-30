@@ -8,9 +8,9 @@ import time
 
 # QUERY all nodes.
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
-					"table=table_nodeview&" + \
-				    "dumpcols='name,resptime,sshstatus,uptime,lastcotop,cpuspeed,memsize,disksize'&" + \
-				    "formatcsv"
+				"table=table_nodeview&" + \
+				"dumpcols='name,resptime,sshstatus,uptime,lastcotop,cpuspeed,memsize,disksize'&" + \
+				"formatcsv"
 				    #"formatcsv&" + \
 					#"select='lastcotop!=0'"
 
@@ -26,7 +26,7 @@ import comon
 import threadpool
 import syncplcdb
 from nodequery import verify,query_to_dict,node_select
-
+import traceback
 import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
@@ -72,7 +72,7 @@ EOF			""")
 				'', 'princeton_comon' : '', 'princeton_comon_running' : '',
 				'princeton_comon_procs' : '', 'sshport' : None})
 	except:
-		import traceback; print traceback.print_exc()
+		print traceback.print_exc()
 		sys.exit(1)
 
 	### RUN SSH ######################
@@ -181,19 +181,19 @@ EOF			""")
 		values['comonstats'] = {'resptime':  '-1', 
 								'uptime':    '-1',
 								'sshstatus': '-1', 
-								'lastcotop': '-1'}
+								'lastcotop': '-1',
+								'cpuspeed' : "null",
+								'disksize' : 'null',
+								'memsize'  : 'null'}
 	# include output value
 	### GET PLC NODE ######################
 	b_except = False
 	plc_lock.acquire()
 
 	try:
-		d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 'last_contact', 'boot_state', 'nodegroup_ids'])
+		d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 'date_created', 'last_updated', 'last_contact', 'boot_state', 'nodegroup_ids'])
 	except:
 		b_except = True
-		import traceback
-		b_except = True
-		import traceback
 		traceback.print_exc()
 
 	plc_lock.release()
@@ -208,13 +208,15 @@ EOF			""")
 			values['pcu'] = "NOPCU"
 		site_id = d_node[0]['site_id']
 		last_contact = d_node[0]['last_contact']
-		nodegroups = d_node[0]['nodegroup_ids']
+		nodegroups = [ i['name'] for i in api.GetNodeGroups(d_node[0]['nodegroup_ids']) ]
 		values['plcnode'] = {'status' : 'SUCCESS', 
 							'pcu_ids': pcu, 
 							'boot_state' : d_node[0]['boot_state'],
 							'site_id': site_id,
 							'nodegroups' : nodegroups,
-							'last_contact': last_contact}
+							'last_contact': last_contact,
+							'date_created': d_node[0]['date_created'],
+							'last_updated': d_node[0]['last_updated']}
 	else:
 		values['pcu']     = "UNKNOWN"
 		values['plcnode'] = {'status' : "GN_FAILED"}
@@ -229,7 +231,6 @@ EOF			""")
 							['max_slices', 'slice_ids', 'node_ids', 'login_base'])
 	except:
 		b_except = True
-		import traceback
 		traceback.print_exc()
 
 	plc_lock.release()
@@ -389,7 +390,6 @@ if __name__ == '__main__':
 	try:
 		main()
 	except Exception, err:
-		import traceback
 		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."

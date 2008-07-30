@@ -21,18 +21,18 @@ def getconf(hostname, force=False, media=None):
 
 	args = {}
 	if not media:
-		args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
-		args['url_list'] += "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+		args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
+		args['url_list'] += "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
 	else:
 		if media == "usb":
-			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
+			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
 		elif media == "iso":
-			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
 		else:
-			args['url_list']  = "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s-partition.usb\n" % hostname
-			args['url_list'] += "   http://pl-virtual-03.cs.princeton.edu/bootcds/%s.iso" % hostname
+			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
+			args['url_list'] += "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
 			
-	#print "http://pl-virtual-03.cs.princeton.edu/bootcds/%s.usb\n" % hostname
+	#print "http://monitor.planet-lab.org/bootcds/%s.usb\n" % hostname
 
 	return args
 

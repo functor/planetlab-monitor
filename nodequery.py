@@ -19,6 +19,8 @@ import re
 fb = soltesz.dbLoad("findbad")
 fbpcu = {}
 
+class NoKeyException(Exception): pass
+
 def daysdown_print_nodeinfo(fbnode, hostname):
 	fbnode['hostname'] = hostname
 	fbnode['daysdown'] = Diagnose.getStrDaysDown(fbnode)
@@ -48,6 +50,79 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 		for f in fields:
 			format += "%%(%s)s " % f
 		print format % fbnode
+
+def get(fb, path):
+    indexes = path.split("/")
+    values = fb
+    for index in indexes:
+        if index in values:
+            values = values[index]
+        else:
+            raise NoKeyException(index)
+    return values
+
+def verifyType(constraints, data):
+	"""
+		constraints is a list of key, value pairs.
+		# [ {... : ...}==AND , ... , ... , ] == OR
+	"""
+	con_or_true = False
+	for con in constraints:
+		#print "con: %s" % con
+		if len(con.keys()) == 0:
+			con_and_true = False
+		else:
+			con_and_true = True
+
+		for key in con.keys():
+			#print "looking at key: %s" % key
+			if data is None:
+				con_and_true = False
+				break
+
+			try:
+				get(data,key)
+				o = con[key]
+				if o.name() == "Match":
+					if get(data,key) is not None:
+						value_re = re.compile(o.value)
+						con_and_true = con_and_true & (value_re.search(get(data,key)) is not None)
+					else:
+						con_and_true = False
+				elif o.name() == "ListMatch":
+					if get(data,key) is not None:
+						match = False
+						for listitem in get(data,key):
+							value_re = re.compile(o.value)
+							if value_re.search(listitem) is not None:
+								match = True
+								break
+						con_and_true = con_and_true & match
+					else:
+						con_and_true = False
+				elif o.name() == "Is":
+					con_and_true = con_and_true & (get(data,key) == o.value)
+				elif o.name() == "FilledIn":
+					con_and_true = con_and_true & (len(get(data,key)) > 0)
+				elif o.name() == "PortOpen":
+					if get(data,key) is not None:
+						v = get(data,key)
+						con_and_true = con_and_true & (v[str(o.value)] == "open")
+					else:
+						con_and_true = False
+				else:
+					value_re = re.compile(o.value)
+					con_and_true = con_and_true & (value_re.search(get(data,key)) is not None)
+
+			except NoKeyException, key:
+				print "missing key %s" % key,
+				pass
+				#print "missing key %s" % key
+				#con_and_true = False
+
+		con_or_true = con_or_true | con_and_true
+
+	return con_or_true
 
 def verify(constraints, data):
 	"""
@@ -95,7 +170,7 @@ def query_to_dict(query):
 	
 	return ad
 
-def _pcu_in(fbdata):
+def pcu_in(fbdata):
 	if 'plcnode' in fbdata:
 		if 'pcu_ids' in fbdata['plcnode']:
 			if len(fbdata['plcnode']['pcu_ids']) > 0:
@@ -116,7 +191,7 @@ def pcu_select(str_query, nodelist=None):
 			if node not in nodelist: continue
 	
 		fb_nodeinfo  = fb['nodes'][node]['values']
-		if _pcu_in(fb_nodeinfo):
+		if pcu_in(fb_nodeinfo):
 			pcuinfo = fbpcu['nodes']['id_%s' % fb_nodeinfo['plcnode']['pcu_ids'][0]]['values']
 			if verify(dict_query, pcuinfo):
 				nodenames.append(node)
@@ -125,7 +200,7 @@ def pcu_select(str_query, nodelist=None):
 				pcunames.append(str)
 	return (nodenames, pcunames)
 
-def node_select(str_query, nodelist=None):
+def node_select(str_query, nodelist=None, fbdb=None):
 	hostnames = []
 	if str_query is None: return hostnames
 
@@ -133,6 +208,9 @@ def node_select(str_query, nodelist=None):
 	dict_query = query_to_dict(str_query)
 	#print dict_query
 	global fb
+
+	if fbdb is not None:
+		fb = fbdb
 
 	for node in fb['nodes'].keys():
 		if nodelist is not None: 

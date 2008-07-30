@@ -398,7 +398,7 @@ class Diagnose:
 
 		# NOTE: these settings can be overridden by command line arguments,
 		#       or the state of a record, i.e. if already in RT's Support Queue.
-		pf = PersistFlags(loginbase, 1, db='site_persitflags')
+		pf = PersistFlags(loginbase, 1, db='site_persistflags')
 		nodes_up = pf.nodes_up
 		if nodes_up < MINUP:
 			d_diag_site[loginbase]['config']['squeeze'] = True

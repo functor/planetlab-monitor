@@ -494,7 +494,7 @@ def reboot(hostname, config=None, forced_action=None):
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
-			('downloadfail' , 'Unable to download main tarball /boot-alpha/bootstrapfs-planetlab-i386.tar.bz2 from server.'),
+			('downloadfail' , 'Unable to download main tarball /boot/bootstrapfs-planetlab-i386.tar.bz2 from server.'),
 			('disktoosmall' , 'The total usable disk size of all disks is insufficient to be usable as a PlanetLab node.'),
 			('hardwarerequirefail' , 'Hardware requirements not met'),
 			('mkfsfail'	    , 'while running: Running mkfs.ext2 -q  -m 0 -j /dev/planetlab/vservers failed'),
@@ -538,7 +538,9 @@ def reboot(hostname, config=None, forced_action=None):
 	# restart_bootmanager_boot
 	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-bootupdatefail-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-update-debug-done",
 			"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
 			"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
@@ -556,6 +558,7 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-done",
 			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
 			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
@@ -660,7 +663,8 @@ def reboot(hostname, config=None, forced_action=None):
 			if conn.compare_and_repair_nodekeys():
 				# the keys either are in sync or were forced in sync.
 				# so try to reboot the node again.
-				conn.restart_bootmanager('boot')
+				conn.restart_bootmanager('rins')
+				pass
 			else:
 				# there was some failure to synchronize the keys.
 				print "...Unable to repair node keys on %s" % node
@@ -713,8 +717,8 @@ def reboot(hostname, config=None, forced_action=None):
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 
-			#print "\tDisabling %s due to out-of-date BOOTCD" % hostname
-			#conn.set_nodestate('disable')
+			print "\tDisabling %s due to out-of-date BOOTCD" % hostname
+			conn.set_nodestate('disable')
 
 		elif sequences[s] == "broken_hardware_email":
 			# MAKE An ACTION record that this host has failed hardware.  May

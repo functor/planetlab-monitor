@@ -1196,12 +1196,13 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 	try:
 		# DataProbe iPal (many sites)
-		if  continue_probe and values['model'].find("Dataprobe IP-41x/IP-81x") >= 0:
+		if  continue_probe and values['model'].find("IP-41x_IP-81x") >= 0:
 			ipal = IPAL(values, verbose, ['23', '80', '9100'])
 			rb_ret = ipal.reboot(values[nodename], dryrun)
 				
 		# APC Masterswitch (Berkeley)
-		elif continue_probe and values['model'].find("APC AP79xx/Masterswitch") >= 0:
+		elif continue_probe and ( values['model'].find("AP79xx") >= 0 or \
+								  values['model'].find("Masterswitch") >= 0 ):
 			print values
 
 			# TODO: make a more robust version of APC
@@ -1226,7 +1227,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 		# BayTech DS4-RPC
-		elif continue_probe and values['model'].find("Baytech DS4-RPC") >= 0:
+		elif continue_probe and values['model'].find("DS4-RPC") >= 0:
 			if values['pcu_id'] in [1237,1052,1209,1002,1008,1041,1013,1022]:
 				# These  require a 'ctrl-c' to be sent... 
 				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
@@ -1255,7 +1256,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				rb_ret = baytech.reboot(values[nodename], dryrun)
 
 		# iLO
-		elif continue_probe and values['model'].find("HP iLO") >= 0:
+		elif continue_probe and values['model'].find("ilo") >= 0:
 			try:
 				hpilo = HPiLO(values, verbose, ['22'])
 				rb_ret = hpilo.reboot(0, dryrun)
@@ -1267,7 +1268,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				rb_ret = hpilo.reboot(0, dryrun)
 
 		# DRAC ssh
-		elif continue_probe and values['model'].find("Dell RAC") >= 0:
+		elif continue_probe and values['model'].find("DRAC") >= 0:
 			# TODO: I don't think DRACRacAdm will throw an exception for the
 			# default method to catch...
 			try:
@@ -1281,15 +1282,12 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				wti = WTIIPS4(values, verbose, ['23'])
 				rb_ret = wti.reboot(values[nodename], dryrun)
 
-		elif continue_probe and values['model'].find("Intel AMT") >= 0:
+		elif continue_probe and values['model'].find("AMT") >= 0:
 				amt = IntelAMT(values, verbose, ['16992'])
 				rb_ret = amt.reboot(values[nodename], dryrun)
 
 		# BlackBox PSExxx-xx (e.g. PSE505-FR)
-		elif continue_probe and \
-			(values['model'].find("BlackBox PS5xx") >= 0 or
-			 values['model'].find("ePowerSwitch 1/4/8x") >=0 ):
-
+		elif continue_probe and values['model'].find("ePowerSwitch") >=0:
 			# TODO: allow a different port than http 80.
 			if values['pcu_id'] in [1089, 1071, 1046, 1035, 1118]:
 				eps = ePowerSwitchGood(values, verbose, ['80'])

@@ -8,7 +8,7 @@ import xml, xmlrpclib
 
 args = {}
 args['known_hosts'] =  os.environ['HOME'] + os.sep + ".ssh" + os.sep + "known_hosts"
-args['XMLRPC_SERVER'] = 'https://www.planet-lab.org/PLCAPI/'
+args['XMLRPC_SERVER'] = 'https://boot.planet-lab.org/PLCAPI/'
 
 class SSHKnownHosts:
 	def __init__(self, args = args):

@@ -102,7 +102,6 @@ def main():
 	for host in sys.argv[1:]:
 		reboot(host)
 
-print "hello?"
 if __name__ == '__main__':
 	print "calling main"
 	main()

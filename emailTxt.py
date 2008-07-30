@@ -163,6 +163,17 @@ If your node returns to normal operation after following these directions, then 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+	pcuthankyou_one=("""Thank you for correcting your PlanetLab node PCU - %(loginbase)s""",
+	"""
+While monitoring your site, we noticed that the following PCU *improved* their states:
+
+%(hostname_list)s  
+Often, system administration is a thankless job, but not today. :-)
+
+Thank you!
+  -- PlanetLab Central (support@planet-lab.org)
+	""")
+
 	thankyou=("""Thank you for helping maintain your PlanetLab nodes - %(loginbase)s""",
 	"""
 While monitoring your site, we noticed that the following nodes *improved*
@@ -196,7 +207,7 @@ Monitor restarted NM on the following machines:
 """As part of our machine monitoring and maintenance, we tried to use the PCU
 registered below, but could not for the following reason at the link below:
 
-	https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php?id=%(pcu_id)s
+	https://monitor.planet-lab.org/cgi-bin/printbadpcus.php?id=%(pcu_id)s
 
 We need your help resolving this issue in two ways:  
 
@@ -228,7 +239,7 @@ Thank you very much for your help,
 registered below, and though it appears to succeed, we do not subsequently
 observe the associated nodes rebooting:
 
-    https://pl-virtual-03.cs.princeton.edu/cgi-bin/printbadpcus.php?id=%(pcu_id)s
+    https://monitor.planet-lab.org/cgi-bin/printbadpcus.php?id=%(pcu_id)s
 
 %(hostname_list)s
 
@@ -289,6 +300,7 @@ Thank you for your help,
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
 	newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
 	newthankyou=[thankyou,thankyou,thankyou]
+	pcuthankyou=[pcuthankyou_one,pcuthankyou_one,pcuthankyou_one]
 	NMReset=[nmreset,nmreset,nmreset]
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
@@ -309,7 +321,74 @@ BootManager.log output follows:
 ---------------------------------------------------------
 %(bmlog)s
 """	  )
+	donation_down_one=("""PlanetLab node donation setup: %(hostname)s""", 
+	"""
+Hello,
 
+As part of PlanetLab node monitoring, we noticed the following node is registered in the PlanetLab database, but it is not completly setup and running.
+
+%(hostname_list)s 
+We are writing because we need your help completing the setup to ensure its full operation.
+
+You should have received directions for the complete configuration when you contacted the donation program coordinator at PlanetLab.  For review, or if you did not receive them, you can find the latest version here:
+
+    https://svn.planet-lab.org/wiki/DC7800Configuration
+
+It is essential that the AMT feature be configured to enable PlanetLab staff to remotely manage the machine.  The basic steps are:
+
+    Configure the DC7800 AMT feature  : https://www.planet-lab.org/AMT
+    Add a PCU to your site            : https://www.planet-lab.org/db/sites/pcu.php
+	Associate your node with the PCU  : Follow the 'My Site' link
+	Finally, download the Boot Image  : https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+	Burn Boot Image to media & Reboot your node
+
+You can confirm that your machine's PCU is correctly configured by visiting the AMT
+port using your browser, such as:
+
+    http://%(hostname)s:16992/
+
+If you need any clarification about the steps mentioned here, please feel free
+to contact us at PlanetLab Support (support@planet-lab.org).
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	donation_nopcu_one=("""PlanetLab node donation, PCU setup: %(hostname)s""", 
+"""
+Hello,
+
+As part of PlanetLab node monitoring, we noticed the following node was not completely setup at your site:
+
+%(hostname_list)s 
+We are writing because we need your help completing the setup to ensure its full operation.
+
+The DC7800 comes with a built-in remote management feature.  The PCU functionality on your node is not configured.  The result of this is that we are unable to remotely administer this machine.
+
+You should have received directions for the complete configuration when you contacted the donation program coordinator at PlanetLab.  For review, or if you did not receive them, you can find the latest version here:
+
+    https://svn.planet-lab.org/wiki/DC7800Configuration
+
+It is essential that the PCU be configured.  The basic steps are:
+
+    Configure the DC7800 AMT feature  : https://www.planet-lab.org/AMT
+    Add a PCU to your site            : https://www.planet-lab.org/db/sites/pcu.php
+	Associate your node with the PCU  : Follow the 'My Site' link
+
+You can confirm that your machine is correctly configured by visiting the AMT
+port using your browser, such as:
+
+    http://%(hostname)s:16992/
+
+If you need any clarification about the steps mentioned here, please feel free
+to contact us at PlanetLab Support (support@planet-lab.org).
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
+	donation_nopcu = [ donation_nopcu_one, donation_nopcu_one, donation_nopcu_one ]
+	donation_down = [ donation_down_one, donation_down_one, donation_down_one ]
 	minimalhardware = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:

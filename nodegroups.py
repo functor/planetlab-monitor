@@ -119,15 +119,8 @@ def main():
 	hostnames = [ n['hostname'] for n in nodelist ]
 
 	# commands:
-	if config.list:
-		print " ---- Nodes in the %s Node Group ----" % group_str
-		i = 1
-		for node in nodelist:
-			print "%-2d" % i, 
-			print nodegroup_display(node, fb, config)
-			i += 1
 
-	elif config.add and config.nodegroup:
+	if config.add and config.nodegroup:
 		for node in hostnames:
 			print "Adding %s to %s nodegroup" % (node, config.nodegroup)
 			api.AddNodeToNodeGroup(node, config.nodegroup)
@@ -136,6 +129,14 @@ def main():
 		for node in hostnames:
 			print "Deleting %s from %s nodegroup" % (node, config.nodegroup)
 			api.DeleteNodeFromNodeGroup(node, config.nodegroup)
+
+	elif config.list:
+		print " ---- Nodes in the %s Node Group ----" % group_str
+		i = 1
+		for node in nodelist:
+			print "%-2d" % i, 
+			print nodegroup_display(node, fb, config)
+			i += 1
 
 	else:
 		print "no other options supported."

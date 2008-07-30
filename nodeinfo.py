@@ -142,10 +142,14 @@ def pcu_print_info(pcuinfo, hostname):
 			print "\t telnet %s" % (reboot.pcu_name(pcuinfo))
 		if pcuinfo['portstatus']['80'] == "open" or \
 			pcuinfo['portstatus']['443'] == "open":
-			print "\t http://%s" % (reboot.pcu_name(pcuinfo))
+			print "\t https://%s" % (reboot.pcu_name(pcuinfo))
+			print "\t import %s.png" % (reboot.pcu_name(pcuinfo))
+			print """\t mutt -s "crash for %s" -a %s.png sapanb@cs.princeton.edu < /dev/null""" % (hostname, reboot.pcu_name(pcuinfo))
 		if pcuinfo['portstatus']['443'] == "open":
 			print "\t racadm.py -r %s -u %s -p '%s'" % (pcuinfo['ip'], pcuinfo['username'], pcuinfo['password'])
 			print "\t cmdhttps/locfg.pl -s %s -f iloxml/Reset_Server.xml -u %s -p '%s' | grep MESSAGE" % \
+				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
+			print "\t cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 		if pcuinfo['portstatus']['16992'] == "open":
 			print "\t ./cmdamt/remoteControl -A -verbose 'http://%s:16992/RemoteControlService' -user admin -pass '%s'" % (reboot.pcu_name(pcuinfo), pcuinfo['password'])

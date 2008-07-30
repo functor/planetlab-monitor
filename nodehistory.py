@@ -15,19 +15,20 @@ import time
 from model import *
 from nodecommon import *
 
-from config import config
-from optparse import OptionParser
-
-parser = OptionParser()
-parser.set_defaults(node=None, fields='state', fromtime=None)
-parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
-					help="A single node name to add to the nodegroup")
-parser.add_option("", "--fields", dest="fields", metavar="key",
-					help="Which record field to extract from all files.")
-parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
-					help="Specify a starting date from which to begin the query.")
-config = config(parser)
-config.parse_args()
+def get_filefromglob(d, str):
+	import os
+	import glob
+	# TODO: This is aweful.
+	path = "archive-pdb"
+	archive = soltesz.SPickle(path)
+	glob_str = "%s*.%s.pkl" % (d.strftime("%Y-%m-%d"), str)
+	os.chdir(path)
+	#print glob_str
+	file = glob.glob(glob_str)[0]
+	#print "loading %s" % file
+	os.chdir("..")
+	return file[:-4]
+	#fb = archive.load(file[:-4])
 
 
 def fb_print_nodeinfo(fbnode, verbose, date=None):
@@ -72,59 +73,60 @@ def pcu_print_info(pcuinfo, hostname):
 			print "\t cmdhttps/locfg.pl -s %s -f iloxml/Reset_Server.xml -u %s -p '%s' | grep MESSAGE" % \
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 
-path = "archive-pdb"
-archive = soltesz.SPickle(path)
+def main():
+	from config import config
+	from optparse import OptionParser
 
-if config.fromtime:
-	begin = config.fromtime
-else:
-	begin = "2007-11-06"
+	parser = OptionParser()
+	parser.set_defaults(node=None, fields='state', fromtime=None)
+	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
+						help="A single node name to add to the nodegroup")
+	parser.add_option("", "--fields", dest="fields", metavar="key",
+						help="Which record field to extract from all files.")
+	parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
+						help="Specify a starting date from which to begin the query.")
+	config = config(parser)
+	config.parse_args()
 
-if config.node is None and len(config.args) > 0:
-	config.node = config.args[0]
-elif config.node is None:
-	print "Add a hostname to arguments"
-	print "exit."
-	sys.exit(1)
-
-d = datetime_fromstr(begin)
-tdelta = timedelta(1)
-verbose = 1
-
-def get_filefromglob(d, str):
-	import os
-	import glob
-	# TODO: This is aweful.
 	path = "archive-pdb"
 	archive = soltesz.SPickle(path)
-	glob_str = "%s*.%s.pkl" % (d.strftime("%Y-%m-%d"), str)
-	os.chdir(path)
-	#print glob_str
-	file = glob.glob(glob_str)[0]
-	#print "loading %s" % file
-	os.chdir("..")
-	return file[:-4]
-	#fb = archive.load(file[:-4])
-	
 
-while True:
-	file = get_filefromglob(d, "production.findbad")
-	#file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
-	
-	try:
-		fb = archive.load(file)
-		if config.node in fb['nodes']:
-			fb_nodeinfo  = fb['nodes'][config.node]['values']
-			fb_print_nodeinfo(fb_nodeinfo, verbose, d.strftime("%Y-%m-%d"))
+	if config.fromtime:
+		begin = config.fromtime
+	else:
+		begin = "2007-11-06"
 
-		del fb
-		verbose = 0
-	except KeyboardInterrupt:
+	if config.node is None and len(config.args) > 0:
+		config.node = config.args[0]
+	elif config.node is None:
+		print "Add a hostname to arguments"
+		print "exit."
 		sys.exit(1)
-	except:
-		#import traceback; print traceback.print_exc()
-		print d.strftime("%Y-%m-%d"), "No record"
 
-	d = d + tdelta
-	if d > datetime.now(): break
+	d = datetime_fromstr(begin)
+	tdelta = timedelta(1)
+	verbose = 1
 
+	while True:
+		file = get_filefromglob(d, "production.findbad")
+		#file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
+		
+		try:
+			fb = archive.load(file)
+			if config.node in fb['nodes']:
+				fb_nodeinfo  = fb['nodes'][config.node]['values']
+				fb_print_nodeinfo(fb_nodeinfo, verbose, d.strftime("%Y-%m-%d"))
+
+			del fb
+			verbose = 0
+		except KeyboardInterrupt:
+			sys.exit(1)
+		except:
+			#import traceback; print traceback.print_exc()
+			print d.strftime("%Y-%m-%d"), "No record"
+
+		d = d + tdelta
+		if d > datetime.now(): break
+
+if __name__ == "__main__":
+	main()

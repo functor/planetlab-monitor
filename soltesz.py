@@ -11,8 +11,8 @@ except:
 
 import inspect
 import shutil
-from config2 import config
-config = config()
+from config import config as cfg
+config = cfg()
 
 DEBUG= 0
 PICKLE_PATH="pdb"

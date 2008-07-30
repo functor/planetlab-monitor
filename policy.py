@@ -373,34 +373,59 @@ class Diagnose(Thread):
 		
 	def getDaysDown(cls, diag_record):
 		daysdown = -1
-		if diag_record['comonstats']['uptime'] != "null":
-			#print "uptime %s" % (int(float(diag_record['comonstats']['uptime'])) // (60*60*24))
+		last_contact = diag_record['plcnode']['last_contact']
+		date_created = diag_record['plcnode']['date_created']
+
+		if diag_record['comonstats']['uptime'] != "null" and diag_record['comonstats']['uptime'] != "-1":
 			daysdown = - int(float(diag_record['comonstats']['uptime'])) // (60*60*24)
-		elif diag_record['comonstats']['sshstatus'] != "null":
-			daysdown = int(diag_record['comonstats']['sshstatus']) // (60*60*24)
-		elif diag_record['comonstats']['lastcotop'] != "null":
-			daysdown = int(diag_record['comonstats']['lastcotop']) // (60*60*24)
+		elif last_contact is None:
+			if date_created is not None:
+				now = time.time()
+				diff = now - date_created
+				daysdown = diff // (60*60*24)
+			else:
+				daysdown = -1
 		else:
 			now = time.time()
-			last_contact = diag_record['plcnode']['last_contact']
-			if last_contact == None:
-				# the node has never been up, so give it a break
-				daysdown = -1
-			else:
-				diff = now - last_contact
-				daysdown = diff // (60*60*24)
+			diff = now - last_contact
+			daysdown = diff // (60*60*24)
 		return daysdown
 	getDaysDown = classmethod(getDaysDown)
 
 	def getStrDaysDown(cls, diag_record):
-		daysdown = cls.getDaysDown(diag_record)
-		if daysdown > 0:
-			return "%d days down"%daysdown
-		elif daysdown == -1:
-			return "Unknown number of days"
+		daysdown = "unknown"
+		last_contact = diag_record['plcnode']['last_contact']
+		date_created = diag_record['plcnode']['date_created']
+
+		if	diag_record['comonstats']['uptime'] != "null" and \
+			diag_record['comonstats']['uptime'] != "-1":
+			daysdown = int(float(diag_record['comonstats']['uptime'])) // (60*60*24)
+			daysdown = "%d days up" % daysdown
+
+		elif last_contact is None:
+			if date_created is not None:
+				now = time.time()
+				diff = now - date_created
+				daysdown = diff // (60*60*24)
+				daysdown = "Never contacted PLC, created %s days ago" % daysdown
+			else:
+				daysdown = "Never contacted PLC"
 		else:
-			return "%d days up"% -daysdown
+			now = time.time()
+			diff = now - last_contact
+			daysdown = diff // (60*60*24)
+			daysdown = "%s days down" % daysdown
+		return daysdown
 	getStrDaysDown = classmethod(getStrDaysDown)
+	#def getStrDaysDown(cls, diag_record):
+	#	daysdown = cls.getDaysDown(diag_record)
+	#	if daysdown > -1:
+	#		return "%d days down"%daysdown
+	#	elif daysdown == -1:
+	#		return "Has never contacted PLC"
+	#	else:
+	#		return "%d days up"% -daysdown
+	#getStrDaysDown = classmethod(getStrDaysDown)
 
 	def __getCDVersion(self, diag_record, nodename):
 		cdversion = ""

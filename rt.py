@@ -142,7 +142,7 @@ def rt_tickets():
 #WHERE Tk.Queue != 10 AND Tk.id > 10000 AND 
 #Tr.id=At.TransactionID AND ( Tk.Status = 'open' OR
 #Tk.Status = 'new') """
-	sqlall = """SELECT distinct Tk.id, Tk.Status, Tk.Subject, At.Content, Us.EmailAddress, Tk.LastUpdated FROM Tickets AS Tk, Attachments AS At, Users as Us JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId WHERE (Tk.Queue=3 OR Tk.Queue=22) AND Tk.id > 10000 AND Tr.id=At.TransactionID AND ( Tk.Status = 'open' OR Tk.Status = 'new') AND Us.id=Tk.LastUpdatedBy """
+	sqlall = """SELECT distinct Tk.id, Tk.Status, Tk.Subject, At.Content, Us.EmailAddress, Tk.LastUpdated, Q.Name, Tk.Owner FROM Tickets AS Tk, Attachments AS At, Queues as Q, Users as Us JOIN Transactions AS Tr ON Tk.id=Tr.ObjectId WHERE (Tk.Queue=3 OR Tk.Queue=22) AND Tk.id > 10000 AND Tr.id=At.TransactionID AND ( Tk.Status = 'open' OR Tk.Status = 'new') AND Us.id=Tk.LastUpdatedBy AND Q.id=Tk.Queue """
 
 
 	raw = fetch_from_db(db, sql)
@@ -163,6 +163,8 @@ def rt_tickets():
 				"content":str(x[3]),
 				"email":str(x[4]),
 				"lastupdated":str(x[5]),
+				"queue":str(x[6]),
+				"owner":str(x[7]),
 				},
 				raw)
 

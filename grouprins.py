@@ -17,15 +17,16 @@ import auth
 api = plc.PLC(auth.auth, auth.plc)
 
 import policy
-
+import traceback
 from config import config as cfg
-import config as config2
+import config as configmodule
 from optparse import OptionParser
 
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
 import soltesz
 from unified_model import *
+import os
 
 import time
 
@@ -71,7 +72,7 @@ class Reboot(object):
 					return ret
 
 				except Exception,e:
-					import traceback; print traceback.print_exc(); print e
+					print traceback.print_exc(); print e
 
 					# NOTE: this failure could be an implementation issue on
 					# 		our end.  So, extra notices are confusing...
@@ -112,7 +113,7 @@ class Reboot(object):
 		try:
 			return monitor.reboot(host)
 		except Exception, e:
-			import traceback; print traceback.print_exc(); print e
+			print traceback.print_exc(); print e
 			return False
 
 class RebootDebug(Reboot):
@@ -230,9 +231,8 @@ if config.nodeselect:
 
 if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
-	import os
 	file = "findbad.txt"
-	config2.setFileFromList(file, hostnames)
+	configmodule.setFileFromList(file, hostnames)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 fb = soltesz.dbLoad("findbad")
@@ -246,7 +246,7 @@ for host in hostnames:
 		try:
 			node = api.GetNodes(host)[0]
 		except:
-			import traceback; print traceback.print_exc(); 
+			print traceback.print_exc(); 
 			print "FAILED GETNODES for host: %s" % host
 			continue
 			
@@ -328,8 +328,8 @@ for host in hostnames:
 				print "ALL METHODS OF RESTARTING %s FAILED" % host
 				args = {}
 				args['hostname'] = host
-				m = PersistMessage(host, "ALL FAIL for %(hostname)s" % args,
-											 "nada", False, db='suspect_persistmessages')
+				m = PersistMessage(host, "ALL METHODS FAILED for %(hostname)s" % args,
+											 "CANNOT CONTACT", False, db='suspect_persistmessages')
 				m.reset()
 				m.send(['monitor-list@lists.planet-lab.org'])
 
@@ -340,7 +340,7 @@ for host in hostnames:
 		print "Killed by interrupt"
 		sys.exit(0)
 	except:
-		import traceback; print traceback.print_exc();
+		print traceback.print_exc();
 		print "Continuing..."
 
 	time.sleep(1)
