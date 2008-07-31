@@ -42,12 +42,10 @@ echo "There is no build stage.  Simply copy files."
 
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}
-mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing core scripts"
-rsync -a --exclude www --exclude archive-pdb \
-      --exclude .svn --exclude CVS \
+rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
 	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
 
 echo " * Installing web pages"
