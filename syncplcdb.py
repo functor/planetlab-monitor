@@ -28,6 +28,9 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 		if node['site_id'] in id2lb.keys():
 			login_base = id2lb[node['site_id']]
 		else:
+			print "%s has a foreign site_id %s" % (node['hostname'], 
+													node['site_id'])
+			continue
 			for i in id2lb:
 				print i, " ", id2lb[i]
 			raise Exception, "Node has missing site id!! %s %d" %(node['hostname'], node['site_id'])

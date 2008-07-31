@@ -562,7 +562,8 @@ class IntelAMT(PCUControl):
 		import soltesz
 
 		cmd = soltesz.CMD()
-		cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
+		#[cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
+		cmd_str = "cmdamt/remoteControl"
 
 		if dryrun:
 			# NOTE: -p checks the power state of the host.
@@ -903,6 +904,20 @@ class ePowerSwitchGood(PCUControl):
 
 		self.close()
 		return 0
+
+class CustomPCU(PCUControl):
+	def run(self, node_port, dryrun):
+		url = "https://www-itec.uni-klu.ac.at/plab-pcu/index.php" 
+
+		if not dryrun:
+			# Turn host off, then on
+			formstr = "plab%s=off" % node_port
+			os.system("curl --user %s:%s --form '%s' --insecure %s" % (self.username, self.password, formstr, url))
+			time.sleep(5)
+			formstr = "plab%s=on" % node_port
+			os.system("curl --user %s:%s --form '%s' --insecure %s" % (self.username, self.password, formstr, url))
+		else:
+			os.system("curl --user %s:%s --insecure %s" % (self.username, self.password, url))
 
 
 class ePowerSwitchOld(PCUControl):
@@ -1299,6 +1314,9 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				eps = ePowerSwitchGood(values, verbose, ['80'])
 
 			rb_ret = eps.reboot(values[nodename], dryrun)
+		elif continue_probe and values['pcu_id'] in [1122]:
+			custom = CustomPCU(values, verbose, ['80', '443'])
+			custom.reboot(values[nodename], dryrun)
 
 		elif continue_probe:
 			rb_ret = "Unsupported_PCU"

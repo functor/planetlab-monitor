@@ -8,13 +8,13 @@ import os
 def getconf(hostname, force=False, media=None):
 	api = plc.PLC(auth.auth, auth.plc)
 	n = api.GetNodes(hostname)
-	filename = "bootcd-alpha/" + hostname + ".txt"
+	filename = "bootcd/" + hostname + ".txt"
 	if not os.path.exists(filename) or force:
-		f = open("bootcd-alpha/" + hostname + ".txt", 'w')
+		f = open("bootcd/" + hostname + ".txt", 'w')
 		f.write( api.AdmGenerateNodeConfFile(n[0]['node_id']) )
 		f.close()
-		print os.system("cd bootcd-alpha; ./build.sh -f %s.txt -t iso -o /plc/data/var/www/html/bootcds/%s.iso &> /dev/null" % ( hostname, hostname))
-		print os.system("cd bootcd-alpha; ./build.sh -f %s.txt -t usb_partition -o /plc/data/var/www/html/bootcds/%s-partition.usb &> /dev/null" % ( hostname, hostname))
+		print os.system("cd bootcd; ./build.sh -f %s.txt -t iso -o /plc/data/var/www/html/bootcds/%s.iso &> /dev/null" % ( hostname, hostname))
+		print os.system("cd bootcd; ./build.sh -f %s.txt -t usb_partition -o /plc/data/var/www/html/bootcds/%s-partition.usb &> /dev/null" % ( hostname, hostname))
 	else:
 		# assume that the images have already been generated..
 		pass
