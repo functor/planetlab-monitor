@@ -42,6 +42,7 @@ echo "There is no build stage.  Simply copy files."
 
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}
+mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}
 mkdir -p $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing core scripts"
@@ -60,8 +61,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-# define a %config entry for /var/share/%{name}/xyz?
+%config /var/share/%{name}/monitorconfig.py
 /usr/share/%{name}
+/var/lib/%{name}
 /var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/%{name}
 
