@@ -36,6 +36,7 @@ command-line utilities for querying the status database.
 %setup -q
 
 %build
+# TODO: note that we should build the cmdamt/ with g++
 echo "There is no build stage.  Simply copy files."
 
 %install
@@ -56,12 +57,14 @@ echo " * TODO: Installing cron job for automated polling"
 install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}
 echo " * TODO: Setting up Monitor account in local MyPLC"
 
+cp /usr/share/%{name}/monitorconfig-default.py /usr/share/%{name}/monitorconfig.py
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%config /var/share/%{name}/monitorconfig.py
+%config /usr/share/%{name}/monitorconfig.py
 /usr/share/%{name}
 /var/lib/%{name}
 /var/www/cgi-bin/monitor
