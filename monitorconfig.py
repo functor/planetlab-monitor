@@ -16,3 +16,7 @@ API_SERVER = "https://boot.planet-lab.org/PLCAPI/"
 API_AUTH   = {'Username': '', 
 				'AuthMethod': 'password', 
 				'AuthString': ''}
+
+# SERVER PATHS
+MONITOR_SCRIPT_ROOT = "/home/soltesz/monitor"
+MONITOR_DATA_ROOT = "/home/soltesz/monitor/pdb"
