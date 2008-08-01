@@ -57,7 +57,7 @@ echo " * TODO: Installing cron job for automated polling"
 install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}
 echo " * TODO: Setting up Monitor account in local MyPLC"
 
-cp /usr/share/%{name}/monitorconfig-default.py /usr/share/%{name}/monitorconfig.py
+cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
