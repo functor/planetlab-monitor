@@ -17,3 +17,11 @@ TODO:
    service.  Mostly, I'm guessing this would be queries for the live status
    nodes and a more reliable 'reboot' and 'reinstall' mechanism than currently
    availble with PLC.
+
+ * convert plc and other files to use the new monitorconfig.py rather than
+   auth, or plc.*
+
+Lower priority:
+ * Add a more structured, 'automate' library of scripts and means of making
+   batch calls, etc.
+
