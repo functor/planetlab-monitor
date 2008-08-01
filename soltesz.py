@@ -14,8 +14,10 @@ import shutil
 from config import config as cfg
 config = cfg()
 
+import monitorconfig
+
 DEBUG= 0
-PICKLE_PATH="pdb"
+PICKLE_PATH=monitorconfig.MONITOR_DATA_ROOT
 
 class ExceptionTimeout(Exception): pass
 

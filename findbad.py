@@ -21,7 +21,8 @@ externalState = {'round': round, 'nodes': {}}
 count = 0
 
 
-import soltesz
+import database
+import moncommands 
 import comon
 import threadpool
 import syncplcdb
@@ -33,7 +34,7 @@ api = plc.PLC(auth.auth, auth.plc)
 
 def collectPingAndSSH(nodename, cohash):
 	### RUN PING ######################
-	ping = soltesz.CMD()
+	ping = moncommands.CMD()
 	(oval,errval) = ping.run_noexcept("ping -c 1 -q %s | grep rtt" % nodename)
 
 	values = {}
@@ -46,7 +47,7 @@ def collectPingAndSSH(nodename, cohash):
 
 	try:
 		for port in [22, 806]: 
-			ssh = soltesz.SSH('root', nodename, port)
+			ssh = moncommands.SSH('root', nodename, port)
 
 			(oval, errval) = ssh.run_noexcept2(""" <<\EOF
 				echo "{"
@@ -77,7 +78,7 @@ EOF			""")
 
 	### RUN SSH ######################
 	b_getbootcd_id = True
-	#ssh = soltesz.SSH('root', nodename)
+	#ssh = moncommands.SSH('root', nodename)
 	#oval = ""
 	#errval = ""
 	#(oval, errval) = ssh.run_noexcept('echo `uname -a ; ls /tmp/bm.log`')
@@ -266,7 +267,7 @@ def recordPingAndSSH(request, result):
 		count += 1
 		print "%d %s %s" % (count, nodename, externalState['nodes'][nodename]['values'])
 		if count % 20 == 0:
-			soltesz.dbDump(config.dbname, externalState)
+			database.dbDump(config.dbname, externalState)
 
 # this will be called when an exception occurs within a thread
 def handle_exception(request, result):
@@ -301,10 +302,16 @@ def checkAndRecordState(l_nodes, cohash):
 			pass
 
 	# WAIT while all the work requests are processed.
+	begin = time.time()
 	while 1:
 		try:
 			time.sleep(1)
 			tp.poll()
+			# if more than two hours
+			if time.time() - begin > (60*60*1.5):
+				print "findbad.py has run out of time!!!!!!"
+				database.dbDump(config.dbname, externalState)
+				os._exit(1)
 		except KeyboardInterrupt:
 			print "Interrupted!"
 			break
@@ -312,14 +319,14 @@ def checkAndRecordState(l_nodes, cohash):
 			print "All results collected."
 			break
 
-	soltesz.dbDump(config.dbname, externalState)
+	database.dbDump(config.dbname, externalState)
 
 
 
 def main():
 	global externalState
 
-	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
+	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
 
 	if config.increment:
 		# update global round number to force refreshes across all nodes
@@ -393,5 +400,5 @@ if __name__ == '__main__':
 		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		soltesz.dbDump(config.dbname, externalState)
+		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

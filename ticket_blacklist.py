@@ -4,7 +4,7 @@ import os
 import sys
 import string
 import time
-import soltesz
+import database
 import plc
 import getopt
 
@@ -20,7 +20,7 @@ def main():
 		print "Error: " + err.msg
 		sys.exit(1)
 
-	l_ticket_blacklist = soltesz.if_cached_else(1, "l_ticket_blacklist", lambda : [])
+	l_ticket_blacklist = database.if_cached_else(1, "l_ticket_blacklist", lambda : [])
 
 	for (opt, optval) in opts:
 		if opt in ["-d", "--delete"]:
@@ -44,7 +44,7 @@ def main():
 			l_ticket_blacklist.append(line)
 
 	print "Total %d nodes in ticket_blacklist" % (len(l_ticket_blacklist))
-	soltesz.dbDump("l_ticket_blacklist")
+	database.dbDump("l_ticket_blacklist")
 	
 if __name__ == '__main__':
 	import os

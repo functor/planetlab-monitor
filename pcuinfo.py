@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import soltesz
+import database
 import plc
 from optparse import OptionParser
 import sys
@@ -33,7 +33,7 @@ if not config.run:
 	print "Add --run to actually perform the command"
 	sys.exit(1)
 
-pculist = soltesz.if_cached_else_refresh(1, 
+pculist = database.if_cached_else_refresh(1, 
 							config.refresh, 
 							"pculist", 
 							lambda : plc.GetPCUs())
@@ -54,4 +54,4 @@ for pcu in pculist:
 		if values['reboot'] == 0:
 			print "%6d %20s %50s %s" % (pcu['pcu_id'], pcu['password'], "%s@%s" % (pcu['username'], host), portstatus)
 
-#soltesz.dbDump("pculist", pculist, 'php')
+#database.dbDump("pculist", pculist, 'php')

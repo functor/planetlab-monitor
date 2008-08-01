@@ -4,7 +4,7 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-import soltesz
+import database
 import reboot
 
 import time
@@ -161,8 +161,8 @@ if config.findbad:
 	configmodule.setFileFromList(file, config.args)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
-fb = soltesz.dbLoad("findbad")
-act_all = soltesz.dbLoad("act_all")
+fb = database.dbLoad("findbad")
+act_all = database.dbLoad("act_all")
 
 for node in config.args:
 	config.node = node
@@ -194,7 +194,7 @@ for node in config.args:
 			#rec['stage'] = "monitor-end-record"
 			#rec['time'] = time.time() - 7*60*60*24
 			#act_all[config.node].insert(0,rec)
-			#soltesz.dbDump("act_all", act_all)
+			#database.dbDump("act_all", act_all)
 
 		for act_nodeinfo in act_all[config.node]:
 			act_print_nodeinfo(act_nodeinfo, header)

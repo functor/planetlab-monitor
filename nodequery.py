@@ -5,7 +5,7 @@ import auth
 api = plc.PLC(auth.auth, auth.plc)
 
 import sys
-import soltesz
+import database
 from nodecommon import *
 from policy import Diagnose
 import glob
@@ -16,7 +16,7 @@ import time
 import re
 
 #fb = {}
-fb = soltesz.dbLoad("findbad")
+fb = database.dbLoad("findbad")
 fbpcu = {}
 
 class NoKeyException(Exception): pass
@@ -264,7 +264,7 @@ def main():
 	
 	if config.fromtime:
 		path = "archive-pdb"
-		archive = soltesz.SPickle(path)
+		archive = database.SPickle(path)
 		d = datetime_fromstr(config.fromtime)
 		glob_str = "%s*.production.findbad.pkl" % d.strftime("%Y-%m-%d")
 		os.chdir(path)
@@ -274,9 +274,9 @@ def main():
 		os.chdir("..")
 		fb = archive.load(file[:-4])
 	else:
-		fb = soltesz.dbLoad("findbad")
+		fb = database.dbLoad("findbad")
 
-	fbpcu = soltesz.dbLoad("findbadpcus")
+	fbpcu = database.dbLoad("findbadpcus")
 
 	if config.nodelist:
 		nodelist = config.getListFromFile(config.nodelist)

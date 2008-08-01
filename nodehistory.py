@@ -4,7 +4,7 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-import soltesz
+import database
 import reboot
 import time
 from datetime import datetime, timedelta
@@ -20,7 +20,7 @@ def get_filefromglob(d, str):
 	import glob
 	# TODO: This is aweful.
 	path = "archive-pdb"
-	archive = soltesz.SPickle(path)
+	archive = database.SPickle(path)
 	glob_str = "%s*.%s.pkl" % (d.strftime("%Y-%m-%d"), str)
 	os.chdir(path)
 	#print glob_str
@@ -89,7 +89,7 @@ def main():
 	config.parse_args()
 
 	path = "archive-pdb"
-	archive = soltesz.SPickle(path)
+	archive = database.SPickle(path)
 
 	if config.fromtime:
 		begin = config.fromtime

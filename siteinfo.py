@@ -4,7 +4,7 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-import soltesz
+import database
 import reboot
 
 import time
@@ -79,8 +79,8 @@ def plc_print_siteinfo(plcsite):
 		diff_time(plcnode['last_contact']))
 
 
-fb = soltesz.dbLoad("findbad")
-act_all = soltesz.dbLoad("act_all")
+fb = database.dbLoad("findbad")
+act_all = database.dbLoad("act_all")
 
 for site in config.args:
 	config.site = site

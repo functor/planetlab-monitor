@@ -24,7 +24,7 @@ from optparse import OptionParser
 
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
-import soltesz
+import database
 from unified_model import *
 import os
 
@@ -156,7 +156,7 @@ def set_node_to_rins(host, fb):
 
 
 try:
-	rebootlog = soltesz.dbLoad("rebootlog")
+	rebootlog = database.dbLoad("rebootlog")
 except:
 	rebootlog = LogRoll()
 
@@ -235,7 +235,7 @@ if config.findbad:
 	configmodule.setFileFromList(file, hostnames)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
-fb = soltesz.dbLoad("findbad")
+fb = database.dbLoad("findbad")
 # commands:
 i = 1
 count = 1
@@ -346,7 +346,7 @@ for host in hostnames:
 	time.sleep(1)
 	if count % 10 == 0:
 		print "Saving rebootlog"
-		soltesz.dbDump("rebootlog", rebootlog)
+		database.dbDump("rebootlog", rebootlog)
 		wait_time = int(config.timewait)
 		print "Sleeping %d minutes" % wait_time
 		ti = 0
@@ -361,4 +361,4 @@ for host in hostnames:
 	count = count + 1
 
 print "Saving rebootlog"
-soltesz.dbDump("rebootlog", rebootlog)
+database.dbDump("rebootlog", rebootlog)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import soltesz
+import database
 
 import plc
 import auth
@@ -70,7 +70,7 @@ class PenaltyMap:
 	# 	condition/penalty is applied, move to the next phase.
 
 
-fb = soltesz.dbLoad("findbad")
+fb = database.dbLoad("findbad")
 
 class RT(object):
 	def __init__(self, ticket_id = None):
@@ -150,10 +150,10 @@ class PersistFlags(Recent):
 			db = "persistflags"
 
 		try:
-			pm = soltesz.dbLoad(db)
+			pm = database.dbLoad(db)
 		except:
-			soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+			database.dbDump(db, {})
+			pm = database.dbLoad(db)
 		#print pm
 		if id in pm:
 			obj = pm[id]
@@ -172,9 +172,9 @@ class PersistFlags(Recent):
 		Recent.__init__(self, withintime)
 
 	def save(self):
-		pm = soltesz.dbLoad(self.db)
+		pm = database.dbLoad(self.db)
 		pm[self.id] = self
-		soltesz.dbDump(self.db, pm)
+		database.dbDump(self.db, pm)
 
 	def resetFlag(self, name):
 		self.__setattr__(name, False)
@@ -222,10 +222,10 @@ class PersistMessage(Message):
 			db = "persistmessages"
 
 		try:
-			pm = soltesz.dbLoad(db)
+			pm = database.dbLoad(db)
 		except:
-			soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+			database.dbDump(db, {})
+			pm = database.dbLoad(db)
 
 		#print pm
 		if id in pm:
@@ -258,9 +258,9 @@ class PersistMessage(Message):
 			self.actiontracker.setRecent()
 
 			#print "recording object for persistance"
-			pm = soltesz.dbLoad(self.db)
+			pm = database.dbLoad(self.db)
 			pm[self.id] = self
-			soltesz.dbDump(self.db, pm)
+			database.dbDump(self.db, pm)
 		else:
 			# NOTE: only send a new message every week, regardless.
 			print "Not sending to host b/c not within window of %s days" % (self.actiontracker.withintime // 60*60*24)
@@ -274,11 +274,11 @@ class MonitorMessage(object):
 
 		try:
 			if 'reset' in kwargs and kwargs['reset'] == True:
-				soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+				database.dbDump(db, {})
+			pm = database.dbLoad(db)
 		except:
-			soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+			database.dbDump(db, {})
+			pm = database.dbLoad(db)
 
 		#print pm
 		if id in pm:
@@ -346,11 +346,11 @@ class PersistSitePenalty(SitePenalty):
 
 		try:
 			if 'reset' in kwargs and kwargs['reset'] == True:
-				soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+				database.dbDump(db, {})
+			pm = database.dbLoad(db)
 		except:
-			soltesz.dbDump(db, {})
-			pm = soltesz.dbLoad(db)
+			database.dbDump(db, {})
+			pm = database.dbLoad(db)
 
 		#print pm
 		if id in pm:
@@ -369,9 +369,9 @@ class PersistSitePenalty(SitePenalty):
 		self.id = id
 
 	def save(self):
-		pm = soltesz.dbLoad(self.db)
+		pm = database.dbLoad(self.db)
 		pm[self.id] = self
-		soltesz.dbDump(self.db, pm)
+		database.dbDump(self.db, pm)
 
 
 class Target:
@@ -413,7 +413,7 @@ class Record(object):
 	def __init__(self, hostname, data):
 		self.hostname = hostname
 		self.data = data
-		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
 		self.loginbase = self.plcdb_hn2lb[self.hostname]
 		return
 
@@ -612,7 +612,7 @@ class NodeRecord:
 			self.ticket.closeTicket()
 
 	def exempt_from_penalties(self):
-		bl = soltesz.dbLoad("l_blacklist")
+		bl = database.dbLoad("l_blacklist")
 		return self.hostname in bl
 
 	def penalties(self):
@@ -644,10 +644,10 @@ class NodeRecord:
 
 if __name__ == "__main__":
 	#r = RT()
-	#r.email("test", "body of test message", ['soltesz@cs.princeton.edu'])
+	#r.email("test", "body of test message", ['database@cs.princeton.edu'])
 	#from emailTxt import mailtxt
 	print "loaded"
-	#soltesz.dbDump("persistmessages", {});
+	#database.dbDump("persistmessages", {});
 	#args = {'url_list': 'http://www.planet-lab.org/bootcds/planet1.usb\n','hostname': 'planet1','hostname_list': ' blahblah -  days down\n'}
 	#m = PersistMessage("blue", "test 1", mailtxt.newdown_one[1] % args, True)
 	#m.send(['soltesz@cs.utk.edu'])

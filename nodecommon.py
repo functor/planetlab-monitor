@@ -128,10 +128,10 @@ def nodegroup_display(node, fb, conf=None):
 	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)20.20s... %(kernel)43s %(lastupdate)12s " % node
 
 from model import *
-import soltesz
+import database
 
 def node_end_record(node):
-	act_all = soltesz.dbLoad("act_all")
+	act_all = database.dbLoad("act_all")
 	if node not in act_all:
 		del act_all
 		return False
@@ -152,7 +152,7 @@ def node_end_record(node):
 	rec['stage'] = "monitor-end-record"
 	rec['time'] = time.time() - 7*60*60*24
 	act_all[node].insert(0,rec)
-	soltesz.dbDump("act_all", act_all)
+	database.dbDump("act_all", act_all)
 	del act_all
 	return True
 

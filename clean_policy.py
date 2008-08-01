@@ -1,7 +1,7 @@
 from config import config
 #print "policy"
 config = config()
-import soltesz
+import database 
 import time
 import mailer
 from www.printbadnodes import cmpCategoryVal
@@ -29,12 +29,12 @@ class MonitorMergeDiagnoseSendEscellate:
 		self.act = act
 		self.plcdb_hn2lb = None
 		if self.plcdb_hn2lb is None:
-			self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+			self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
 		self.loginbase = self.plcdb_hn2lb[self.hostname]
 		return
 
 	def getFBRecord(self):
-		fb = soltesz.dbLoad("findbad")
+		fb = database.dbLoad("findbad")
 		if self.hostname in fb['nodes']:
 			fbnode = fb['nodes'][self.hostname]['values']
 		else:
@@ -43,7 +43,7 @@ class MonitorMergeDiagnoseSendEscellate:
 
 	def getActionRecord(self):
 		# update ticket status
-		act_all = soltesz.dbLoad("act_all")
+		act_all = database.dbLoad("act_all")
 		if self.hostname in act_all and len(act_all[self.hostname]) > 0:
 			actnode = act_all[self.hostname][0]
 		else:
@@ -121,7 +121,7 @@ class MonitorMergeDiagnoseSendEscellate:
 			record.data['log'] = self.getDownLog(record)
 
 		elif category == "prod":
-			state = diag.getState()
+			state = record.getState()
 			if state == "boot":
 				diag.setFlag('SendThankyou')
 				record.data['message'] = emailTxt.mailtxt.newthankyou
@@ -199,9 +199,9 @@ class MonitorMergeDiagnoseSendEscellate:
 		return True
 
 	def add_and_save_act_all(self, record):
-		self.act_all = soltesz.dbLoad("act_all")
+		self.act_all = database.dbLoad("act_all")
 		self.act_all[self.hostname].insert(0,record.data)
-		soltesz.dbDump("act_all", self.act_all)
+		database.dbDump("act_all", self.act_all)
 		
 	def getDownLog(self, record):
 

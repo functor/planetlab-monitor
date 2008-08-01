@@ -4,24 +4,24 @@ TODO:
    to share very similar argument or argument sets, as well as have some
    common config options.  I'm not sure the best way to do this.
 
- * pull out global configuration information from various files, like rt_db,
-   mailer.py,  auth.py, and any others.  Create a single configuration file
-   from which all others pull.
-
  * Find a better location to place and pull the PLK files currently in the pdb
    directory.  Ultimately, these should be stored in a real DB.  Until then,
    they should sit in a location that is accessible from the www scripts,
    backend scripts, and user utilities.
 
- * add a third package for user tools that will interact with the Monitor
-   service.  Mostly, I'm guessing this would be queries for the live status
-   nodes and a more reliable 'reboot' and 'reinstall' mechanism than currently
-   availble with PLC.
+ * pull out global configuration information from various files, like rt_db,
+   mailer.py,  auth.py, and any others.  Create a single configuration file
+   from which all others pull.
 
- * convert plc and other files to use the new monitorconfig.py rather than
-   auth, or plc.*
+   - convert plc and other files to use the new monitorconfig.py rather than
+     auth, or plc.*
 
 Lower priority:
  * Add a more structured, 'automate' library of scripts and means of making
    batch calls, etc.
+
+ * add a third package for user tools that will interact with the Monitor
+   service.  Mostly, I'm guessing this would be queries for the live status
+   nodes and a more reliable 'reboot' and 'reinstall' mechanism than currently
+   availble with PLC.
 

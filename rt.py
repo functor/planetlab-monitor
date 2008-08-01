@@ -8,13 +8,11 @@ import Queue
 import time 
 import re
 import comon
-import soltesz
+import database
 from threading import *
+import monitorconfig
 
 # TODO: merge the RT mailer from mailer.py into this file.
-
-# RT database access constants file
-RT_DB_CONSTANTS_PATH='rt_db'
 
 #Logging
 logger = logging.getLogger("monitor")
@@ -69,17 +67,17 @@ def readConstantsFile( file_path ):
 def open_rt_db():
 
 	# read plc database passwords and connect
-	rt_db_constants= readConstantsFile(RT_DB_CONSTANTS_PATH)
-	if rt_db_constants is None:
-		print "Unable to read database access constants from %s" % \
-			  RT_DB_CONSTANTS_PATH
-		return -1
+	#rt_db_constants= readConstantsFile(RT_DB_CONSTANTS_PATH)
+	#if rt_db_constants is None:
+	#	print "Unable to read database access constants from %s" % \
+	#		  RT_DB_CONSTANTS_PATH
+	#	return -1
 
 	try:
-		rt_db = MySQLdb.connect(host=rt_db_constants['RT_DB_HOST'],
-				user=rt_db_constants['RT_DB_USER'],
-		   		passwd=rt_db_constants['RT_DB_PASSWORD'],
-				db=rt_db_constants['RT_DB_NAME'])
+		rt_db = MySQLdb.connect(host=monitorconfig.RT_DB_HOST,
+								user=monitorconfig.RT_DB_USER,
+		   						passwd=monitorconfig.RT_DB_PASSWORD,
+								db=monitorconfig.RT_DB_NAME)
 	except Exception, err:
 		print "Failed to connect to RT database: %s" %err
 		return -1
@@ -173,7 +171,7 @@ def rt_tickets():
 	idTickets = {}
 	for t in tickets_all:
 		idTickets[t['ticket_id']] = t
-	soltesz.dbDump("idTickets", idTickets)
+	database.dbDump("idTickets", idTickets)
 
 	return tickets
 
@@ -206,7 +204,7 @@ def is_host_in_rt_tickets(host, ticket_blacklist, ad_rt_tickets):
 		return (False, None)
 
 	# This search, while O(tickets), takes less than a millisecond, 05-25-07
-	#t = soltesz.MyTimer()
+	#t = commands.MyTimer()
 	ret = search_tickets(host, ad_rt_tickets)
 	#del t
 
@@ -312,7 +310,7 @@ def main():
 	logger.addHandler(ch)
 
 	tickets = rt_tickets()
-	soltesz.dbDump("ad_dbTickets", tickets)
+	database.dbDump("ad_dbTickets", tickets)
 
 
 if __name__ == '__main__':

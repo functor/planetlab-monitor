@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import soltesz
+import database
 
-sql = soltesz.dbLoad("idTickets")
+sql = database.dbLoad("idTickets")
 import sys
 
 sortkeys = {}

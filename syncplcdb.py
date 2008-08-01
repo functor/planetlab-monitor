@@ -2,7 +2,7 @@
 
 import plc
 from config import config
-import soltesz
+import database
 import sys
 
 config = config()
@@ -88,12 +88,12 @@ def create_plcdb():
 
 	if ('cachenodes' in dir(config) and config.cachenodes) or \
 		'cachenodes' not in dir(config):
-		soltesz.dbDump("plcdb_hn2lb", hn2lb)
-		soltesz.dbDump("plcdb_lb2hn", lb2hn)
-		soltesz.dbDump("plcdb_netid2ip", netid2ip)
-		soltesz.dbDump("l_plcnodenetworks", l_nodenetworks)
-		soltesz.dbDump("l_plcnodes", l_nodes)
-		soltesz.dbDump("l_plcsites", l_sites)
+		database.dbDump("plcdb_hn2lb", hn2lb)
+		database.dbDump("plcdb_lb2hn", lb2hn)
+		database.dbDump("plcdb_netid2ip", netid2ip)
+		database.dbDump("l_plcnodenetworks", l_nodenetworks)
+		database.dbDump("l_plcnodes", l_nodes)
+		database.dbDump("l_plcsites", l_sites)
 	
 	return l_nodes
 	

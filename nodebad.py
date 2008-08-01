@@ -6,7 +6,7 @@ import string
 import time
 
 
-import soltesz
+import database
 import comon
 import threadpool
 import syncplcdb
@@ -24,13 +24,13 @@ count = 0
 
 def main(config):
 	global externalState
-	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
+	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
 	if config.increment:
 		# update global round number to force refreshes across all nodes
 		externalState['round'] += 1
 
 	l_nodes = syncplcdb.create_plcdb()
-	l_plcnodes = soltesz.dbLoad("l_plcnodes")
+	l_plcnodes = database.dbLoad("l_plcnodes")
 
 	if config.node:
 		l_nodes = [config.node]
@@ -59,12 +59,12 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 			count += 1
 
 		if count % 20 == 0:
-			soltesz.dbDump(config.dbname, externalState)
+			database.dbDump(config.dbname, externalState)
 
-	soltesz.dbDump(config.dbname, externalState)
+	database.dbDump(config.dbname, externalState)
 
-fb = soltesz.dbLoad('findbad')
-hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+fb = database.dbLoad('findbad')
+hn2lb = database.dbLoad("plcdb_hn2lb")
 
 def getnodesup(nodelist):
 	up = 0
@@ -157,5 +157,5 @@ if __name__ == '__main__':
 		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		soltesz.dbDump(config.dbname, externalState)
+		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

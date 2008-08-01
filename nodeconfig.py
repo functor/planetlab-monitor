@@ -9,11 +9,11 @@ from optparse import OptionParser
 from sets import Set
 
 from nodecommon import *
-import soltesz
+import database
 
 def main():
 	from config import config
-	fb = soltesz.dbLoad("findbad")
+	fb = database.dbLoad("findbad")
 
 	parser = OptionParser()
 	parser.set_defaults(nodelist=None,

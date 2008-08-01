@@ -245,12 +245,6 @@ def main():
 			print("%-40s \t Bootstate %s nodetype %s kernver %s keyok %s" % ( 
 				host, cdb[host]['bootstate'], cdb[host]['nodetype'], 
 				cdb[host]['kernver'], cdb[host]['keyok']))
-			#ssh = soltesz.SSH('root', host)
-			#try:
-			#	val = ssh.run("uname -r")
-			#	print "%s == %s" % (host, val),
-			#except:
-			#	pass
 	#	else:
 	#		print("key mismatch at: %s" % host)
 	#print a.codata['michelangelo.ani.univie.ac.at']

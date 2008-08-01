@@ -12,6 +12,7 @@ import calendar
 import logging
 import os
 import time
+import monitorconfig
 
 config = config()
 logger = logging.getLogger("monitor")
@@ -28,11 +29,11 @@ def reformat_for_rt(text):
 		
 
 def _setupRTenvironment():
-	os.environ['PATH'] = os.environ['PATH'] + ":/home/soltesz/local/bin/"
-	os.environ['RTSERVER'] = "https://rt.planet-lab.org/"
-	os.environ['RTUSER']   = "monitor"
-	os.environ['RTPASSWD'] = "ssorcmor"
-	os.environ['RTDEBUG'] = "0"
+	os.environ['PATH'] = os.environ['PATH'] + ":" + monitorconfig.RT_WEB_TOOLS_PATH
+	os.environ['RTSERVER'] = monitorconfig.RT_WEB_SERVER
+	os.environ['RTUSER']   = monitorconfig.RT_WEB_USER
+	os.environ['RTPASSWD'] = monitorconfig.RT_WEB_PASSWORD
+	os.environ['RTDEBUG'] = monitorconfig.RT_WEB_DEBUG
 	return
 
 def setTicketStatus(ticket_id, status):

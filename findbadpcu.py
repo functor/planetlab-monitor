@@ -44,7 +44,8 @@ count = 0
 import reboot
 from reboot import pcu_name
 
-import soltesz
+import database
+import moncommands
 import plc
 import comon
 import threadpool
@@ -74,7 +75,7 @@ def get_pcu(pcuname):
 	except:
 		try:
 			print "GetPCU from file %s" % pcuname
-			l_pcus = soltesz.dbLoad("pculist")
+			l_pcus = database.dbLoad("pculist")
 			for i in l_pcus:
 				if i['pcu_id'] == pcuname:
 					l_pcu = i
@@ -92,7 +93,7 @@ def get_nodes(node_ids):
 		l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 'node_id', 'ports'])
 	except:
 		try:
-			plc_nodes = soltesz.dbLoad("l_plcnodes")
+			plc_nodes = database.dbLoad("l_plcnodes")
 			for n in plc_nodes:
 				if n['node_id'] in node_ids:
 					l_node.append(n)
@@ -148,7 +149,7 @@ def get_plc_site_values(site_id):
 			d_site = d_site[0]
 	except:
 		try:
-			plc_sites = soltesz.dbLoad("l_plcsites")
+			plc_sites = database.dbLoad("l_plcsites")
 			for site in plc_sites:
 				if site['site_id'] == site_id:
 					d_site = site
@@ -258,7 +259,7 @@ def collectPingAndSSH(pcuname, cohash):
 
 		#### RUN NMAP ###############################
 		if continue_probe:
-			nmap = soltesz.CMD()
+			nmap = moncommands.CMD()
 			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % pcu_name(values))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
@@ -306,12 +307,12 @@ def recordPingAndSSH(request, result):
 
 		count += 1
 		print "%d %s %s" % (count, nodename, externalState['nodes'][pcu_id]['values'])
-		soltesz.dbDump(config.dbname, externalState)
+		database.dbDump(config.dbname, externalState)
 
 	if errors is not None:
 		pcu_id = "id_%s" % nodename
 		errorState[pcu_id] = errors
-		soltesz.dbDump("findbadpcu_errors", errorState)
+		database.dbDump("findbadpcu_errors", errorState)
 
 # this will be called when an exception occurs within a thread
 def handle_exception(request, result):
@@ -349,10 +350,16 @@ def checkAndRecordState(l_pcus, cohash):
 			pass
 
 	# WAIT while all the work requests are processed.
+	begin = time.time()
 	while 1:
 		try:
 			time.sleep(1)
 			tp.poll()
+			# if more than two hours
+			if time.time() - begin > (60*60*1):
+				print "findbadpcus.py has run out of time!!!!!!"
+				database.dbDump(config.dbname, externalState)
+				os._exit(1)
 		except KeyboardInterrupt:
 			print "Interrupted!"
 			break
@@ -365,8 +372,8 @@ def checkAndRecordState(l_pcus, cohash):
 def main():
 	global externalState
 
-	l_pcus = soltesz.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
-	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
+	l_pcus = database.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
+	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
 	cohash = {}
 
 	if config.increment:
@@ -432,5 +439,5 @@ if __name__ == '__main__':
 		traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		soltesz.dbDump(config.dbname, externalState)
+		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

@@ -25,7 +25,7 @@ echo $$ > $HOME/monitor/SKIP
 #########################
 # 1. FINDBAD NODES 
 rm -f pdb/production.findbad2.pkl
-./findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE
+./findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE || :
 
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs kill || :
 
@@ -47,7 +47,7 @@ cp badcsv.txt /plc/data/var/www/html/monitor/
 #########################
 # 2. FINDBAD PCUS
 rm -f pdb/production.findbadpcus2.pkl
-./findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE		
+./findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE || :
 
 ./sitebad.py --increment || :
 ./nodebad.py --increment || :
@@ -72,8 +72,12 @@ for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistfl
 	cp pdb/production.$f.pkl archive-pdb/`date +%F-%H:%M`.production.$f.pkl
 done
 
-./grouprins.py --mail=1 --nodeselect 'state=DEBUG&&boot_state=dbg' \
-						--stopselect 'state=BOOT&&kernel=2.6.22.19-vs2.3.0.34.9.planetlab' \
-						--reboot || :
+./grouprins.py --mail=1 \
+	--nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' \
+	--stopselect 'state=BOOT&&kernel=2.6.22.19-vs2.3.0.34.9.planetlab' \
+	--reboot || :
+
+# cache the RT db locally.
+python ./rt.py
 
 rm -f $HOME/monitor/SKIP

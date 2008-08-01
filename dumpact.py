@@ -5,12 +5,12 @@
 import sys
 import time
 import getopt
-import soltesz
+import database 
 
 def main():
 
-	act_all = soltesz.dbLoad(sys.argv[1])
-	plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+	act_all = database.dbLoad(sys.argv[1])
+	plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
 	s_nodenames = ""
 	sickdb = {}
 

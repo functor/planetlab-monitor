@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 import sys
-import soltesz
+import database
 
 from config import config as cfg
 
 def nodes_from_time(time_str):
 	path = "archive-pdb"
-	archive = soltesz.SPickle(path)
+	archive = database.SPickle(path)
 	d = datetime_fromstr(config.fromtime)
 	glob_str = "%s*.production.findbad.pkl" % d.strftime("%Y-%m-%d")
 	os.chdir(path)

@@ -14,7 +14,8 @@ from getsshkeys import SSHKnownHosts
 
 import subprocess
 import time
-import soltesz
+import database
+import moncommands
 from sets import Set
 
 import ssh.pxssh as pxssh
@@ -22,6 +23,8 @@ import ssh.fdpexpect as fdpexpect
 import ssh.pexpect as pexpect
 from unified_model import *
 from emailTxt import mailtxt
+
+import monitorconfig
 
 import signal
 class Sopen(subprocess.Popen):
@@ -33,7 +36,7 @@ from Rpyc import SocketConnection, Async
 from Rpyc.Utils import *
 
 def get_fbnode(node):
-	fb = soltesz.dbLoad("findbad")
+	fb = database.dbLoad("findbad")
 	fbnode = fb['nodes'][node]['values']
 	return fbnode
 
@@ -65,8 +68,8 @@ class NodeConnection:
 
 	def dump_plconf_file(self):
 		c = self.c
-		c.modules.sys.path.append("/tmp/source/")
-		c.modules.os.chdir('/tmp/source')
+		self.c.modules.sys.path.append("/tmp/source/")
+		self.c.modules.os.chdir('/tmp/source')
 
 		log = c.modules.BootManager.log('/tmp/new.log')
 		bm = c.modules.BootManager.BootManager(log,'boot')
@@ -92,8 +95,8 @@ class NodeConnection:
 
 	def compare_and_repair_nodekeys(self):
 		c = self.c
-		c.modules.sys.path.append("/tmp/source/")
-		c.modules.os.chdir('/tmp/source')
+		self.c.modules.sys.path.append("/tmp/source/")
+		self.c.modules.os.chdir('/tmp/source')
 
 		log = c.modules.BootManager.log('/tmp/new.log')
 		bm = c.modules.BootManager.BootManager(log,'boot')
@@ -201,7 +204,7 @@ class PlanetLabSession:
 		args['port'] = self.port
 		args['user'] = 'root'
 		args['hostname'] = self.node
-		args['monitordir'] = "/home/soltesz/monitor"
+		args['monitordir'] = monitorconfig.MONITOR_SCRIPT_ROOT
 		ssh_port = 22
 
 		if self.nosetup:
@@ -209,11 +212,11 @@ class PlanetLabSession:
 			return 
 
 		# COPY Rpyc files to host
-		cmd = "rsync -qv -az -e ssh %(monitordir)s/Rpyc-2.45-2.3/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
+		cmd = "rsync -qv -az -e ssh %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
 		if self.verbose: print cmd
 		# TODO: Add timeout
 		timeout = 120
-		localos = soltesz.CMD()
+		localos = moncommands.CMD()
 
 		ret = localos.system(cmd, timeout)
 		print ret
@@ -230,7 +233,7 @@ class PlanetLabSession:
 
 		t1 = time.time()
 		# KILL any already running servers.
-		ssh = soltesz.SSH(args['user'], args['hostname'], ssh_port)
+		ssh = moncommands.SSH(args['user'], args['hostname'], ssh_port)
 		(ov,ev) = ssh.run_noexcept2("""<<\EOF
             rm -f out.log
             echo "kill server" >> out.log
@@ -270,7 +273,7 @@ EOF""")
 		# TODO: the read() here may block indefinitely.  Need a better
 		# approach therefore, that includes a timeout.
 		#ret = self.command.stdout.read(5)
-		ret = soltesz.read_t(self.command.stdout, 5)
+		ret = moncommands.read_t(self.command.stdout, 5)
 
 		t2 = time.time()
 		if 'READY' in ret:

@@ -53,8 +53,8 @@ class PLC:
 		return self.api.__repr__()
 
 def getAuthAPI():
-	import auth
-	return PLC(auth.auth, auth.plc)
+	import monitorconfig
+	return PLC(monitorconfig.API_AUTH, monitorconfig.API_SERVER)
 
 '''
 Returns list of nodes in dbg as reported by PLC

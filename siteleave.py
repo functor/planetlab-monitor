@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import soltesz
 import plc
 import os
 import sys

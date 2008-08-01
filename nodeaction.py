@@ -4,10 +4,6 @@ import plc
 import auth
 api = plc.PLC(auth.auth, auth.plc)
 
-import soltesz
-#fb = soltesz.dbLoad("findbad")
-#act_all = soltesz.dbLoad("act_all")
-
 import reboot
 
 import time

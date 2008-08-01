@@ -8,11 +8,12 @@ import sys
 import reboot
 from datetime import datetime, timedelta
 
-import soltesz
+import database
 import comon
 from nodecommon import color_pcu_state, datetime_fromstr
 from nodehistory import get_filefromglob
 import time
+import traceback
 
 # region
 # total
@@ -21,10 +22,10 @@ import time
 # up with good hardware & functional pcu
 
 #cm_url="http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeviewshort&format=formatcsv&dumpcols='name,cpuspeed,memsize,disksize'"
-#cm = soltesz.if_cached_else(1, "cmhardware", lambda : comon.comonget(cm_url))
+#cm = database.if_cached_else(1, "cmhardware", lambda : comon.comonget(cm_url))
 
 def gethardwarequality(nodename, fb):
-	if nodename in fb['nodes']:
+	if nodename in fb['nodes'] and 'comonstats' in fb['nodes'][nodename]['values']:
 		cstat = fb['nodes'][nodename]['values']['comonstats']
 		for field in ['cpuspeed', 'memsize', 'disksize']:
 			if field not in cstat: cstat[field] = "null"
@@ -72,7 +73,7 @@ def main():
 
 	stats = {}
 	path = "archive-pdb"
-	archive = soltesz.SPickle(path)
+	archive = database.SPickle(path)
 
 	if len(sys.argv) > 2:
 		timestr = sys.argv[1]
@@ -86,9 +87,9 @@ def main():
 	fbstr = get_filefromglob(d, "production.findbad")
 	fbpcustr = get_filefromglob(d, "production.findbadpcus")
 
-	l_plcnodes = soltesz.dbLoad("l_plcnodes")
-	l_plcsites = soltesz.dbLoad("l_plcsites")
-	lb2hn = soltesz.dbLoad("plcdb_lb2hn")
+	l_plcnodes = database.dbLoad("l_plcnodes")
+	l_plcsites = database.dbLoad("l_plcsites")
+	lb2hn = database.dbLoad("plcdb_lb2hn")
 	fb = archive.load(fbstr) 
 	fbpcu = archive.load(fbpcustr)
 	reboot.fb = fbpcu
@@ -138,12 +139,21 @@ def main():
 					CC=fields[-1]
 
 				if hostname in fb['nodes']:
+					if 'state' in fb['nodes'][hostname]['values']:
+						state = fb['nodes'][hostname]['values']['state'].lower()
+					else:
+						state = "unknown"
+
 					args = {'cc': CC, 
 						'site' : site['login_base'],
 						'host' : hostname,
-						'status' : fb['nodes'][hostname]['values']['state'].lower(),
+						'status' : state,
 						'hardware' : gethardwarequality(hostname, fb),
 						'pcuok' : color_pcu_state(fb['nodes'][hostname]['values']) }
+					#except:
+					#	print traceback.print_exc()
+					#	print args
+					#	print fb['nodes'][hostname]['values']
 					results.append("%(cc)7s %(status)8s %(hardware)8s %(pcuok)8s %(site)15s %(host)42s " % args)
 					addtostats(stats, args)
 		else:

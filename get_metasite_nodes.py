@@ -1,13 +1,13 @@
 #!/usr/bin/python
 import plc
-import soltesz
+import database
 import string
 import sys
 
 def main():
 	meta_sites = ['canarie', 'rnp', 'jgn2', 'i2', 'tp', 'princeton', 'princetondsl', 'plcolo', 'wide']
 	l_blacklist = [ "grouse.hpl.hp.com", "planet1.att.nodes.planet-lab.org"]
-	#l_blacklist = soltesz.dbLoad("l_blacklist")
+	#l_blacklist = database.dbLoad("l_blacklist")
 	l_sitelist = []
 	count = 0
 	# for each prefix above
@@ -33,7 +33,7 @@ def main():
 	print "Found %d nodes" % count
 	print "Found %d sites " % len(l_sitelist)
 
-	soltesz.dbDump("l_blacklist")
+	database.dbDump("l_blacklist")
 
 if __name__=="__main__":
 	main() 

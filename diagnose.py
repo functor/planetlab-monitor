@@ -49,7 +49,8 @@ config.parse_args()
 import rt
 # Correlates input with policy to form actions
 import policy
-import soltesz
+import moncommands
+import database 
 import plc
 import syncplcdb
 
@@ -153,7 +154,7 @@ def main():
 	#########  GET NODES    ########################################
 	logger.info('Get Nodes from PLC')
 	print "getnode from plc: %s %s %s" % (config.debug, config.cachenodes, config.refresh)
-	l_plcnodes = soltesz.if_cached_else_refresh(config.cachenodes, 
+	l_plcnodes = database.if_cached_else_refresh(config.cachenodes, 
 								config.refresh, "l_plcnodes",
 								lambda : syncplcdb.create_plcdb() )
 
@@ -179,14 +180,14 @@ def main():
 
 	print "len of l_nodes: %d" % len(l_nodes)
 	# Minus blacklisted ones..
-	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
-	l_ticket_blacklist = soltesz.if_cached_else(1,"l_ticket_blacklist",lambda : [])
+	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
+	l_ticket_blacklist = database.if_cached_else(1,"l_ticket_blacklist",lambda : [])
 	l_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 
 	logger.info('Get Tickets from RT')
 	#######  RT tickets    #########################################
-	t = soltesz.MyTimer()
-	ad_dbTickets = soltesz.if_cached_else_refresh(config.cachert, config.refresh, "ad_dbTickets", rt.rt_tickets)
+	t = moncommands.MyTimer()
+	ad_dbTickets = database.if_cached_else_refresh(config.cachert, config.refresh, "ad_dbTickets", rt.rt_tickets)
 	if ad_dbTickets == "":
 		print "ad_dbTickets failed..."
 		sys.exit(1)

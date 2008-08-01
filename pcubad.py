@@ -7,7 +7,7 @@ import time
 
 from reboot import pcu_name
 
-import soltesz
+import database
 import comon
 import threadpool
 import syncplcdb
@@ -25,12 +25,12 @@ count = 0
 
 def main(config):
 	global externalState
-	externalState = soltesz.if_cached_else(1, config.dbname, lambda : externalState) 
+	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
 	if config.increment:
 		# update global round number to force refreshes across all pcus
 		externalState['round'] += 1
 
-	l_plcpcus = soltesz.if_cached_else_refresh(1, 1, "pculist", lambda : plc.GetPCUs())
+	l_plcpcus = database.if_cached_else_refresh(1, 1, "pculist", lambda : plc.GetPCUs())
 
 	l_pcu = None
 	if config.pcu:
@@ -65,12 +65,12 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 			count += 1
 
 		if count % 20 == 0:
-			soltesz.dbDump(config.dbname, externalState)
+			database.dbDump(config.dbname, externalState)
 
-	soltesz.dbDump(config.dbname, externalState)
+	database.dbDump(config.dbname, externalState)
 
-fbpcu = soltesz.dbLoad('findbadpcus')
-hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+fbpcu = database.dbLoad('findbadpcus')
+hn2lb = database.dbLoad("plcdb_hn2lb")
 
 def get(fb, path):
 	indexes = path.split("/")
@@ -159,5 +159,5 @@ if __name__ == '__main__':
 		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		soltesz.dbDump(config.dbname, externalState)
+		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import soltesz
+import database 
 from config import config
 from optparse import OptionParser
 parser = OptionParser()
@@ -20,5 +20,5 @@ if config.output is None:
 	# just use the input name.
 	config.output = config.input
 
-data = soltesz.dbLoad(config.input)
-soltesz.dbDump(config.output, data, 'php')
+data = database.dbLoad(config.input)
+database.dbDump(config.output, data, 'php')

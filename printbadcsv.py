@@ -1,14 +1,14 @@
 #!/usr/bin/python
-import soltesz
+import database
 from config import config
 from optparse import OptionParser
 from www.printbadnodes import *
 
 def main():
 	global fb
-	db = soltesz.dbLoad(config.dbname)
-	fb = soltesz.dbLoad("findbadpcus")
-	act= soltesz.dbLoad("act_all")
+	db = database.dbLoad(config.dbname)
+	fb = database.dbLoad("findbadpcus")
+	act= database.dbLoad("act_all")
 
 	## Field widths used for printing
 	maxFieldLengths = { 'nodename' : -45,

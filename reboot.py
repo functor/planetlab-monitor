@@ -19,6 +19,7 @@ from subprocess import PIPE, Popen
 import ssh.pxssh as pxssh
 import ssh.pexpect as pexpect
 import socket
+import moncommands 
 
 # Use our versions of telnetlib and pyssh
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
@@ -559,9 +560,8 @@ class APC(PCUControl):
 
 class IntelAMT(PCUControl):
 	def run(self, node_port, dryrun):
-		import soltesz
 
-		cmd = soltesz.CMD()
+		cmd = moncommands.CMD()
 		#[cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
 		cmd_str = "cmdamt/remoteControl"
 
@@ -625,9 +625,8 @@ class HPiLO(PCUControl):
 		
 class HPiLOHttps(PCUControl):
 	def run(self, node_port, dryrun):
-		import soltesz
 
-		locfg = soltesz.CMD()
+		locfg = moncommands.CMD()
 		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
@@ -638,7 +637,7 @@ class HPiLOHttps(PCUControl):
 			return sout.strip()
 
 		if not dryrun:
-			locfg = soltesz.CMD()
+			locfg = moncommands.CMD()
 			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 						self.host, "iloxml/Reset_Server.xml", 
 						self.username, self.password)
@@ -1163,8 +1162,8 @@ def pcu_name(pcu):
 	else:
 		return None
 
-import soltesz
-fb =soltesz.dbLoad("findbadpcus")
+import database
+fb =database.dbLoad("findbadpcus")
 
 def get_pcu_values(pcu_id):
 	# TODO: obviously, this shouldn't be loaded each time...

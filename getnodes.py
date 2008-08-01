@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import soltesz
+import database
 import plc
 from optparse import OptionParser
 import sys
@@ -27,7 +27,7 @@ if not config.run:
 	print "Add --run to actually perform the command"
 	sys.exit(1)
 
-nodelist = soltesz.if_cached_else_refresh(1, 
+nodelist = database.if_cached_else_refresh(1, 
 							config.refresh, 
 							"l_plcnodes", 
 							lambda : plc.getNodes({'peer_id':None}, ['hostname']))

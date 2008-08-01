@@ -1,7 +1,7 @@
 from config import config
 #print "policy"
 config = config()
-import soltesz
+import database
 import time
 import mailer
 from www.printbadnodes import cmpCategoryVal
@@ -49,13 +49,13 @@ class Merge:
 		self.merge_list = l_merge
 
 		# the hostname to loginbase mapping
-		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
 
 		# Previous actions taken on nodes.
-		self.act_all = soltesz.if_cached_else(1, "act_all", lambda : {})
-		self.findbad = soltesz.if_cached_else(1, "findbad", lambda : {})
+		self.act_all = database.if_cached_else(1, "act_all", lambda : {})
+		self.findbad = database.if_cached_else(1, "findbad", lambda : {})
 
-		self.cache_all = soltesz.if_cached_else(1, "act_all", lambda : {})
+		self.cache_all = database.if_cached_else(1, "act_all", lambda : {})
 		self.sickdb = {}
 		self.mergedb = {}
 
@@ -257,8 +257,8 @@ class RT:
 class Diagnose:
 	def __init__(self, record_list):
 		self.record_list = record_list
-		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
-		self.findbad = soltesz.if_cached_else(1, "findbad", lambda : {})
+		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+		self.findbad = database.if_cached_else(1, "findbad", lambda : {})
 
 		self.diagnose_in = {}
 		self.diagnose_out = {}
@@ -827,12 +827,12 @@ class Diagnose:
 class Action:
 	def __init__(self, diagnose_out):
 		# the hostname to loginbase mapping
-		self.plcdb_hn2lb = soltesz.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
 
 		# Actions to take.
 		self.diagnose_db = diagnose_out
 		# Actions taken.
-		self.act_all   = soltesz.if_cached_else(1, "act_all", lambda : {})
+		self.act_all   = database.if_cached_else(1, "act_all", lambda : {})
 
 		# A dict of actions to specific functions. PICKLE doesnt' like lambdas.
 		self.actions = {}
@@ -869,8 +869,8 @@ class Action:
 			print err
 			if config.policysavedb:
 				print "Saving Databases... act_all"
-				soltesz.dbDump("act_all", self.act_all)
-				soltesz.dbDump("diagnose_out", self.diagnose_db)
+				database.dbDump("act_all", self.act_all)
+				database.dbDump("diagnose_out", self.diagnose_db)
 			sys.exit(1)
 
 		#print_stats("sites_observed", stats)
@@ -882,11 +882,11 @@ class Action:
 
 		if config.policysavedb:
 			print "Saving Databases... act_all"
-			#soltesz.dbDump("policy.eventlog", self.eventlog)
+			#database.dbDump("policy.eventlog", self.eventlog)
 			# TODO: remove 'diagnose_out', 
 			#	or at least the entries that were acted on.
-			soltesz.dbDump("act_all", self.act_all)
-			soltesz.dbDump("diagnose_out", self.diagnose_db)
+			database.dbDump("act_all", self.act_all)
+			database.dbDump("diagnose_out", self.diagnose_db)
 
 	def accumSites(self):
 		"""
@@ -1091,10 +1091,10 @@ class Action:
 		
 		if config.policysavedb:
 			#print "Saving Databases... act_all, diagnose_out"
-			#soltesz.dbDump("act_all", self.act_all)
+			#database.dbDump("act_all", self.act_all)
 			# remove site record from diagnose_out, it's in act_all as done.
 			del self.diagnose_db[loginbase]
-			#soltesz.dbDump("diagnose_out", self.diagnose_db)
+			#database.dbDump("diagnose_out", self.diagnose_db)
 
 		print "sleeping for 1 sec"
 		time.sleep(1)

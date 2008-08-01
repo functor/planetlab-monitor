@@ -4,7 +4,6 @@ import os
 import sys
 import string
 import time
-import soltesz
 import plc
 
 bwlimit = {}

@@ -46,7 +46,7 @@ config.parse_args()
 import rt
 # Correlates input with policy to form actions
 import policy
-import soltesz
+import database
 import plc
 
 # Log to what 
@@ -140,7 +140,7 @@ def main():
 	#########  GET NODES    ########################################
 	logger.info('Get Nodes from PLC')
 	print "getnode from plc"
-	l_plcnodes = soltesz.if_cached_else(True,
+	l_plcnodes = database.if_cached_else(True,
 								"l_plcnodes", 
 								lambda : plc.getNodes({'peer_id':None}))
 
@@ -168,15 +168,15 @@ def main():
 
 	print "len of l_nodes: %d" % len(l_nodes)
 	# Minus blacklisted ones..
-	l_ticket_blacklist = soltesz.if_cached_else(1,"l_ticket_blacklist",lambda : [])
+	l_ticket_blacklist = database.if_cached_else(1,"l_ticket_blacklist",lambda : [])
 
-	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
+	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
 	l_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 
 	#######  Get RT tickets    #########################################
 	#logger.info('Get Tickets from RT')
-	#t = soltesz.MyTimer()
-	#ad_dbTickets = soltesz.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
+	#t = commands.MyTimer()
+	#ad_dbTickets = database.if_cached_else(config.cachert, "ad_dbTickets", rt.rt_tickets)
 	#print "Getting tickets from RT took: %f sec" % t.diff() ; del t
 
 	logger.info('Start Action thread')

@@ -6,7 +6,7 @@
 #
 # $Id: monitor.py,v 1.7 2007/07/03 19:59:02 soltesz Exp $
 
-import soltesz
+import database
 
 from monitor_policy import *
 import rt
@@ -25,14 +25,14 @@ def reboot(hostname):
 	if len(l_nodes) == 0:
 		raise Exception("No such host: %s" % hostname)
 	
-	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
-	l_ticket_blacklist = soltesz.if_cached_else(1,"l_ticket_blacklist",lambda : [])
+	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
+	l_ticket_blacklist = database.if_cached_else(1,"l_ticket_blacklist",lambda : [])
 
 	l_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 	if len(l_nodes) == 0:
 		raise Exception("Host removed via blacklist: %s" % hostname)
 
-	ad_dbTickets = soltesz.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : [])
+	ad_dbTickets = database.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : [])
 	if ad_dbTickets == None:
 		raise Exception("Could not find cached dbTickets")
 
@@ -61,14 +61,14 @@ def reboot2(hostname):
 	if len(l_nodes) == 0:
 		raise Exception("No such host: %s" % hostname)
 	
-	l_blacklist = soltesz.if_cached_else(1, "l_blacklist", lambda : [])
-	l_ticket_blacklist = soltesz.if_cached_else(1,"l_ticket_blacklist",lambda : [])
+	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
+	l_ticket_blacklist = database.if_cached_else(1,"l_ticket_blacklist",lambda : [])
 
 	l_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 	if len(l_nodes) == 0:
 		raise Exception("Host removed via blacklist: %s" % hostname)
 
-	ad_dbTickets = soltesz.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : None)
+	ad_dbTickets = database.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : None)
 	if ad_dbTickets == None:
 		raise Exception("Could not find cached dbTickets")
 

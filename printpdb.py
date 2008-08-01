@@ -2,8 +2,8 @@
 
 import pprint
 import sys
-import soltesz
+import database
 
 pp = pprint.PrettyPrinter(indent=4) 
-o = soltesz.dbLoad(sys.argv[1])
+o = database.dbLoad(sys.argv[1])
 pp.pprint(o) 
