@@ -1,6 +1,7 @@
 
 import struct
 import reboot
+from unified_model import PersistFlags
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"
 GREEN	= esc + "[1;32m"
@@ -90,7 +91,7 @@ def diff_time(timestamp):
 	elif diff < 60*60*24: # sec in day
 		t = diff / (60*60)
 		t_str = "%s hrs ago" % int(math.ceil(t))
-	elif diff < 60*60*24*7: # sec in week
+	elif diff < 60*60*24*14: # sec in week
 		t = diff / (60*60*24)
 		t_str = "%s days ago" % int(math.ceil(t))
 	elif diff <= 60*60*24*30: # approx sec in month
@@ -124,8 +125,10 @@ def nodegroup_display(node, fb, conf=None):
 	#node['current'] 	= node['current']
 	node['pcu'] = fb['nodes'][node['hostname']]['values']['pcu']
 	node['lastupdate'] = diff_time(node['last_contact'])
+	pf = PersistFlags(node['hostname'], 1, db='node_persistflags')
+	node['lc'] = diff_time(pf.last_changed)
 
-	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)20.20s... %(kernel)43s %(lastupdate)12s " % node
+	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)33s %(lastupdate)12s, %(lc)s" % node
 
 from model import *
 import database
