@@ -147,7 +147,7 @@ function get_category_link($category,$header)
 	return "<a href='printbadpcus.php?category=$category'>$header</a>"; 
 }
 
-include 'soltesz.php';
+include 'database.php';
 $p = new Pickle();
 $findbad = $p->load("findbadpcus");
 $findbadpcus = array_keys($findbad['nodes']);

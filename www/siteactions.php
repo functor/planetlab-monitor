@@ -71,7 +71,7 @@ class Event
 	}
 }
 
-include 'soltesz.php';
+include 'database.php';
 $p = new Pickle();
 $act_all = $p->load("act_all");
 $plcdb_hn2lb = $p->load("plcdb_hn2lb");
