@@ -1,84 +1,83 @@
 #!/bin/bash
 
+source monitorconfig.py
+cd ${MONITOR_SCRIPT_ROOT}
 set -e
-cd $HOME/monitor/
 DATE=`date +%Y-%m-%d-%T`
+MONITOR_PID="$HOME/monitor/SKIP"
 
-if [ -f $HOME/monitor/SKIP ] ; then 
-	#	echo "SKIPPING Monitor"
-	#	exit
-	# TODO: should be possible to kill the old version if 
-	# desired and prevent lingering instances of automate.
+API=$(./testapi.py)
+if [ "$API" != "ok" ] ; then 
+	# NOTE: Do not try to run any commands if the API is obviously broken.
+	echo "API IS DOWN : "`date`
+	exit 1
+fi
+
+if [ -f $MONITOR_PID ] ; then 
 	if [ -z "$1" ] ; then 
 		echo "KILLING Monitor"
-		PID=`cat $HOME/monitor/SKIP`
-		rm -f $HOME/monitor/SKIP
-		./kill.cmd.sh $PID
+		PID=`cat $MONITOR_PID`
+		rm -f $MONITOR_PID
+		${MONITOR_SCRIPT_ROOT}/kill.cmd.sh $PID
 	else 
 		# skipping monitor
 		echo "SKIPPING Monitor"
 		exit
 	fi 
 fi
-echo $$ > $HOME/monitor/SKIP
+echo $$ > $MONITOR_PID
 
 #########################
 # 1. FINDBAD NODES 
-rm -f pdb/production.findbad2.pkl
-./findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE || :
-
+rm -f ${MONITOR_DATA_ROOT}/production.findbad2.pkl
+${MONITOR_SCRIPT_ROOT}/findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE || :
+cp ${MONITOR_DATA_ROOT}/production.findbad2.pkl ${MONITOR_DATA_ROOT}/production.findbad.pkl
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs kill || :
-
-########################
-# COPY to golf for diagnose.py and action.py
-cp pdb/production.findbad2.pkl pdb/production.findbad.pkl
-#scp pdb/production.findbad2.pkl soltesz@golf.cs.princeton.edu:monitor3/pdb/production.findbad.pkl
-
-########################
-# COPY Act_all records
-#scp soltesz@golf.cs.princeton.edu:monitor3/pdb/production.act_all.pkl pdb/
-
-########################
-# badcsv.txt
-./printbadcsv.py  | grep -v loading | tr -d ' ' > badcsv.txt
-cp badcsv.txt /plc/data/var/www/html/monitor/
-./showlatlon.py | head -9 | awk 'BEGIN {print "<table>"} { print "<tr><td>", $0, "</td></tr>"} END{print "</table>"}'  | sed -e 's\|\</td><td>\g' > /plc/data/var/www/html/monitor/regions.html
 
 #########################
 # 2. FINDBAD PCUS
-rm -f pdb/production.findbadpcus2.pkl
-./findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE || :
-
-./sitebad.py --increment || :
-./nodebad.py --increment || :
-./pcubad.py --increment || :
-
+rm -f ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl
+${MONITOR_SCRIPT_ROOT}/findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE || :
+cp ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl ${MONITOR_DATA_ROOT}/production.findbadpcus.pkl
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs kill || :
 
-# convert pkl to php serialize format.
-cp pdb/production.findbadpcus2.pkl pdb/production.findbadpcus.pkl
+# badcsv.txt
+${MONITOR_SCRIPT_ROOT}/printbadcsv.py  | grep -v loading | tr -d ' ' > badcsv.txt
+cp badcsv.txt /plc/data/var/www/html/monitor/
+${MONITOR_SCRIPT_ROOT}/showlatlon.py | head -9 | awk 'BEGIN {print "<table>"} { print "<tr><td>", $0, "</td></tr>"} END{print "</table>"}'  | sed -e 's\|\</td><td>\g' > /plc/data/var/www/html/monitor/regions.html
 
-./pkl2php.py -i findbadpcus2 -o findbadpcus
-./pkl2php.py -i act_all -o act_all
-./pkl2php.py -i plcdb_hn2lb -o plcdb_hn2lb
-./pkl2php.py -i findbad -o findbadnodes
-./pkl2php.py -i ad_dbTickets -o ad_dbTickets
-./pkl2php.py -i idTickets -o idTickets
+########################
+# 3. record last-changed for sites, nodes and pcus.
+${MONITOR_SCRIPT_ROOT}/sitebad.py --increment || :
+${MONITOR_SCRIPT_ROOT}/nodebad.py --increment || :
+${MONITOR_SCRIPT_ROOT}/pcubad.py --increment || :
 
-#for f in findbad act_all findbadpcus l_plcnodes; do 
-#for f in findbad act_all findbadpcus l_plcnodes site_persistflags ; do 
+#########################
+# 4. convert pkl to php serialize format.
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbadpcus2 -o findbadpcus
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i act_all -o act_all
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i plcdb_hn2lb -o plcdb_hn2lb
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbad -o findbadnodes
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i ad_dbTickets -o ad_dbTickets
+${MONITOR_SCRIPT_ROOT}/pkl2php.py -i idTickets -o idTickets
+
+#########################
+# Archive pkl files.
 for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do 
-	cp pdb/production.$f.pkl archive-pdb/`date +%F-%H:%M`.production.$f.pkl
+	cp ${MONITOR_DATA_ROOT}/production.$f.pkl ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.production.$f.pkl
 done
 
-./grouprins.py --mail=1 \
+############################
+# 5. Check if there are any nodes in dbg state.  Clean up afterward.
+${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 \
 	--nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' \
 	--stopselect 'state=BOOT&&kernel=2.6.22.19-vs2.3.0.34.9.planetlab' \
 	--reboot || :
-./findbad.py --increment --cachenodes --debug=0 --dbname="findbad" --nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' || :
+${MONITOR_SCRIPT_ROOT}/findbad.py --increment --cachenodes --debug=0 --dbname="findbad" --nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' || :
 
-# cache the RT db locally.
-python ./rt.py
+##########################
+# 6. cache the RT db locally.
+python ${MONITOR_SCRIPT_ROOT}/rt.py
 
-rm -f $HOME/monitor/SKIP
+rm -f $MONITOR_PID
