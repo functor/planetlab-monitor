@@ -10,31 +10,38 @@
 
 import xml, xmlrpclib
 import logging
-try:
-    import auth
-except:
-	class Anon:
-		def __init__(self):
-			self.auth = {'AuthMethod': "anonymous"}
-	auth = Anon()
-
 import time
+import traceback
 try:
 	from config import config
 	config = config()
 	debug = config.debug
 except:
 	debug = False
+logger = logging.getLogger("monitor")
 	
+class Auth:
+	def __init__(self):
+		self.auth = {'AuthMethod': "anonymous"}
+
+# NOTE: this host is used by default when there are no auth files.
 XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 
-logger = logging.getLogger("monitor")
+# NOTE: by default, use anonymous access, but if auth files are 
+#       configured, use them, with their auth definitions.
+auth = Auth()
+try:
+	import monitorconfig
+	auth.auth = monitorconfig.API_AUTH
+	auth.server = monitorconfig.API_SERVER
+except:
+	try:
+		import auth
+		auth.server = auth.plc
+	except:
+		auth.server = XMLRPC_SERVER
 
-api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
-
-def getAPI(url):
-	api = xmlrpclib.Server(url, verbose=False, allow_none=True)
-	return api
+api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 
 class PLC:
 	def __init__(self, auth, url):
@@ -52,8 +59,10 @@ class PLC:
 	def __repr__(self):
 		return self.api.__repr__()
 
+def getAPI(url):
+	return xmlrpclib.Server(url, verbose=False, allow_none=True)
+
 def getAuthAPI():
-	import monitorconfig
 	return PLC(monitorconfig.API_AUTH, monitorconfig.API_SERVER)
 
 '''
@@ -61,7 +70,7 @@ Returns list of nodes in dbg as reported by PLC
 '''
 def nodesDbg():
 	dbgNodes = []
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	anon = {'AuthMethod': "anonymous"}
 	for node in api.GetNodes(anon, {"boot_state":"dbg"},["hostname"]):
 		dbgNodes.append(node['hostname'])
@@ -73,7 +82,7 @@ def nodesDbg():
 Returns loginbase for given nodename
 '''
 def siteId(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	anon = {'AuthMethod': "anonymous"}
 	site_id = api.GetNodes (anon, {"hostname": nodename}, ['site_id'])
 	if len(site_id) == 1:
@@ -85,7 +94,7 @@ Returns list of slices for a site.
 '''
 def slices(loginbase):
 	siteslices = []
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	sliceids = api.GetSites (auth.auth, {"login_base" : loginbase}, ["slice_ids"])[0]['slice_ids']
 	for slice in api.GetSlices(auth.auth, {"slice_id" : sliceids}, ["name"]):
 		siteslices.append(slice['name'])
@@ -95,7 +104,7 @@ def slices(loginbase):
 Returns dict of PCU info of a given node.
 '''
 def getpcu(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	anon = {'AuthMethod': "anonymous"}
 	nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
 	if nodeinfo['pcu_ids']:
@@ -107,7 +116,7 @@ def getpcu(nodename):
 		return False
 
 def GetPCUs(filter=None, fields=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	pcu_list = api.GetPCUs(auth.auth, filter, fields)
 	return pcu_list 
 
@@ -115,7 +124,7 @@ def GetPCUs(filter=None, fields=None):
 Returns all site nodes for site id (loginbase).
 '''
 def getSiteNodes(loginbase, fields=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	nodelist = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
@@ -128,7 +137,7 @@ def getSiteNodes(loginbase, fields=None):
 	return nodelist
 
 def getPersons(filter=None, fields=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	persons = []
 	try:
 		persons = api.GetPersons(auth.auth, filter, fields)
@@ -138,21 +147,20 @@ def getPersons(filter=None, fields=None):
 	return persons
 
 def getSites(filter=None, fields=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	sites = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
 		#sites = api.GetSites(anon, filter, fields)
 		sites = api.GetSites(auth.auth, filter, fields)
 	except Exception, exc:
-		import traceback
 		traceback.print_exc()
 		print "getSites:  %s" % exc
 		logger.info("getSites:  %s" % exc)
 	return sites
 
 def getSiteNodes2(loginbase):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	nodelist = []
 	anon = {'AuthMethod': "anonymous"}
 	try:
@@ -163,12 +171,12 @@ def getSiteNodes2(loginbase):
 	return nodelist
 
 def getNodeNetworks(filter=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	nodenetworks = api.GetNodeNetworks(auth.auth, filter, None)
 	return nodenetworks
 
 def getNodes(filter=None, fields=None):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	nodes = api.GetNodes(auth.auth, filter, fields) 
 			#['boot_state', 'hostname', 
 			#'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
@@ -179,14 +187,14 @@ def getNodes(filter=None, fields=None):
 Sets boot state of a node.
 '''
 def nodeBootState(nodename, state):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
 		return api.UpdateNode(auth.auth, nodename, {'boot_state': state})
 	except Exception, exc:
 		logger.info("nodeBootState:  %s" % exc)
 
 def updateNodeKey(nodename, key):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
 		return api.UpdateNode(auth.auth, nodename, {'key': key})
 	except Exception, exc:
@@ -196,7 +204,7 @@ def updateNodeKey(nodename, key):
 Sends Ping Of Death to node.
 '''
 def nodePOD(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	logger.info("Sending POD to %s" % nodename)
 	try:
 		if not debug:
@@ -208,7 +216,7 @@ def nodePOD(nodename):
 Freeze all site slices.
 '''
 def suspendSlices(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	for slice in slices(siteId(nodename)):
 		logger.info("Suspending slice %s" % slice)
 		try:
@@ -218,7 +226,7 @@ def suspendSlices(nodename):
 			logger.info("suspendSlices:  %s" % exc)
 
 def enableSlices(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	for slice in slices(siteId(nodename)):
 		logger.info("Enabling slices %s" % slice)
 		try:
@@ -241,13 +249,13 @@ def enableSlices(nodename):
 #Enable suspended site slices.
 #'''
 #def enableSlices(nodename, slicelist):
-#	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+#	api = xmlrpclib.Server(auth.server, verbose=False)
 #	for slice in  slices(siteId(nodename)):
 #		logger.info("Suspending slice %s" % slice)
 #		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
 #
 def enableSliceCreation(nodename):
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False, allow_none=True)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	try:
 		loginbase = siteId(nodename)
 		logger.info("Enabling slice creation for site %s" % loginbase)
@@ -263,7 +271,7 @@ Removes ability to create slices. Returns previous max_slices
 '''
 def removeSliceCreation(nodename):
 	print "removeSliceCreation(%s)" % nodename
-	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
 		loginbase = siteId(nodename)
 		#numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
@@ -279,7 +287,7 @@ def removeSliceCreation(nodename):
 QED
 '''
 #def enableSliceCreation(nodename, maxslices):
-#	api = xmlrpclib.Server(XMLRPC_SERVER, verbose=False)
+#	api = xmlrpclib.Server(auth.server, verbose=False)
 #	anon = {'AuthMethod': "anonymous"}
 #	siteid = api.AnonAdmQuerySite (anon, {"node_hostname": nodename})
 #	if len(siteid) == 1:
@@ -313,5 +321,4 @@ def main():
 	#print slices("princeton")
 
 if __name__=="__main__":
-	import reboot
 	main() 

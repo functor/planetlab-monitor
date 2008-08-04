@@ -3,8 +3,7 @@
 # Attempt to reboot a node in debug state.
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 import sys
 import os

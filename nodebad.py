@@ -13,8 +13,7 @@ import syncplcdb
 from nodequery import verify,query_to_dict,node_select
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 from unified_model import *
 from monitor_policy import MINUP
 

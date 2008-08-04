@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import plc
-import auth
 import sys
 import time
 
@@ -16,8 +15,9 @@ email_list = [ 'monitor@planet-lab.org',
         	 # 'vivek@cs.princeton.edu',
 		]
 
-api   = plc.PLC(auth.auth, auth.plc)
-api06 = plc.PLC(auth.auth06, auth.plc06)
+import monitorconfig
+api   = plc.PLC(monitorconfig.API_AUTH, monitorconfig.API_SERVER)
+api06 = plc.PLC(monitorconfig.API_AUTH06, monitorconfig.API_SERVER06)
 
 
 # add planetlab-15.cs.princeton.edu, and use the key on the CD.

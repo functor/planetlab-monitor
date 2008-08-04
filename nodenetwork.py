@@ -2,8 +2,7 @@
 
 import sys
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 import config
 
 if len(sys.argv[1:]) > 0:

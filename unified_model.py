@@ -3,8 +3,7 @@
 import database
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 import mailer
 import time

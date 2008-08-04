@@ -13,8 +13,7 @@
 # 
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 import policy
 import traceback

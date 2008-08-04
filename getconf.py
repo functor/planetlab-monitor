@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
-import auth
 import plc
+api = plc.getAuthAPI()
 import sys
 import os
 
 def getconf(hostname, force=False, media=None):
-	api = plc.PLC(auth.auth, auth.plc)
 	n = api.GetNodes(hostname)
 	filename = "bootcd/" + hostname + ".txt"
 	if not os.path.exists(filename) or force:

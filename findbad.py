@@ -29,8 +29,7 @@ import syncplcdb
 from nodequery import verify,query_to_dict,node_select
 import traceback
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 def collectPingAndSSH(nodename, cohash):
 	### RUN PING ######################

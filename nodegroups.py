@@ -14,8 +14,7 @@
 #  * 
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 from optparse import OptionParser
 from sets import Set

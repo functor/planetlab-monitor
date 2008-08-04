@@ -13,8 +13,7 @@ import rt
 import sys
 
 import plc
-import auth
-api = plc.PLC(auth.auth, auth.plc)
+api = plc.getAuthAPI()
 
 from clean_policy import *
 
