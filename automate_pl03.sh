@@ -76,6 +76,7 @@ done
 	--nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' \
 	--stopselect 'state=BOOT&&kernel=2.6.22.19-vs2.3.0.34.9.planetlab' \
 	--reboot || :
+./findbad.py --increment --cachenodes --debug=0 --dbname="findbad" --nodeselect 'state=DEBUG&&boot_state=dbg||state=DEBUG&&boot_state=boot' || :
 
 # cache the RT db locally.
 python ./rt.py

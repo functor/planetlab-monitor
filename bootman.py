@@ -23,7 +23,8 @@ import ssh.fdpexpect as fdpexpect
 import ssh.pexpect as pexpect
 from unified_model import *
 from emailTxt import mailtxt
-
+from nodeconfig import network_config_to_str
+import traceback
 import monitorconfig
 
 import signal
@@ -334,7 +335,7 @@ def reboot(hostname, config=None, forced_action=None):
 	try:
 		k = SSHKnownHosts(); k.update(node); k.write(); del k
 	except:
-		import traceback; print traceback.print_exc()
+		print traceback.print_exc()
 		return False
 
 	try:
@@ -344,7 +345,7 @@ def reboot(hostname, config=None, forced_action=None):
 			session = PlanetLabSession(node, config.nosetup, config.verbose)
 	except Exception, e:
 		print "ERROR setting up session for %s" % hostname
-		import traceback; print traceback.print_exc()
+		print traceback.print_exc()
 		print e
 		return False
 
@@ -357,7 +358,7 @@ def reboot(hostname, config=None, forced_action=None):
 			time.sleep(session.timeout*4)
 			conn = session.get_connection(config)
 		except:
-			import traceback; print traceback.print_exc()
+			print traceback.print_exc()
 			return False
 			
 
@@ -497,6 +498,7 @@ def reboot(hostname, config=None, forced_action=None):
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
+			('dnserror'     , 'Name or service not known'),
 			('downloadfail' , 'Unable to download main tarball /boot/bootstrapfs-planetlab-i386.tar.bz2 from server.'),
 			('disktoosmall' , 'The total usable disk size of all disks is insufficient to be usable as a PlanetLab node.'),
 			('hardwarerequirefail' , 'Hardware requirements not met'),
@@ -542,6 +544,9 @@ def reboot(hostname, config=None, forced_action=None):
 	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-bootupdatefail-update-debug-done",
+
+			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-exception-protoerror-update-protoerror-debug-done",
+
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-update-debug-done",
@@ -549,6 +554,7 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
 			"bminit-cfg-auth-protoerror-exception-update-bootupdatefail-authfail-debug-done",
 			"bminit-cfg-auth-protoerror-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-exception-protoerror-update-debug-done",
 			"bminit-cfg-auth-getplc-implementerror-update-debug-done",
 			]:
 		sequences.update({n : "restart_bootmanager_boot"})
@@ -627,6 +633,9 @@ def reboot(hostname, config=None, forced_action=None):
 
 	# broken_hardware_email
 	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
+
+	# bad_dns_email
+	sequences.update({"bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done" : "bad_dns_email"})
 
 	flag_set = True
 
@@ -751,6 +760,29 @@ def reboot(hostname, config=None, forced_action=None):
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 			conn.set_nodestate('disable')
 
+		elif sequences[s] == "bad_dns_email":
+			print "...NOTIFYING OWNERS OF DNS FAILURE on %s!!!" % hostname
+			args = {}
+			try:
+				node = api.GetNodes(hostname)[0]
+				net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
+			except:
+				print traceback.print_exc()
+				# TODO: api error. skip email, b/c all info is not available,
+				# flag_set will not be recorded.
+				return False
+			nodenet_str = network_config_to_str(net)
+
+			args['hostname'] = hostname
+			args['network_config'] = nodenet_str
+			args['nodenetwork_id'] = net['nodenetwork_id']
+			m = PersistMessage(hostname, mailtxt.baddns[0] % args,
+										 mailtxt.baddns[1] % args, True, db='baddns_persistmessages')
+
+			loginbase = plc.siteId(hostname)
+			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			conn.set_nodestate('disable')
+
 	if flag_set:
 		pflags.setRecentFlag(s)
 		pflags.save() 
@@ -773,6 +805,8 @@ def main():
 						help="Extra quiet output messages.")
 	parser.add_option("", "--verbose", dest="verbose", action="store_true", 
 						help="Extra debug output messages.")
+	parser.add_option("", "--nonet", dest="nonet", action="store_true", 
+						help="Do not setup the network, use existing log files to re-run a test pass.")
 	parser.add_option("", "--collect", dest="collect", action="store_true", 
 						help="No action, just collect dmesg, and bm.log")
 	parser.add_option("", "--nosetup", dest="nosetup", action="store_true", 

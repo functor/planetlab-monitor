@@ -389,6 +389,8 @@ Thank you for your help,
 
 	donation_nopcu = [ donation_nopcu_one, donation_nopcu_one, donation_nopcu_one ]
 	donation_down = [ donation_down_one, donation_down_one, donation_down_one ]
+
+
 	minimalhardware = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
@@ -515,12 +517,24 @@ Thanks.
 """)
 
 
-	dns=("""Planetlab node %(hostname)s down.""", """As part of PlanetLab node monitoring, we noticed the DNS servers used by  %(hostname)s are not responding to queries.
+	baddns=("""Planetlab node down: broken DNS configuration for %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed the DNS servers used by the following machine(s) are not responding to queries.
 
-Please verify the DNS information used by the node is correct.  You can find directions on how to update the node's network information on the PlanetLab Technical Contacts Guid (http://www.planet-lab.org/doc/TechsGuide.php#id268898).
+    %(hostname)s 
 
-Thanks.
+The conseuqnece of this is that the node cannot boot correctly, and is not a functioning part of the PlanetLab network.
 
+To help us return this machine to running order, please verify that the registered DNS servers in the node network configuration are correct.  
+
+%(network_config)s
+
+You may update the node's network information at the link below:
+
+    https://www.planet-lab.org/db/nodes/node_networks.php?id=%(nodenetwork_id)s
+
+If you have any questions, please feel free to contact us at PlanetLab Support (support@planet-lab.org).
+
+Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 

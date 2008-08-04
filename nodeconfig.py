@@ -11,6 +11,16 @@ from sets import Set
 from nodecommon import *
 import database
 
+def network_config_to_str(net):
+
+	str = ""
+	static_keys = ['method', 'ip', 'gateway', 'network', 'broadcast', 'netmask', 'dns1', 'dns2', 'mac', 'is_primary']
+	for k in static_keys:
+		str += "%15s == %s\n" % (k, net[k])
+
+	return str
+	
+
 def main():
 	from config import config
 	fb = database.dbLoad("findbad")
@@ -43,9 +53,7 @@ def main():
 				else:
 					print "%15s == %s" % (k, n[k])
 
-			static_keys = ['method', 'ip', 'gateway', 'network', 'broadcast', 'netmask', 'dns1', 'dns2', 'mac', 'is_primary']
-			for k in static_keys:
-				print "%15s == %s" % (k, net[k])
+			print network_config_to_str(net)
 
 			#for k in net.keys():
 			#	print k, "==" , net[k]
