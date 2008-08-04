@@ -32,13 +32,16 @@ XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 auth = Auth()
 try:
 	import monitorconfig
-	auth.auth = monitorconfig.API_AUTH
+	auth.auth = {'Username' : monitorconfig.API_AUTH_USER,
+	             'AuthMethod' : 'password',
+				 'AuthString' : monitorconfig.API_AUTH_PASSWORD}
 	auth.server = monitorconfig.API_SERVER
 except:
 	try:
 		import auth
 		auth.server = auth.plc
 	except:
+		auth = Auth()
 		auth.server = XMLRPC_SERVER
 
 api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
@@ -63,7 +66,7 @@ def getAPI(url):
 	return xmlrpclib.Server(url, verbose=False, allow_none=True)
 
 def getAuthAPI():
-	return PLC(monitorconfig.API_AUTH, monitorconfig.API_SERVER)
+	return PLC(auth.auth, auth.server)
 
 '''
 Returns list of nodes in dbg as reported by PLC
