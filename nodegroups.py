@@ -16,7 +16,7 @@
 import plc
 api = plc.getAuthAPI()
 
-from optparse import OptionParser
+import parser as parsermodule
 from sets import Set
 from nodequery import verify,query_to_dict,node_select
 
@@ -24,29 +24,17 @@ from nodecommon import *
 import database
 
 def main():
-	from config import config
 	fb = database.dbLoad("findbad")
 
-	parser = OptionParser()
-	parser.set_defaults(nodegroup="Alpha",
-						node=None,
-						nodelist=None,
-						list=True,
+	parser = parsermodule.getParser(['nodesets'])
+	parser.set_defaults( list=True,
 						add=False,
                         nocolor=False,
 						notng=False,
-						delete=False,
-						nodeselect=None,
-						)
+						delete=False,)
+
 	parser.add_option("", "--not", dest="notng", action="store_true", 
 						help="All nodes NOT in nodegroup.")
-	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
-						help="Specify a nodegroup to perform actions on")
-	parser.add_option("", "--nodeselect", dest="nodeselect", metavar="querystring",
-						help="Specify a query to perform on findbad db")
-	parser.add_option("", "--site", dest="site", metavar="site name",
-						help="Specify a site to view node status")
-
 	parser.add_option("", "--nocolor", dest="nocolor", action="store_true", 
 						help="Enable color")
 	parser.add_option("", "--list", dest="list", action="store_true", 
@@ -55,12 +43,9 @@ def main():
 						help="Add nodes to the given nodegroup")
 	parser.add_option("", "--delete", dest="delete", action="store_true", 
 						help="Delete nodes from the given nodegroup")
-	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
-						help="A single node name to add to the nodegroup")
-	parser.add_option("", "--nodelist", dest="nodelist", metavar="list.txt", 
-						help="Use all nodes in the given file for operation.")
-	config = config(parser)
-	config.parse_args()
+
+	parser = parsermodule.getParser(['defaults'], parser)
+	config = parsermodule.parse_args(parser)
 
 	# COLLECT nodegroups, nodes and node lists
 	if config.node or config.nodelist:
@@ -131,6 +116,7 @@ def main():
 
 	elif config.list:
 		print " ---- Nodes in the %s Node Group ----" % group_str
+		print "   Hostname                                   plc  obs     pcu     key         kernel                        last_contact, last change, comon uptime"
 		i = 1
 		for node in nodelist:
 			print "%-2d" % i, 

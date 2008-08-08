@@ -1,6 +1,4 @@
-from config import config
-#print "policy"
-config = config()
+import config
 import database
 import time
 import mailer

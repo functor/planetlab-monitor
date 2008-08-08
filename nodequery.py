@@ -10,6 +10,7 @@ from policy import Diagnose
 import glob
 import os
 from reboot import pcu_name
+import util.file
 
 import time
 import re
@@ -240,10 +241,11 @@ def main():
 	global fb
 	global fbpcu
 
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
-	parser.set_defaults(node=None, fromtime=None, select=None, list=None, pcuselect=None, nodelist=None, daysdown=None, fields=None)
+	import parser as parsermodule
+	parser = parsermodule.getParser()
+
+	parser.set_defaults(node=None, fromtime=None, select=None, list=None, 
+						pcuselect=None, nodelist=None, daysdown=None, fields=None)
 	parser.add_option("", "--daysdown", dest="daysdown", action="store_true",
 						help="List the node state and days down...")
 	parser.add_option("", "--select", dest="select", metavar="key=value", 
@@ -258,8 +260,9 @@ def main():
 						help="A list of nodes to bring out of debug mode.")
 	parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
 					help="Specify a starting date from which to begin the query.")
-	config = config(parser)
-	config.parse_args()
+
+	parser = parsermodule.getParser(['defaults'], parser)
+	config = parsermodule.parse_args(parser)
 	
 	if config.fromtime:
 		path = "archive-pdb"
@@ -278,7 +281,7 @@ def main():
 	fbpcu = database.dbLoad("findbadpcus")
 
 	if config.nodelist:
-		nodelist = config.getListFromFile(config.nodelist)
+		nodelist = util.file.getListFromFile(config.nodelist)
 	else:
 		nodelist = fb['nodes'].keys()
 
@@ -290,7 +293,6 @@ def main():
 		nodelist = node_select(config.select, nodelist)
 	elif config.pcuselect is not None:
 		nodelist, pculist = pcu_select(config.pcuselect, nodelist)
-
 
 	if pculist:
 		for pcu in pculist:

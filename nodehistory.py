@@ -73,10 +73,9 @@ def pcu_print_info(pcuinfo, hostname):
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 
 def main():
-	from config import config
-	from optparse import OptionParser
+	import parser as parsermodule
 
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(node=None, fields='state', fromtime=None)
 	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
 						help="A single node name to add to the nodegroup")
@@ -84,8 +83,7 @@ def main():
 						help="Which record field to extract from all files.")
 	parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
 						help="Specify a starting date from which to begin the query.")
-	config = config(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 
 	path = "archive-pdb"
 	archive = database.SPickle(path)

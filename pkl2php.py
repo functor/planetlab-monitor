@@ -1,16 +1,15 @@
 #!/usr/bin/python
 
 import database 
-from config import config
-from optparse import OptionParser
-parser = OptionParser()
+import parser as parsermodule
+
+parser = parsermodule.getParser()
 parser.set_defaults(filename=None)
 parser.add_option("-i", "--idb", dest="input", metavar="dbname", 
 					help="Provide the input dbname to convert")
 parser.add_option("-o", "--odb", dest="output", metavar="dbname", 
 					help="Provide the output dbname to save to")
-config = config(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
 if config.input is None:
 	print "please provide a pickle file to convert"

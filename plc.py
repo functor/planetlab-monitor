@@ -13,8 +13,7 @@ import logging
 import time
 import traceback
 try:
-	from config import config
-	config = config()
+	import config
 	debug = config.debug
 except:
 	debug = False

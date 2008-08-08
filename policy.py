@@ -22,9 +22,7 @@ import reboot
 import database
 import string
 from www.printbadnodes import cmpCategoryVal
-from config import config
-#print "policy"
-config = config()
+import config
 
 DAT="./monitor.dat"
 

@@ -2,6 +2,7 @@ import os
 
 DEBUG= 0
 
+class ExceptionTimeout(Exception): pass
 COMMAND_TIMEOUT = 60
 ssh_options = { 'StrictHostKeyChecking':'no', 
 				'BatchMode':'yes', 

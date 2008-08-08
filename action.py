@@ -15,9 +15,9 @@ import Queue
 from sets import Set
 
 # Global config options
-from config import config
-from optparse import OptionParser
-parser = OptionParser()
+import parser as parsermodule
+
+parser = parsermodule.getParser()
 
 parser.set_defaults(nodelist=None, 
 					cachert=False, 
@@ -36,8 +36,7 @@ parser.add_option("", "--ticketlist", dest="ticketlist",
 parser.add_option("", "--blacklist", dest="blacklist",
 					help="Blacklist all nodes in this file")
 
-config = config(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
 # daemonize and *pid
 #from util.process import * 

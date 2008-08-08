@@ -12,6 +12,8 @@ import comon
 import threadpool
 import syncplcdb
 from nodequery import verify,query_to_dict,node_select
+import parser as parsermodule
+from nodecommon import *
 
 import plc
 api = plc.getAuthAPI()
@@ -134,9 +136,7 @@ def collectStatusAndState(pcuname, l_plcpcus):
 	return True
 
 if __name__ == '__main__':
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(filename=None, pcu=None, pcuselect=False, pcugroup=None, 
 						increment=False, dbname="pcubad", cachepcus=False)
 	parser.add_option("", "--pcu", dest="pcu", metavar="hostname", 
@@ -148,8 +148,7 @@ if __name__ == '__main__':
 						help="Specify the name of the database to which the information is saved")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
-	config = config(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 
 	try:
 		main(config)

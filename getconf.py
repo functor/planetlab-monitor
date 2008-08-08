@@ -4,6 +4,7 @@ import plc
 api = plc.getAuthAPI()
 import sys
 import os
+import monitorconfig
 
 def getconf(hostname, force=False, media=None):
 	n = api.GetNodes(hostname)
@@ -20,33 +21,32 @@ def getconf(hostname, force=False, media=None):
 
 	args = {}
 	if not media:
-		args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
-		args['url_list'] += "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
+		args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+		args['url_list'] += "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
 	else:
 		if media == "usb":
-			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
+			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
 		elif media == "iso":
-			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
+			args['url_list']  = "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
 		else:
-			args['url_list']  = "   http://monitor.planet-lab.org/bootcds/%s-partition.usb\n" % hostname
-			args['url_list'] += "   http://monitor.planet-lab.org/bootcds/%s.iso" % hostname
+			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+			args['url_list'] += "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
 			
-	#print "http://monitor.planet-lab.org/bootcds/%s.usb\n" % hostname
 
 	return args
 
 if __name__ == '__main__':
-	from config import config as cfg
-	from optparse import OptionParser
-	parser = OptionParser()
+	import parser as parsermodule
+
+	parser = parsermodule.getParser()
 	parser.set_defaults(media='both', force=False)
 	parser.add_option("", "--media", dest="media", metavar="usb, iso, both", 
 						help="""Which media to generate the message for.""")
 	parser.add_option("", "--force", dest="force", action="store_true", 
 						help="""Force the recreation of the usb images.""")
+	parser = parsermodule.getParser(['defaults'], parser)
 
-	config = cfg(parser)
-	config.parse_args()
+	config = parsesrmodule.parse_args(parser)
 
 	ret = {'url_list' : ''} 
 	for i in config.args:

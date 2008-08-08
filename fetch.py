@@ -3,12 +3,10 @@
 import csv
 import sys
 import os
-import config
 from glob import glob
 
 import vxargs
-from config import config
-from optparse import OptionParser
+import parser as parsermodule
 from automate import *
 
 def build_vx_args(shell_cmd):
@@ -23,20 +21,14 @@ def vx_start(filelist,outdir,cmd, timeout=0):
 	vxargs.start(None, 20, filelist, outdir, False, args, timeout)
 
 if __name__ == "__main__":
-	parser = OptionParser()
-	parser.set_defaults(nodelist=None, 
-						node=None,
-						outdir=None,
-						querystr=None,
+
+	parser = parsermodule.getParser(['nodesets'])
+	parser.set_defaults(outdir=None,
 						timeout=0,
 						simple=False,
 						run=False,
 						cmdfile=None,)
 
-	parser.add_option("", "--nodelist", dest="nodelist", metavar="filename",
-						help="Read list of nodes from specified file")
-	parser.add_option("", "--node", dest="node", metavar="hostname",
-						help="specify a single node name.")
 	parser.add_option("", "--timeout", dest="timeout", metavar="seconds",
 						help="Number of seconds to wait before timing out on host.")
 	parser.add_option("", "--outdir", dest="outdir", metavar="dirname",
@@ -45,8 +37,7 @@ if __name__ == "__main__":
 						help="Name of file that contains a unix-to-csv command " + \
 							 "to run on the hosts.")
 
-	config = config(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 
 	if config.outdir == None: 
 		outdir="checkhosts"
@@ -55,6 +46,10 @@ if __name__ == "__main__":
 
 	if not os.path.exists(outdir):
 		os.system('mkdir -p %s' % outdir)
+
+	if config.site is not None or config.nodeselect is not None or config.nodegroup is not None:
+		print "TODO: implement support for nodeselect and site queries."
+		sys.exit(1)
 
 	if config.nodelist == None and config.node == None:
 		filelist="nocomon.txt"

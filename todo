@@ -3,6 +3,19 @@ TODO:
  * reimplement the config.py / .config mechanism.  i'd like for many commands
    to share very similar argument or argument sets, as well as have some
    common config options.  I'm not sure the best way to do this.
+    
+	 - features of config.py
+	 	* parse arguments and return an object with attributes equal to the
+		  parser values.
+		* maintain values consistently across modules at run time.
+		* have default values that are not specified at each run time.
+		* easy to import and use
+
+	 - config module is available via 'import config' or as returned by
+	   	  parsermodule.parse_args()
+     - python supports load-once modules, so subsequent imports refer to the
+          same module object.
+	   
 
  * Find a better location to place and pull the PKL files currently in the pdb
    directory.  Ultimately, these should be stored in a real DB.  Until then,
@@ -10,6 +23,13 @@ TODO:
    backend scripts, and user utilities.
 
  * clean up plc.py; there's a lot of redundent code.
+
+ * figure out python paths for user commands.
+   - directories for pickle files.
+   - add user in rpm install
+   - user permissions for data files for day-to-day operations.
+
+ * fix BayTechCtrlCUnibe expect script.
 
 Lower priority:
  * Add a more structured, 'automate' library of scripts and means of making

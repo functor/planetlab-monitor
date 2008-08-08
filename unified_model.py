@@ -10,10 +10,11 @@ import time
 from nodecommon import *
 
 from const import *
+import util.file
+import config
 
 def gethostlist(hostlist_file):
-	import config
-	return config.getListFromFile(hostlist_file)
+	return util.file.getListFromFile(hostlist_file)
 	
 	#nodes = api.GetNodes({'peer_id' : None}, ['hostname'])
 	#return [ n['hostname'] for n in nodes ]
@@ -532,10 +533,6 @@ class Record(object):
 		return message
 	
 	def getContacts(self):
-		from config import config
-		#print "policy"
-		config = config()
-
 		roles = self.data['email']
 
 		if not config.mail and not config.debug and config.bcc:

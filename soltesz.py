@@ -11,8 +11,7 @@ except:
 
 import inspect
 import shutil
-from config import config as cfg
-config = cfg()
+import config
 
 import monitorconfig
 

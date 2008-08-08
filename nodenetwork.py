@@ -3,7 +3,7 @@
 import sys
 import plc
 api = plc.getAuthAPI()
-import config
+import util.file
 
 if len(sys.argv[1:]) > 0:
 	for host in sys.argv[1:]:
@@ -24,7 +24,7 @@ if len(sys.argv[1:]) > 0:
 					#print nn2['nodenetwork_id']
 					#api.DeleteNodeNetwork(nn2['nodenetwork_id'])
 else:
-	nnids = config.getListFromFile('nnids.txt')
+	nnids = util.file.getListFromFile('nnids.txt')
 	nnids = [ int(i) for i in nnids]
 	for id in nnids:
 		nnet2 = api.GetNodeNetworks(id)

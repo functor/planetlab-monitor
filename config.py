@@ -5,38 +5,21 @@ import getopt
 import sys
 import __main__
 from optparse import OptionParser
+from parser import parse_bool
+
+debug=0
+mail=0
+bcc=0
+email="soltesz@cs.utk.edu"
+run=False
+checkopt=False
+squeeze=0
+policysavedb=0
 
 config_command = False
 
-XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
-def parse_bool(option, opt_str, value, parser):
-	if opt_str in ["--debug"]:
-		parser.values.debug = int(int(value))
-	elif opt_str in ["--mail"]:
-		parser.values.mail = int(int(value))
-	elif opt_str in ["--bcc"]:
-		parser.values.bcc = int(int(value))
-	elif opt_str in ["--policysavedb"]:
-		parser.values.policysavedb = int(int(value))
-	elif opt_str in ["--squeeze"]:
-		parser.values.squeeze = int(int(value))
-	else:
-		print "blue"
-
-def setFileFromList(file, list):
-	f = open(file, 'w')
-	for line in list:
-		f.write(line + "\n")
-	f.close()
-	return True
-
-def getListFromFile(file):
-	f = open(file, 'r')
-	list = []
-	for line in f:
-		line = line.strip()
-		list += [line]
-	return list
+def updatemodule(module, cf):
+	module.__dict__.update(cf.__dict__)
 
 class config:
 	debug=0

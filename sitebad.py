@@ -119,9 +119,9 @@ def collectStatusAndState(sitename, l_plcsites):
 	return True
 
 if __name__ == '__main__':
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
+	import parser as parsermodule
+
+	parser = parsermodule.getParser()
 	parser.set_defaults(filename=None, node=None, site=None, nodeselect=False, nodegroup=None, 
 						increment=False, dbname="sitebad", cachenodes=False)
 	parser.add_option("", "--site", dest="site", metavar="login_base", 
@@ -133,8 +133,7 @@ if __name__ == '__main__':
 						help="Specify the name of the database to which the information is saved")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
-	config = config(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 
 	try:
 		main(config)

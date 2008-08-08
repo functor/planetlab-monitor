@@ -706,7 +706,9 @@ class BayTechCtrlCUnibe(PCUControl):
 
 		# Control Outlets  (5 ,1).........5
 		try:
-			index = s.expect(["Enter Request :"])
+			print s
+			print "Enter Request" in s.before
+			index = s.expect("Enter Request")
 
 			if index == 0:
 				print "3"
@@ -786,7 +788,10 @@ class BayTechCtrlC(PCUControl):
 							print "sending Y"
 							s.send("Y\r\n")
 
-				index = s.expect(["DS-RPC>"])
+				# NOTE: for some reason, the script times out with the
+				# following line.  In manual tests, it works correctly, but
+				# with automated tests, evidently it fails.
+				#index = s.expect(["DS-RPC>"])
 				#print "got prompt back"
 
 			s.close()

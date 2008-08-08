@@ -2,18 +2,17 @@
 
 import database
 import plc
-from optparse import OptionParser
+import parser as parsermodule
 import sys
 from reboot import pcu_name, get_pcu_values
 
 import sys
-from config import config
 
 def print_dict(dict):
 	for key in dict.keys():
 		print "%30s : %s" % (key, dict[key])
 
-parser = OptionParser()
+parser = parsermodule.getParser()
 parser.set_defaults(withpcu=False,
 					refresh=False)
 parser.add_option("-f", "--nodelist",dest="filename",default="", metavar="FILE",
@@ -21,9 +20,7 @@ parser.add_option("-f", "--nodelist",dest="filename",default="", metavar="FILE",
 parser.add_option("", "--refresh", action="store_true", dest="refresh",
 					help="Refresh the cached values")
 
-
-config = config(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
 if not config.run:
 	k = config.__dict__.keys()

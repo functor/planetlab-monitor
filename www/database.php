@@ -1,8 +1,8 @@
 
 <?php 
 
-// PICKLE_PATH="/home/soltesz/research/planetlab/monitor3/pdb";
-define("PICKLE_PATH", "pdb");
+include 'monitorconfig.php';
+define("PICKLE_PATH", MONITOR_DATA_ROOTWEB);
 
 class Pickle
 {

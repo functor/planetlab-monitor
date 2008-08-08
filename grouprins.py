@@ -18,7 +18,7 @@ api = plc.getAuthAPI()
 import policy
 import traceback
 from config import config as cfg
-import config as configmodule
+import util.file
 from optparse import OptionParser
 
 from nodecommon import *
@@ -28,6 +28,7 @@ from unified_model import *
 import os
 
 import time
+import parser as parsermodule
 
 from model import *
 import bootman 		# debug nodes
@@ -159,12 +160,8 @@ try:
 except:
 	rebootlog = LogRoll()
 
-parser = OptionParser()
-parser.set_defaults(nodegroup=None,
-					node=None,
-					nodelist=None,
-					nodeselect=None,
-					timewait=0,
+parser = parsermodule.getParser(['nodesets'])
+parser.set_defaults( timewait=0,
 					skip=0,
 					rins=False,
 					reboot=False,
@@ -176,33 +173,9 @@ parser.set_defaults(nodegroup=None,
 					stopvalue=None,
 					quiet=False,
 					)
-parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
-					help="A single node name to add to the nodegroup")
-parser.add_option("", "--nodelist", dest="nodelist", metavar="list.txt", 
-					help="Use all nodes in the given file for operation.")
-parser.add_option("", "--nodegroup", dest="nodegroup", metavar="NodegroupName",
-					help="Specify a nodegroup to perform actions on")
-parser.add_option("", "--nodeselect", dest="nodeselect", metavar="querystring",
-					help="Specify a query to perform on findbad db")
-
-parser.add_option("", "--verbose", dest="verbose", action="store_true", 
-					help="Extra debug output messages.")
-parser.add_option("", "--nosetup", dest="nosetup", action="store_true", 
-					help="Do not perform the orginary setup phase.")
-
-parser.add_option("", "--skip", dest="skip", 
-					help="Number of machines to skip on the input queue.")
-parser.add_option("", "--timewait", dest="timewait", 
-					help="Minutes to wait between iterations of 10 nodes.")
 
 parser.add_option("", "--stopselect", dest="stopselect", metavar="", 
 					help="The select string that must evaluate to true for the node to be considered 'done'")
-
-parser.add_option("", "--stopkey", dest="stopkey", metavar="", 
-					help="")
-parser.add_option("", "--stopvalue", dest="stopvalue", metavar="", 
-					help="")
-
 parser.add_option("", "--findbad", dest="findbad", action="store_true", 
 					help="Re-run findbad on the nodes we're going to check before acting.")
 parser.add_option("", "--force", dest="force", action="store_true", 
@@ -211,9 +184,18 @@ parser.add_option("", "--rins", dest="rins", action="store_true",
 					help="Set the boot_state to 'rins' for all nodes.")
 parser.add_option("", "--reboot", dest="reboot", action="store_true", 
 					help="Actively try to reboot the nodes, keeping a log of actions.")
-#config = config(parser)
-config = cfg(parser)
-config.parse_args()
+
+parser.add_option("", "--verbose", dest="verbose", action="store_true", 
+					help="Extra debug output messages.")
+parser.add_option("", "--nosetup", dest="nosetup", action="store_true", 
+					help="Do not perform the orginary setup phase.")
+parser.add_option("", "--skip", dest="skip", 
+					help="Number of machines to skip on the input queue.")
+parser.add_option("", "--timewait", dest="timewait", 
+					help="Minutes to wait between iterations of 10 nodes.")
+
+parser = parsermodule.getParser(['defaults'], parser)
+config = parsermodule.parse_args(parser)
 
 # COLLECT nodegroups, nodes and node lists
 if config.nodegroup:
@@ -231,7 +213,7 @@ if config.nodeselect:
 if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
 	file = "findbad.txt"
-	configmodule.setFileFromList(file, hostnames)
+	util.file.setFileFromList(file, hostnames)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 fb = database.dbLoad("findbad")

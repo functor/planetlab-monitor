@@ -4,7 +4,7 @@
 import plc
 api = plc.getAuthAPI()
 
-from optparse import OptionParser
+import parser as parsermodule
 from sets import Set
 
 from nodecommon import *
@@ -21,10 +21,9 @@ def network_config_to_str(net):
 	
 
 def main():
-	from config import config
 	fb = database.dbLoad("findbad")
 
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(nodelist=None,
 						list=False,
 						add=False,
@@ -33,8 +32,8 @@ def main():
 						)
 	parser.add_option("", "--nodelist", dest="nodelist", metavar="list.txt", 
 						help="Use all nodes in the given file for operation.")
-	config = config(parser)
-	config.parse_args()
+	parser = parsermodule.getParser(['defaults'], parser)
+	config = parsermodule.parse_args(parser)
 
 	# COLLECT nodegroups, nodes and node lists
 	for node in config.args:

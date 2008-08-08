@@ -1,19 +1,17 @@
 #!/usr/bin/python
 
-from config import config as cfg
 import sys
 import os
 from sets import Set
-from optparse import OptionParser
+import parser as parsermodule
 
 def main():
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(operation="and",)
 	parser.add_option("", "--operation", dest="operation", metavar="and", 
 						help="""Which operation to perform on the two sets.  (and, or, minus""")
 
-	config = cfg(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 
 	f1 = config.args[0]
 	f2 = config.args[1]

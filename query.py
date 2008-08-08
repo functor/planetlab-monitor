@@ -9,11 +9,11 @@ import re
 from cgi import parse_qs
 
 import vxargs
-from config import config
-from optparse import OptionParser
+import parser as parsermodule
+
 from automate import *
 
-parser = OptionParser()
+parser = parsermodule.getParser()
 parser.set_defaults(nodelist=None, 
 				    outdir=None,
 					querystr=None,
@@ -30,9 +30,7 @@ parser.add_option("", "--query", dest="querystr", metavar="QUERY",
 parser.add_option("", "--simple", dest="simple", action="store_true",
 					help="display simple output")
 
-config = config(parser)
-config.parse_args()
-
+config = parsermodule.parse_args(parser)
 
 if config.outdir == None: 
 	outdir="checkhosts"

@@ -11,6 +11,7 @@ import comon
 import threadpool
 import syncplcdb
 from nodequery import verify,query_to_dict,node_select
+from nodecommon import *
 
 import plc
 api = plc.getAuthAPI()
@@ -132,22 +133,17 @@ def collectStatusAndState(nodename, l_plcnodes):
 	return True
 
 if __name__ == '__main__':
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
+	import parser as parsermodule
+	parser = parsermodule.getParser(['nodesets'])
 	parser.set_defaults(filename=None, node=None, nodeselect=False, nodegroup=None, 
 						increment=False, dbname="nodebad", cachenodes=False)
-	parser.add_option("", "--node", dest="node", metavar="hostname", 
-						help="Provide a single node to operate on")
-	parser.add_option("", "--nodelist", dest="nodelist", metavar="file.list", 
-						help="Provide a list of files to operate on")
-
+	
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 						help="Specify the name of the database to which the information is saved")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
-	config = config(parser)
-	config.parse_args()
+	parser = parsermodule.getParser(['defaults'], parser)
+	config = parsermodule.parse_args(parser)
 
 	try:
 		main(config)

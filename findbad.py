@@ -4,6 +4,7 @@ import os
 import sys
 import string
 import time
+import config
 
 
 # QUERY all nodes.
@@ -340,8 +341,8 @@ def main():
 	#cohash = {}
 	cohash = cotop.coget(cotop_url)
 	l_nodes = syncplcdb.create_plcdb()
-	if config.filename:
-		f_nodes = config.getListFromFile(config.filename)
+	if config.nodelist:
+		f_nodes = config.getListFromFile(config.nodelist)
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.node:
 		f_nodes = [config.node]
@@ -368,30 +369,21 @@ def main():
 
 
 if __name__ == '__main__':
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
-	parser.set_defaults(filename=None, node=None, site=None, nodeselect=False, nodegroup=None, 
-						increment=False, dbname="findbadnodes", cachenodes=False)
-	parser.add_option("", "--node", dest="node", metavar="hostname", 
-						help="Provide a single node to operate on")
-	parser.add_option("-f", "--nodelist", dest="filename", metavar="FILE", 
-						help="Provide the input file for the node list")
-	parser.add_option("", "--nodeselect", dest="nodeselect", metavar="query string", 
-						help="Provide a selection string to return a node list.")
-	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="FILE", 
-						help="Provide the nodegroup for the list of nodes.")
-	parser.add_option("", "--site", dest="site", metavar="site name",
-						help="Specify a site to view node status")
+	import parser as parsermodule
 
+	parser = parsermodule.getParser(['nodesets'])
+
+	parser.set_defaults( increment=False, dbname="findbadnodes", cachenodes=False)
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 						help="Specify the name of the database to which the information is saved")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
-	config = config(parser)
-	config.parse_args()
+
+	parser = parsermodule.getParser(['defaults'], parser)
+	
+	cfg = parsermodule.parse_args(parser)
 
 	try:
 		main()

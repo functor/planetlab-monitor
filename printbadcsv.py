@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import database
-from config import config
-from optparse import OptionParser
+import config
+import parser as parsermodule
+
 from www.printbadnodes import *
 
 def main():
@@ -128,7 +129,7 @@ def main():
 	print ""
 import cgi
 if __name__ == '__main__':
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(cmpdays=False, 
 						comon="sshstatus", 
 						fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd,rt", 
@@ -148,6 +149,5 @@ if __name__ == '__main__':
 	parser.add_option("", "--kernel",	dest="cmpkernel", action="store_true", help="")
 	parser.add_option("", "--state",	dest="cmpstate", action="store_true", help="")
 	parser.add_option("", "--comon",	dest="comon", 	help="")
-	config = config(parser)
-	config.parse_args()
+	config = parsermodule.parse_args(parser)
 	main()

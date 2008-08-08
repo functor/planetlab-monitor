@@ -7,14 +7,13 @@
 # $Id: mailer.py,v 1.10 2007/08/08 13:28:06 soltesz Exp $
 from emailTxt import *
 import smtplib
-from config import config
+import config
 import calendar
 import logging
 import os
 import time
 import monitorconfig
 
-config = config()
 logger = logging.getLogger("monitor")
 
 MTA="localhost"

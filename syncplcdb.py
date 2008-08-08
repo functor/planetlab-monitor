@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 import plc
-from config import config
+import config
 import database
 import sys
-
-config = config()
 
 def dsites_from_lsites(l_sites):
 	d_sites = {}

@@ -2,22 +2,18 @@
 
 import database
 import plc
-from optparse import OptionParser
 import sys
 from reboot import pcu_name, get_pcu_values
 
 import sys
-from config import config
+import parser as parsermodule
 
-parser = OptionParser()
+parser = parsermodule.getParser()
 parser.set_defaults(withpcu=False,
 					refresh=False)
 parser.add_option("", "--refresh", action="store_true", dest="refresh",
 					help="Refresh the cached values")
-
-
-config = config(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
 if not config.run:
 	k = config.__dict__.keys()

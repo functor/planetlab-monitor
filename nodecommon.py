@@ -74,12 +74,15 @@ def color_boot_state(l):
 	else:
 		return l
 
-def diff_time(timestamp):
+def diff_time(timestamp, abstime=True):
 	import math
 	now = time.time()
 	if timestamp == None:
 		return "unknown"
-	diff = now - timestamp
+	if abstime:
+		diff = now - timestamp
+	else:
+		diff = timestamp
 	# return the number of seconds as a difference from current time.
 	t_str = ""
 	if diff < 60: # sec in min.
@@ -127,8 +130,12 @@ def nodegroup_display(node, fb, conf=None):
 	node['lastupdate'] = diff_time(node['last_contact'])
 	pf = PersistFlags(node['hostname'], 1, db='node_persistflags')
 	node['lc'] = diff_time(pf.last_changed)
+	ut = fb['nodes'][node['hostname']]['values']['comonstats']['uptime']
+	if ut != "null":
+		ut = diff_time(float(fb['nodes'][node['hostname']]['values']['comonstats']['uptime']), False)
+	node['uptime'] = ut
 
-	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)33s %(lastupdate)12s, %(lc)s" % node
+	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)33s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
 
 from model import *
 import database

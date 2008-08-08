@@ -445,7 +445,7 @@ def reboot(hostname, config=None, forced_action=None):
 
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
-			conn.set_nodestate('diag')
+			conn.set_nodestate('disable')
 			return False
 
 	print "...Downloading bm.log from %s" % node
@@ -701,7 +701,7 @@ def reboot(hostname, config=None, forced_action=None):
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 			conn.dump_plconf_file()
-			conn.set_nodestate('diag')
+			conn.set_nodestate('disable')
 
 		elif sequences[s] == "nodenetwork_email":
 			print "...Sending message to LOOK AT NODE NETWORK"
@@ -713,7 +713,7 @@ def reboot(hostname, config=None, forced_action=None):
 			loginbase = plc.siteId(hostname)
 			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
 			conn.dump_plconf_file()
-			conn.set_nodestate('diag')
+			conn.set_nodestate('disable')
 
 		elif sequences[s] == "update_bootcd_email":
 			print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
@@ -792,10 +792,11 @@ def reboot(hostname, config=None, forced_action=None):
 # MAIN -------------------------------------------------------------------
 
 def main():
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
-	parser.set_defaults(node=None, nodelist=None, child=False, collect=False, nosetup=False, verbose=False, force=None, quiet=False)
+	import parser as parsermodule
+	parser = parsermodule.getParser()
+
+	parser.set_defaults(child=False, collect=False, nosetup=False, verbose=False, 
+						force=None, quiet=False)
 	parser.add_option("", "--child", dest="child", action="store_true", 
 						help="This is the child mode of this process.")
 	parser.add_option("", "--force", dest="force", metavar="boot_state",
@@ -810,12 +811,9 @@ def main():
 						help="No action, just collect dmesg, and bm.log")
 	parser.add_option("", "--nosetup", dest="nosetup", action="store_true", 
 						help="Do not perform the orginary setup phase.")
-	parser.add_option("", "--node", dest="node", metavar="nodename.edu", 
-						help="A single node name to try to bring out of debug mode.")
-	parser.add_option("", "--nodelist", dest="nodelist", metavar="nodelist.txt", 
-						help="A list of nodes to bring out of debug mode.")
-	config = config(parser)
-	config.parse_args()
+
+	parser = parsermodule.getParser(['nodesets', 'defaults'], parser)
+	config = parsermodule.parse_args(parser)
 
 	if config.nodelist:
 		nodes = config.getListFromFile(config.nodelist)

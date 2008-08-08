@@ -10,12 +10,11 @@ import time
 from model import *
 from nodecommon import *
 
-import config as configmodule
+import util.file
 
-from config import config as cfg
-from optparse import OptionParser
+import parser as parsermodule
 
-parser = OptionParser()
+parser = parsermodule.getParser()
 parser.set_defaults(node=None, 
 					findbad=False,
 					endrecord=False)
@@ -27,35 +26,8 @@ parser.add_option("", "--findbad", dest="findbad", action="store_true",
 					help="Re-run findbad on the nodes we're going to check before acting.")
 parser.add_option("", "--bootcd", dest="bootcd", action="store_true",
 					help="A stock help message for fetching a new BootCD from the PLC GUI.")
-config = cfg(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
-def diff_time(timestamp):
-	now = time.time()
-	if timestamp == None:
-		return "unknown"
-	diff = now - timestamp
-	# return the number of seconds as a difference from current time.
-	t_str = ""
-	if diff < 60: # sec in min.
-		t = diff
-		t_str = "%s sec ago" % t
-	elif diff < 60*60: # sec in hour
-		t = diff // (60)
-		t_str = "%s min ago" % int(t)
-	elif diff < 60*60*24: # sec in day
-		t = diff // (60*60)
-		t_str = "%s hours ago" % int(t)
-	elif diff < 60*60*24*7: # sec in week
-		t = diff // (60*60*24)
-		t_str = "%s days ago" % int(t)
-	elif diff < 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7)
-		t_str = "%s weeks ago" % int(t)
-	elif diff > 60*60*24*30: # approx sec in month
-		t = diff // (60*60*24*7*30)
-		t_str = "%s months ago" % int(t)
-	return t_str
 
 def plc_print_nodeinfo(plcnode):
 	url = "https://www.planet-lab.org/db/nodes/index.php?nodepattern="
@@ -157,7 +129,7 @@ if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
 	import os
 	file = "findbad.txt"
-	configmodule.setFileFromList(file, config.args)
+	util.file.setFileFromList(file, config.args)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 fb = database.dbLoad("findbad")

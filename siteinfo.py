@@ -10,12 +10,12 @@ import time
 from model import *
 from nodecommon import *
 
-import config as configmodule
+import util.file
 
-from config import config as cfg
-from optparse import OptionParser
+import parser as parsermodule
 
-parser = OptionParser()
+
+parser = parsermodule.getParser()
 parser.set_defaults(site=None, 
 					findbad=False,
 					enable=False,
@@ -29,8 +29,7 @@ parser.add_option("", "--enable", dest="enable", action="store_true",
 					help="")
 parser.add_option("", "--disable", dest="disable", action="store_true",
 					help="")
-config = cfg(parser)
-config.parse_args()
+config = parsermodule.parse_args(parser)
 
 from unified_model import *
 def color_sitestatus(status):
@@ -94,7 +93,7 @@ for site in config.args:
 		file = "findbad.txt"
 		nodes = api.GetNodes(plc_siteinfo['node_ids'], ['hostname'])
 		nodes = [ n['hostname'] for n in nodes ]
-		configmodule.setFileFromList(file, nodes)
+		util.file.setFileFromList(file, nodes)
 		os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 	print "%(login_base)s %(url)s" % plc_siteinfo

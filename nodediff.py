@@ -2,8 +2,8 @@
 
 import sys
 import database
-
-from config import config as cfg
+import config
+import parser as parsermodule
 
 def nodes_from_time(time_str):
 	path = "archive-pdb"
@@ -22,13 +22,13 @@ def nodes_from_time(time_str):
 	
 
 def main():
-	parser = OptionParser()
+	parser = parsermodule.getParser()
 	parser.set_defaults(nodeselect=None,)
 	parser.add_option("", "--nodeselect", dest="nodeselect", metavar="state=BOOT", 
 						help="""Query on the nodes to count""")
 
-	config = cfg(parser)
-	config.parse_args()
+	parser = parsermodule.getParser(['defaults'], parser)
+	cfg = parsermodule.parse_args(parser)
 
 	time1 = config.args[0]
 	time2 = config.args[1]
