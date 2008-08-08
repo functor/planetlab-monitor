@@ -26,7 +26,9 @@ URL: %(echo %{url} | cut -d ' ' -f 2)
 
 Requires: curl
 Requires: coreutils
+Requires: openssh-clients
 Requires: PLCWWW >= 4.2
+Requires: BootCD >= 4.2
 
 %description
 Scripts for polling PLC, the node, and PCU status.  Also a collection of
@@ -74,6 +76,11 @@ rm -rf $RPM_BUILD_ROOT
 echo "Post processing"
 # TODO: this will be nice when we have a web-based service running., such as
 # 		an API server or so on.
+# TODO: create real monitorconfig.py from monitorconfig-default.py
+# TODO: create monitorconfig.php using phpconfig.py 
+# TODO: create symlink in /var/lib/monitor-server for chroot environments
+# TODO: update the content of automate_pl03.sh 
+
 #chkconfig --add monitor-server
 #chkconfig monitor-server on
 
