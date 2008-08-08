@@ -6,7 +6,8 @@ api = plc.getAuthAPI()
 import sys
 import database
 from nodecommon import *
-from policy import Diagnose
+#from policy import Diagnose
+from unified_model import Record
 import glob
 import os
 from reboot import pcu_name
@@ -23,8 +24,8 @@ class NoKeyException(Exception): pass
 
 def daysdown_print_nodeinfo(fbnode, hostname):
 	fbnode['hostname'] = hostname
-	fbnode['daysdown'] = Diagnose.getStrDaysDown(fbnode)
-	fbnode['intdaysdown'] = Diagnose.getDaysDown(fbnode)
+	fbnode['daysdown'] = Record.getStrDaysDown(fbnode)
+	fbnode['intdaysdown'] = Record.getDaysDown(fbnode)
 
 	print "%(intdaysdown)5s %(hostname)-44s | %(state)10.10s | %(daysdown)s" % fbnode
 

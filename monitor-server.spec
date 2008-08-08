@@ -29,6 +29,7 @@ Requires: coreutils
 Requires: openssh-clients
 Requires: PLCWWW >= 4.2
 Requires: BootCD >= 4.2
+Requires: MySQL-python
 
 %description
 Scripts for polling PLC, the node, and PCU status.  Also a collection of
@@ -46,6 +47,7 @@ echo "There is no build stage.  Simply copy files."
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}
 mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}
+mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing core scripts"
@@ -55,9 +57,10 @@ rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
 echo " * Installing web pages"
 rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
-echo " * TODO: Installing cron job for automated polling"
-install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}
+echo " * Installing cron job for automated polling"
+install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
 echo " * TODO: Setting up Monitor account in local MyPLC"
+# TODO: 
 
 cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
@@ -80,6 +83,7 @@ echo "Post processing"
 # TODO: create monitorconfig.php using phpconfig.py 
 # TODO: create symlink in /var/lib/monitor-server for chroot environments
 # TODO: update the content of automate_pl03.sh 
+# TODO: Use the installed version of bootcd to create custom boot images. ( or, use the api now).
 
 #chkconfig --add monitor-server
 #chkconfig monitor-server on

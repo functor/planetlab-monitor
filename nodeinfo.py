@@ -133,7 +133,10 @@ if config.findbad:
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
 fb = database.dbLoad("findbad")
-act_all = database.dbLoad("act_all")
+try:
+	act_all = database.dbLoad("act_all")
+except:
+	act_all = {}
 
 for node in config.args:
 	config.node = node
@@ -146,7 +149,7 @@ for node in config.args:
 
 	if fb_nodeinfo['pcu'] == "PCU":
 		pcu = reboot.get_pcu_values(fb_nodeinfo['plcnode']['pcu_ids'][0])
-		pcu_print_info(pcu, config.node)
+		if pcu: pcu_print_info(pcu, config.node)
 
 	if config.node in act_all and len(act_all[config.node]) > 0:
 		header = [True]
