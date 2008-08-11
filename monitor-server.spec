@@ -30,6 +30,7 @@ Requires: openssh-clients
 Requires: PLCWWW >= 4.2
 Requires: BootCD >= 4.2
 Requires: MySQL-python
+Requires: rt3 == 3.4.1
 
 %description
 Scripts for polling PLC, the node, and PCU status.  Also a collection of
