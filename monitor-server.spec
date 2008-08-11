@@ -6,7 +6,7 @@
 
 %define name monitor-server
 %define version 1.0
-%define taglevel 5
+%define taglevel 6
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -89,5 +89,9 @@ echo "Post processing"
 #chkconfig monitor-server on
 
 %changelog
+* Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-6
+- This is a major tag of every thing.  probably needs a very different release
+- number.
+
 * Wed Jul 30 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-server-1.0-5
 - initial creation of server-side package

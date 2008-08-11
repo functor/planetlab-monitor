@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 5
+%define taglevel 6
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,10 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-6
+- This is a major tag of every thing.  probably needs a very different release
+- number.
+
 * Fri Jul 18 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-5
 - Incremental improvements
 
