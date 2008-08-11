@@ -73,7 +73,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}
 /var/lib/%{name}
 /var/www/cgi-bin/monitor
-%{_sysconfdir}/cron.d/%{name}
+%{_sysconfdir}/cron.d/%{name}.cron
 
 %post
 echo "Post processing"
