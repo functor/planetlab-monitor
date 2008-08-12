@@ -5,6 +5,15 @@ import sys
 import string
 import time
 import xml, xmlrpclib
+try:
+	import monitorconfig
+	auth = {'Username'   : monitorconfig.API_AUTH_USER,
+	        'AuthMethod' : "password",
+			'AuthString' : monitorconfig.API_AUTH_PASSWORD}
+except:
+	import traceback
+	print traceback.print_exc()
+	auth = {'AuthMethod' : "anonymous"}
 
 args = {}
 args['known_hosts'] =  os.environ['HOME'] + os.sep + ".ssh" + os.sep + "known_hosts"
@@ -14,8 +23,7 @@ class SSHKnownHosts:
 	def __init__(self, args = args):
 		self.args = args
 		self.read_knownhosts()
-		self.auth = {}
-		self.auth['AuthMethod'] = "anonymous"
+		self.auth = auth
 		self.api = xmlrpclib.Server(args['XMLRPC_SERVER'], verbose=False, allow_none=True)
 		self.nodenetworks = {}
 

@@ -29,4 +29,5 @@ for loginbase in sys.argv[1:]:
 
 	date = time.strftime("%Y/%m/%d", time.gmtime(time.time()))
 
-	print "%s : %s : %s : %s" % (loginbase, date, name, site[0]['ext_consortium_id'])
+	print "loginbase :   date     : name 						: ext_consortium_id"
+	print "%9s : %10s : %s : %s" % (loginbase, date, name, site[0]['ext_consortium_id'])

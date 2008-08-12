@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-import soltesz
-import plc
+import database
 
 class NagiosObject(object):
 	trans = {'d2_coords': '2d_coords'}
@@ -69,9 +68,9 @@ globalhost = [Host(	name="planetlab-host",
 for obj in globalhost + globalservices:
 	print obj.toString()
 
-plcdb = soltesz.dbLoad("l_plcsites")
-netid2ip = soltesz.dbLoad("plcdb_netid2ip")
-lb2hn = soltesz.dbLoad("plcdb_lb2hn")
+plcdb = database.dbLoad("l_plcsites")
+netid2ip = database.dbLoad("plcdb_netid2ip")
+lb2hn = database.dbLoad("plcdb_lb2hn")
 
 for site in plcdb:
 	shortname = site['abbreviated_name']
@@ -87,7 +86,7 @@ for site in plcdb:
 		lat_y = int(180 - (lat + 90)) * scale
 
 	if site['login_base'] in lb2hn:
-		nodes = lb2hn[site['login_base']] # plc.getSiteNodes2(site['login_base'])
+		nodes = lb2hn[site['login_base']]
 	else:
 		continue
 
