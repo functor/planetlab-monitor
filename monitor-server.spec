@@ -42,6 +42,7 @@ command-line utilities for querying the status database.
 %build
 # TODO: note that we should build the cmdamt/ with g++
 cd cmdamt
+export TMPDIR=$PWD/tmp
 make
 cd ..
 
