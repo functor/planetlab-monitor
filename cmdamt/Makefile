@@ -37,7 +37,7 @@ Utils.o: $(SRC_PATH)/Utils.cpp
 clean:
 	rm -f $(OBJS) $(APPNAME) *~
 	rm -rf .libs
-	dos2unix *.h
-	dos2unix *.cpp
-	dos2unix README
-	dos2unix Makefile
+	#dos2unix *.h
+	#dos2unix *.cpp
+	#dos2unix README
+	#dos2unix Makefile
