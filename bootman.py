@@ -400,25 +400,34 @@ def reboot(hostname, config=None, forced_action=None):
 			('ccisserror' , 'cciss: cmd \w+ has CHECK CONDITION  byte \w+ = \w+'),
 
 			('buffererror', 'Buffer I/O error on device dm-\d, logical block \d+'),
+
+			('hdaseekerror', 'hda: dma_intr: status=0x\d+ { DriveReady SeekComplete Error }'),
+			('hdacorrecterror', 'hda: dma_intr: error=0x\d+ { UncorrectableError }, LBAsect=\d+, sector=\d+'),
+
 			('atareadyerror'   , 'ata\d+: status=0x\d+ { DriveReady SeekComplete Error }'),
 			('atacorrecterror' , 'ata\d+: error=0x\d+ { UncorrectableError }'),
+
 			('sdXerror'   , 'sd\w: Current: sense key: Medium Error'),
 			('ext3error'   , 'EXT3-fs error (device dm-\d+): ext3_find_entry: reading directory #\d+ offset \d+'),
+
 			('floppytimeout','floppy0: floppy timeout called'),
 			('floppyerror',  'end_request: I/O error, dev fd\w+, sector \d+'),
+
+			# hda: dma_intr: status=0x51 { DriveReady SeekComplete Error }
+			# hda: dma_intr: error=0x40 { UncorrectableError }, LBAsect=23331263, sector=23331263
 
 			# floppy0: floppy timeout called
 			# end_request: I/O error, dev fd0, sector 0
 
-			#Buffer I/O error on device dm-2, logical block 8888896
-			#ata1: status=0x51 { DriveReady SeekComplete Error }
-			#ata1: error=0x40 { UncorrectableError }
-			#SCSI error : <0 0 0 0> return code = 0x8000002
-			#sda: Current: sense key: Medium Error
+			# Buffer I/O error on device dm-2, logical block 8888896
+			# ata1: status=0x51 { DriveReady SeekComplete Error }
+			# ata1: error=0x40 { UncorrectableError }
+			# SCSI error : <0 0 0 0> return code = 0x8000002
+			# sda: Current: sense key: Medium Error
 			#	Additional sense: Unrecovered read error - auto reallocate failed
 
-			#SCSI error : <0 2 0 0> return code = 0x40001
-			#end_request: I/O error, dev sda, sector 572489600
+			# SCSI error : <0 2 0 0> return code = 0x40001
+			# end_request: I/O error, dev sda, sector 572489600
 		]
 		id = index_to_id(steps, child.expect( steps_to_list(steps) + [ pexpect.EOF ]))
 		sequence.append(id)
