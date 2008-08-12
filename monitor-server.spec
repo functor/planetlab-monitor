@@ -41,7 +41,9 @@ command-line utilities for querying the status database.
 
 %build
 # TODO: note that we should build the cmdamt/ with g++
-echo "There is no build stage.  Simply copy files."
+cd cmdamt
+make
+cd ..
 
 %install
 
