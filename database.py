@@ -3,8 +3,8 @@ import sys
 import pickle
 noserial=False
 try:
-	from PHPSerialize import *
-	from PHPUnserialize import *
+	from util.PHPSerialize import *
+	from util.PHPUnserialize import *
 except:
 	#print >>sys.stderr, "PHPSerial db type not allowed."
 	noserial=True

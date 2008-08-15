@@ -5,6 +5,9 @@ import sys
 import string
 import time
 import socket
+import util.file
+import plc
+import sets
 
     
 import signal
@@ -380,11 +383,20 @@ def main():
 		# update global round number to force refreshes across all nodes
 		externalState['round'] += 1
 
-	if config.nodelist == None and config.pcuid == None:
+	if config.site is not None:
+		api = plc.getAuthAPI()
+		site = api.GetSites(config.site)
+		l_nodes = api.GetNodes(site[0]['node_ids'], ['pcu_ids'])
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.nodelist == None and config.pcuid == None:
 		print "Calling API GetPCUs() : refresh(%s)" % config.refresh
 		l_pcus  = [pcu['pcu_id'] for pcu in l_pcus]
 	elif config.nodelist is not None:
-		l_pcus = config.getListFromFile(config.nodelist)
+		l_pcus = util.file.getListFromFile(config.nodelist)
 		l_pcus = [int(pcu) for pcu in l_pcus]
 	elif config.pcuid is not None:
 		l_pcus = [ config.pcuid ] 
@@ -409,14 +421,18 @@ if __name__ == '__main__':
 	parser.set_defaults(nodelist=None, 
 						increment=False, 
 						pcuid=None,
+						site=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
 						refresh=False,
 						)
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
 						help="Provide the input file for the node list")
+	parser.add_option("", "--site", dest="site", metavar="FILE", 
+						help="Get all pcus associated with the given site's nodes")
 	parser.add_option("", "--pcuid", dest="pcuid", metavar="id", 
 						help="Provide the id for a single pcu")
+
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 

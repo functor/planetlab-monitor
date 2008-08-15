@@ -4,15 +4,22 @@ TODO:
  	* had to mount -t devpts devpts /dev/pts to get ssh to work inside the
 	  chroot. also, disable the pam modules in /etc/pam.d/sshd
 
+ * auto configuration for php configuration.  
+ 	maybe run translation of monitor.conf before loading monitorconfig.php?
+
  * A setup script of some kind would be nice that walked through : 
     - writing monitorconfig.py
 	- creation of monitorconfig.php
 	- run syncplcdb.py
 	- testapi.py
 	- findbad.py on sample site.
+	- nodebad.py
+	- nodequery.py
+	- nodegroups.py
+	- findbadpcus.py
 	- loads webpage for those retreived values to confirm setup succeeded.
 
- * reimplement the config.py / .config mechanism.  i'd like for many commands
+ * reimplement the config.py / .config mechanism.  I'd like for many commands
    to share very similar argument or argument sets, as well as have some
    common config options.  I'm not sure the best way to do this.
     
@@ -28,11 +35,9 @@ TODO:
      - python supports load-once modules, so subsequent imports refer to the
           same module object.
 	   
+ * have package pull in threadpool from easy_install
 
- * Find a better location to place and pull the PKL files currently in the pdb
-   directory.  Ultimately, these should be stored in a real DB.  Until then,
-   they should sit in a location that is accessible from the www scripts,
-   backend scripts, and user utilities.
+ * place PKL files in a real database
 
  * clean up plc.py; there's a lot of redundent code.
 
@@ -49,6 +54,7 @@ TODO:
 		configuration, 
 		policy, 
 		data model, 
+		data access,
 		object interfaces.
 
 Lower priority:
@@ -61,6 +67,10 @@ Lower priority:
    availble with PLC.
 
 Done:
+ * Find a better location to place and pull the PKL files currently in the pdb
+   directory.  Ultimately, these should be stored in a real DB.  Until then,
+   they should sit in a location that is accessible from the www scripts,
+   backend scripts, and user utilities.
  * nodebad loads plc_hn2lb unconditionally
  * nodeinfo loads act_all unconditionally
  * change findbad.py default db name

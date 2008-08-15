@@ -32,10 +32,11 @@ def main(config):
 	l_nodes = syncplcdb.create_plcdb()
 	l_plcnodes = database.dbLoad("l_plcnodes")
 
-	if config.node:
-		l_nodes = [config.node]
-	else:
-		l_nodes = [node['hostname'] for node in l_plcnodes]
+	l_nodes = get_nodeset(config)
+	#if config.node:
+	#	l_nodes = [config.node]
+	##else:
+	#	l_nodes = [node['hostname'] for node in l_plcnodes]
 	
 	checkAndRecordState(l_nodes, l_plcnodes)
 

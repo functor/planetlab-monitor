@@ -1,8 +1,10 @@
 
 <?php 
 
+# TODO: clean up this aweful hack.
+system("/usr/share/monitor-server/phpconfig.py > /var/www/cgi-bin/monitor/monitorconfig.php");
 include 'monitorconfig.php';
-define("PICKLE_PATH", MONITOR_DATA_ROOTWEB);
+define("PICKLE_PATH", MONITOR_DATA_ROOT);
 
 class Pickle
 {

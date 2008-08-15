@@ -5,6 +5,7 @@ import sys
 import string
 import time
 import config
+import util.file
 
 
 # QUERY all nodes.
@@ -342,7 +343,7 @@ def main():
 	cohash = cotop.coget(cotop_url)
 	l_nodes = syncplcdb.create_plcdb()
 	if config.nodelist:
-		f_nodes = config.getListFromFile(config.nodelist)
+		f_nodes = util.file.getListFromFile(config.nodelist)
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.node:
 		f_nodes = [config.node]

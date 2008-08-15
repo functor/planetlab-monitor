@@ -5,7 +5,7 @@ import sys
 import traceback
 
 api = plc.getAuthAPI()
-loginbase = "princeton"
+loginbase = sys.argv[1] # "princeton"
 
 try:
 	site = api.GetSites(loginbase)[0]
