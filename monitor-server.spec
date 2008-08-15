@@ -34,7 +34,7 @@ Requires: MySQL-python
 Requires: rt3 == 3.4.1
 
 Requires: PLCWWW >= 4.2
-Requires: BootCD >= 4.2
+Requires: bootcd-planetlab-i386 >= 4.2
 
 %description
 Scripts for polling PLC, the node, and PCU status.  Also a collection of
@@ -87,11 +87,14 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %config /usr/share/%{name}/monitorconfig.py
+%config /etc/monitor.conf
 /usr/share/%{name}
 /var/lib/%{name}
 /var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/%{name}.cron
 %{python_sitearch}/threadpool.py
+%{python_sitearch}/threadpool.pyc
+%{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
 
 %post
