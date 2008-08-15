@@ -30,11 +30,11 @@ XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 #       configured, use them, with their auth definitions.
 auth = Auth()
 try:
-	import monitorconfig
-	auth.auth = {'Username' : monitorconfig.API_AUTH_USER,
+	from monitor import config
+	auth.auth = {'Username' : config.API_AUTH_USER,
 	             'AuthMethod' : 'password',
-				 'AuthString' : monitorconfig.API_AUTH_PASSWORD}
-	auth.server = monitorconfig.API_SERVER
+				 'AuthString' : config.API_AUTH_PASSWORD}
+	auth.server = config.API_SERVER
 except:
 	try:
 		import auth
