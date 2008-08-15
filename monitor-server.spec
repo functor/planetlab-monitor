@@ -70,8 +70,12 @@ install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cro
 echo " * TODO: Setting up Monitor account in local MyPLC"
 # TODO: 
 
-mkdir -p $RPM_BUILD_ROOT/%{python_sitearch}/%{name}
-install -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/%{name}
+mkdir -p $RPM_BUILD_ROOT/%{python_sitearch}/monitor
+install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
+# TODO: need a much better way to do this.
+for file in __init__.py database.py config.py ; do 
+	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
+done
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 
 install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
@@ -88,7 +92,7 @@ rm -rf $RPM_BUILD_ROOT
 /var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/%{name}.cron
 %{python_sitearch}/threadpool.py
-%{python_sitearch}/%{name}
+%{python_sitearch}/monitor
 
 %post
 echo "Post processing"
