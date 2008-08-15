@@ -1,6 +1,8 @@
 
 import struct
 import reboot
+import time
+from monitor import database
 from unified_model import PersistFlags
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"
@@ -136,35 +138,6 @@ def nodegroup_display(node, fb, conf=None):
 	node['uptime'] = ut
 
 	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)33s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
-
-from model import *
-import database
-
-def node_end_record(node):
-	act_all = database.dbLoad("act_all")
-	if node not in act_all:
-		del act_all
-		return False
-
-	if len(act_all[node]) == 0:
-		del act_all
-		return False
-
-	a = Action(node, act_all[node][0])
-	a.delField('rt')
-	a.delField('found_rt_ticket')
-	a.delField('second-mail-at-oneweek')
-	a.delField('second-mail-at-twoweeks')
-	a.delField('first-found')
-	rec = a.get()
-	rec['action'] = ["close_rt"]
-	rec['category'] = "UNKNOWN"
-	rec['stage'] = "monitor-end-record"
-	rec['time'] = time.time() - 7*60*60*24
-	act_all[node].insert(0,rec)
-	database.dbDump("act_all", act_all)
-	del act_all
-	return True
 
 def datetime_fromstr(str):
 	if '-' in str:

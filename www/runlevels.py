@@ -2,7 +2,7 @@
 
 import cgi
 import cgitb; 
-import soltesz
+from monitor import database
 import time
 cgitb.enable()
 
@@ -32,7 +32,7 @@ vals['princeton_comon_procs'] = get_value('princeton_comon_procs')
 
 
 rows = ""
-fb = soltesz.dbLoad("findbad")
+fb = database.dbLoad("findbad")
 packed_values = []
 for mynode in fb['nodes'].keys():
 	fbnode = fb['nodes'][mynode]['values']

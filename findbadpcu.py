@@ -404,9 +404,8 @@ if __name__ == '__main__':
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 	fh.setFormatter(formatter)
 	logger.addHandler(fh)
-	from config import config
-	from optparse import OptionParser
-	parser = OptionParser()
+	import parser as parsermodule
+	parser = parsermodule.getParser()
 	parser.set_defaults(nodelist=None, 
 						increment=False, 
 						pcuid=None,
@@ -426,8 +425,8 @@ if __name__ == '__main__':
 						help="Refresh the cached values")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
-	config = config(parser)
-	config.parse_args()
+	parser = parsermodule.getParser(['defaults'], parser)
+	config = parsermodule.parse_args(parser)
 	try:
 		# NOTE: evidently, there is a bizarre interaction between iLO and ssh
 		# when LANG is set... Do not know why.  Unsetting LANG, fixes the problem.

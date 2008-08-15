@@ -2,12 +2,11 @@ import config
 import database 
 import time
 import mailer
-from www.printbadnodes import cmpCategoryVal
+from unified_model import cmpCategoryVal
 import sys
 import emailTxt
 import string
 
-from policy import get_ticket_id, print_stats, close_rt_backoff, reboot_node
 from rt import is_host_in_rt_tickets
 import plc
 
@@ -20,6 +19,16 @@ SUMTO = "soltesz@cs.princeton.edu"
 from const import *
 
 from unified_model import *
+
+def get_ticket_id(record):
+	if 'ticket_id' in record and record['ticket_id'] is not "" and record['ticket_id'] is not None:
+		return record['ticket_id']
+	elif 		'found_rt_ticket' in record and \
+		 record['found_rt_ticket'] is not "" and \
+		 record['found_rt_ticket'] is not None:
+		return record['found_rt_ticket']
+	else:
+		return None
 
 class MonitorMergeDiagnoseSendEscellate:
 	def __init__(self, hostname, act):

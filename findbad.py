@@ -359,7 +359,8 @@ def main():
 	# perform this query after the above options, so that the filter above
 	# does not break.
 	if config.nodeselect:
-		l_nodes = node_select(config.nodeselect)
+		fb = database.dbLoad("findbad")
+		l_nodes = node_select(config.nodeselect, fb['nodes'].keys(), fb)
 
 	print "fetching %s hosts" % len(l_nodes)
 
@@ -373,7 +374,7 @@ if __name__ == '__main__':
 
 	parser = parsermodule.getParser(['nodesets'])
 
-	parser.set_defaults( increment=False, dbname="findbadnodes", cachenodes=False)
+	parser.set_defaults( increment=False, dbname="findbad", cachenodes=False)
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 

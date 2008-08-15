@@ -7,7 +7,6 @@ import logging
 import Queue
 import time 
 import re
-import comon
 import database
 from threading import *
 import monitorconfig

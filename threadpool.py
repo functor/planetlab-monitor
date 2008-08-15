@@ -218,7 +218,6 @@ class ThreadPool:
                     request.callback(request, result)
                 del self.workRequests[request.requestID]
             except Queue.Empty:
-				print "queue empty"
                 break
 
     def wait(self):

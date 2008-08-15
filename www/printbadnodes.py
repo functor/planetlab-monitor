@@ -1,11 +1,7 @@
 #!/usr/bin/python
-import soltesz
-from config import config
-from optparse import OptionParser
+from monitor import database
+from monitor import config
 import string
-#from HyperText.HTML import A, BR, IMG, TABLE, TR, TH, TD, EM, quote_body
-#from HyperText.Documents import Document
-
 import sys
 
 categories = {}
@@ -243,8 +239,8 @@ def fields_to_html(fields, vals):
 def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	global fb
 
-	db = soltesz.dbLoad(config.dbname)
-	fb = soltesz.dbLoad("findbadpcus")
+	db = database.dbLoad(config.dbname)
+	fb = database.dbLoad("findbadpcus")
 
 	## Field widths used for printing
 	maxFieldLengths = { 'nodename' : -45,
@@ -498,30 +494,16 @@ if __name__ == '__main__':
 	else:
 		mynodeonly = None
 
-	parser = OptionParser()
-	parser.set_defaults(cmpdays=False, 
-						comon="sshstatus", 
-						fields="nodename,ping,ssh,pcu,category,state,comonstats,kernel,bootcd", 
-						dbname="findbad", # -070724-1", 
-						cmpping=False, 
-						cmpdns=False, 
-						cmploginbase=False, 
-						cmpssh=False, 
-						cmpcategory=False,
-						cmpstate=False)
-	parser.add_option("", "--fields",	dest="fields", help="")
-	parser.add_option("", "--dbname",	dest="dbname", help="")
-	parser.add_option("", "--days",		dest="cmpdays", action="store_true", help="")
-	parser.add_option("", "--ping",		dest="cmpping", action="store_true", help="")
-	parser.add_option("", "--dns",		dest="cmpdns", action="store_true", help="")
-	parser.add_option("", "--ssh",		dest="cmpssh",	action="store_true", help="")
-	parser.add_option("", "--loginbase",dest="cmploginbase",action="store_true", help="")
-	parser.add_option("", "--category",	dest="cmpcategory", action="store_true", help="")
-	parser.add_option("", "--kernel",	dest="cmpkernel", action="store_true", help="")
-	parser.add_option("", "--state",	dest="cmpstate", action="store_true", help="")
-	parser.add_option("", "--comon",	dest="comon", 	help="")
-	config = config(parser)
-	config.parse_args()
+	config.cmpdays=False
+	config.comon="sshstatus"
+	config.fields="nodename,ping,ssh,pcu,category,state,comonstats,kernel,bootcd"
+	config.dbname="findbad"
+	config.cmpping=False 
+	config.cmpdns=False
+	config.cmploginbase=False
+	config.cmpssh=False 
+	config.cmpcategory=False
+
 	print "Content-Type: text/html\r\n"
 	if mynodeonly == None:
 		print "<html><body>\n"

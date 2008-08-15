@@ -1,6 +1,6 @@
 #!/usr/bin/python
-import database
-import config
+from monitor import database
+from monitor import config
 import parser as parsermodule
 
 from www.printbadnodes import *

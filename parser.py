@@ -75,7 +75,7 @@ def parseSetNodeSets(parser=None):
 	if parser == None:
 		parser = OptionParser()
 	
-	parser.set_defaults(node=None, site=None, nodelist=None, nodeselect=False, nodegroup=None)
+	parser.set_defaults(node=None, site=None, nodelist=None, nodeselect=None, nodegroup=None)
 	parser.add_option("", "--node", dest="node", metavar="hostname", 
 						help="Provide a single node to operate on")
 	parser.add_option("", "--site", dest="site", metavar="site name",
@@ -104,10 +104,11 @@ def getParser(parsesets=[], parser=None):
 	
 def parse_args(parser):
 	class obj: pass
-	o = obj()
 	(options, args) = parser.parse_args()
+	o = obj()
 	o.__dict__.update(options.__dict__)
 	o.__dict__['args'] = args
+	#config.update(o)
 	config.updatemodule(config, o)
 	return config
 

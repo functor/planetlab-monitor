@@ -47,8 +47,11 @@ if __name__ == "__main__":
 	if not os.path.exists(outdir):
 		os.system('mkdir -p %s' % outdir)
 
-	if config.site is not None or config.nodeselect is not None or config.nodegroup is not None:
+	if config.site is not None or \
+	   config.nodeselect is not None or \
+	   config.nodegroup is not None:
 		print "TODO: implement support for nodeselect and site queries."
+		print "%s %s %s" % (config.site, config.nodeselect, config.nodegroup)
 		sys.exit(1)
 
 	if config.nodelist == None and config.node == None:
@@ -70,5 +73,7 @@ if __name__ == "__main__":
 	else:
 		f = open(config.cmdfile,'r')
 		cmd = f.read()
+
+	print filelist
 
 	vx_start(filelist, outdir, cmd, int(config.timeout))

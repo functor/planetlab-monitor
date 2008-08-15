@@ -108,16 +108,4 @@ class Diagnose(MonRecord):
 		MonRecord.__init__(self, data)
 		return
 
-class Action(MonRecord):
-	def __init__(self, host, data):
-		self.host = host
-		MonRecord.__init__(self, data)
-		return
-
-	def deltaDays(self, delta):
-		t = datetime.fromtimestamp(self.__dict__['time'])
-		d = t + timedelta(delta)
-		self.__dict__['time'] = time.mktime(d.timetuple())
-		
-	
 

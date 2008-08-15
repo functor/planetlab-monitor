@@ -15,12 +15,12 @@
 import plc
 api = plc.getAuthAPI()
 
-import policy
 import traceback
-from config import config as cfg
+import config
 import util.file
 from optparse import OptionParser
 
+import const
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
 import database
@@ -32,8 +32,8 @@ import parser as parsermodule
 
 from model import *
 import bootman 		# debug nodes
-import monitor		# down nodes with pcu
 import reboot		# down nodes without pcu
+import mailmonitor 	# down nodes with pcu
 from emailTxt import mailtxt
 #reboot.verbose = 0
 import sys
@@ -54,18 +54,21 @@ class Reboot(object):
 								 mailtxt.pcudown_one[1] % args, True, db='pcu_persistmessages')
 
 		loginbase = plc.siteId(host)
-		m.send([policy.TECHEMAIL % loginbase])
+		m.send([const.TECHEMAIL % loginbase])
 
 	def pcu(self, host):
 		# TODO: It should be possible to diagnose the various conditions of
 		# 		the PCU here, and send different messages as appropriate.
-		if self.fbnode['pcu'] == "PCU": 
+		print "'%s'" % self.fbnode['pcu']
+		if self.fbnode['pcu'] == "PCU" or "PCUOK" in self.fbnode['pcu']:
 			self.action = "reboot.reboot('%s')" % host
 
 			pflags = PersistFlags(host, 2*60*60*24, db='pcu_persistflags')
+			pflags.resetRecentFlag('pcutried')
 			if not pflags.getRecentFlag('pcutried'):
 				pflags.setRecentFlag('pcutried')
 				try:
+					print "CALLING REBOOT!!!"
 					ret = reboot.reboot(host)
 
 					pflags.save()
@@ -94,8 +97,10 @@ class Reboot(object):
 					return True
 
 				else:
+					print "GetRecentFlag()"
 					return False
 		else:
+			print "NO PCUOK"
 			self.action = "None"
 			return False
 
@@ -108,10 +113,10 @@ class Reboot(object):
 			pflags.setRecentFlag('endrecord')
 			pflags.save()
 
-		# Then in either case, run monitor.reboot()
-		self.action = "monitor.reboot('%s')" % host
+		# Then in either case, run mailmonitor.reboot()
+		self.action = "mailmonitor.reboot('%s')" % host
 		try:
-			return monitor.reboot(host)
+			return mailmonitor.reboot(host)
 		except Exception, e:
 			print traceback.print_exc(); print e
 			return False
@@ -207,8 +212,10 @@ if config.node or config.nodelist:
 	if config.node: hostnames = [ config.node ] 
 	else: hostnames = config.getListFromFile(config.nodelist)
 
+fb = database.dbLoad("findbad")
+
 if config.nodeselect:
-	hostnames = node_select(config.nodeselect)
+	hostnames = node_select(config.nodeselect, fb['nodes'].keys(), fb)
 
 if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
@@ -216,7 +223,6 @@ if config.findbad:
 	util.file.setFileFromList(file, hostnames)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
-fb = database.dbLoad("findbad")
 # commands:
 i = 1
 count = 1
@@ -233,7 +239,7 @@ for host in hostnames:
 			
 		print "%-2d" % i, nodegroup_display(node, fb)
 		i += 1
-		if i < int(config.skip): continue
+		if i-1 <= int(config.skip): continue
 
 		if config.stopselect:
 			dict_query = query_to_dict(config.stopselect)

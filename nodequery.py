@@ -11,13 +11,14 @@ from unified_model import Record
 import glob
 import os
 from reboot import pcu_name
+import reboot
 import util.file
 
 import time
 import re
 
 #fb = {}
-fb = database.dbLoad("findbad")
+fb = {}
 fbpcu = {}
 
 class NoKeyException(Exception): pass
@@ -202,13 +203,14 @@ def pcu_select(str_query, nodelist=None):
 	return (nodenames, pcunames)
 
 def node_select(str_query, nodelist=None, fbdb=None):
+	global fb
+
 	hostnames = []
 	if str_query is None: return hostnames
 
 	#print str_query
 	dict_query = query_to_dict(str_query)
 	#print dict_query
-	global fb
 
 	if fbdb is not None:
 		fb = fbdb
@@ -280,6 +282,7 @@ def main():
 		fb = database.dbLoad("findbad")
 
 	fbpcu = database.dbLoad("findbadpcus")
+	reboot.fb = fbpcu
 
 	if config.nodelist:
 		nodelist = util.file.getListFromFile(config.nodelist)
@@ -288,10 +291,10 @@ def main():
 
 	pculist = None
 	if config.select is not None and config.pcuselect is not None:
-		nodelist = node_select(config.select, nodelist)
+		nodelist = node_select(config.select, nodelist, fb)
 		nodelist, pculist = pcu_select(config.pcuselect, nodelist)
 	elif config.select is not None:
-		nodelist = node_select(config.select, nodelist)
+		nodelist = node_select(config.select, nodelist, fb)
 	elif config.pcuselect is not None:
 		nodelist, pculist = pcu_select(config.pcuselect, nodelist)
 

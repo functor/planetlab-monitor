@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
-import database
+from monitor import database
 
 import plc
 api = plc.getAuthAPI()
 
 import mailer
 import time
-from nodecommon import *
 
+from model import *
 from const import *
 import util.file
 import config
@@ -70,7 +70,7 @@ class PenaltyMap:
 	# 	condition/penalty is applied, move to the next phase.
 
 
-fb = database.dbLoad("findbad")
+#fb = database.dbLoad("findbad")
 
 class RT(object):
 	def __init__(self, ticket_id = None):
@@ -565,10 +565,10 @@ class NodeRecord:
 		self.hostname = hostname
 		self.ticket = None
 		self.target = target
-		if hostname in fb['nodes']:
-			self.data = fb['nodes'][hostname]['values']
-		else:
-			raise Exception("Hostname not in scan database")
+		#if hostname in fb['nodes']:
+		#	self.data = fb['nodes'][hostname]['values']
+		#else:
+		#	raise Exception("Hostname not in scan database")
 
 	def stageIswaitforever(self):
 		if 'waitforever' in self.data['stage']:
@@ -637,6 +637,43 @@ class NodeRecord:
 		pass
 	def _get_contacts_for_condition(self):
 		pass
+
+class Action(MonRecord):
+	def __init__(self, host, data):
+		self.host = host
+		MonRecord.__init__(self, data)
+		return
+
+	def deltaDays(self, delta):
+		t = datetime.fromtimestamp(self.__dict__['time'])
+		d = t + timedelta(delta)
+		self.__dict__['time'] = time.mktime(d.timetuple())
+		
+def node_end_record(node):
+	act_all = database.dbLoad("act_all")
+	if node not in act_all:
+		del act_all
+		return False
+
+	if len(act_all[node]) == 0:
+		del act_all
+		return False
+
+	a = Action(node, act_all[node][0])
+	a.delField('rt')
+	a.delField('found_rt_ticket')
+	a.delField('second-mail-at-oneweek')
+	a.delField('second-mail-at-twoweeks')
+	a.delField('first-found')
+	rec = a.get()
+	rec['action'] = ["close_rt"]
+	rec['category'] = "UNKNOWN"
+	rec['stage'] = "monitor-end-record"
+	rec['time'] = time.time() - 7*60*60*24
+	act_all[node].insert(0,rec)
+	database.dbDump("act_all", act_all)
+	del act_all
+	return True
 
 if __name__ == "__main__":
 	#r = RT()

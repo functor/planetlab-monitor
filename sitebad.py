@@ -15,7 +15,7 @@ from nodequery import verify,query_to_dict,node_select
 import plc
 api = plc.getAuthAPI()
 from unified_model import *
-from monitor_policy import MINUP
+from const import MINUP
 
 round = 1
 externalState = {'round': round, 'sites': {}}

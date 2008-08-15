@@ -21,7 +21,7 @@ import os
 import reboot
 import database
 import string
-from www.printbadnodes import cmpCategoryVal
+from unified_model import cmpCategoryVal
 import config
 
 DAT="./monitor.dat"
@@ -85,15 +85,6 @@ def getdebug():
 def print_stats(key, stats):
 	if key in stats: print "%20s : %d" % (key, stats[key])
 
-def get_ticket_id(record):
-	if 'ticket_id' in record and record['ticket_id'] is not "" and record['ticket_id'] is not None:
-		return record['ticket_id']
-	elif 		'found_rt_ticket' in record and \
-		 record['found_rt_ticket'] is not "" and \
-		 record['found_rt_ticket'] is not None:
-		return record['found_rt_ticket']
-	else:
-		return None
 
 class Merge(Thread):
 	def __init__(self, l_merge, toRT):
@@ -927,17 +918,7 @@ class BackoffActions(SiteAction):
 # TODO: create class for each action below, 
 #		allow for lists of actions to be performed...
 
-def close_rt_backoff(args):
-	if 'ticket_id' in args and (args['ticket_id'] != "" and args['ticket_id'] != None):
-		mailer.closeTicketViaRT(args['ticket_id'], 
-								"Ticket CLOSED automatically by SiteAssist.")
-		plc.enableSlices(args['hostname'])
-		plc.enableSliceCreation(args['hostname'])
-	return
 
-def reboot_node(args):
-	host = args['hostname']
-	return reboot.reboot_policy(host, True, config.debug)
 
 def reset_nodemanager(args):
 	os.system("ssh root@%s /sbin/service nm restart" % nodename)

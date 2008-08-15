@@ -16,7 +16,7 @@ from nodecommon import *
 import plc
 api = plc.getAuthAPI()
 from unified_model import *
-from monitor_policy import MINUP
+from const import MINUP
 
 round = 1
 externalState = {'round': round, 'nodes': {}}
@@ -64,7 +64,6 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 	database.dbDump(config.dbname, externalState)
 
 fb = database.dbLoad('findbad')
-hn2lb = database.dbLoad("plcdb_hn2lb")
 
 def getnodesup(nodelist):
 	up = 0

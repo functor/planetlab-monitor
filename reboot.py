@@ -11,8 +11,6 @@ import urllib2
 import urllib
 import threading, popen2
 import array, struct
-#from socket import *
-import socket
 import plc
 import base64
 from subprocess import PIPE, Popen
@@ -1167,12 +1165,16 @@ def pcu_name(pcu):
 	else:
 		return None
 
-import database
-fb =database.dbLoad("findbadpcus")
+#import database
+from monitor import database
+fb = None
 
 def get_pcu_values(pcu_id):
-	# TODO: obviously, this shouldn't be loaded each time...
-
+	global fb
+	if fb == None:
+		# this shouldn't be loaded each time...
+		fb = database.dbLoad("findbadpcus")
+		
 	try:
 		values = fb['nodes']["id_%s" % pcu_id]['values']
 	except:

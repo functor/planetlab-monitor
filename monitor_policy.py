@@ -2,14 +2,23 @@ import config
 import database
 import time
 import mailer
-from www.printbadnodes import cmpCategoryVal
+from unified_model import cmpCategoryVal
 import sys
 import emailTxt
 import string
 
-from policy import get_ticket_id, print_stats, close_rt_backoff, reboot_node
 from rt import is_host_in_rt_tickets
 import plc
+
+def get_ticket_id(record):
+	if 'ticket_id' in record and record['ticket_id'] is not "" and record['ticket_id'] is not None:
+		return record['ticket_id']
+	elif 		'found_rt_ticket' in record and \
+		 record['found_rt_ticket'] is not "" and \
+		 record['found_rt_ticket'] is not None:
+		return record['found_rt_ticket']
+	else:
+		return None
 
 # Time to enforce policy
 POLSLEEP = 7200
@@ -821,6 +830,17 @@ class Diagnose:
 
 		return up
 
+def close_rt_backoff(args):
+	if 'ticket_id' in args and (args['ticket_id'] != "" and args['ticket_id'] != None):
+		mailer.closeTicketViaRT(args['ticket_id'], 
+								"Ticket CLOSED automatically by SiteAssist.")
+		plc.enableSlices(args['hostname'])
+		plc.enableSliceCreation(args['hostname'])
+	return
+
+def reboot_node(args):
+	host = args['hostname']
+	return reboot.reboot_policy(host, True, config.debug)
 
 class Action:
 	def __init__(self, diagnose_out):
@@ -874,7 +894,7 @@ class Action:
 		#print_stats("sites_observed", stats)
 		#print_stats("sites_diagnosed", stats)
 		#print_stats("nodes_diagnosed", stats)
-		print_stats("sites_emailed", stats)
+		self.print_stats("sites_emailed", stats)
 		#print_stats("nodes_actedon", stats)
 		print string.join(stats['allsites'], ",")
 

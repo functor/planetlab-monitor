@@ -18,7 +18,7 @@ from nodecommon import *
 import plc
 api = plc.getAuthAPI()
 from unified_model import *
-from monitor_policy import MINUP
+from const import MINUP
 
 round = 1
 externalState = {'round': round, 'nodes': {}}

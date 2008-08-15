@@ -12,7 +12,7 @@ except:
 import inspect
 import shutil
 import config
-import monitorconfig
+import config as monitorconfig
 
 DEBUG= 0
 PICKLE_PATH=monitorconfig.MONITOR_DATA_ROOT
@@ -111,7 +111,10 @@ class SPickle:
 				raise Exception, "No such file %s" % name
 				
 
+		#import traceback
+		#print traceback.print_stack()
 		#print "loading %s" % self.__file(name, type)
+		#sys.stderr.write("-----------------------------\n")
 		f = open(self.__file(name, type), 'r')
 		if type == None:
 			o = pickle.load(f)

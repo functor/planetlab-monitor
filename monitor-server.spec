@@ -9,6 +9,8 @@
 %define taglevel 6
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
+%global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
+
 
 Summary: Monitor backend scripts for server
 Name: %{name}
@@ -27,10 +29,12 @@ URL: %(echo %{url} | cut -d ' ' -f 2)
 Requires: curl
 Requires: coreutils
 Requires: openssh-clients
-Requires: PLCWWW >= 4.2
-Requires: BootCD >= 4.2
+Requires: perl-libwww-perl
 Requires: MySQL-python
 Requires: rt3 == 3.4.1
+
+Requires: PLCWWW >= 4.2
+Requires: BootCD >= 4.2
 
 %description
 Scripts for polling PLC, the node, and PCU status.  Also a collection of
@@ -66,6 +70,11 @@ install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cro
 echo " * TODO: Setting up Monitor account in local MyPLC"
 # TODO: 
 
+mkdir -p $RPM_BUILD_ROOT/%{python_sitearch}/%{name}
+install -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/%{name}
+install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
+
+install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
 %clean
@@ -78,6 +87,8 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/%{name}
 /var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/%{name}.cron
+%{python_sitearch}/threadpool.py
+%{python_sitearch}/%{name}
 
 %post
 echo "Post processing"

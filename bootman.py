@@ -7,7 +7,7 @@ api = plc.getAuthAPI()
 
 import sys
 import os
-import policy
+import const
 
 from getsshkeys import SSHKnownHosts
 
@@ -321,7 +321,7 @@ def reboot(hostname, config=None, forced_action=None):
 							mailtxt.newbootcd_one[1] % args, True, db='bootcd_persistmessages')
 
 		loginbase = plc.siteId(hostname)
-		m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+		m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 
 		print "\tDisabling %s due to out-of-date BOOTCD" % hostname
 		api.UpdateNode(hostname, {'boot_state' : 'disable'})
@@ -453,7 +453,7 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.set_nodestate('disable')
 			return False
 
@@ -615,11 +615,14 @@ def reboot(hostname, config=None, forced_action=None):
 
 	# update_node_config_email
 	for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
-			"bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
+			  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
+			  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
 			]:
 		sequences.update({n : "update_node_config_email"})
 
-	for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", ]:
+	for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
+			   "bminit-cfg-update-exception-nodehostname-update-debug-done", 
+			]:
 		sequences.update({n : "nodenetwork_email"})
 
 	# update_bootcd_email
@@ -643,7 +646,11 @@ def reboot(hostname, config=None, forced_action=None):
 	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
 
 	# bad_dns_email
-	sequences.update({"bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done" : "bad_dns_email"})
+	for n in [ 
+	 "bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
+		"bminit-cfg-auth-implementerror-bootcheckfail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
+		]:
+		sequences.update( { n : "bad_dns_email"})
 
 	flag_set = True
 
@@ -708,7 +715,7 @@ def reboot(hostname, config=None, forced_action=None):
 			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
 								True, db='nodeid_persistmessages')
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.dump_plconf_file()
 			conn.set_nodestate('disable')
 
@@ -720,7 +727,7 @@ def reboot(hostname, config=None, forced_action=None):
 			m = PersistMessage(hostname,  mailtxt.plnode_network[0] % args,  mailtxt.plnode_cfg[1] % args, 
 								True, db='nodenet_persistmessages')
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.dump_plconf_file()
 			conn.set_nodestate('disable')
 
@@ -735,7 +742,7 @@ def reboot(hostname, config=None, forced_action=None):
 								mailtxt.newalphacd_one[1] % args, True, db='bootcd_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 
 			print "\tDisabling %s due to out-of-date BOOTCD" % hostname
 			conn.set_nodestate('disable')
@@ -753,7 +760,7 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.set_nodestate('disable')
 
 		elif sequences[s] == "update_hardware_email":
@@ -765,7 +772,7 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.minimalhardware[1] % args, True, db='minhardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.set_nodestate('disable')
 
 		elif sequences[s] == "bad_dns_email":
@@ -788,7 +795,7 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddns[1] % args, True, db='baddns_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([policy.PIEMAIL % loginbase, policy.TECHEMAIL % loginbase])
+			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
 			conn.set_nodestate('disable')
 
 	if flag_set:

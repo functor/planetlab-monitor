@@ -1,20 +1,8 @@
 
 TODO:
- * make 'automate.sh' be the real automate script for cron.
- * install the right version of RT tools as a dependency?
- * www/*.py need appropriate access to database.py,  config.py, monitorconfig.py, etc.
- * build cmdamt with g++ prior to packaging
  * install openssh-server, passwd, perl-libwww-perl (for rt), rt-3.4.1,  MySQL-python
  	* had to mount -t devpts devpts /dev/pts to get ssh to work inside the
 	  chroot. also, disable the pam modules in /etc/pam.d/sshd
- * threadpool package.
- * reboot.py loads findbadpcus unconditionally.
- * unified_model loads findbad unconditionally
- * nodequery loads findbad unconditionally
- * remove deps on www.printbadnodes
- * change findbad.py default db name
- * nodebad loads plc_hn2lb unconditionally
- * nodeinfo loads act_all unconditionally
 
  * A setup script of some kind would be nice that walked through : 
     - writing monitorconfig.py
@@ -55,6 +43,13 @@ TODO:
 
  * fix BayTechCtrlCUnibe expect script.
 
+ * separate modules into different, logical categories, and create a python
+   module as part of the install:
+   		command line, 
+		configuration, 
+		policy, 
+		data model, 
+		object interfaces.
 
 Lower priority:
  * Add a more structured, 'automate' library of scripts and means of making
@@ -66,6 +61,20 @@ Lower priority:
    availble with PLC.
 
 Done:
+ * nodebad loads plc_hn2lb unconditionally
+ * nodeinfo loads act_all unconditionally
+ * change findbad.py default db name
+ * remove deps on www.printbadnodes
+ * reboot.py loads findbadpcus unconditionally.
+ * nodequery loads findbad unconditionally
+ * unified_model loads findbad unconditionally
+
+ * threadpool package.
+ * build cmdamt with g++ prior to packaging
+
+ * www/*.py need appropriate access to database.py,  config.py, monitorconfig.py, etc.
+ 	- need to convert monitor.conf into monitorconf.sh and monitorconf.php
+
  * pull out global configuration information from various files, like rt_db,
    mailer.py,  auth.py, and any others.  Create a single configuration file
    from which all others pull.

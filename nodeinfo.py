@@ -3,12 +3,14 @@
 import plc
 api = plc.getAuthAPI()
 
-import database
+from monitor import *
+#import database
 import reboot
 
 import time
 from model import *
 from nodecommon import *
+from unified_model import node_end_record, PersistFlags
 
 import util.file
 
@@ -43,12 +45,14 @@ def plc_print_nodeinfo(plcnode):
 		 diff_time(plcnode['last_contact']), plcnode['key'])
 
 def fb_print_nodeinfo(fbnode):
+	pf = PersistFlags(fbnode['hostname'], 1, db='node_persistflags')
+	fbnode['last_change'] = diff_time(pf.last_changed)
 	print "   Checked: ",
 	if 'checked' in fbnode:
 		print "%11.11s " % diff_time(fbnode['checked'])
 	else:
 		print "Unknown"
-	print "\t      state |  ssh  |  pcu  | bootcd | category | kernel"
+	print "\t      state |  ssh  |  pcu  | bootcd | category | last change | kernel"
 	if fbnode['bootcd']:
 		fbnode['bootcd'] = fbnode['bootcd'].split()[-1]
 	else:
@@ -59,7 +63,7 @@ def fb_print_nodeinfo(fbnode):
 		fbnode['state'] = "none"
 	if len(fbnode['kernel'].split()) > 2:
 		fbnode['kernel'] = fbnode['kernel'].split()[2]
-	print "\t       %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+	print "\t       %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(last_change)11s | %(kernel)s" % fbnode
 
 def act_print_nodeinfo(actnode, header):
 	if header[0]:
@@ -132,25 +136,25 @@ if config.findbad:
 	util.file.setFileFromList(file, config.args)
 	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
 
-fb = database.dbLoad("findbad")
-try:
-	act_all = database.dbLoad("act_all")
-except:
-	act_all = {}
-
 for node in config.args:
 	config.node = node
 
+	fb = database.dbLoad("findbad")
 	plc_nodeinfo = api.GetNodes({'hostname': config.node}, None)[0]
 	fb_nodeinfo  = fb['nodes'][config.node]['values']
 
 	plc_print_nodeinfo(plc_nodeinfo)
+	fb_nodeinfo['hostname'] = node
 	fb_print_nodeinfo(fb_nodeinfo)
 
 	if fb_nodeinfo['pcu'] == "PCU":
 		pcu = reboot.get_pcu_values(fb_nodeinfo['plcnode']['pcu_ids'][0])
 		if pcu: pcu_print_info(pcu, config.node)
 
+	try:
+		act_all = database.dbLoad("act_all")
+	except:
+		act_all = {}
 	if config.node in act_all and len(act_all[config.node]) > 0:
 		header = [True]
 
