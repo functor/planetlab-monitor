@@ -32,6 +32,7 @@ Requires: openssh-clients
 Requires: perl-libwww-perl
 Requires: MySQL-python
 Requires: rt3 == 3.4.1
+Requires: nmap
 
 Requires: PLCWWW >= 4.2
 Requires: bootcd-planetlab-i386 >= 4.2
@@ -77,6 +78,9 @@ for file in __init__.py database.py config.py ; do
 	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
 done
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
+
+touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
+chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
 install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
