@@ -18,8 +18,8 @@ import time
 import re
 
 #fb = {}
-fb = {}
-fbpcu = {}
+fb = None
+fbpcu = None
 
 class NoKeyException(Exception): pass
 
@@ -46,7 +46,10 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 			fbnode['kernel'] = fbnode['kernel'].split()[2]
 		fbnode['boot_state'] = fbnode['plcnode']['boot_state']
 
-		print "%(hostname)-39s | %(checked)11.11s | %(boot_state)5.5s| %(state)8.8s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+		if len(fbnode['nodegroups']) > 0:
+			fbnode['category'] = fbnode['nodegroups'][0]
+
+		print "%(hostname)-45s | %(checked)11.11s | %(boot_state)5.5s| %(state)8.8s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 	else:
 		format = ""
 		for f in fields:
@@ -143,7 +146,13 @@ def verify(constraints, data):
 			#print "looking at key: %s" % key
 			if key in data: 
 				value_re = re.compile(con[key])
-				con_and_true = con_and_true & (value_re.search(data[key]) is not None)
+				if type([]) == type(data[key]):
+					local_or_true = False
+					for val in data[key]:
+						local_or_true = local_or_true | (value_re.search(val) is not None)
+					con_and_true = con_and_true & local_or_true
+				else:
+					con_and_true = con_and_true & (value_re.search(data[key]) is not None)
 			elif key not in data:
 				print "missing key %s" % key,
 				pass
@@ -180,9 +189,16 @@ def pcu_in(fbdata):
 	return False
 
 def pcu_select(str_query, nodelist=None):
+	global fb
+	global fbpcu
 	pcunames = []
 	nodenames = []
 	if str_query is None: return (nodenames, pcunames)
+
+	if fb is None:
+		fb = database.dbLoad("findbad")
+	if fbpcu is None:
+		fbpcu = database.dbLoad("findbadpcus")
 
 	#print str_query
 	dict_query = query_to_dict(str_query)
@@ -199,7 +215,8 @@ def pcu_select(str_query, nodelist=None):
 				nodenames.append(node)
 				str = "cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
 							(pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
-				pcunames.append(str)
+				#pcunames.append(str)
+				pcunames.append(pcuinfo['pcu_id'])
 	return (nodenames, pcunames)
 
 def node_select(str_query, nodelist=None, fbdb=None):

@@ -12,6 +12,7 @@ import sets
     
 import signal
 import traceback
+from nodequery import pcu_select
 
 #old_handler = signal.getsignal(signal.SIGCHLD)
 
@@ -329,7 +330,7 @@ def checkAndRecordState(l_pcus, cohash):
 	global count
 	global_round = externalState['round']
 
-	tp = threadpool.ThreadPool(20)
+	tp = threadpool.ThreadPool(10)
 
 	# CREATE all the work requests
 	for pcuname in l_pcus:
@@ -390,6 +391,11 @@ def main():
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+	elif config.pcuselect is not None:
+		n, pcus = pcu_select(config.pcuselect)
+		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.nodelist == None and config.pcuid == None:
@@ -421,6 +427,7 @@ if __name__ == '__main__':
 	parser.set_defaults(nodelist=None, 
 						increment=False, 
 						pcuid=None,
+						pcuselect=None,
 						site=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
@@ -430,6 +437,8 @@ if __name__ == '__main__':
 						help="Provide the input file for the node list")
 	parser.add_option("", "--site", dest="site", metavar="FILE", 
 						help="Get all pcus associated with the given site's nodes")
+	parser.add_option("", "--pcuselect", dest="pcuselect", metavar="FILE", 
+						help="Query string to apply to the findbad pcus")
 	parser.add_option("", "--pcuid", dest="pcuid", metavar="id", 
 						help="Provide the id for a single pcu")
 

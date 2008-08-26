@@ -342,6 +342,7 @@ class spawn (object):
         self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
         self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All other use pty.fork().
+        self.allstr = ""
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -1108,6 +1109,7 @@ class spawn (object):
                     self.buffer = incoming[self.match.end() : ]
                     self.before = incoming[ : self.match.start()]
                     self.after = incoming[self.match.start() : self.match.end()]
+                    #print "MATCH--", self.after, "--EOM"
                     return self.match_index
                 # No match at this point
                 if timeout < 0 and timeout is not None:
@@ -1116,6 +1118,8 @@ class spawn (object):
                 c = self.read_nonblocking (self.maxread, timeout)
                 time.sleep (0.0001)
                 incoming = incoming + c
+                self.allstr += c
+                #print "INCOMING--", c, "--EOI"
                 if timeout is not None:
                     timeout = end_time - time.time()
         except EOF, e:

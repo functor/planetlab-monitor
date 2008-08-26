@@ -22,6 +22,7 @@ from nodequery import verify,query_to_dict,node_select
 
 from nodecommon import *
 import database
+import util.file
 
 def main():
 	fb = database.dbLoad("findbad")
@@ -52,7 +53,7 @@ def main():
 		if config.node: 
 			hostlist = [ config.node ] 
 		else: 
-			hostlist = config.getListFromFile(config.nodelist)
+			hostlist = util.file.getListFromFile(config.nodelist)
 
 		# NOTE: preserve order given in file.  Otherwise, return values are not in order
 		# given to GetNodes

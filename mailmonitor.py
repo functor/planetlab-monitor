@@ -17,7 +17,7 @@ api = plc.getAuthAPI()
 from clean_policy import *
 
 def reboot(hostname):
-	print "calling reboot!!! %s " % hostname
+	print "CALLING: mailmonitor.reboot(%s)" % hostname
 
 	l_nodes = api.GetNodes(hostname)
 	if len(l_nodes) == 0:
@@ -30,11 +30,11 @@ def reboot(hostname):
 	if len(l_nodes) == 0:
 		raise Exception("Host removed via blacklist: %s" % hostname)
 
-	ad_dbTickets = database.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : [])
-	if ad_dbTickets == None:
-		raise Exception("Could not find cached dbTickets")
+	#ad_dbTickets = database.if_cached_else_refresh(True, False, "ad_dbTickets", lambda : [])
+	#if ad_dbTickets == None:
+	#	raise Exception("Could not find cached dbTickets")
 
-	print "starting new thing"
+	#print "starting new thing"
 	mon = MonitorMergeDiagnoseSendEscellate(hostname, True)
 	mon.run()
 

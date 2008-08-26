@@ -91,7 +91,7 @@ class RT(object):
 		return self.status
 
 	def closeTicket(self):
-		mailer.closeTicketViaRT(self.ticket_id) 
+		mailer.closeTicketViaRT(self.ticket_id, "Ticket CLOSED automatically by SiteAssist.") 
 
 	def email(self, subject, body, to):
 		self.ticket_id = mailer.emailViaRT(subject, body, to, self.ticket_id)
@@ -229,10 +229,10 @@ class PersistMessage(Message):
 
 		#print pm
 		if id in pm:
-			print "Using existing object"
+			#print "Using existing object"
 			obj = pm[id]
 		else:
-			print "creating new object"
+			#print "creating new object"
 			obj = super(PersistMessage, typ).__new__(typ, [id, subject, message, via_rt], **kwargs)
 			obj.id = id
 			obj.actiontracker = Recent(3*60*60*24)
@@ -252,18 +252,19 @@ class PersistMessage(Message):
 	def reset(self):
 		self.actiontracker.unsetRecent()
 
+	def save(self):
+		pm = database.dbLoad(self.db)
+		pm[self.id] = self
+		database.dbDump(self.db, pm)
+
 	def send(self, to):
 		if not self.actiontracker.isRecent():
 			self.ticket_id = Message.send(self, to)
 			self.actiontracker.setRecent()
-
-			#print "recording object for persistance"
-			pm = database.dbLoad(self.db)
-			pm[self.id] = self
-			database.dbDump(self.db, pm)
+			self.save()
 		else:
 			# NOTE: only send a new message every week, regardless.
-			print "Not sending to host b/c not within window of %s days" % (self.actiontracker.withintime // 60*60*24)
+			print "Not sending to host b/c not within window of %s days" % (self.actiontracker.withintime // (60*60*24))
 
 class MonitorMessage(object):
 	def __new__(typ, id, *args, **kwargs):
@@ -427,6 +428,7 @@ class Record(object):
 	def severity(self):
 		category = self.data['category']
 		prev_category = self.data['prev_category']
+		#print "SEVERITY: ", category, prev_category
 		val = cmpCategoryVal(category, prev_category)
 		return val 
 
@@ -504,33 +506,46 @@ class Record(object):
 
 	def takeAction(self):
 		pp = PersistSitePenalty(self.hostname, 0, db='persistpenalty_hostnames')
-		if 'improvement' in self.data['stage'] or self.improved():
-			print "decreasing penalty for %s"%self.hostname
+		if 'improvement' in self.data['stage'] or self.improved() or \
+			'monitor-end-record' in self.data['stage']:
+			print "takeAction: decreasing penalty for %s"%self.hostname
+			pp.decrease()
 			pp.decrease()
 		else:
-			print "increasing penalty for %s"%self.hostname
+			print "takeAction: increasing penalty for %s"%self.hostname
 			pp.increase()
 		pp.apply(self.hostname)
 		pp.save()
 
 	def _format_diaginfo(self):
 		info = self.data['info']
+		print "FORMAT : STAGE: ", self.data['stage']
 		if self.data['stage'] == 'monitor-end-record':
+			if info[2] == "ALPHA": info = (info[0], info[1], "PROD")
 			hlist = "    %s went from '%s' to '%s'\n" % (info[0], info[1], info[2]) 
 		else:
 			hlist = "    %s %s - %s\n" % (info[0], info[2], info[1]) #(node,ver,daysdn)
 		return hlist
+	def saveAction(self):
+		if 'save-act-all' in self.data and self.data['save-act-all'] == True:
+			return True
+		else:
+			return False
 
 	def getMessage(self, ticket_id=None):
 		self.data['args']['hostname'] = self.hostname
 		self.data['args']['loginbase'] = self.loginbase
 		self.data['args']['hostname_list'] = self._format_diaginfo()
-		message = PersistMessage(self.hostname, 
+		#print self.data['message']
+		if self.data['message']:
+			message = PersistMessage(self.hostname, 
 								 self.data['message'][0] % self.data['args'],
 								 self.data['message'][1] % self.data['args'],
 								 True, db='monitor_persistmessages',
 								 ticket_id=ticket_id)
-		return message
+			return message
+		else:
+			return None
 	
 	def getContacts(self):
 		roles = self.data['email']
@@ -579,6 +594,7 @@ class NodeRecord:
 	def severity(self):
 		category = self.data['category']
 		prev_category = self.data['prev_category']
+		print "IMPROVED: ", category, prev_category
 		val = cmpCategoryVal(category, prev_category)
 		return val 
 
@@ -659,6 +675,15 @@ def node_end_record(node):
 		del act_all
 		return False
 
+	pm = database.dbLoad("monitor_persistmessages")
+	if node not in pm:
+		del pm
+		return False
+	else:
+		print "deleting node record"
+		del pm[node]
+		database.dbDump("monitor_persistmessages", pm)
+
 	a = Action(node, act_all[node][0])
 	a.delField('rt')
 	a.delField('found_rt_ticket')
@@ -667,8 +692,9 @@ def node_end_record(node):
 	a.delField('first-found')
 	rec = a.get()
 	rec['action'] = ["close_rt"]
-	rec['category'] = "UNKNOWN"
+	rec['category'] = "ALPHA"	# assume that it's up...
 	rec['stage'] = "monitor-end-record"
+	rec['ticket_id'] = None
 	rec['time'] = time.time() - 7*60*60*24
 	act_all[node].insert(0,rec)
 	database.dbDump("act_all", act_all)

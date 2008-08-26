@@ -64,13 +64,35 @@ class Reboot(object):
 			self.action = "reboot.reboot('%s')" % host
 
 			pflags = PersistFlags(host, 2*60*60*24, db='pcu_persistflags')
-			pflags.resetRecentFlag('pcutried')
+			#pflags.resetRecentFlag('pcutried')
 			if not pflags.getRecentFlag('pcutried'):
-				pflags.setRecentFlag('pcutried')
 				try:
 					print "CALLING REBOOT!!!"
 					ret = reboot.reboot(host)
 
+					pflags.setRecentFlag('pcutried')
+					pflags.save()
+					return ret
+
+				except Exception,e:
+					print traceback.print_exc(); print e
+
+					# NOTE: this failure could be an implementation issue on
+					# 		our end.  So, extra notices are confusing...
+					# self._send_pcunotice(host) 
+
+					pflags.setRecentFlag('pcufailed')
+					pflags.save()
+					return False
+
+			elif not pflags.getRecentFlag('pcu_rins_tried'):
+				try:
+					# set node to 'rins' boot state.
+					print "CALLING REBOOT +++ RINS"
+					plc.nodeBootState(host, 'rins')
+					ret = reboot.reboot(host)
+
+					pflags.setRecentFlag('pcu_rins_tried')
 					pflags.save()
 					return ret
 
@@ -93,12 +115,12 @@ class Reboot(object):
 
 					pflags.setRecentFlag('pcumessagesent')
 					pflags.save()
-					# NOTE: this will result in just one message sent at a time.
-					return True
 
-				else:
-					print "GetRecentFlag()"
-					return False
+				# This will result in mail() being called next, to try to
+				# engage the technical contact to take care of it also.
+				print "RETURNING FALSE"
+				return False
+
 		else:
 			print "NO PCUOK"
 			self.action = "None"
@@ -174,8 +196,6 @@ parser.set_defaults( timewait=0,
 					force=False, 
 					nosetup=False, 
 					verbose=False, 
-					stopkey=None,
-					stopvalue=None,
 					quiet=False,
 					)
 
@@ -210,7 +230,7 @@ if config.nodegroup:
 
 if config.node or config.nodelist:
 	if config.node: hostnames = [ config.node ] 
-	else: hostnames = config.getListFromFile(config.nodelist)
+	else: hostnames = util.file.getListFromFile(config.nodelist)
 
 fb = database.dbLoad("findbad")
 
@@ -221,14 +241,18 @@ if config.findbad:
 	# rerun findbad with the nodes in the given nodes.
 	file = "findbad.txt"
 	util.file.setFileFromList(file, hostnames)
-	os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
+	os.system("./findbad.py --cachenodes --increment --nodelist %s" % file)
+	# TODO: shouldn't we reload the node list now?
 
+l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
 # commands:
 i = 1
 count = 1
+#print "hosts: %s" % hostnames
 for host in hostnames:
 
 	#if 'echo' in host or 'hptest-1' in host: continue
+
 	try:
 		try:
 			node = api.GetNodes(host)[0]
@@ -240,6 +264,9 @@ for host in hostnames:
 		print "%-2d" % i, nodegroup_display(node, fb)
 		i += 1
 		if i-1 <= int(config.skip): continue
+		if host in l_blacklist:
+			print "%s is blacklisted.  Skipping." % host
+			continue
 
 		if config.stopselect:
 			dict_query = query_to_dict(config.stopselect)
@@ -249,20 +276,17 @@ for host in hostnames:
 			if verify(dict_query, fbnode) and observed_state != "dbg ":
 				# evaluates to true, therefore skip.
 				print "%s evaluates true for %s ; skipping..." % ( config.stopselect, host )
-				continue
+				try:
+					# todo: clean up act_all record here.
+					# todo: send thank you, etc.
+					mailmonitor.reboot(host)
+				except Exception, e:
+					print traceback.print_exc(); print e
 
-		if config.stopkey and config.stopvalue:
-			fbnode = fb['nodes'][host]['values']
-			observed_state = get_current_state(fbnode)
-
-			if config.stopkey in fbnode:
-				if config.stopvalue in fbnode[config.stopkey] and observed_state != "dbg ":
-					print "%s has stopvalue; skipping..." % host
-					continue
-			else:
-				print "stopkey %s not in fbnode record for %s; skipping..." % (config.stopkey, host)
-				print fbnode
 				continue
+			#else:
+				#print "%s failed to match %s: -%s-" % ( host, dict_query, observed_state )
+				#sys.exit(1)
 
 		if not config.force and rebootlog.find(host, {'action' : ".*reboot"}, 60*60*2):
 			print "recently rebooted %s.  skipping... " % host

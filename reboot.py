@@ -704,9 +704,8 @@ class BayTechCtrlCUnibe(PCUControl):
 
 		# Control Outlets  (5 ,1).........5
 		try:
-			print s
-			print "Enter Request" in s.before
-			index = s.expect("Enter Request")
+			#index = s.expect("Enter Request")
+			index = s.expect(["Enter Request :"])
 
 			if index == 0:
 				print "3"
@@ -720,7 +719,8 @@ class BayTechCtrlCUnibe(PCUControl):
 					print "Reboot %d" % node_port
 					s.send("Reboot %d\r\n" % node_port)
 
-					index = s.expect(["(Y/N)?"])
+					time.sleep(5)
+					index = s.expect(["\(Y/N\)\?", "Port in use", "DS-RPC>"])
 					if index == 0:
 						if dryrun:
 							print "sending N"
@@ -728,16 +728,21 @@ class BayTechCtrlCUnibe(PCUControl):
 						else:
 							print "sending Y"
 							s.send("Y\r\n")
+					elif index == 1:
+						raise ExceptionPrompt("PCU Reported 'Port in use.'")
+					elif index == 2:
+						raise ExceptionSequence("Issued command 'Reboot' failed.")
 
-				#index = s.expect(["DS-RPC>"])
+				time.sleep(5)
+				index = s.expect(["DS-RPC>"])
 				#print "got prompt back"
 
 			s.close()
 
 		except pexpect.EOF:
-			raise ExceptionPrompt("EOF before 'Enter Request' Prompt")
+			raise ExceptionPrompt("EOF before expected Prompt")
 		except pexpect.TIMEOUT:
-			raise ExceptionPrompt("Timeout before 'Enter Request' Prompt")
+			raise ExceptionPrompt("Timeout before expected Prompt")
 
 		return 0
 
@@ -757,40 +762,54 @@ class BayTechCtrlC(PCUControl):
 		# Otherwise, the login succeeded.
 
 		# Send a ctrl-c to the remote process.
-		print "sending ctrl-c"
+		print "SENDING ctrl-c"
 		s.send(chr(3))
 
 		# Control Outlets  (5 ,1).........5
 		try:
+			print "EXPECTING: ", "Enter Request :"
 			index = s.expect(["Enter Request :"])
 
 			if index == 0:
-				print "5"
+				print "SENDING: 5"
 				s.send("5\r\n")
-				index = s.expect(["DS-RPC>", "Enter user name:"])
+				print "EXPECTING: ", "DS-RPC>"
+				index = s.expect(["DS-RPC>", "Enter user name:", "Port in use."])
 				if index == 1:
 					print "sending username"
 					s.send(self.username + "\r\n")
 					index = s.expect(["DS-RPC>"])
+				elif index == 2:
+					raise ExceptionPrompt("PCU Reported 'Port in use.'")
 
 				if index == 0:
-					print "Reboot %d" % node_port
+					print "SENDING: Reboot %d" % node_port
 					s.send("Reboot %d\r\n" % node_port)
 
-					index = s.expect(["(Y/N)?"])
+					print "SLEEPING: 5"
+					time.sleep(5)
+					print "EXPECTING: ", "Y/N?"
+					index = s.expect(["\(Y/N\)\?", "Port in use", "DS-RPC>"])
 					if index == 0:
 						if dryrun:
 							print "sending N"
 							s.send("N\r\n")
 						else:
-							print "sending Y"
+							print "SENDING: Y"
 							s.send("Y\r\n")
+					elif index == 1:
+						raise ExceptionPrompt("PCU Reported 'Port in use.'")
+					elif index == 2:
+						raise ExceptionSequence("Issued command 'Reboot' failed.")
 
 				# NOTE: for some reason, the script times out with the
 				# following line.  In manual tests, it works correctly, but
 				# with automated tests, evidently it fails.
-				#index = s.expect(["DS-RPC>"])
-				#print "got prompt back"
+				print "SLEEPING: 5"
+				time.sleep(5)
+				#print "TOTAL--", s.allstr, "--EOT"
+				index = s.expect(["DS-RPC>"])
+				print "got prompt back"
 
 			s.close()
 
@@ -817,6 +836,7 @@ class BayTech(PCUControl):
 			# even after login...
 			print "msg: %s" % msg
 			self.transport.write(self.username + "\r\n")
+			time.sleep(5)
 			self.ifThenSend("DS-RPC>", "Reboot %d" % node_port)
 
 		# Reboot Outlet  N	  (Y/N)?
@@ -824,6 +844,7 @@ class BayTech(PCUControl):
 			self.ifThenSend("(Y/N)?", "N")
 		else:
 			self.ifThenSend("(Y/N)?", "Y")
+		time.sleep(5)
 		self.ifThenSend("DS-RPC>", "")
 
 		self.close()
@@ -1227,7 +1248,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			print values
 
 			# TODO: make a more robust version of APC
-			if values['pcu_id'] in [1163,1055,1111,1231,1113,1127,1128,1148]:
+			if values['pcu_id'] in [1102,1163,1055,1111,1231,1113,1127,1128,1148]:
 				apc = APCEurope(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
@@ -1235,11 +1256,11 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				apc = APCBrazil(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1221,1225]:
+			elif values['pcu_id'] in [1221,1225,1220]:
 				apc = APCBerlin(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1173,1221,1220]:
+			elif values['pcu_id'] in [1173,1240]:
 				apc = APCFolsom(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
@@ -1249,7 +1270,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# BayTech DS4-RPC
 		elif continue_probe and values['model'].find("DS4-RPC") >= 0:
-			if values['pcu_id'] in [1237,1052,1209,1002,1008,1041,1013,1022]:
+			if values['pcu_id'] in [1056,1237,1052,1209,1002,1008,1041,1013,1022]:
 				# These  require a 'ctrl-c' to be sent... 
 				baytech = BayTechCtrlC(values, verbose, ['22', '23'])
 				rb_ret = baytech.reboot(values[nodename], dryrun)

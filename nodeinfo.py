@@ -76,8 +76,7 @@ def act_print_nodeinfo(actnode, header):
 	if 'rt' in actnode and 'Status' in actnode['rt']:
 		print "\t %5.5s %5.5s | %8.8s | %15.15s | %s" % \
 			(actnode['rt']['Status'], actnode['rt']['id'][7:],
-			 actnode['category'], actnode['action'][0], 
-			 actnode['msg_format'][:-1])
+			 actnode['category'], actnode['action'][0], actnode['info'][1:])
 	else:
 		if type(actnode['action']) == type([]):
 			action = actnode['action'][0]

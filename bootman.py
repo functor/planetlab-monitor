@@ -34,9 +34,12 @@ class Sopen(subprocess.Popen):
 #from Rpyc import SocketConnection, Async
 from Rpyc import SocketConnection, Async
 from Rpyc.Utils import *
+fb = None
 
 def get_fbnode(node):
-	fb = database.dbLoad("findbad")
+	global fb
+	if fb is None:
+		fb = database.dbLoad("findbad")
 	fbnode = fb['nodes'][node]['values']
 	return fbnode
 
@@ -359,7 +362,6 @@ def reboot(hostname, config=None, forced_action=None):
 		except:
 			print traceback.print_exc()
 			return False
-			
 
 	if forced_action == "reboot":
 		conn.restart_node('rins')

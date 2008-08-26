@@ -30,7 +30,7 @@ If the machine has booted successfully, you may check it more quickly by logging
 
     sudo /usr/sbin/vps ax
 
-If you have a BootCD older than 3.0, you will need to create burn a new BootImage to CD or USB.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contact's Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
@@ -204,24 +204,32 @@ Monitor restarted NM on the following machines:
 	""")
 	pcudown_one =("""Could not use PCU to reboot %(hostname)s""",
 
-"""As part of our machine monitoring and maintenance, we tried to use the PCU
-registered below, but could not for the following reason at the link below:
+"""As part of PlanetLab node monitoring and maintenance, we tried to use the PCU
+registered below, but could not for the reasons at the link below:
 
 	https://monitor.planet-lab.org/cgi-bin/printbadpcus.php?id=%(pcu_id)s
 
-We need your help resolving this issue in two ways:  
+We need your help resolving this issue in a few ways:  
 
-* First, we need your help rebooting %(hostname)s.  Because we cannot leverage
-  the above PCU, please manually reboot this machine and we can help you
-  resolve any configuration errors with the PCU independently.
+ 1. First, we need your help rebooting %(hostname)s.  Because the above PCU does 
+    not appear to work, please manually reboot this machine.  If it turns out that 
+    there is a problem with the PCU configuration, we can help you
+    resolve that independently.
 
-* Second, if it is possible, please correcct the above PCU problem.  
-  By enabling us to take administrative actions automatically from
-  PlanetLab Central without local intervention, you can trade a small
-  amount of time now for a time savings in the future. 
+ 2. If there is nothing apparently wrong with the PCU, or the mapping between
+    the PCU and the host, then there is likely a problem with our bootstrap
+    software on your machine.  To help us, please make a note of any text on
+    the console and report it to mailto:support@planet-lab.org .  An example
+    might be that the console hangs waiting for a module to unload.  The last
+    reported name or any error messages on the screen would be very helpful.
+
+ 3. Alternately, if it is possible, please correcct the above PCU problem, or
+    let us know what steps you are taking.  By enabling us to take administrative 
+    actions automatically from PlanetLab Central without your intervention, you 
+    can trade a small amount of time now for a time savings in the future. 
 
 If the PCU is up and running, but behind a firewall, please make it accessible
-from address block 128.112.139.0/25.  You can confirm that this is the address
+from address block 128.112.139.0/24.  You can confirm that this is the address
 space from which the PlanetLab Central servers run.
 
 If the above PCU is no longer in service, please delete it by visiting:

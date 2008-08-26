@@ -132,13 +132,16 @@ def nodegroup_display(node, fb, conf=None):
 	node['pcu'] = fb['nodes'][node['hostname']]['values']['pcu']
 	node['lastupdate'] = diff_time(node['last_contact'])
 	pf = PersistFlags(node['hostname'], 1, db='node_persistflags')
-	node['lc'] = diff_time(pf.last_changed)
+	try:
+		node['lc'] = diff_time(pf.last_changed)
+	except:
+		node['lc'] = "err"
 	ut = fb['nodes'][node['hostname']]['values']['comonstats']['uptime']
 	if ut != "null":
 		ut = diff_time(float(fb['nodes'][node['hostname']]['values']['comonstats']['uptime']), False)
 	node['uptime'] = ut
 
-	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)33s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
+	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)35.35s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
 
 def datetime_fromstr(str):
 	if '-' in str:

@@ -171,7 +171,7 @@ def closeTicketViaRT(ticket_id, comment):
 	return
 
 def emailViaRT(subject, text, to, ticket_id=None):
-	if ticket_id == None or ticket_id == "":
+	if ticket_id == None or ticket_id == "" or ticket_id == 0:
 		print "No TICKET"
 		return emailViaRT_NoTicket(subject, text, to)
 
