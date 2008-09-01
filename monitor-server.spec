@@ -6,7 +6,7 @@
 
 %define name monitor-server
 %define version 1.0
-%define taglevel 6
+%define taglevel 7
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -115,6 +115,9 @@ echo "Post processing"
 #chkconfig monitor-server on
 
 %changelog
+* Mon Sep 01 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-1.0-7
+- Checkpointing current version for 4.2-rc21 - many many changes
+
 * Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-6
 - This is a major tag of every thing.  probably needs a very different release
 - number.
