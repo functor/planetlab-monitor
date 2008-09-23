@@ -12,6 +12,46 @@ print "Content-Type: text/html\r\n"
 
 form = cgi.FieldStorage()
 
+def get(fb, path):
+    indexes = path.split("/")
+    values = fb
+    for index in indexes:
+        if index in values:
+            values = values[index]
+        else:
+            return None
+    return values
+
+def diff_time(timestamp, abstime=True):
+	import math
+	now = time.time()
+	if timestamp == None:
+		return "unknown"
+	if abstime:
+		diff = now - timestamp
+	else:
+		diff = timestamp
+	# return the number of seconds as a difference from current time.
+	t_str = ""
+	if diff < 60: # sec in min.
+		t = diff / 1
+		t_str = "%s sec ago" % int(math.ceil(t))
+	elif diff < 60*60: # sec in hour
+		t = diff / (60)
+		t_str = "%s min ago" % int(math.ceil(t))
+	elif diff < 60*60*24: # sec in day
+		t = diff / (60*60)
+		t_str = "%s hrs ago" % int(math.ceil(t))
+	elif diff < 60*60*24*14: # sec in week
+		t = diff / (60*60*24)
+		t_str = "%s days ago" % int(math.ceil(t))
+	elif diff <= 60*60*24*30: # approx sec in month
+		t = diff / (60*60*24*7)
+		t_str = "%s wks ago" % int(math.ceil(t))
+	elif diff > 60*60*24*30: # approx sec in month
+		t = diff / (60*60*24*30)
+		t_str = "%s mnths ago" % int(t)
+	return t_str
 
 def get_value(val):
 	
@@ -26,6 +66,8 @@ vals = {}
 vals['ssh'] = get_value('ssh')
 vals['state'] = get_value('state')
 vals['nm'] = get_value('nm')
+vals['plcnode/last_contact'] = None
+vals['comonstats/uptime'] = None
 vals['princeton_comon'] = get_value('princeton_comon')
 vals['princeton_comon_running'] = get_value('princeton_comon_running')
 vals['princeton_comon_procs'] = get_value('princeton_comon_procs')
@@ -34,41 +76,47 @@ vals['princeton_comon_procs'] = get_value('princeton_comon_procs')
 rows = ""
 fb = database.dbLoad("findbad")
 packed_values = []
+node_count = 0
 for mynode in fb['nodes'].keys():
 	fbnode = fb['nodes'][mynode]['values']
 	row = []
 	row.append(mynode)
 	add=True
-	for key in ['ssh', 'state', 'nm', 'princeton_comon', 'princeton_comon_running', 'princeton_comon_procs']:
-		if key not in fbnode: 
+	for key in ['ssh', 'state', 'plcnode/last_contact', 'nm', 'princeton_comon', 'princeton_comon_running', 'princeton_comon_procs', 'comonstats/uptime']:
+		if get(fbnode, key) is None:
 			row.append('nokey')
 		else:
-			if vals[key] and vals[key] == fbnode[key]:
+			if vals[key] is not None and vals[key] in get(fbnode, key):
 				add = True & add
-			elif not vals[key]:
+			elif vals[key] is None:
 				add = True & add
 			else:
 				add = False
-
-			row.append(fbnode[key])
-
+			
+			if 'last_contact' in key:
+				t = time.time()
+				lc = get(fbnode,key)
+				diff = ((t - lc) // (60*60*6)) * 6
+				row.append(-int(diff))
+			else:
+				row.append(get(fbnode,key))
 	if add:
 		packed_values.append(row)
-	
+
+
 
 def rowcmp(x,y):
 	for i in range(1,len(x)):
 		if x[i] == y[i]: continue
 		if x[i] < y[i]: return -1
 		if x[i] > y[i]: return 1
-
 	return 0
 
 packed_values.sort(rowcmp)
 
 t = TABLE(border=1)
 r = TR()
-for value in ['num', 'host', 'ssh', 'state', 'NM', 'comon<br>dir', 'comon<br>vserver', 'comon<br>procs']:
+for value in ['num', 'host', 'ssh', 'state', 'last<br>contact', 'NM', 'comon<br>dir', 'comon<br>vserver', 'comon<br>procs']:
 	r.append(TD(value))
 t.append(r)
 
@@ -81,5 +129,9 @@ for row in packed_values:
 	i+=1 
 	t.append(r)
 		
+#r = TR()
+#r.append(TD(node_count))
+#t.append(r)
+
 d = Document(t)
 print d
