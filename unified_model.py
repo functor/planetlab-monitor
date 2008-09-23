@@ -3,8 +3,6 @@
 from monitor import database
 
 import plc
-api = plc.getAuthAPI()
-
 import mailer
 import time
 
@@ -15,9 +13,6 @@ import config
 
 def gethostlist(hostlist_file):
 	return util.file.getListFromFile(hostlist_file)
-	
-	#nodes = api.GetNodes({'peer_id' : None}, ['hostname'])
-	#return [ n['hostname'] for n in nodes ]
 
 def array_to_priority_map(array):
 	""" Create a mapping where each entry of array is given a priority equal
@@ -450,7 +445,7 @@ class Record(object):
 
 	def getDaysDown(cls, diag_record):
 		daysdown = -1
-		if diag_record['comonstats']['uptime'] != "null":
+		if diag_record['comonstats']['uptime'] != "null" and diag_record['comonstats']['uptime'] != "-1":
 			daysdown = - int(float(diag_record['comonstats']['uptime'])) // (60*60*24)
 		#elif diag_record['comonstats']['sshstatus'] != "null":
 		#	daysdown = int(diag_record['comonstats']['sshstatus']) // (60*60*24)
@@ -504,7 +499,7 @@ class Record(object):
 	#		return "%d days up"% -daysdown
 	#getStrDaysDown = classmethod(getStrDaysDown)
 
-	def takeAction(self):
+	def takeAction(self, index=0):
 		pp = PersistSitePenalty(self.hostname, 0, db='persistpenalty_hostnames')
 		if 'improvement' in self.data['stage'] or self.improved() or \
 			'monitor-end-record' in self.data['stage']:
@@ -514,6 +509,7 @@ class Record(object):
 		else:
 			print "takeAction: increasing penalty for %s"%self.hostname
 			pp.increase()
+		pp.index = index
 		pp.apply(self.hostname)
 		pp.save()
 

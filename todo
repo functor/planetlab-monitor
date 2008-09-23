@@ -14,9 +14,9 @@ TODO:
 	- testapi.py
 	- findbad.py on sample site.
 	- nodebad.py
+	- findbadpcus.py
 	- nodequery.py
 	- nodegroups.py
-	- findbadpcus.py
 	- loads webpage for those retreived values to confirm setup succeeded.
 
  * reimplement the config.py / .config mechanism.  I'd like for many commands

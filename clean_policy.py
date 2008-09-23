@@ -84,6 +84,7 @@ class MonitorMergeDiagnoseSendEscellate:
 		fbnode['log'] = None
 		fbnode['time'] = time.time()
 		fbnode['email'] = TECH
+		fbnode['action-level'] = 0
 		fbnode['action'] = ['noop']
 		fbnode['date_created'] = time.time()
 
@@ -171,7 +172,7 @@ class MonitorMergeDiagnoseSendEscellate:
 		print "diagnose: checkStageAndTime Returned Valid Record"
 		site = PersistFlags(self.loginbase, 1, db='site_persistflags')
 
-		if site.status != "good":
+		if "good" not in site.status: #  != "good":
 			print "diagnose: Setting site %s for 'squeeze'" % self.loginbase
 			diag.setFlag('Squeeze')
 		else:
@@ -191,7 +192,9 @@ class MonitorMergeDiagnoseSendEscellate:
 		#print record.data['stage']
 		#print "improvement" in record.data['stage']
 		#print self.getSendEmailFlag(record)
-		if self.getSendEmailFlag(record) or "monitor-end-record" in record.data['stage']: 
+		print "%s %s DAYS DOWN" % ( self.hostname, Record.getDaysDown(record.data) )
+		if ( self.getSendEmailFlag(record) and Record.getDaysDown(record.data) >= 2 ) or \
+			"monitor-end-record" in record.data['stage']:
 			print "action: getting message"
 			message = record.getMessage(record.data['ticket_id'])
 			if message:
@@ -206,10 +209,13 @@ class MonitorMergeDiagnoseSendEscellate:
 					print "action: setting record ticket_id"
 					record.data['ticket_id'] = message.rt.ticket_id
 
-			if (record.data['takeaction'] and diag.getFlag('Squeeze') ) or diag.getFlag('BackOff'):
+			if ( record.data['takeaction'] and diag.getFlag('Squeeze') ): 
 				print "action: taking action"
-				record.takeAction()
+				record.takeAction(record.data['action-level'])
 				diag.resetFlag('Squeeze')
+				diag.save()
+			if diag.getFlag('BackOff'):
+				record.takeAction(0)
 				diag.resetFlag('BackOff')
 				diag.save()
 
@@ -306,6 +312,7 @@ class MonitorMergeDiagnoseSendEscellate:
 			record.data['message'] = record.data['message_series'][0]
 			record.data['stage'] = 'stage_actinoneweek'
 			record.data['save-act-all'] = True
+			record.data['action-level'] = 0
 
 		elif 'reboot_node' in record.data['stage']:
 			record.data['email'] = TECH
@@ -314,6 +321,7 @@ class MonitorMergeDiagnoseSendEscellate:
 			record.data['stage'] = 'stage_actinoneweek'
 			record.data['takeaction'] = False
 			record.data['save-act-all'] = False
+			record.data['action-level'] = 0
 			
 		elif 'improvement' in record.data['stage']:
 			print "checkStageAndTime: backing off of %s" % self.hostname
@@ -322,6 +330,7 @@ class MonitorMergeDiagnoseSendEscellate:
 			record.data['message'] = record.data['message_series'][0]
 			record.data['stage'] = 'monitor-end-record'
 			record.data['save-act-all'] = True
+			record.data['action-level'] = 0
 
 		elif 'actinoneweek' in record.data['stage']:
 			if delta >= 7 * SPERDAY: 
@@ -333,6 +342,7 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['time'] = current_time		# reset clock for waitforever
 				record.data['takeaction'] = True
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 1
 			elif delta >= 3* SPERDAY and not 'second-mail-at-oneweek' in record.data:
 				print "checkStageAndTime: second message in one week"
 				record.data['email'] = TECH 
@@ -341,11 +351,13 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['second-mail-at-oneweek'] = True
 				record.data['takeaction'] = False
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 0
 			else:
 				record.data['message'] = None
 				record.data['action'] = ['waitforoneweekaction' ]
 				record.data['takeaction'] = False
 				record.data['save-act-all'] = False
+				record.data['action-level'] = 0
 				print "checkStageAndTime: ignoring this record for: %s" % self.hostname
 				#return None 			# don't send if there's no action
 
@@ -359,6 +371,7 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['time'] = current_time		# reset clock for waitforever
 				record.data['takeaction'] = True
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 2
 			elif delta >= 3* SPERDAY and not 'second-mail-at-twoweeks' in record.data:
 				print "checkStageAndTime: second message in one week for stage two"
 				record.data['email'] = TECH | PI
@@ -367,12 +380,14 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['second-mail-at-twoweeks'] = True
 				record.data['takeaction'] = False
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 1
 			else:
 				record.data['message'] = None
 				record.data['takeaction'] = False
 				record.data['action'] = ['waitfortwoweeksaction']
 				record.data['save-act-all'] = False
 				print "checkStageAndTime: second message in one week for stage two"
+				record.data['action-level'] = 1
 				#return None 			# don't send if there's no action
 
 		elif 'ticket_waitforever' in record.data['stage']:
@@ -385,18 +400,21 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['message'] = None
 				record.data['time'] = current_time
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 2
 			else:
 				if delta >= 7*SPERDAY:
 					record.data['action'] = ['ticket_waitforever']
 					record.data['message'] = None
 					record.data['time'] = current_time		# reset clock
 					record.data['save-act-all'] = True
+					record.data['action-level'] = 2
 				else:
 					record.data['action'] = ['ticket_waitforever']
 					record.data['message'] = None
 					record.data['takeaction'] = False
 					record.data['save-act-all'] = False
-					return None
+					record.data['action-level'] = 2
+					#return None
 
 		elif 'waitforever' in record.data['stage']:
 			# more than 3 days since last action
@@ -408,11 +426,13 @@ class MonitorMergeDiagnoseSendEscellate:
 				record.data['message'] = record.data['message_series'][2]
 				record.data['time'] = current_time		# reset clock
 				record.data['save-act-all'] = True
+				record.data['action-level'] = 2
 			else:
 				record.data['action'] = ['waitforever']
 				record.data['message'] = None
 				record.data['takeaction'] = False
 				record.data['save-act-all'] = False
+				record.data['action-level'] = 2
 				#return None 			# don't send if there's no action
 
 		else:

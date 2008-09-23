@@ -29,11 +29,11 @@ def gethardwarequality(nodename, fb):
 		for field in ['cpuspeed', 'memsize', 'disksize']:
 			if field not in cstat: cstat[field] = "null"
 
-		if cstat['cpuspeed'] != "null" and float(cstat['cpuspeed']) < 2.4:
+		if cstat['cpuspeed'] != "null" and float(cstat['cpuspeed']) < 2.2:
 			return "BAD" # "cpu_slow",
-		if cstat['memsize'] != "null" and float(cstat['memsize']) < 2.9:
+		if cstat['memsize'] != "null" and float(cstat['memsize']) < 2.8:
 			return "BAD" # "mem_small",
-		if cstat['disksize'] != "null" and float(cstat['disksize']) < 320.0:
+		if cstat['disksize'] != "null" and float(cstat['disksize']) < 300.0:
 			return "BAD" # "disk_small",
 
 		if cstat['disksize'] == "null" and \
@@ -42,9 +42,9 @@ def gethardwarequality(nodename, fb):
 			return "N/A"
 
 		try:
-			if  float(cstat['cpuspeed']) >= 2.4 and \
-				float(cstat['memsize']) >= 2.9 and \
-				(cstat['disksize'] == "null" or float(cstat['disksize']) >= 320.0):
+			if  float(cstat['cpuspeed']) >= 2.2 and \
+				float(cstat['memsize']) >= 2.8 and \
+				(cstat['disksize'] == "null" or float(cstat['disksize']) >= 300.0):
 				return "A-OK"
 		except:
 			print cstat

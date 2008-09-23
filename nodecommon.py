@@ -4,6 +4,7 @@ import reboot
 import time
 import util.file
 import plc
+from datetime import datetime 
 from monitor import database
 from unified_model import PersistFlags
 esc = struct.pack('i', 27)

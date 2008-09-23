@@ -228,6 +228,11 @@ if config.nodegroup:
 	nodelist = api.GetNodes(ng[0]['node_ids'])
 	hostnames = [ n['hostname'] for n in nodelist ]
 
+if config.site:
+	site = api.GetSites(config.site)
+	l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
+	hostnames = [ n['hostname'] for n in l_nodes ]
+
 if config.node or config.nodelist:
 	if config.node: hostnames = [ config.node ] 
 	else: hostnames = util.file.getListFromFile(config.nodelist)
@@ -339,10 +344,10 @@ for host in hostnames:
 				print "ALL METHODS OF RESTARTING %s FAILED" % host
 				args = {}
 				args['hostname'] = host
-				m = PersistMessage(host, "ALL METHODS FAILED for %(hostname)s" % args,
-											 "CANNOT CONTACT", False, db='suspect_persistmessages')
-				m.reset()
-				m.send(['monitor-list@lists.planet-lab.org'])
+				#m = PersistMessage(host, "ALL METHODS FAILED for %(hostname)s" % args,
+				#							 "CANNOT CONTACT", False, db='suspect_persistmessages')
+				#m.reset()
+				#m.send(['monitor-list@lists.planet-lab.org'])
 
 			l = Log(host, record)
 			print l

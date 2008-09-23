@@ -541,11 +541,11 @@ def reboot(hostname, config=None, forced_action=None):
 	#  By using the sequence identifier, we guarantee that there will be no
 	#  frequent loops.  I'm guessing there is a better way to track loops,
 	#  though.
-	if not config.force and pflags.getRecentFlag(s):
-		pflags.setRecentFlag(s)
-		pflags.save() 
-		print "... flag is set or it has already run recently. Skipping %s" % node
-		return True
+	#if not config.force and pflags.getRecentFlag(s):
+	#	pflags.setRecentFlag(s)
+	#	pflags.save() 
+	#	print "... flag is set or it has already run recently. Skipping %s" % node
+	#	return True
 
 	sequences = {}
 
