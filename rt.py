@@ -9,7 +9,7 @@ import time
 import re
 import database
 from threading import *
-import monitorconfig
+import config
 
 # TODO: merge the RT mailer from mailer.py into this file.
 
@@ -73,10 +73,10 @@ def open_rt_db():
 	#	return -1
 
 	try:
-		rt_db = MySQLdb.connect(host=monitorconfig.RT_DB_HOST,
-								user=monitorconfig.RT_DB_USER,
-		   						passwd=monitorconfig.RT_DB_PASSWORD,
-								db=monitorconfig.RT_DB_NAME)
+		rt_db = MySQLdb.connect(host=config.RT_DB_HOST,
+								user=config.RT_DB_USER,
+		   						passwd=config.RT_DB_PASSWORD,
+								db=config.RT_DB_NAME)
 	except Exception, err:
 		print "Failed to connect to RT database: %s" %err
 		return -1

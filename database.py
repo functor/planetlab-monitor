@@ -12,10 +12,9 @@ except:
 import inspect
 import shutil
 import config
-import config as monitorconfig
 
 DEBUG= 0
-PICKLE_PATH=monitorconfig.MONITOR_DATA_ROOT
+PICKLE_PATH=config.MONITOR_DATA_ROOT
 
 
 def dbLoad(name, type=None):

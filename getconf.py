@@ -4,7 +4,7 @@ import plc
 api = plc.getAuthAPI()
 import sys
 import os
-import monitorconfig
+import config
 
 def getconf(hostname, force=False, media=None):
 	n = api.GetNodes(hostname)
@@ -21,16 +21,16 @@ def getconf(hostname, force=False, media=None):
 
 	args = {}
 	if not media:
-		args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
-		args['url_list'] += "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+		args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (config.MONITOR_HOSTNAME, hostname)
+		args['url_list'] += "   http://%s/bootcds/%s.iso" % (config.MONITOR_HOSTNAME, hostname)
 	else:
 		if media == "usb":
-			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (config.MONITOR_HOSTNAME, hostname)
 		elif media == "iso":
-			args['url_list']  = "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+			args['url_list']  = "   http://%s/bootcds/%s.iso" % (config.MONITOR_HOSTNAME, hostname)
 		else:
-			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (monitorconfig.MONITOR_HOSTNAME, hostname)
-			args['url_list'] += "   http://%s/bootcds/%s.iso" % (monitorconfig.MONITOR_HOSTNAME, hostname)
+			args['url_list']  = "   http://%s/bootcds/%s-partition.usb\n" % (config.MONITOR_HOSTNAME, hostname)
+			args['url_list'] += "   http://%s/bootcds/%s.iso" % (config.MONITOR_HOSTNAME, hostname)
 			
 
 	return args
