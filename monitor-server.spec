@@ -5,8 +5,8 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/Monitor/trunk/Monitor-server.spec $
 
 %define name monitor-server
-%define version 1.0
-%define taglevel 8
+%define version 1.1
+%define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -128,3 +128,5 @@ echo "Post processing"
 
 * Wed Jul 30 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-server-1.0-5
 - initial creation of server-side package
+
+%define module_current_branch 1.0

@@ -5,8 +5,8 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version 1.0
-%define taglevel 8
+%define version 1.1
+%define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -85,3 +85,5 @@ chkconfig monitor on
 
 * Mon Apr 07 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-1.0-0
 - initial addition.
+
+%define module_current_branch 1.0
