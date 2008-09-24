@@ -6,7 +6,7 @@
 
 %define name monitor-server
 %define version 1.0
-%define taglevel 7
+%define taglevel 8
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -115,6 +115,10 @@ echo "Post processing"
 #chkconfig monitor-server on
 
 %changelog
+* Wed Sep 24 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-8
+- These are all changes in the latest Monitor code.  I will branch this version
+- next, before making additional large changes.
+
 * Mon Sep 01 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-1.0-7
 - Checkpointing current version for 4.2-rc21 - many many changes
 
