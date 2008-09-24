@@ -12,7 +12,6 @@ import calendar
 import logging
 import os
 import time
-import monitorconfig
 
 logger = logging.getLogger("monitor")
 
@@ -28,11 +27,11 @@ def reformat_for_rt(text):
 		
 
 def _setupRTenvironment():
-	os.environ['PATH'] = os.environ['PATH'] + ":" + monitorconfig.RT_WEB_TOOLS_PATH
-	os.environ['RTSERVER'] = monitorconfig.RT_WEB_SERVER
-	os.environ['RTUSER']   = monitorconfig.RT_WEB_USER
-	os.environ['RTPASSWD'] = monitorconfig.RT_WEB_PASSWORD
-	os.environ['RTDEBUG'] = monitorconfig.RT_WEB_DEBUG
+	os.environ['PATH'] = os.environ['PATH'] + ":" + config.RT_WEB_TOOLS_PATH
+	os.environ['RTSERVER'] = config.RT_WEB_SERVER
+	os.environ['RTUSER']   = config.RT_WEB_USER
+	os.environ['RTPASSWD'] = config.RT_WEB_PASSWORD
+	os.environ['RTDEBUG'] = config.RT_WEB_DEBUG
 	return
 
 def setTicketStatus(ticket_id, status):

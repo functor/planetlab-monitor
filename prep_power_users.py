@@ -15,9 +15,9 @@ email_list = [ 'monitor@planet-lab.org',
         	 # 'vivek@cs.princeton.edu',
 		]
 
-import monitorconfig
-api   = plc.PLC(monitorconfig.API_AUTH, monitorconfig.API_SERVER)
-api06 = plc.PLC(monitorconfig.API_AUTH06, monitorconfig.API_SERVER06)
+import config
+api   = plc.PLC(config.API_AUTH, config.API_SERVER)
+api06 = plc.PLC(config.API_AUTH06, config.API_SERVER06)
 
 
 # add planetlab-15.cs.princeton.edu, and use the key on the CD.

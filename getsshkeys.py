@@ -6,10 +6,10 @@ import string
 import time
 import xml, xmlrpclib
 try:
-	import monitorconfig
-	auth = {'Username'   : monitorconfig.API_AUTH_USER,
+	import config
+	auth = {'Username'   : config.API_AUTH_USER,
 	        'AuthMethod' : "password",
-			'AuthString' : monitorconfig.API_AUTH_PASSWORD}
+			'AuthString' : config.API_AUTH_PASSWORD}
 except:
 	import traceback
 	print traceback.print_exc()

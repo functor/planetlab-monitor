@@ -13,10 +13,10 @@ import inspect
 import shutil
 import config
 
-import monitorconfig
+import config
 
 DEBUG= 0
-PICKLE_PATH=monitorconfig.MONITOR_DATA_ROOT
+PICKLE_PATH=config.MONITOR_DATA_ROOT
 
 class ExceptionTimeout(Exception): pass
 

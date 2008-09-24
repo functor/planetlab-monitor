@@ -24,7 +24,7 @@ from unified_model import *
 from emailTxt import mailtxt
 from nodeconfig import network_config_to_str
 import traceback
-import monitorconfig
+import config
 
 import signal
 class Sopen(subprocess.Popen):
@@ -207,7 +207,7 @@ class PlanetLabSession:
 		args['port'] = self.port
 		args['user'] = 'root'
 		args['hostname'] = self.node
-		args['monitordir'] = monitorconfig.MONITOR_SCRIPT_ROOT
+		args['monitordir'] = config.MONITOR_SCRIPT_ROOT
 		ssh_port = 22
 
 		if self.nosetup:
