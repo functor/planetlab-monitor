@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+	<ModulePrefs title="PlanetLab Site Status" title_url="http://www.planet-lab.org">
+		<Require feature="dynamic-height"/>
+	</ModulePrefs>
+	<UserPref name="loginBase" display_name="Site Login Base" 
+			  default_value="loginbase" datatype="string"></UserPref>
+	<!--UserPref name="reloadRandom" display_name="reset" 
+			  default_value="true" datatype="bool"></UserPref-->
+	<Content type="html"><![CDATA[
+<div id="content_div"></div>
+<script type="text/javascript">
+var prefs = new _IG_Prefs(__MODULE_ID__);
+var displaycontent = function (responseText) {
+	_gel('content_div').innerHTML = responseText; 
+	_IG_AdjustIFrameHeight();
+};
+var url = 'http://monitor.planet-lab.org/cgi-bin/monitorgadget.py?loginbase=' + prefs.getString("loginBase");
+_IG_FetchContent(url, displaycontent, { refreshInterval: 1200 }); 
+</script>
+]]></Content>
+</Module>
