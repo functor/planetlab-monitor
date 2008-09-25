@@ -4,6 +4,7 @@ TODO:
  	* had to mount -t devpts devpts /dev/pts to get ssh to work inside the
 	  chroot. also, disable the pam modules in /etc/pam.d/sshd
 
+ * blue
  * auto configuration for php configuration.  
  	maybe run translation of monitor.conf before loading monitorconfig.php?
 
