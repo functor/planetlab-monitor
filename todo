@@ -7,6 +7,7 @@ TODO:
  * blue
  * auto configuration for php configuration.  
  	maybe run translation of monitor.conf before loading monitorconfig.php?
+ * blue2
 
  * A setup script of some kind would be nice that walked through : 
     - writing monitorconfig.py
