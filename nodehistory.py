@@ -43,9 +43,10 @@ def fb_print_nodeinfo(fbnode, verbose, date=None):
 	else:
 		fbnode['bootcd'] = "unknown"
 	fbnode['state'] = color_boot_state(get_current_state(fbnode))
+	fbnode['boot_state'] = getvalue(fbnode, 'plcnode/boot_state')
 	if len(fbnode['kernel'].split()) >= 3:
 		fbnode['kernel'] = fbnode['kernel'].split()[2]
-	print "    %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+	print "    %(state)5s | %(boot_state)s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
 
 def pcu_print_info(pcuinfo, hostname):
 	print "   Checked: ",

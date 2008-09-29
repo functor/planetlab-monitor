@@ -56,6 +56,8 @@ def collectPingAndSSH(nodename, cohash):
 				echo '  "bmlog":"'`ls /tmp/bm.log`'",'
 				echo '  "bootcd":"'`cat /mnt/cdrom/bootme/ID`'",'
 				echo '  "nm":"'`ps ax | grep nm.py | grep -v grep`'",'
+				echo '  "readonlyfs":"'`touch /var/log/monitor 2>&1`'",'
+				echo '  "dns":"'`host boot.planet-lab.org 2>&1`'",'
 				echo '  "princeton_comon":"'`ls -d /vservers/princeton_comon`'",'
 
 				ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
@@ -70,9 +72,13 @@ EOF			""")
 				values['sshport'] = port
 				break
 			else:
-				values.update({'kernel': "", 'bmlog' : "", 'bootcd' : '', 'nm' :
-				'', 'princeton_comon' : '', 'princeton_comon_running' : '',
-				'princeton_comon_procs' : '', 'sshport' : None})
+				values.update({'kernel': "", 'bmlog' : "", 'bootcd' : '', 
+							 	'nm' : '', 
+								'readonlyfs' : '',
+								'dns' : '',
+								'princeton_comon' : '', 
+								'princeton_comon_running' : '', 
+								'princeton_comon_procs' : '', 'sshport' : None})
 	except:
 		print traceback.print_exc()
 		sys.exit(1)

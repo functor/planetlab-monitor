@@ -198,7 +198,6 @@ class MonitorMergeDiagnoseSendEscellate:
 			print "action: getting message"
 			message = record.getMessage(record.data['ticket_id'])
 			if message:
-				#message.reset()
 				print "action: sending email"
 				message.send(record.getContacts())
 				#print "DEBUG NOT SENDING MESSAGE WHEN I SHOULD BE!!!!!"
