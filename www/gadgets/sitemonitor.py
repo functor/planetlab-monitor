@@ -102,6 +102,7 @@ def main():
 	
 	if form.has_key('loginbase'):
 		loginbase = form.getvalue('loginbase')
+		loginbase = loginbase.rstrip("_")
 	else:
 		loginbase = "undefined"
 
@@ -114,7 +115,10 @@ def main():
 	r = TR()
 
 	if loginbase not in lb2hn:
-		value = ("Select 'Edit settings' to enter your Site's loginbase.", "")
+		value = ("""Select 'Edit settings' to enter your Site's loginbase.<br><br>
+					The loginbase is the unchangable portion of your slicename.  
+					For instance, your slice follows the pattern loginbase_slicename.<br><br>
+					If this hint is unclear, then you can find your loginbase by visiting 'My Site' at <a target=_blank href=http://www.planet-lab.org>'PlanetLab.org'</a>""", "")
 		r = TR(TD(value[0]))
 		t.append(r)
 	else:

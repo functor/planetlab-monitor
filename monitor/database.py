@@ -3,8 +3,8 @@ import sys
 import pickle
 noserial=False
 try:
-	from PHPSerialize import *
-	from PHPUnserialize import *
+	from util.PHPSerialize import *
+	from util.PHPUnserialize import *
 except:
 	#print >>sys.stderr, "PHPSerial db type not allowed."
 	noserial=True
@@ -15,7 +15,7 @@ import config
 import config as monitorconfig
 
 DEBUG= 0
-PICKLE_PATH=monitorconfig.MONITOR_DATA_ROOT
+PICKLE_PATH=config.MONITOR_DATA_ROOT
 
 
 def dbLoad(name, type=None):
@@ -90,6 +90,7 @@ class SPickle:
 		Otherwise, it's normal mode, if the file doesn't exist, raise error
 		Load the file
 		"""
+		print "loading %s" % name
 
 		if config.debug:
 			if self.exists("debug.%s" % name, type):

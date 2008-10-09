@@ -1235,6 +1235,8 @@ def reboot_policy(nodename, continue_probe, dryrun):
 
 def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 	rb_ret = ""
+	if 'plc_pcu_stats' in values:
+		values.update(values['plc_pcu_stats'])
 
 	try:
 		# DataProbe iPal (many sites)

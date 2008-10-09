@@ -13,13 +13,22 @@ import os
 from reboot import pcu_name
 import reboot
 import util.file
+import traceback
 
 import time
 import re
 
+import config
+
+from sqlobject import connectionForURI,sqlhub
+connection = connectionForURI(config.sqlobjecturi)
+sqlhub.processConnection = connection
+from infovacuum.model.findbadrecord import *
+
 #fb = {}
 fb = None
 fbpcu = None
+import string
 
 class NoKeyException(Exception): pass
 
@@ -31,20 +40,26 @@ def daysdown_print_nodeinfo(fbnode, hostname):
 	print "%(intdaysdown)5s %(hostname)-44s | %(state)10.10s | %(daysdown)s" % fbnode
 
 def fb_print_nodeinfo(fbnode, hostname, fields=None):
-	fbnode['hostname'] = hostname
-	fbnode['checked'] = diff_time(fbnode['checked'])
-	if fbnode['bootcd']:
-		fbnode['bootcd'] = fbnode['bootcd'].split()[-1]
+	#fbnode['hostname'] = hostname
+	#fbnode['checked'] = diff_time(fbnode['checked'])
+	if fbnode['bootcd_version']:
+		fbnode['bootcd_version'] = fbnode['bootcd_version'].split()[-1]
 	else:
-		fbnode['bootcd'] = "unknown"
+		fbnode['bootcd_version'] = "unknown"
 	fbnode['pcu'] = color_pcu_state(fbnode)
 
 	if not fields:
-		if 'ERROR' in fbnode['category']:
-			fbnode['kernel'] = ""
+		if ( fbnode['observed_status'] is not None and \
+		   'DOWN' in fbnode['observed_status'] ) or \
+		   fbnode['kernel_version'] is None:
+			fbnode['kernel_version'] = ""
 		else:
-			fbnode['kernel'] = fbnode['kernel'].split()[2]
-		fbnode['boot_state'] = fbnode['plcnode']['boot_state']
+			fbnode['kernel_version'] = fbnode['kernel_version'].split()[2]
+
+		if fbnode['plc_node_stats'] is not None:
+			fbnode['boot_state'] = fbnode['plc_node_stats']['boot_state']
+		else:
+			fbnode['boot_state'] = "unknown"
 
 		try:
 			if len(fbnode['nodegroups']) > 0:
@@ -53,7 +68,7 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 			#print "ERROR!!!!!!!!!!!!!!!!!!!!!"
 			pass
 
-		print "%(hostname)-45s | %(checked)11.11s | %(boot_state)5.5s| %(state)8.8s | %(ssh)5.5s | %(pcu)6.6s | %(bootcd)6.6s | %(category)8.8s | %(kernel)s" % fbnode
+		print "%(hostname)-45s | %(date_checked)11.11s | %(boot_state)5.5s| %(observed_status)8.8s | %(ssh_status)5.5s | %(pcu)6.6s | %(bootcd_version)6.6s | %(kernel_version)s" % fbnode
 	else:
 		format = ""
 		for f in fields:
@@ -133,6 +148,65 @@ def verifyType(constraints, data):
 
 	return con_or_true
 
+def verifyDBrecord(constraints, record):
+	"""
+		constraints is a list of key, value pairs.
+		# [ {... : ...}==AND , ... , ... , ] == OR
+	"""
+	def has_key(obj, key):
+		try:
+			x = obj.__getattribute__(key)
+			return True
+		except:
+			return False
+
+	def get_val(obj, key):
+		try:
+			return obj.__getattribute__(key)
+		except:
+			return None
+
+	def get(obj, path):
+		indexes = path.split("/")
+		value = get_val(obj,indexes[0])
+		if value is not None and len(indexes) > 1:
+			for key in indexes[1:]:
+				if key in value:
+					value = value[key]
+				else:
+					raise NoKeyException(key)
+		return value
+
+	#print constraints, record
+
+	con_or_true = False
+	for con in constraints:
+		#print "con: %s" % con
+		if len(con.keys()) == 0:
+			con_and_true = False
+		else:
+			con_and_true = True
+
+		for key in con.keys():
+			#print "looking at key: %s" % key
+			if has_key(record, key):
+				value_re = re.compile(con[key])
+				if type([]) == type(get(record,key)):
+					local_or_true = False
+					for val in get(record,key):
+						local_or_true = local_or_true | (value_re.search(val) is not None)
+					con_and_true = con_and_true & local_or_true
+				else:
+					if get(record,key) is not None:
+						con_and_true = con_and_true & (value_re.search(get(record,key)) is not None)
+			else:
+				print "missing key %s" % key,
+				pass
+
+		con_or_true = con_or_true | con_and_true
+
+	return con_or_true
+
 def verify(constraints, data):
 	"""
 		constraints is a list of key, value pairs.
@@ -156,12 +230,11 @@ def verify(constraints, data):
 						local_or_true = local_or_true | (value_re.search(val) is not None)
 					con_and_true = con_and_true & local_or_true
 				else:
-					con_and_true = con_and_true & (value_re.search(data[key]) is not None)
+					if data[key] is not None:
+						con_and_true = con_and_true & (value_re.search(data[key]) is not None)
 			elif key not in data:
 				print "missing key %s" % key,
 				pass
-				#print "missing key %s" % key
-				#con_and_true = False
 
 		con_or_true = con_or_true | con_and_true
 
@@ -239,18 +312,21 @@ def node_select(str_query, nodelist=None, fbdb=None):
 	for node in fb['nodes'].keys():
 		if nodelist is not None: 
 			if node not in nodelist: continue
-	
-		fb_nodeinfo  = fb['nodes'][node]['values']
 
-		if fb_nodeinfo == []:
-			#print node, "has lost values"
+		try:
+			fb_noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node, 
+											   orderBy='date_checked').reversed()[0]
+		except:
 			continue
-			#sys.exit(1)
-		fb_nodeinfo['pcu'] = color_pcu_state(fb_nodeinfo)
-		fb_nodeinfo['hostname'] = node
-		if 'plcnode' in fb_nodeinfo:
-			fb_nodeinfo.update(fb_nodeinfo['plcnode'])
 
+		
+		fb_nodeinfo = fb_noderec.toDict()
+
+		#fb_nodeinfo['pcu'] = color_pcu_state(fb_nodeinfo)
+		#if 'plcnode' in fb_nodeinfo:
+		#	fb_nodeinfo.update(fb_nodeinfo['plcnode'])
+
+		#if verifyDBrecord(dict_query, fb_nodeinfo):
 		if verify(dict_query, fb_nodeinfo):
 			#print node #fb_nodeinfo
 			hostnames.append(node)
@@ -300,6 +376,7 @@ def main():
 		os.chdir("..")
 		fb = archive.load(file[:-4])
 	else:
+		fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
 		fb = database.dbLoad("findbad")
 
 	fbpcu = database.dbLoad("findbadpcus")
@@ -329,7 +406,13 @@ def main():
 		if node not in fb['nodes']:
 			continue
 
-		fb_nodeinfo  = fb['nodes'][node]['values']
+		try:
+			# Find the most recent record
+			fb_noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node, 
+											   orderBy='date_checked').reversed()[0]
+		except:
+			print traceback.print_exc()
+			pass #fb_nodeinfo  = fb['nodes'][node]['values']
 
 		if config.list:
 			print node
@@ -337,6 +420,7 @@ def main():
 			if config.daysdown:
 				daysdown_print_nodeinfo(fb_nodeinfo, node)
 			else:
+				fb_nodeinfo = fb_noderec.toDict()
 				if config.select:
 					if config.fields:
 						fields = config.fields.split(",")

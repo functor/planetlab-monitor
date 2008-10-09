@@ -66,16 +66,14 @@ class CMD:
 		o_value = ""
 		e_value = ""
 
-		#print "reading from f_out"
-		if len(lout) > 0: o_value = f_out.read()
-		#print "reading from f_err"
-		if len(lerr) > 0: e_value = f_err.read()
+		o_value = f_out.read()
+		e_value = f_err.read()
 
 		#print "striping output"
 		o_value = o_value.strip()
 		e_value = e_value.strip()
 
-		#print "OUTPUT", o_value, e_value
+		#print "OUTPUT -%s-%s-" % (o_value, e_value)
 
 		#print "closing files"
 		f_out.close()

@@ -14,31 +14,32 @@ import syncplcdb
 from nodequery import verify,query_to_dict,node_select
 import parser as parsermodule
 from nodecommon import *
+from datetime import datetime,timedelta
+import config
+
+from sqlobject import connectionForURI,sqlhub
+connection = connectionForURI(config.sqlobjecturi)
+sqlhub.processConnection = connection
+from infovacuum.model_findbadrecord import *
+from infovacuum.model_historyrecord import *
 
 import plc
 api = plc.getAuthAPI()
 from unified_model import *
 from const import MINUP
 
-round = 1
-externalState = {'round': round, 'nodes': {}}
-count = 0
 
 def main(config):
-	global externalState
-	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
-	if config.increment:
-		# update global round number to force refreshes across all pcus
-		externalState['round'] += 1
 
 	l_plcpcus = database.if_cached_else_refresh(1, 1, "pculist", lambda : plc.GetPCUs())
 
-	l_pcu = None
+	l_pcus = None
 	if config.pcu:
 		for pcu in l_plcpcus:
-			if pcu['hostname'] == config.pcu  or pcu['ip'] == config.pcu:
+			if ( pcu['hostname'] is not None and config.pcu in pcu['hostname'] ) or \
+			   ( pcu['ip'] is not None and config.pcu in pcu['ip'] ):
 				l_pcus = [pcu['pcu_id']]
-		if not l_pcu:
+		if not l_pcus:
 			print "ERROR: could not find pcu %s" % config.pcu
 			sys.exit(1)
 	else:
@@ -46,108 +47,68 @@ def main(config):
 	
 	checkAndRecordState(l_pcus, l_plcpcus)
 
-def checkAndRecordState(l_pcus, l_plcpcus):
-	global externalState
-	global count
-	global_round = externalState['round']
-
-	for pcuname in l_pcus:
-		if pcuname not in externalState['nodes']:
-			externalState['nodes'][pcuname] = {'round': 0, 'values': []}
-
-		pcu_round   = externalState['nodes'][pcuname]['round']
-		if pcu_round < global_round:
-			# do work
-			values = collectStatusAndState(pcuname, l_plcpcus)
-			global_round = externalState['round']
-			externalState['nodes'][pcuname]['values'] = values
-			externalState['nodes'][pcuname]['round'] = global_round
-		else:
-			count += 1
-
-		if count % 20 == 0:
-			database.dbDump(config.dbname, externalState)
-
-	database.dbDump(config.dbname, externalState)
-
-fbpcu = database.dbLoad('findbadpcus')
 hn2lb = database.dbLoad("plcdb_hn2lb")
 
-def get(fb, path):
-	indexes = path.split("/")
-	values = fb
-	for index in indexes:
-		if index in values:
-			values = values[index]
+def checkAndRecordState(l_pcus, l_plcpcus):
+	count = 0
+	for pcuname in l_pcus:
+
+		d_pcu = None
+		for pcu in l_plcpcus:
+			if pcu['pcu_id'] == pcuname:
+				d_pcu = pcu
+				break
+		if not d_pcu:
+			continue
+
+		try:
+			pf = HistoryPCURecord.by_pcuid(d_pcu['pcu_id'])
+		except:
+			pf = HistoryPCURecord(plc_pcuid=pcuname)
+
+		pf.last_checked = datetime.now()
+
+		try:
+			# Find the most recent record
+			pcurec = FindbadPCURecord.select(FindbadPCURecord.q.plc_pcuid==pcuname, 
+											   orderBy='date_checked').reversed()[0]
+		except:
+			# don't have the info to create a new entry right now, so continue.
+			continue 
+
+		pcu_state      = pcurec.reboot_trial_status
+		current_state = pcu_state
+
+		if current_state == 0 or current_state == "0":
+			if pf.status != "good": 
+				pf.last_changed = datetime.now() 
+				pf.status = "good"
+		elif current_state == 'NetDown':
+			if pf.status != "netdown": 
+				pf.last_changed = datetime.now()
+				pf.status = "netdown"
+		elif current_state == 'Not_Run':
+			if pf.status != "badconfig": 
+				pf.last_changed = datetime.now()
+				pf.status = "badconfig"
 		else:
-			return None
-	return values
+			if pf.status != "error": 
+				pf.last_changed = datetime.now()
+				pf.status = "error"
 
-def collectStatusAndState(pcuname, l_plcpcus):
-	global count
-
-	d_pcu = None
-	for pcu in l_plcpcus:
-		if pcu['pcu_id'] == pcuname:
-			d_pcu = pcu
-			break
-	if not d_pcu:
-		return None
-
-	pf = PersistFlags(pcuname, 1, db='pcu_persistflags')
-
-	if not pf.checkattr('last_changed'):
-		pf.last_changed = time.time()
-		
-	pf.last_checked = time.time()
-
-	if not pf.checkattr('valid'):
-		pf.valid = "unknown"
-		pf.last_valid = 0
-
-	if not pf.checkattr('status'):
-		pf.status = "unknown"
-
-	state_path     = "nodes/id_" + str(pcuname) + "/values/reboot"
-	bootstate_path = "nodes/id_" + str(pcuname) + "/values/plcpcu/boot_state"
-
-	current_state = get(fbpcu, state_path)
-	if current_state == 0:
-		if pf.status != "good": pf.last_changed = time.time()
-		pf.status = "good"
-	elif current_state == 'NetDown':
-		if pf.status != "netdown": pf.last_changed = time.time()
-		pf.status = "netdown"
-	elif current_state == 'Not_Run':
-		if pf.status != "badconfig": pf.last_changed = time.time()
-		pf.status = "badconfig"
-	else:
-		if pf.status != "error": pf.last_changed = time.time()
-		pf.status = "error"
-
-	count += 1
-	print "%d %35s %s since(%s)" % (count, pcu_name(d_pcu), pf.status, diff_time(pf.last_changed))
-	# updated by other modules
-	#pf.enabled = 
-	#pf.suspended = 
-
-	pf.save()
+		count += 1
+		print "%d %35s %s since(%s)" % (count, pcu_name(d_pcu), pf.status, diff_time(time.mktime(pf.last_changed.timetuple())))
 
 	return True
 
 if __name__ == '__main__':
 	parser = parsermodule.getParser()
-	parser.set_defaults(filename=None, pcu=None, pcuselect=False, pcugroup=None, 
-						increment=False, dbname="pcubad", cachepcus=False)
+	parser.set_defaults(filename=None, pcu=None, pcuselect=False, pcugroup=None, cachepcus=False)
 	parser.add_option("", "--pcu", dest="pcu", metavar="hostname", 
 						help="Provide a single pcu to operate on")
 	parser.add_option("", "--pculist", dest="pculist", metavar="file.list", 
 						help="Provide a list of files to operate on")
 
-	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
-						help="Specify the name of the database to which the information is saved")
-	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
-						help="Increment round number to force refresh or retry")
 	config = parsermodule.parse_args(parser)
 
 	try:
@@ -156,6 +117,4 @@ if __name__ == '__main__':
 		import traceback
 		print traceback.print_exc()
 		print "Exception: %s" % err
-		print "Saving data... exitting."
-		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

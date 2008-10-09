@@ -66,6 +66,8 @@ vals = {}
 vals['ssh'] = get_value('ssh')
 vals['state'] = get_value('state')
 vals['nm'] = get_value('nm')
+vals['dns'] = None
+vals['readonlyfs'] = None
 vals['plcnode/last_contact'] = None
 vals['comonstats/uptime'] = None
 vals['princeton_comon'] = get_value('princeton_comon')
@@ -82,7 +84,19 @@ for mynode in fb['nodes'].keys():
 	row = []
 	row.append(mynode)
 	add=True
-	for key in ['ssh', 'state', 'plcnode/last_contact', 'nm', 'princeton_comon', 'princeton_comon_running', 'princeton_comon_procs', 'comonstats/uptime']:
+	if 'readonlyfs' in fbnode:
+		if 'Read-only file system' in fbnode['readonlyfs']:
+			fbnode['readonlyfs'] = 'Y'
+		else:
+			fbnode['readonlyfs'] = '_'
+
+	if 'dns' in fbnode:
+		if 'boot.planet-lab.org has address' in fbnode['dns']:
+			fbnode['dns'] = '_'
+		else:
+			fbnode['dns'] = 'N'
+			
+	for key in ['ssh', 'state', 'plcnode/last_contact', 'readonlyfs', 'dns', 'nm', 'princeton_comon', 'princeton_comon_running', 'princeton_comon_procs', 'comonstats/uptime']:
 		if get(fbnode, key) is None:
 			row.append('nokey')
 		else:
@@ -116,7 +130,7 @@ packed_values.sort(rowcmp)
 
 t = TABLE(border=1)
 r = TR()
-for value in ['num', 'host', 'ssh', 'state', 'last<br>contact', 'NM', 'comon<br>dir', 'comon<br>vserver', 'comon<br>procs']:
+for value in ['num', 'host', 'ssh', 'state', 'last<br>contact', 'readonlyfs', 'dns', 'NM', 'comon<br>dir', 'comon<br>vserver', 'comon<br>procs']:
 	r.append(TD(value))
 t.append(r)
 

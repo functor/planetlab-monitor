@@ -505,6 +505,7 @@ def reboot(hostname, config=None, forced_action=None):
 			('nodehostname' , 'Configured node hostname does not resolve'),
 			('implementerror', 'Implementation Error'),
 			('readonlyfs'   , '[Errno 30] Read-only file system'),
+			('baddisk'      , "IOError: [Errno 13] Permission denied: '/tmp/mnt/sysimg//vservers/\w+/etc/hosts'"),
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
@@ -514,6 +515,7 @@ def reboot(hostname, config=None, forced_action=None):
 			('hardwarerequirefail' , 'Hardware requirements not met'),
 			('mkfsfail'	    , 'while running: Running mkfs.ext2 -q  -m 0 -j /dev/planetlab/vservers failed'),
 			('nofilereference', "No such file or directory: '/tmp/mnt/sysimg//vservers/.vref/planetlab-f8-i386/etc/hosts'"),
+			('kernelcopyfail', "cp: cannot stat `/tmp/mnt/sysimg/boot/kernel-boot': No such file or directory"),
 			('chrootfail'   , 'Running chroot /tmp/mnt/sysimg'),
 			('modulefail'   , 'Unable to get list of system modules'),
 			('writeerror'   , 'write error: No space left on device'),
@@ -583,6 +585,7 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
 			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-exception-mkfsfail-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-exception-noinstall-update-debug-done",
 			]:
 		sequences.update({n : "restart_bootmanager_rins"})
