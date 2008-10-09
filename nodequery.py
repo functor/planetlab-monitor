@@ -12,7 +12,7 @@ import glob
 import os
 from reboot import pcu_name
 import reboot
-import util.file
+from monitor import util
 import traceback
 
 import time
@@ -20,10 +20,11 @@ import re
 
 import config
 
-from sqlobject import connectionForURI,sqlhub
-connection = connectionForURI(config.sqlobjecturi)
-sqlhub.processConnection = connection
-from infovacuum.model.findbadrecord import *
+from monitor.database import FindbadNodeRecord, FindbadNodeRecordSync
+#from sqlobject import connectionForURI,sqlhub
+#connection = connectionForURI(config.sqlobjecturi)
+#sqlhub.processConnection = connection
+#from infovacuum.model.findbadrecord import *
 
 #fb = {}
 fb = None

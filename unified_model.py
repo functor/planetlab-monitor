@@ -8,7 +8,7 @@ import time
 
 from model import *
 from const import *
-import util.file
+from monitor import util
 import config
 
 def gethostlist(hostlist_file):

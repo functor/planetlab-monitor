@@ -2,7 +2,7 @@
 import struct
 import reboot
 import time
-import util.file
+from monitor import util
 import plc
 from datetime import datetime 
 from monitor import database

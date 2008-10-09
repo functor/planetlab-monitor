@@ -50,6 +50,7 @@ if not config.imported:
 	options = Options()
 	update_section(options, 'commandline', True)
 	update_section(options, 'monitorconfig')
+	update_section(options, 'monitordatabase')
 
 #for i in dir(config):
 #	if "__" not  in i:
