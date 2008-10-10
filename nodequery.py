@@ -1,35 +1,28 @@
 #!/usr/bin/python
 
-import plc
-api = plc.getAuthAPI()
 
 import sys
 import database
 from nodecommon import *
-#from policy import Diagnose
 from unified_model import Record
 import glob
 import os
-from reboot import pcu_name
 import reboot
-from monitor import util
 import traceback
 
 import time
 import re
+import string
 
-import config
+import plc
+api = plc.getAuthAPI()
 
 from monitor.database import FindbadNodeRecord, FindbadNodeRecordSync
-#from sqlobject import connectionForURI,sqlhub
-#connection = connectionForURI(config.sqlobjecturi)
-#sqlhub.processConnection = connection
-#from infovacuum.model.findbadrecord import *
+from monitor import util
+from monitor import config
 
-#fb = {}
 fb = None
 fbpcu = None
-import string
 
 class NoKeyException(Exception): pass
 
@@ -292,7 +285,7 @@ def pcu_select(str_query, nodelist=None):
 			if verify(dict_query, pcuinfo):
 				nodenames.append(node)
 				str = "cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
-							(pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
+							(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 				#pcunames.append(str)
 				pcunames.append(pcuinfo['pcu_id'])
 	return (nodenames, pcunames)
