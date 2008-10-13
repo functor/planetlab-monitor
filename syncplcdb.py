@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import plc
-import config
-import database
 import sys
+from monitor.wrapper import plc
+from monitor import database
+from monitor import config
 
 def dsites_from_lsites(l_sites):
 	d_sites = {}

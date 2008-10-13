@@ -7,7 +7,7 @@
 # $Id: mailer.py,v 1.10 2007/08/08 13:28:06 soltesz Exp $
 from emailTxt import *
 import smtplib
-import config
+from monitor import config
 import calendar
 import logging
 import os

@@ -5,55 +5,26 @@ import sys
 import string
 import time
 import socket
-import util.file
-import plc
 import sets
-
-    
 import signal
 import traceback
+from datetime import datetime,timedelta
+import threadpool
+import threading
+
+import monitor
+from monitor.pcu import reboot
+from monitor import config
+from monitor.database import FindbadPCURecordSync, FindbadPCURecord
+from monitor import util 
+from monitor.wrapper import plc
+import syncplcdb
 from nodequery import pcu_select
 
-#old_handler = signal.getsignal(signal.SIGCHLD)
-
-#def sig_handler(signum, stack):
-#	""" Handle SIGCHLD signal """
-#	global old_handler
-#	if signum == signal.SIGCHLD:
-#		try:
-#			os.wait()
-#		except:
-#			pass
-#	if old_handler != signal.SIG_DFL:
-#		old_handler(signum, stack)
-#
-#orig_sig_handler = signal.signal(signal.SIGCHLD, sig_handler)
-
-
-# QUERY all nodes.
-COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
-					"table=table_nodeview&" + \
-				    "dumpcols='name,resptime,sshstatus,uptime,lastcotop'&" + \
-				    "formatcsv"
-				    #"formatcsv&" + \
-					#"select='lastcotop!=0'"
-
-import threading
 plc_lock = threading.Lock()
-round = 1
-externalState = {'round': round, 'nodes': {'a': None}}
+global_round = 1
 errorState = {}
 count = 0
-
-import reboot
-from reboot import pcu_name
-
-import database
-import moncommands
-import plc
-import comon
-import threadpool
-import syncplcdb
 
 def nmap_portstatus(status):
 	ps = {}
@@ -71,14 +42,14 @@ def nmap_portstatus(status):
 def get_pcu(pcuname):
 	plc_lock.acquire()
 	try:
-		print "GetPCU from PLC %s" % pcuname
+		#print "GetPCU from PLC %s" % pcuname
 		l_pcu  = plc.GetPCUs({'pcu_id' : pcuname})
-		print l_pcu
+		#print l_pcu
 		if len(l_pcu) > 0:
 			l_pcu = l_pcu[0]
 	except:
 		try:
-			print "GetPCU from file %s" % pcuname
+			#print "GetPCU from file %s" % pcuname
 			l_pcus = database.dbLoad("pculist")
 			for i in l_pcus:
 				if i['pcu_id'] == pcuname:
@@ -185,14 +156,17 @@ def collectPingAndSSH(pcuname, cohash):
 
 	continue_probe = True
 	errors = None
-	values = {}
+	values = {'reboot' : 'novalue'}
 	### GET PCU ######################
 	try:
 		b_except = False
 		try:
 			v = get_plc_pcu_values(pcuname)
+			if v['hostname'] is not None: v['hostname'] = v['hostname'].strip()
+			if v['ip'] is not None: v['ip'] = v['ip'].strip()
+
 			if v is not None:
-				values.update(v)
+				values['plc_pcu_stats'] = v
 			else:
 				continue_probe = False
 		except:
@@ -202,23 +176,18 @@ def collectPingAndSSH(pcuname, cohash):
 
 		if b_except or not continue_probe: return (None, None, None)
 
-		if values['hostname'] is not None:
-			values['hostname'] = values['hostname'].strip()
-
-		if values['ip'] is not None:
-			values['ip'] = values['ip'].strip()
 
 		#### COMPLETE ENTRY   #######################
 
 		values['complete_entry'] = []
 		#if values['protocol'] is None or values['protocol'] is "":
 		#	values['complete_entry'] += ["protocol"]
-		if values['model'] is None or values['model'] is "":
+		if values['plc_pcu_stats']['model'] is None or values['plc_pcu_stats']['model'] is "":
 			values['complete_entry'] += ["model"]
 			# Cannot continue due to this condition
 			continue_probe = False
 
-		if values['password'] is None or values['password'] is "":
+		if values['plc_pcu_stats']['password'] is None or values['plc_pcu_stats']['password'] is "":
 			values['complete_entry'] += ["password"]
 			# Cannot continue due to this condition
 			continue_probe = False
@@ -226,23 +195,23 @@ def collectPingAndSSH(pcuname, cohash):
 		if len(values['complete_entry']) > 0:
 			continue_probe = False
 
-		if values['hostname'] is None or values['hostname'] is "":
+		if values['plc_pcu_stats']['hostname'] is None or values['plc_pcu_stats']['hostname'] is "":
 			values['complete_entry'] += ["hostname"]
-		if values['ip'] is None or values['ip'] is "":
+		if values['plc_pcu_stats']['ip'] is None or values['plc_pcu_stats']['ip'] is "":
 			values['complete_entry'] += ["ip"]
 
 		# If there are no nodes associated with this PCU, then we cannot continue.
-		if len(values['node_ids']) == 0:
+		if len(values['plc_pcu_stats']['node_ids']) == 0:
 			continue_probe = False
 			values['complete_entry'] += ['NoNodeIds']
 
 		#### DNS and IP MATCH #######################
-		if values['hostname'] is not None and values['hostname'] is not "" and \
-		   values['ip'] is not None and values['ip'] is not "":
+		if values['plc_pcu_stats']['hostname'] is not None and values['plc_pcu_stats']['hostname'] is not "" and \
+		   values['plc_pcu_stats']['ip'] is not None and values['plc_pcu_stats']['ip'] is not "":
 			#print "Calling socket.gethostbyname(%s)" % values['hostname']
 			try:
-				ipaddr = socket.gethostbyname(values['hostname'])
-				if ipaddr == values['ip']:
+				ipaddr = socket.gethostbyname(values['plc_pcu_stats']['hostname'])
+				if ipaddr == values['plc_pcu_stats']['ip']:
 					values['dnsmatch'] = "DNS-OK"
 				else:
 					values['dnsmatch'] = "DNS-MISMATCH"
@@ -250,21 +219,21 @@ def collectPingAndSSH(pcuname, cohash):
 
 			except Exception, err:
 				values['dnsmatch'] = "DNS-NOENTRY"
-				values['hostname'] = values['ip']
+				values['plc_pcu_stats']['hostname'] = values['plc_pcu_stats']['ip']
 				#print err
 		else:
-			if values['ip'] is not None and values['ip'] is not "":
+			if values['plc_pcu_stats']['ip'] is not None and values['plc_pcu_stats']['ip'] is not "":
 				values['dnsmatch'] = "NOHOSTNAME"
-				values['hostname'] = values['ip']
+				values['plc_pcu_stats']['hostname'] = values['plc_pcu_stats']['ip']
 			else:
 				values['dnsmatch'] = "NO-DNS-OR-IP"
-				values['hostname'] = "No_entry_in_DB"
+				values['plc_pcu_stats']['hostname'] = "No_entry_in_DB"
 				continue_probe = False
 
 		#### RUN NMAP ###############################
 		if continue_probe:
-			nmap = moncommands.CMD()
-			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % pcu_name(values))
+			nmap = util.command.CMD()
+			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
 			# NOTE: an empty / error value for oval, will still work.
 			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
 		else:
@@ -272,20 +241,13 @@ def collectPingAndSSH(pcuname, cohash):
 			
 
 		######  DRY RUN  ############################
-		if 'node_ids' in values and len(values['node_ids']) > 0:
-			rb_ret = reboot.reboot_test(values['nodenames'][0], values, continue_probe, 1, True)
+		if 'node_ids' in values['plc_pcu_stats'] and len(values['plc_pcu_stats']['node_ids']) > 0:
+			rb_ret = reboot.reboot_test(values['plc_pcu_stats']['nodenames'][0], values, continue_probe, 1, True)
 		else:
 			rb_ret = "Not_Run" # No nodes to test"
 
 		values['reboot'] = rb_ret
 
-		### GET PLC SITE ######################
-		v = get_plc_site_values(values['site_id'])
-		if v is not None:
-			values.update(v)
-		else:
-			values['plcsite'] = {'status' : "GS_FAILED"}
-			
 	except:
 		print "____________________________________"
 		print values
@@ -294,24 +256,35 @@ def collectPingAndSSH(pcuname, cohash):
 		errors['traceback'] = traceback.format_exc()
 		print errors['traceback']
 
-	values['checked'] = time.time()
+	values['date_checked'] = time.time()
 	return (pcuname, values, errors)
 
 def recordPingAndSSH(request, result):
 	global errorState
-	global externalState
 	global count
+	global global_round
 	(nodename, values, errors) = result
 
 	if values is not None:
-		global_round = externalState['round']
-		pcu_id = "id_%s" % nodename
-		externalState['nodes'][pcu_id]['values'] = values
-		externalState['nodes'][pcu_id]['round'] = global_round
+		pcu_id = int(nodename)
+		fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
+											if_new_set={'round': global_round})
+		global_round = fbsync.round
+		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, 
+											if_new_set={'round' : global_round})
 
+		fbrec = FindbadPCURecord(
+					date_checked=datetime.fromtimestamp(values['date_checked']),
+					plc_pcuid=pcu_id,
+					plc_pcu_stats=values['plc_pcu_stats'],
+					dns_status=values['dnsmatch'],
+					port_status=values['portstatus'],
+					entry_complete=" ".join(values['complete_entry']),
+					reboot_trial_status="%s" % values['reboot'],
+				)
+		fbnodesync.round = global_round
 		count += 1
-		print "%d %s %s" % (count, nodename, externalState['nodes'][pcu_id]['values'])
-		database.dbDump(config.dbname, externalState)
+		print "%d %s %s" % (count, nodename, values)
 
 	if errors is not None:
 		pcu_id = "id_%s" % nodename
@@ -326,21 +299,17 @@ def handle_exception(request, result):
 
 
 def checkAndRecordState(l_pcus, cohash):
-	global externalState
+	global global_round
 	global count
-	global_round = externalState['round']
 
 	tp = threadpool.ThreadPool(10)
 
 	# CREATE all the work requests
 	for pcuname in l_pcus:
-		pcu_id = "id_%s" % pcuname
-		if pcuname not in externalState['nodes']:
-			#print type(externalState['nodes'])
+		pcu_id = int(pcuname)
+		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
 
-			externalState['nodes'][pcu_id] = {'round': 0, 'values': []}
-
-		node_round   = externalState['nodes'][pcu_id]['round']
+		node_round   = fbnodesync.round
 		if node_round < global_round:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
@@ -350,8 +319,7 @@ def checkAndRecordState(l_pcus, cohash):
 		else:
 			# We just skip it, since it's "up to date"
 			count += 1
-			print "%d %s %s" % (count, pcu_id, externalState['nodes'][pcu_id]['values'])
-			pass
+			print "%d %s %s" % (count, pcu_id, node_round)
 
 	# WAIT while all the work requests are processed.
 	begin = time.time()
@@ -362,7 +330,6 @@ def checkAndRecordState(l_pcus, cohash):
 			# if more than two hours
 			if time.time() - begin > (60*60*1):
 				print "findbadpcus.py has run out of time!!!!!!"
-				database.dbDump(config.dbname, externalState)
 				os._exit(1)
 		except KeyboardInterrupt:
 			print "Interrupted!"
@@ -371,18 +338,24 @@ def checkAndRecordState(l_pcus, cohash):
 			print "All results collected."
 			break
 
+	print FindbadPCURecordSync.query.count()
+	print FindbadPCURecord.query.count()
 
 
 def main():
-	global externalState
+	global global_round
 
-	l_pcus = database.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
-	externalState = database.if_cached_else(1, config.dbname, lambda : externalState) 
+	l_pcus = monitor.database.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
 	cohash = {}
+
+	fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, if_new_set={'round' : global_round})
+
+	global_round = fbsync.round
 
 	if config.increment:
 		# update global round number to force refreshes across all nodes
-		externalState['round'] += 1
+		global_round += 1
+		fbsync.round = global_round
 
 	if config.site is not None:
 		api = plc.getAuthAPI()
@@ -422,7 +395,7 @@ if __name__ == '__main__':
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 	fh.setFormatter(formatter)
 	logger.addHandler(fh)
-	import parser as parsermodule
+	from monitor import parser as parsermodule
 	parser = parsermodule.getParser()
 	parser.set_defaults(nodelist=None, 
 						increment=False, 
@@ -463,5 +436,4 @@ if __name__ == '__main__':
 		traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
-		database.dbDump(config.dbname, externalState)
 		sys.exit(0)

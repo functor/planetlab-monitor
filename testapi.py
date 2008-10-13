@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-import plc
 import sys
 import traceback
+
+from monitor.wrapper import plc
 
 api = plc.getAuthAPI()
 loginbase = sys.argv[1] # "princeton"

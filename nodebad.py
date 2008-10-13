@@ -4,27 +4,21 @@ import os
 import sys
 import string
 import time
-
-
-import database
-import comon
-import threadpool
-import syncplcdb
-from nodequery import verify,query_to_dict,node_select
-from nodecommon import *
 from datetime import datetime,timedelta
-import config
 
-from sqlobject import connectionForURI,sqlhub
-connection = connectionForURI(config.sqlobjecturi)
-sqlhub.processConnection = connection
-from infovacuum.model_findbadrecord import *
-from infovacuum.model_historyrecord import *
+from nodequery import verify,query_to_dict,node_select
 
-import plc
-api = plc.getAuthAPI()
+import syncplcdb
+from nodecommon import *
+
+from monitor import config
+from monitor.wrapper import plc
+from monitor.const import MINUP
+from monitor.database import  FindbadNodeRecord, HistoryNodeRecord
+
 from unified_model import *
-from const import MINUP
+
+api = plc.getAuthAPI()
 
 round = 1
 count = 0
@@ -49,20 +43,18 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 		if not d_node:
 			continue
 
-		try:
-			pf = HistoryNodeRecord.by_hostname(nodename)
-		except:
-			pf = HistoryNodeRecord(hostname=nodename)
-
+		pf = HistoryNodeRecord.findby_or_create(hostname=nodename)
 		pf.last_checked = datetime.now()
 
 		try:
 			# Find the most recent record
-			noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==nodename, 
-											   orderBy='date_checked').reversed()[0]
+			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==nodename).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			print "NODEREC: ", noderec.date_checked
 		except:
-			# or create an empty one.
-			noderec = FindbadNodeRecord(hostname=nodename)
+			print "COULD NOT FIND %s" % nodename
+			import traceback
+			print traceback.print_exc()
+			continue
 
 		node_state = noderec.observed_status
 		if noderec.plc_node_stats:
@@ -86,10 +78,15 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 		count += 1
 		print "%d %35s %s since(%s)" % (count, nodename, pf.status, diff_time(time.mktime(pf.last_changed.timetuple())))
 
+	# NOTE: this commits all pending operations to the DB.  Do not remove, or
+	# replace with another operations that also commits all pending ops, such
+	# as session.commit() or flush() or something
+	print HistoryNodeRecord.query.count()
+
 	return True
 
 if __name__ == '__main__':
-	import parser as parsermodule
+	from monitor import parser as parsermodule
 	parser = parsermodule.getParser(['nodesets'])
 	parser.set_defaults(filename=None, node=None, nodeselect=False, nodegroup=None, cachenodes=False)
 	parser = parsermodule.getParser(['defaults'], parser)

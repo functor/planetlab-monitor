@@ -2,19 +2,19 @@
 
 
 import sys
-import database
+from monitor import database
 from nodecommon import *
 from unified_model import Record
 import glob
 import os
-import reboot
 import traceback
 
 import time
 import re
 import string
 
-import plc
+from monitor.pcu import reboot
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 from monitor.database import FindbadNodeRecord, FindbadNodeRecordSync
@@ -303,30 +303,31 @@ def node_select(str_query, nodelist=None, fbdb=None):
 	if fbdb is not None:
 		fb = fbdb
 
-	for node in fb['nodes'].keys():
-		if nodelist is not None: 
-			if node not in nodelist: continue
+	for node in nodelist:
+		#if nodelist is not None: 
+		#	if node not in nodelist: continue
 
 		try:
-			fb_noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node, 
-											   orderBy='date_checked').reversed()[0]
+			fb_noderec = None
+			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
 		except:
+			print traceback.print_exc()
 			continue
 
-		
-		fb_nodeinfo = fb_noderec.toDict()
+		if fb_noderec:
+			fb_nodeinfo = fb_noderec.to_dict()
 
-		#fb_nodeinfo['pcu'] = color_pcu_state(fb_nodeinfo)
-		#if 'plcnode' in fb_nodeinfo:
-		#	fb_nodeinfo.update(fb_nodeinfo['plcnode'])
+			#fb_nodeinfo['pcu'] = color_pcu_state(fb_nodeinfo)
+			#if 'plcnode' in fb_nodeinfo:
+			#	fb_nodeinfo.update(fb_nodeinfo['plcnode'])
 
-		#if verifyDBrecord(dict_query, fb_nodeinfo):
-		if verify(dict_query, fb_nodeinfo):
-			#print node #fb_nodeinfo
-			hostnames.append(node)
-		else:
-			#print "NO MATCH", node
-			pass
+			#if verifyDBrecord(dict_query, fb_nodeinfo):
+			if verify(dict_query, fb_nodeinfo):
+				#print node #fb_nodeinfo
+				hostnames.append(node)
+			else:
+				#print "NO MATCH", node
+				pass
 	
 	return hostnames
 
@@ -335,7 +336,7 @@ def main():
 	global fb
 	global fbpcu
 
-	import parser as parsermodule
+	from monitor import parser as parsermodule
 	parser = parsermodule.getParser()
 
 	parser.set_defaults(node=None, fromtime=None, select=None, list=None, 
@@ -370,8 +371,9 @@ def main():
 		os.chdir("..")
 		fb = archive.load(file[:-4])
 	else:
-		fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
-		fb = database.dbLoad("findbad")
+		#fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
+		#fb = database.dbLoad("findbad")
+		fb = None
 
 	fbpcu = database.dbLoad("findbadpcus")
 	reboot.fb = fbpcu
@@ -379,7 +381,11 @@ def main():
 	if config.nodelist:
 		nodelist = util.file.getListFromFile(config.nodelist)
 	else:
-		nodelist = fb['nodes'].keys()
+		# NOTE: list of nodes should come from findbad db.   Otherwise, we
+		# don't know for sure that there's a record in the db..
+		plcnodes = database.dbLoad("l_plcnodes")
+		nodelist = [ node['hostname'] for node in plcnodes ]
+		#nodelist = ['planetlab-1.cs.princeton.edu']
 
 	pculist = None
 	if config.select is not None and config.pcuselect is not None:
@@ -397,13 +403,12 @@ def main():
 	for node in nodelist:
 		config.node = node
 
-		if node not in fb['nodes']:
+		if node not in nodelist:
 			continue
 
 		try:
 			# Find the most recent record
-			fb_noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node, 
-											   orderBy='date_checked').reversed()[0]
+			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
 		except:
 			print traceback.print_exc()
 			pass #fb_nodeinfo  = fb['nodes'][node]['values']
@@ -414,7 +419,7 @@ def main():
 			if config.daysdown:
 				daysdown_print_nodeinfo(fb_nodeinfo, node)
 			else:
-				fb_nodeinfo = fb_noderec.toDict()
+				fb_nodeinfo = fb_noderec.to_dict()
 				if config.select:
 					if config.fields:
 						fields = config.fields.split(",")

@@ -1,6 +1,10 @@
 import os
 import sys
 import pickle
+import inspect
+import shutil
+from monitor import config
+
 noserial=False
 try:
 	from util.PHPSerialize import *
@@ -8,11 +12,6 @@ try:
 except:
 	#print >>sys.stderr, "PHPSerial db type not allowed."
 	noserial=True
-
-import inspect
-import shutil
-import config
-import config as monitorconfig
 
 DEBUG= 0
 PICKLE_PATH=config.MONITOR_DATA_ROOT

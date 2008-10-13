@@ -4,30 +4,22 @@ import os
 import sys
 import string
 import time
-
-from reboot import pcu_name
-
-import database
-import comon
-import threadpool
-import syncplcdb
-from nodequery import verify,query_to_dict,node_select
-import parser as parsermodule
-from nodecommon import *
 from datetime import datetime,timedelta
-import config
 
-from sqlobject import connectionForURI,sqlhub
-connection = connectionForURI(config.sqlobjecturi)
-sqlhub.processConnection = connection
-from infovacuum.model_findbadrecord import *
-from infovacuum.model_historyrecord import *
+from monitor import database
+from monitor.pcu import reboot
+from monitor import parser as parsermodule
+from monitor import config
+from monitor.database import HistoryPCURecord, FindbadPCURecord
+from monitor.wrapper import plc
+from monitor.const import MINUP
 
-import plc
-api = plc.getAuthAPI()
+from nodecommon import *
+from nodequery import verify,query_to_dict,node_select
+import syncplcdb
 from unified_model import *
-from const import MINUP
 
+api = plc.getAuthAPI()
 
 def main(config):
 
@@ -61,18 +53,17 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 		if not d_pcu:
 			continue
 
-		try:
-			pf = HistoryPCURecord.by_pcuid(d_pcu['pcu_id'])
-		except:
-			pf = HistoryPCURecord(plc_pcuid=pcuname)
-
+		pf = HistoryPCURecord.findby_or_create(plc_pcuid=d_pcu['pcu_id'])
 		pf.last_checked = datetime.now()
 
 		try:
 			# Find the most recent record
-			pcurec = FindbadPCURecord.select(FindbadPCURecord.q.plc_pcuid==pcuname, 
-											   orderBy='date_checked').reversed()[0]
+			pcurec = FindbadPCURecord.query.filter(FindbadPCURecord.plc_pcuid==pcuname).order_by(FindbadPCURecord.date_checked.desc()).first()
+			print "NODEREC: ", pcurec.date_checked
 		except:
+			print "COULD NOT FIND FB record for %s" % reboot.pcu_name(pcu)
+			import traceback
+			print traceback.print_exc()
 			# don't have the info to create a new entry right now, so continue.
 			continue 
 
@@ -97,7 +88,12 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 				pf.status = "error"
 
 		count += 1
-		print "%d %35s %s since(%s)" % (count, pcu_name(d_pcu), pf.status, diff_time(time.mktime(pf.last_changed.timetuple())))
+		print "%d %35s %s since(%s)" % (count, reboot.pcu_name(d_pcu), pf.status, diff_time(time.mktime(pf.last_changed.timetuple())))
+
+	# NOTE: this commits all pending operations to the DB.  Do not remove, or
+	# replace with another operations that also commits all pending ops, such
+	# as session.commit() or flush() or something
+	print HistoryPCURecord.query.count()
 
 	return True
 

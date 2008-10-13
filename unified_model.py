@@ -2,14 +2,14 @@
 
 from monitor import database
 
-import plc
-import mailer
+from monitor.wrapper import plc
+from monitor.wrapper import mailer
 import time
 
 from model import *
-from const import *
+from monitor.const import *
 from monitor import util
-import config
+from monitor import config
 
 def gethostlist(hostlist_file):
 	return util.file.getListFromFile(hostlist_file)

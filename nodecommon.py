@@ -1,12 +1,15 @@
 
-import struct
-import reboot
 import time
+import struct
+from monitor.pcu import reboot
+
 from monitor import util
-import plc
-from datetime import datetime 
 from monitor import database
+from monitor.wrapper import plc
+
+from datetime import datetime 
 from unified_model import PersistFlags
+
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"
 GREEN	= esc + "[1;32m"

@@ -11,13 +11,13 @@ import urllib2
 import urllib
 import threading, popen2
 import array, struct
-import plc
+from monitor.wrapper import plc
 import base64
 from subprocess import PIPE, Popen
 import ssh.pxssh as pxssh
 import ssh.pexpect as pexpect
 import socket
-import moncommands 
+from monitor.util import command
 
 # Use our versions of telnetlib and pyssh
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
@@ -559,7 +559,7 @@ class APC(PCUControl):
 class IntelAMT(PCUControl):
 	def run(self, node_port, dryrun):
 
-		cmd = moncommands.CMD()
+		cmd = command.CMD()
 		#[cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
 		cmd_str = "cmdamt/remoteControl"
 
@@ -624,7 +624,7 @@ class HPiLO(PCUControl):
 class HPiLOHttps(PCUControl):
 	def run(self, node_port, dryrun):
 
-		locfg = moncommands.CMD()
+		locfg = command.CMD()
 		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 					self.host, "iloxml/Get_Network.xml", 
 					self.username, self.password)
@@ -635,7 +635,7 @@ class HPiLOHttps(PCUControl):
 			return sout.strip()
 
 		if not dryrun:
-			locfg = moncommands.CMD()
+			locfg = command.CMD()
 			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 						self.host, "iloxml/Reset_Server.xml", 
 						self.username, self.password)
