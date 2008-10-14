@@ -46,7 +46,7 @@ class CMD:
 
 	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
-		#print "CMD.run(%s)" % cmd
+		print "CMD.run(%s)" % cmd
 		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 		self.s = s
 		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)

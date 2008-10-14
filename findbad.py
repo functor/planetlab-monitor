@@ -93,14 +93,14 @@ EOF			""")
 	oval = values['kernel']
 	if "2.6.17" in oval or "2.6.2" in oval:
 		values['ssh'] = 'SSH'
-		values['category'] = 'ALPHA'
+		values['category'] = 'PROD'
 		if "bm.log" in values['bmlog']:
 			values['state'] = 'DEBUG'
 		else:
 			values['state'] = 'BOOT'
 	elif "2.6.12" in oval or "2.6.10" in oval:
 		values['ssh'] = 'SSH'
-		values['category'] = 'PROD'
+		values['category'] = 'OLDPROD'
 		if "bm.log" in values['bmlog']:
 			values['state'] = 'DEBUG'
 		else:

@@ -29,6 +29,19 @@ if [ -f $MONITOR_PID ] ; then
 fi
 echo $$ > $MONITOR_PID
 
+AGENT=`ps ax | grep ssh-agent | grep -v grep`
+if [ -z "$AGENT" ] ; then
+        echo "starting ssh agent"
+        # if no agent is running, set it up.
+        ssh-agent > ${MONITOR_SCRIPT_ROOT}/agent.sh
+        source ${MONITOR_SCRIPT_ROOT}/agent.sh
+        ssh-add /etc/planetlab/debug_ssh_key.rsa
+        ssh-add /etc/planetlab/root_ssh_key.rsa
+fi
+#TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
+source ${MONITOR_SCRIPT_ROOT}/agent.sh
+
+
 echo "Performing Findbad Nodes"
 #########################
 # 1. FINDBAD NODES 

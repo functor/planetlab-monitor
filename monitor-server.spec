@@ -2,7 +2,7 @@
 # $Id$
 # 
 
-%define url $URL: svn+ssh://svn.planet-lab.org/svn/Monitor/trunk/Monitor-server.spec $
+%define url $URL: svn+ssh://svn.planet-lab.org/svn/Monitor/trunk/monitor-server.spec $
 
 %define name monitor-server
 %define version 1.0
@@ -30,6 +30,7 @@ Requires: curl
 Requires: coreutils
 Requires: openssh-clients
 Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
 Requires: MySQL-python
 Requires: rt3 == 3.4.1
 Requires: nmap
@@ -55,6 +56,8 @@ cd ..
 
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}
+mkdir -p $RPM_BUILD_ROOT/data/var/lib/%{name}
+mkdir -p $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}
 mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/

@@ -428,7 +428,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			vals['reboot'] = vals['reboot'].replace(" ", "_")
 
 		if 'nodename' in vals:
-			url = "<a href='https://www.planet-lab.org/db/nodes/index.php?nodepattern=%s'>%s</a>" % (vals['nodename'], vals['nodename'])
+			url = "<a href='https://%s/db/nodes/index.php?nodepattern=%s'>%s</a>" % (config.MONITOR_HOSTNAME, vals['nodename'], vals['nodename'])
 			vals['nodename'] = url
 
 		try:

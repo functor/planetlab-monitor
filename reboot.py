@@ -1260,7 +1260,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				apc = APCBerlin(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1173,1240]:
+			elif values['pcu_id'] in [1173,1240,47]:
 				apc = APCFolsom(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 

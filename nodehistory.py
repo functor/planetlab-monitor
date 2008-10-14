@@ -23,10 +23,12 @@ def get_filefromglob(d, str):
 	glob_str = "%s*.%s.pkl" % (d.strftime("%Y-%m-%d"), str)
 	os.chdir(path)
 	#print glob_str
-	file = glob.glob(glob_str)[0]
+	#file = glob.glob(glob_str)[0]
+	files = glob.glob(glob_str)
 	#print "loading %s" % file
 	os.chdir("..")
-	return file[:-4]
+	files_chng = [ file[:-4] for file in files ]
+	return files_chng
 	#fb = archive.load(file[:-4])
 
 
@@ -106,17 +108,19 @@ def main():
 	verbose = 1
 
 	while True:
-		file = get_filefromglob(d, "production.findbad")
-		#file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
 		
 		try:
-			fb = archive.load(file)
-			if config.node in fb['nodes']:
-				fb_nodeinfo  = fb['nodes'][config.node]['values']
-				fb_print_nodeinfo(fb_nodeinfo, verbose, d.strftime("%Y-%m-%d"))
+			for file in get_filefromglob(d, "production.findbad"):
+				#file = get_filefromglob(d, "production.findbad")
+				#file = "%s.production.findbad" % d.strftime("%Y-%m-%d")
+				fb = archive.load(file)
+				if config.node in fb['nodes']:
+					fb_nodeinfo  = fb['nodes'][config.node]['values']
+					fb_print_nodeinfo(fb_nodeinfo, verbose, d.strftime("%Y-%m-%d"))
 
-			del fb
-			verbose = 0
+				del fb
+				verbose = 0
+
 		except KeyboardInterrupt:
 			sys.exit(1)
 		except:

@@ -16,7 +16,7 @@ import time
 logger = logging.getLogger("monitor")
 
 MTA="localhost"
-FROM="monitor@planet-lab.org"
+FROM=config.email
 
 def reformat_for_rt(text):
 	lines = text.split("\n")
@@ -216,7 +216,7 @@ def emailViaRT_NoTicket(subject, text, to):
 	# NOTE: AdminCc: (in PLC's RT configuration) gets an email sent.
 	# This is not the case (surprisingly) for Cc:
 	input_text  = "Subject: %s\n"
-	input_text += "Requestor: monitor@planet-lab.org\n"
+	input_text += "Requestor: %s\n"% FROM
 	input_text += "id: ticket/new\n"
 	input_text += "Queue: Monitor\n"
 	for recipient in to:
@@ -286,7 +286,7 @@ def email(subject, text, to):
 	if config.bcc and not config.debug:
 		writer.addheader("Bcc", config.email)
 
-	writer.addheader("Reply-To", 'monitor@planet-lab.org')
+	writer.addheader("Reply-To", FROM)
 		
 	writer.addheader("MIME-Version", "1.0")
 	#
@@ -357,7 +357,7 @@ if __name__=="__main__":
 	#	  "soltesz@cs.utk.edu")
 	email("Re: [PL #21323] TEST 7", 
 			   mailtxt.newbootcd_one[1] % {'hostname_list':"hostname list..."},
-			   ['monitor@planet-lab.org'])
+			   [FROM])
 	#print "ticketid: %d" % id
 	#id = plc.siteId(["alice.cs.princeton.edu"])
 	#print id
