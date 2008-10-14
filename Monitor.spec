@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 9
+%define taglevel 10
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,10 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Tue Oct 14 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-10
+- an update to the latest tag.  looks like I actually needed to update the tags
+- file more than this.
+
 * Thu Sep 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-9
 - includes all removals of 'monitorconfig'
 
