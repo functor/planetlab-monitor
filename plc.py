@@ -67,6 +67,50 @@ def getAPI(url):
 def getAuthAPI():
 	return PLC(auth.auth, auth.server)
 
+
+def getTechEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	p = api.GetPersons(s['person_ids'])[0]
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'tech' in x['roles'], p) ]
+	return emails
+
+def getPIEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	p = api.GetPersons(s['person_ids'])[0]
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], p) ]
+	return emails
+
+def getSliceUserEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	#api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	slices = api.GetSlices(s['slice_ids'])
+	people = []
+	for slice in slices:
+		people += api.GetPersons(slice['person_ids'])
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], people) ]
+	unique_emails = [ x for x in set(emails) ]
+	return unique_emails
+
 '''
 Returns list of nodes in dbg as reported by PLC
 '''
@@ -137,6 +181,7 @@ def getSiteNodes(loginbase, fields=None):
 		logger.info("getSiteNodes:  %s" % exc)
 		print "getSiteNodes:  %s" % exc
 	return nodelist
+
 
 def getPersons(filter=None, fields=None):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)

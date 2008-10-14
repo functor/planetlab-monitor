@@ -937,17 +937,21 @@ class Action:
 		if ADMIN & roles:
 			contacts += [config.email]
 		if TECH & roles:
-			contacts += [TECHEMAIL % loginbase]
+			#contacts += [TECHEMAIL % loginbase]
+			contacts += plc.getTechEmails(loginbase)
 		if PI & roles:
-			contacts += [PIEMAIL % loginbase]
+			#contacts += [PIEMAIL % loginbase]
+			contacts += plc.getPIEmails(loginbase)
 		if USER & roles:
+			contacts += plc.getSliceUserEmails(loginbase)
 			slices = plc.slices(loginbase)
 			if len(slices) >= 1:
-				for slice in slices:
-					contacts += [SLICEMAIL % slice]
 				print "SLIC: %20s : %d slices" % (loginbase, len(slices))
 			else:
 				print "SLIC: %20s : 0 slices" % loginbase
+
+		unique_contacts = set(contacts)
+		contacts = [ c for c in unique_contacts ]	# convert back into list
 
 		try:
 			subject = message[0] % args

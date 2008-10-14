@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # NOTE: Must be an absolute path to guarantee it is read.
-source /usr/share/monitor-server/monitorconfig.py
+INSTALLPATH=/usr/share/monitor-server/
+# Generate an 'sh' style file full of variables in monitor.conf
+$INSTALLPATH/shconfig.py >  $INSTALLPATH/monitorconfig.sh
+source $INSTALLPATH/monitorconfig.sh
 cd ${MONITOR_SCRIPT_ROOT}
 set -e
 DATE=`date +%Y-%m-%d-%T`
@@ -28,6 +31,15 @@ if [ -f $MONITOR_PID ] ; then
 	fi 
 fi
 echo $$ > $MONITOR_PID
+
+# SETUP act_all database if it's not there.
+if [ ! -f ${MONITOR_SCRIPT_ROOT}/actallsetup.flag ]; then
+	if ! python -c 'import database; database.dbLoad("act_all")' 2>/dev/null ; then 
+		python -c 'import database; database.dbDump("act_all", {})' 2>/dev/null ; then 
+		touch ${MONITOR_SCRIPT_ROOT}/actallsetup.flag
+	fi
+fi
+
 
 AGENT=`ps ax | grep ssh-agent | grep -v grep`
 if [ -z "$AGENT" ] ; then
