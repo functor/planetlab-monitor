@@ -36,7 +36,7 @@ def cmpValMap(v1, v2, map):
 		raise Exception("No index %s or %s in map" % (v1, v2))
 
 def cmpCategoryVal(v1, v2):
-	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
+	map = array_to_priority_map([ None, 'PROD', 'ALPHA', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	return cmpValMap(v1,v2,map)
 
 

@@ -70,7 +70,7 @@ echo " * Installing web pages"
 rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing cron job for automated polling"
-install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
+install -D -m 644 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
 echo " * TODO: Setting up Monitor account in local MyPLC"
 # TODO: 
 
