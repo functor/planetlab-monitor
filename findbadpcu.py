@@ -18,7 +18,6 @@ from monitor import config
 from monitor.database import FindbadPCURecordSync, FindbadPCURecord
 from monitor import util 
 from monitor.wrapper import plc
-import syncplcdb
 from nodequery import pcu_select
 
 plc_lock = threading.Lock()
