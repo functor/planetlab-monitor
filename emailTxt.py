@@ -36,6 +36,10 @@ If you have a BootCD older than 3.0, you will need to create a new BootImage on 
 
 If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
+Finally, you can track the current status of your machines using this Google Gadget:
+
+    http://fusion.google.com/add?source=atgs&moduleurl=http://monitor.planet-lab.org/monitor/sitemonitor.xml
+
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
@@ -65,6 +69,10 @@ If you have a BootCD older than 3.0, you will need to create a new Boot CD and c
 
 If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 
+Finally, you can track the current status of your machines using this Google Gadget:
+
+    http://fusion.google.com/add?source=atgs&moduleurl=http://monitor.planet-lab.org/monitor/sitemonitor.xml
+
 After another week, we will disable all slices currently running on PlanetLab.  Because this action will directly affect all users of these slices, these users will also be notified at that time.
 
 Thank you for your help,
@@ -91,6 +99,10 @@ If the machine has booted successfully, you may check it more quickly by logging
 If you have a BootCD older than 3.0, you will need to create a new Boot CD and configuration file.  You can find instructions for this at the Technical Contact's Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
+
+Finally, you can track the current status of your machines using this Google Gadget:
+
+    http://fusion.google.com/add?source=atgs&moduleurl=http://monitor.planet-lab.org/monitor/sitemonitor.xml
 
 If after following these directions, and either logging in with your site_admin account or seeing the CoMon report of your machine, there is no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (support@planet-lab.org) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
 

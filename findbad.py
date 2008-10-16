@@ -63,7 +63,6 @@ def collectPingAndSSH(nodename, cohash):
 					echo '  "princeton_comon":"'`ls -d /vservers/princeton_comon`'",'
 
 					ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
-
 					echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 					echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
 					echo "}"
@@ -97,14 +96,14 @@ EOF				""")
 		oval = values['kernel']
 		if "2.6.17" in oval or "2.6.2" in oval:
 			values['ssh'] = 'SSH'
-			values['category'] = 'ALPHA'
+			values['category'] = 'PROD'
 			if "bm.log" in values['bmlog']:
 				values['state'] = 'DEBUG'
 			else:
 				values['state'] = 'BOOT'
 		elif "2.6.12" in oval or "2.6.10" in oval:
 			values['ssh'] = 'SSH'
-			values['category'] = 'PROD'
+			values['category'] = 'OLDPROD'
 			if "bm.log" in values['bmlog']:
 				values['state'] = 'DEBUG'
 			else:

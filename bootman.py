@@ -586,6 +586,8 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-exception-mkfsfail-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-exception-chrootfail-update-debug-done",
+			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
+			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-exception-noinstall-update-debug-done",
 			]:
 		sequences.update({n : "restart_bootmanager_rins"})

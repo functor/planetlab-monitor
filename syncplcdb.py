@@ -62,6 +62,44 @@ def create_netid2ip(l_nodes, l_nodenetworks):
 
 	return netid2ip
 
+l_sites = None
+l_nodes = None
+l_pcus = None
+l_nodenetworks = None
+
+plcdb_hn2lb = None
+plcdb_lb2hn = None
+plcdb_netid2ip = None
+
+def init():
+	global l_sites
+	global l_nodes
+	global l_pcus
+	global l_nodenetworks
+	global plcdb_hn2lb
+	global plcdb_lb2hn
+	global plcdb_netid2ip
+
+	api = plc.getCachedAuthAPI()
+	l_sites = api.GetSites({'peer_id':None}, 
+							['login_base', 'site_id', 'abbreviated_name', 'latitude', 
+							'longitude', 'max_slices', 'slice_ids', 'node_ids' ])
+	l_nodes = api.GetNodes({'peer_id':None}, 
+							['hostname', 'node_id', 'ports', 'site_id', 'version', 'last_updated', 
+							 'date_created', 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
+	l_pcus = api.GetPCUs()
+	l_nodenetworks = api.GetNodeNetworks()
+
+	(d_sites,id2lb) = dsites_from_lsites(l_sites)
+	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
+	netid2ip = create_netid2ip(l_nodes, l_nodenetworks)
+
+	plcdb_hn2lb = hn2lb
+	plcdb_lb2hn = lb2hn
+	plcdb_netid2ip = netid2ip
+	
+	return l_nodes
+
 def create_plcdb():
 
 	# get sites, and stats

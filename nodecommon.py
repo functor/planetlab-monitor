@@ -112,6 +112,16 @@ def diff_time(timestamp, abstime=True):
 		t_str = "%s mnths ago" % int(t)
 	return t_str
 
+def getvalue(fb, path):
+    indexes = path.split("/")
+    values = fb
+    for index in indexes:
+        if index in values:
+            values = values[index]
+        else:
+            return None
+    return values
+
 def nodegroup_display(node, fb, conf=None):
 	if node['hostname'] in fb['nodes']:
 		node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])

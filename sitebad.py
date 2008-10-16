@@ -4,26 +4,22 @@ import os
 import sys
 import string
 import time
-
-
-import database
-import comon
-import threadpool
-import syncplcdb
-from nodequery import verify,query_to_dict,node_select
 from datetime import datetime,timedelta
-import config
 
-from sqlobject import connectionForURI,sqlhub
-connection = connectionForURI(config.sqlobjecturi)
-sqlhub.processConnection = connection
-from infovacuum.model.findbadrecord import *
-from infovacuum.model.historyrecord import *
+from monitor import database
+from monitor.pcu import reboot
+from monitor import parser as parsermodule
+from monitor import config
+from monitor.database import HistorySiteRecord, FindbadNodeRecord
+from monitor.wrapper import plc
+from monitor.const import MINUP
 
-import plc
-api = plc.getAuthAPI()
+from nodecommon import *
+from nodequery import verify,query_to_dict,node_select
+import syncplcdb
 from unified_model import *
-from const import MINUP
+
+api = plc.getAuthAPI()
 
 def main(config):
 
@@ -41,12 +37,14 @@ def getnodesup(nodelist):
 	up = 0
 	for node in nodelist:
 		try:
-			noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node['hostname'], 
-											   orderBy='date_checked').reversed()[0]
-			if noderec.observed_status == "BOOT":
+			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			#noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node['hostname'], 
+			#								   orderBy='date_checked').reversed()[0]
+			if noderec is not None and noderec.observed_status == "BOOT":
 				up = up + 1
 		except:
-			pass
+			import traceback
+			print traceback.print_exc()
 	return up
 
 def checkAndRecordState(l_sites, l_plcsites):
@@ -62,13 +60,9 @@ def checkAndRecordState(l_sites, l_plcsites):
 			continue
 
 		if sitename in lb2hn:
-			try:
-				pf = HistorySiteRecord.by_loginbase(sitename)
-			except:
-				pf = HistorySiteRecord(loginbase=sitename)
+			pf = HistorySiteRecord.findby_or_create(loginbase=sitename)
 
 			pf.last_checked = datetime.now()
-
 			pf.slices_used = len(d_site['slice_ids'])
 			pf.nodes_total = len(lb2hn[sitename])
 			pf.nodes_up = getnodesup(lb2hn[sitename])
@@ -83,11 +77,12 @@ def checkAndRecordState(l_sites, l_plcsites):
 			count += 1
 			print "%d %15s slices(%2s) nodes(%2s) up(%2s) %s" % (count, sitename, pf.slices_used, 
 											pf.nodes_total, pf.nodes_up, pf.status)
+	print HistorySiteRecord.query.count()
 
 	return True
 
 if __name__ == '__main__':
-	import parser as parsermodule
+	from monitor import parser as parsermodule
 
 	parser = parsermodule.getParser()
 	parser.set_defaults(filename=None, node=None, site=None, 

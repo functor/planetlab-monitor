@@ -12,6 +12,8 @@ import xml, xmlrpclib
 import logging
 import time
 import traceback
+from monitor import database
+
 try:
 	import config
 	debug = config.debug
@@ -61,11 +63,99 @@ class PLC:
 	def __repr__(self):
 		return self.api.__repr__()
 
+class CachedPLC(PLC):
+
+	def _param_to_str(self, name, *params):
+		fields = len(params)
+		retstr = ""
+		retstr += "%s-" % name
+		for x in params:
+			retstr += "%s-" % x
+		return retstr[:-1]
+
+	def __getattr__(self, name):
+		method = getattr(self.api, name)
+		if method is None:
+			raise AssertionError("method does not exist")
+
+		def run_or_returncached(*params):
+			cachename = self._param_to_str(name, *params)
+			#print "cachename is %s" % cachename
+			if 'Get' in name:
+				if not database.cachedRecently(cachename):
+					load_old_cache = False
+					try:
+						values = method(self.auth, *params)
+					except:
+						print "Call %s FAILED: Using old cached data" % cachename
+						load_old_cache = True
+						
+					if load_old_cache:
+						values = database.dbLoad(cachename)
+					else:
+						database.dbDump(cachename, values)
+						
+					return values
+				else:
+					values = database.dbLoad(cachename)
+					return values
+			else:
+				return method(self.auth, *params)
+
+		return run_or_returncached
+
+
 def getAPI(url):
 	return xmlrpclib.Server(url, verbose=False, allow_none=True)
 
 def getAuthAPI():
 	return PLC(auth.auth, auth.server)
+
+def getCachedAuthAPI():
+	return CachedPLC(auth.auth, auth.server)
+
+def getTechEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	p = api.GetPersons(s['person_ids'])[0]
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'tech' in x['roles'], p) ]
+	return emails
+
+def getPIEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	p = api.GetPersons(s['person_ids'])[0]
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], p) ]
+	return emails
+
+def getSliceUserEmails(loginbase):
+	"""
+		For the given site, return all user email addresses that have the 'tech' role.
+	"""
+	#api = getAuthAPI()
+	# get site details.
+	s = api.GetSites(loginbase)[0]
+	# get people at site
+	slices = api.GetSlices(s['slice_ids'])
+	people = []
+	for slice in slices:
+		people += api.GetPersons(slice['person_ids'])
+	# pull out those with the right role.
+	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], people) ]
+	unique_emails = [ x for x in set(emails) ]
+	return unique_emails
 
 '''
 Returns list of nodes in dbg as reported by PLC
@@ -137,6 +227,7 @@ def getSiteNodes(loginbase, fields=None):
 		logger.info("getSiteNodes:  %s" % exc)
 		print "getSiteNodes:  %s" % exc
 	return nodelist
+
 
 def getPersons(filter=None, fields=None):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)

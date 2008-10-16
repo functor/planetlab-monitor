@@ -6,7 +6,7 @@ import string
 import time
 import xml, xmlrpclib
 try:
-	import config
+	from monitor import config
 	auth = {'Username'   : config.API_AUTH_USER,
 	        'AuthMethod' : "password",
 			'AuthString' : config.API_AUTH_PASSWORD}

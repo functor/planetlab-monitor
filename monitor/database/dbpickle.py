@@ -3,6 +3,7 @@ import sys
 import pickle
 import inspect
 import shutil
+import time
 from monitor import config
 
 noserial=False
@@ -16,6 +17,27 @@ except:
 DEBUG= 0
 PICKLE_PATH=config.MONITOR_DATA_ROOT
 
+def lastModified(name, type=None):
+	# TODO: fix for 'debug' mode also.
+	t = SPickle().mtime("production.%s" % name, type)
+	return t
+
+def cachedRecently(name, length=int(config.cachetime), type=None):
+	"""
+		return true or false based on whether the modified time of the cached
+		file is within 'length' minutes.
+	"""
+	try:
+		t = lastModified(name, type)
+	except:
+		# file doesn't exist or we can't access it.
+		return False
+
+	current_time = time.time()
+	if current_time > t + length*60:
+		return False
+	else:
+		return True
 
 def dbLoad(name, type=None):
 	return SPickle().load(name, type)
@@ -73,6 +95,10 @@ class SPickle:
 				raise Exception("No PHPSerializer module available")
 
 			return "%s/%s.phpserial" % (self.path, name)
+
+	def mtime(self, name, type=None):
+		f = os.stat(self.__file(name, type))
+		return f[-2]
 		
 	def exists(self, name, type=None):
 		return os.path.exists(self.__file(name, type))

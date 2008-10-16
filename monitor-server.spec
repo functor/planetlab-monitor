@@ -2,7 +2,7 @@
 # $Id$
 # 
 
-%define url $URL: svn+ssh://svn.planet-lab.org/svn/Monitor/trunk/Monitor-server.spec $
+%define url $URL: svn+ssh://svn.planet-lab.org/svn/Monitor/trunk/monitor-server.spec $
 
 %define name monitor-server
 %define version 1.1
@@ -30,6 +30,7 @@ Requires: curl
 Requires: coreutils
 Requires: openssh-clients
 Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
 Requires: MySQL-python
 Requires: rt3 == 3.4.1
 Requires: nmap
@@ -55,6 +56,8 @@ cd ..
 
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/share/%{name}
+mkdir -p $RPM_BUILD_ROOT/data/var/lib/%{name}
+mkdir -p $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}
 mkdir -p $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 mkdir -p $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
@@ -67,7 +70,7 @@ echo " * Installing web pages"
 rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing cron job for automated polling"
-install -D -m 755 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
+install -D -m 644 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
 echo " * TODO: Setting up Monitor account in local MyPLC"
 # TODO: 
 
@@ -116,6 +119,13 @@ echo "Post processing"
 #chkconfig monitor-server on
 
 %changelog
+* Tue Oct 14 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-10
+- an update to the latest tag.  looks like I actually needed to update the tags
+- file more than this.
+
+* Thu Sep 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-9
+- includes all removals of 'monitorconfig'
+
 * Wed Sep 24 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-8
 - These are all changes in the latest Monitor code.  I will branch this version
 - next, before making additional large changes.

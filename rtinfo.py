@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import database
+from monitor import database
 
 sql = database.dbLoad("idTickets")
 import sys

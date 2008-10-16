@@ -230,7 +230,7 @@ class PersistMessage(Message):
 			#print "creating new object"
 			obj = super(PersistMessage, typ).__new__(typ, [id, subject, message, via_rt], **kwargs)
 			obj.id = id
-			obj.actiontracker = Recent(3*60*60*24)
+			obj.actiontracker = Recent(1*60*60*24)
 			obj.ticket_id = None
 
 		if 'ticket_id' in kwargs and kwargs['ticket_id'] is not None:
@@ -259,6 +259,7 @@ class PersistMessage(Message):
 			self.save()
 		else:
 			# NOTE: only send a new message every week, regardless.
+			# NOTE: can cause thank-you messages to be lost, for instance when node comes back online within window.
 			print "Not sending to host b/c not within window of %s days" % (self.actiontracker.withintime // (60*60*24))
 
 class MonitorMessage(object):
@@ -539,6 +540,8 @@ class Record(object):
 								 self.data['message'][1] % self.data['args'],
 								 True, db='monitor_persistmessages',
 								 ticket_id=ticket_id)
+			if self.data['stage'] == "improvement":
+				message.reset()
 			return message
 		else:
 			return None
