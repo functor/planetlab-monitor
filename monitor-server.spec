@@ -6,7 +6,7 @@
 
 %define name monitor-server
 %define version 1.0
-%define taglevel 10
+%define taglevel 11
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -118,6 +118,9 @@ echo "Post processing"
 #chkconfig monitor-server on
 
 %changelog
+* Tue Oct 21 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-11
+- send direct email, not to tech-* and pi-* aliases.
+
 * Tue Oct 14 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-10
 - an update to the latest tag.  looks like I actually needed to update the tags
 - file more than this.
