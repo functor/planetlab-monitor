@@ -225,7 +225,7 @@ def fields_to_html(fields, vals):
 				#print "state: %s<br>" % pcu_state(vals['plcnode']['pcu_ids'][0])
 				#print "color: %s<br>" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
 				bgcolor = "bgcolor='%s'" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
-				url = "<a href='/cgi-bin/printbadpcus.php#id%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
+				url = "<a href='/cgi-bin/monitor/printbadpcus.php?id=%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
 				r_str += "<td nowrap %s>%s</td>" % (bgcolor, url)
 		else:
 			r_str += "<td nowrap %s>%s</td>" % (bgcolor, f)
@@ -238,6 +238,17 @@ def fields_to_html(fields, vals):
 
 def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	global fb
+	import os
+	import datetime
+	if nodeonlyfilter == None:
+		print "<html><body>\n"
+
+		try:
+			mtime = os.stat("/var/lib/monitor-server/production.findbad.pkl")[-2]
+			print "Last Updated: %s GMT" % datetime.datetime.fromtimestamp(mtime)
+		except:
+			pass
+
 
 	db = database.dbLoad(config.dbname)
 	fb = database.dbLoad("findbadpcus")
@@ -356,10 +367,12 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	if comonfilter != None:	cmf = re.compile(comonfilter)
 	else: 					cmf = None
 
+
+	output_str = ""
 	#l_loginbase = bysite.keys()
 	#l_loginbase.sort()
 	if nodeonlyfilter == None:
-		print "<table width=80% border=1>"
+		output_str += "<table width=80% border=1>"
 
 	prev_sitestring = ""
 	for row in d2:
@@ -376,16 +389,16 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			continue
 
 		if nodeonlyfilter != None:
-			print vals['nodename']
+			output_str += vals['nodename']
 			continue
 
 		site_string = row['site_string']
 		if site_string != prev_sitestring:
-			print "<tr><td bgcolor=lightblue nowrap>" 
-			print site_string
-			print "</td>"
+			output_str += "<tr><td bgcolor=lightblue nowrap>" 
+			output_str += site_string
+			output_str += "</td>"
 		else:
-			print "<tr><td>&nbsp;</td>"
+			output_str += "<tr><td>&nbsp;</td>"
 
 		prev_sitestring = site_string
 
@@ -441,15 +454,15 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			print >>sys.stderr, vals
 
 		s = fields_to_html(str_fields, vals)
-		print s
+		output_str += s
 			
-		print "\n</tr>"
+		output_str += "\n</tr>"
 
 	if nodeonlyfilter == None:
-		print "</table>"
-		print "<table>"
+		output_str += "</table>"
 	keys = categories.keys()
 	keys.sort()
+	print "<table>"
 	for cat in keys:
 		print "<tr>"
 		print "<th nowrap align=left>Total %s</th>" % cat
@@ -457,6 +470,10 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 		print "</tr>"
 	if nodeonlyfilter == None:
 		print "</table>"
+
+	print output_str
+	if nodeonlyfilter == None:
+		print "</body></html>\n"
 
 
 
@@ -496,7 +513,7 @@ if __name__ == '__main__':
 
 	config.cmpdays=False
 	config.comon="sshstatus"
-	config.fields="nodename,ping,ssh,pcu,category,state,comonstats,kernel,bootcd"
+	config.fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd"
 	config.dbname="findbad"
 	config.cmpping=False 
 	config.cmpdns=False
@@ -505,11 +522,7 @@ if __name__ == '__main__':
 	config.cmpcategory=False
 
 	print "Content-Type: text/html\r\n"
-	if mynodeonly == None:
-		print "<html><body>\n"
 	if len(sys.argv) > 1:
 		if sys.argv[1] == "ssherror":
 			ssherror = True
 	main(myfilter, mycategory, mystate, mycomon,mynodeonly)
-	if mynodeonly == None:
-		print "</body></html>\n"
