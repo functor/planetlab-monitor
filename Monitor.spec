@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 11
+%define taglevel 12
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,11 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Wed Oct 29 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-12
+- Improvements in web pages, and default installation options, and RT queue
+- setup.
+- Send direct emails rather than using tech- & pi- aliases
+
 * Tue Oct 21 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-11
 - send direct email, not to tech-* and pi-* aliases.
 
