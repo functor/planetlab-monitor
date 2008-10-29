@@ -48,8 +48,14 @@ if not config.imported:
 
 	#from config import options as config
 	options = Options()
-	update_section(options, 'commandline', True)
-	update_section(options, 'monitorconfig')
+	try:
+		update_section(options, 'commandline', True)
+	except:
+		pass
+	try:
+		update_section(options, 'monitorconfig')
+	except:
+		pass
 
 #for i in dir(config):
 #	if "__" not  in i:

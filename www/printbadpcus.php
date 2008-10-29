@@ -2,12 +2,12 @@
 
 function plc_site_link($site_name) 
 { 
-	return "https://www.planet-lab.org/db/sites/index.php?site_pattern=" .  $site_name;
+	return "https://" . MONITOR_HOSTNAME . "/db/sites/index.php?site_pattern=" .  $site_name;
 }
 
 function pcu_link($pcu) 
 { 
-	return "https://www.planet-lab.org/db/sites/pcu.php?id=" . $pcu['pcu_id']; 
+	return "https://" . MONITOR_HOSTNAME . "/db/sites/pcu.php?id=" . $pcu['pcu_id']; 
 }
 
 function pcu_site($pcu)

@@ -218,7 +218,7 @@ def emailViaRT_NoTicket(subject, text, to):
 	input_text  = "Subject: %s\n"
 	input_text += "Requestor: %s\n"% FROM
 	input_text += "id: ticket/new\n"
-	input_text += "Queue: Monitor\n"
+	input_text += "Queue: %s\n" % config.RT_QUEUE
 	for recipient in to:
 		input_text += "AdminCc: %s\n" % recipient
 	input_text += "Text: %s"

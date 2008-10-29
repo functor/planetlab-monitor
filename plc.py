@@ -76,7 +76,7 @@ def getTechEmails(loginbase):
 	# get site details.
 	s = api.GetSites(loginbase)[0]
 	# get people at site
-	p = api.GetPersons(s['person_ids'])[0]
+	p = api.GetPersons(s['person_ids'])
 	# pull out those with the right role.
 	emails = [ person['email'] for person in filter(lambda x: 'tech' in x['roles'], p) ]
 	return emails
@@ -89,7 +89,7 @@ def getPIEmails(loginbase):
 	# get site details.
 	s = api.GetSites(loginbase)[0]
 	# get people at site
-	p = api.GetPersons(s['person_ids'])[0]
+	p = api.GetPersons(s['person_ids'])
 	# pull out those with the right role.
 	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], p) ]
 	return emails
