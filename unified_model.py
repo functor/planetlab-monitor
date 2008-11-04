@@ -564,12 +564,12 @@ class Record(object):
 			contacts += [config.email]
 		if TECH & roles:
 			#contacts += [TECHEMAIL % self.loginbase]
-			contacts += plc.getTechEmails(loginbase)
+			contacts += plc.getTechEmails(self.loginbase)
 		if PI & roles:
 			#contacts += [PIEMAIL % self.loginbase]
-			contacts += plc.getSliceUserEmails(loginbase)
+			contacts += plc.getSliceUserEmails(self.loginbase)
 		if USER & roles:
-			contacts += plc.getSliceUserEmails(loginbase)
+			contacts += plc.getSliceUserEmails(self.loginbase)
 			slices = plc.slices(self.loginbase)
 			if len(slices) >= 1:
 				#for slice in slices:
