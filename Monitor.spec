@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 12
+%define taglevel 13
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,9 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Tue Nov 04 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-13
+- Fixed for email change in unified_model.py tweaks in others.
+
 * Wed Oct 29 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-12
 - Improvements in web pages, and default installation options, and RT queue
 - setup.
