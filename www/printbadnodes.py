@@ -1,8 +1,10 @@
 #!/usr/bin/python
 from monitor import database
 from monitor import config
+from monitor import general_functions
 import string
 import sys
+import time
 
 categories = {}
 ssherror = False
@@ -234,6 +236,41 @@ def fields_to_html(fields, vals):
 	
 	return r_str
 
+def my_diff_time(timestamp):
+        now = time.time()
+        if timestamp == None:
+                return "not yet contacted"
+        diff = now - timestamp
+        # return the number of seconds as a difference from current time.
+        t_str = ""
+        if diff < 60: # sec in min.
+                t = diff
+                t_str = "%s sec ago" % t
+        elif diff < 60*60: # sec in hour
+                t = diff // (60)
+                t_str = "%s min ago" % int(t)
+        elif diff < 60*60*24: # sec in day
+                t = diff // (60*60)
+                t_str = "%s hours ago" % int(t)
+        elif diff < 60*60*24*7: # sec in week
+                t = diff // (60*60*24)
+                t_str = "%s days ago" % int(t)
+        elif diff < 60*60*24*30: # approx sec in month
+                t = diff // (60*60*24*7)
+                t_str = "%s weeks ago" % int(t)
+        elif diff > 60*60*24*30 and diff < 60*60*24*30*2: # approx sec in month
+                month = int( diff // (60*60*24*30) )
+                weeks = (diff - (month * (60*60*24*30))) // (60*60*24*7) 
+                if weeks == 0:
+                        t_str = "%s month ago" % int(month)
+                elif weeks == 4:
+                        t_str = "2 months ago"
+                else:
+                        t_str = "%s month and %s weeks ago" % ( int(month) , int(weeks) )
+        elif diff >= 60*60*24*30*2:                
+                month =  diff // (60*60*24*30)
+                t_str = "%s months ago" % int(month)
+        return t_str
 
 
 def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
@@ -262,6 +299,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 						'state' : 5, 
 						'kernel' : 10.65, 
 						'comonstats' : 5, 
+						'last_contact' : 10.65,
 						'plcsite' : 12,
 						'bootcd' : 10.65}
 	## create format string based on config.fields
@@ -270,6 +308,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	format_fields = []
 	for f in config.fields.split(','):
 		fields[f] = "%%(%s)s" % f
+		#print f
 		#if f in maxFieldLengths:
 		#	fields[f] = "%%(%s)%ds" % (f, maxFieldLengths[f])
 		#else:
@@ -379,6 +418,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 
 		vals = row
 
+		#added by guto about last contact information
 		if (catfilter != None and cf.match(vals['category']) == None):
 			continue
 
@@ -443,6 +483,12 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 		if 'nodename' in vals:
 			url = "<a href='https://%s/db/nodes/index.php?nodepattern=%s'>%s</a>" % (config.MONITOR_HOSTNAME, vals['nodename'], vals['nodename'])
 			vals['nodename'] = url
+
+		if 'plcnode' in vals:
+			if vals['plcnode']['status'] == "GN_FAILED":
+				vals['last_contact'] = "UNKNOWN"
+			else:
+				vals['last_contact'] = my_diff_time(vals['plcnode']['last_contact'])
 
 		try:
 			str_fields = []
@@ -513,7 +559,7 @@ if __name__ == '__main__':
 
 	config.cmpdays=False
 	config.comon="sshstatus"
-	config.fields="nodename,ping,ssh,pcu,category,state,kernel,bootcd"
+	config.fields="nodename,ping,ssh,pcu,category,state,last_contact,kernel,bootcd"
 	config.dbname="findbad"
 	config.cmpping=False 
 	config.cmpdns=False
