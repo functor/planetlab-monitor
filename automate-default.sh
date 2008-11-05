@@ -10,6 +10,7 @@ set -e
 DATE=`date +%Y-%m-%d-%T`
 MONITOR_PID="${MONITOR_SCRIPT_ROOT}/SKIP"
 
+echo "#######################################"; echo "Running Monitor at $DATE"; echo "######################################"
 echo "Performing API test"
 API=$(./testapi.py)
 if [ "$API" != "ok" ] ; then 
@@ -23,7 +24,12 @@ if [ -f $MONITOR_PID ] ; then
 		echo "KILLING Monitor"
 		PID=`cat $MONITOR_PID`
 		rm -f $MONITOR_PID
-		${MONITOR_SCRIPT_ROOT}/kill.cmd.sh $PID
+		if [ -z $PID ] ; then
+			${MONITOR_SCRIPT_ROOT}/kill.cmd.sh $PID
+			echo "done."
+		else
+			echo "No PID to be killed."
+		fi
 	else 
 		# skipping monitor
 		echo "SKIPPING Monitor"
@@ -35,7 +41,6 @@ echo $$ > $MONITOR_PID
 # SETUP act_all database if it's not there.
 if [ ! -f ${MONITOR_SCRIPT_ROOT}/actallsetup.flag ]; then
 	if ! python -c 'import database; database.dbLoad("act_all")' 2>/dev/null ; then 
-		python -c 'import database; database.dbDump("act_all", {})' 2>/dev/null ; then 
 		touch ${MONITOR_SCRIPT_ROOT}/actallsetup.flag
 	fi
 fi
@@ -62,7 +67,7 @@ echo "Performing Findbad Nodes"
 rm -f ${MONITOR_DATA_ROOT}/production.findbad2.pkl
 ${MONITOR_SCRIPT_ROOT}/findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE || :
 cp ${MONITOR_DATA_ROOT}/production.findbad2.pkl ${MONITOR_DATA_ROOT}/production.findbad.pkl
-ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs kill || :
+ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 echo "Performing Findbad PCUs"
 #########################
@@ -71,7 +76,7 @@ rm -f ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl
 ${MONITOR_SCRIPT_ROOT}/findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE || :
 cp ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl ${MONITOR_DATA_ROOT}/production.findbadpcus.pkl
 # clean up stray 'locfg' processes that hang around inappropriately...
-ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs kill || :
+ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 #echo "Generating web data"
 # badcsv.txt
@@ -90,8 +95,13 @@ echo "Converting pkl files to phpserial"
 #########################
 # 4. convert pkl to php serialize format.
 ${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbadpcus2 -o findbadpcus
-${MONITOR_SCRIPT_ROOT}/pkl2php.py -i act_all -o act_all
-${MONITOR_SCRIPT_ROOT}/pkl2php.py -i plcdb_hn2lb -o plcdb_hn2lb
+for f in act_all plcdb_hn2lb ; do
+	if [ -f ${MONITOR_DATA_ROOT}/production.$f.pkl ]; then
+		${MONITOR_SCRIPT_ROOT}/pkl2php.py -i $f -o $f
+	else
+		echo "Warning: ${MONITOR_DATA_ROOT}/production.$f.pkl does not exist."
+	fi
+done
 ${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbad -o findbadnodes
 #${MONITOR_SCRIPT_ROOT}/pkl2php.py -i ad_dbTickets -o ad_dbTickets
 #${MONITOR_SCRIPT_ROOT}/pkl2php.py -i idTickets -o idTickets
@@ -99,8 +109,12 @@ ${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbad -o findbadnodes
 echo "Archiving pkl files"
 #########################
 # Archive pkl files.
-for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do 
-	cp ${MONITOR_DATA_ROOT}/production.$f.pkl ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.production.$f.pkl
+for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do
+	if [ -f ${MONITOR_DATA_ROOT}/production.$f.pkl ] ; then
+		cp ${MONITOR_DATA_ROOT}/production.$f.pkl ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.production.$f.pkl
+	else
+		echo "Warning: It failed to archive ${MONITOR_DATA_ROOT}/production.$f.pkl"
+	fi
 done
 
 echo "Running grouprins on all dbg nodes"
