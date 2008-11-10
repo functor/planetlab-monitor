@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from monitor import database
 from monitor import config
-from monitor import general_functions
 import string
 import sys
 import time
