@@ -1,0 +1,273 @@
+%define debug_package %{nil}
+
+%define _prefix		/usr/local/zabbix
+
+Name:		zabbix
+Version:	1.6.1
+Release:	1
+Group:		System Environment/Daemons
+License:	GPL
+Summary:	ZABBIX network monitor server
+Vendor:		ZABBIX SIA
+URL:		http://www.zabbix.org
+Packager:	Eugene Grigorjev <eugene.grigorjev@zabbix.com>
+Source:		zabbix-1.6.1.tar.gz
+
+Autoreq:	no
+Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
+
+
+#Prefix:		%{_prefix}
+
+%define zabbix_bindir	%{_prefix}/bin
+%define zabbix_datadir	%{_prefix}/misc
+%define zabbix_confdir	%{_prefix}/conf
+%define zabbix_initdir	%{_prefix}/init.d
+%define zabbix_docdir	%{_prefix}/doc
+%define zabbix_webdir	/var/www/html/zabbix
+#%define zabbix_piddir	%{_tmppath}
+#%define zabbix_logdir	%{_tmppath}
+
+%define zabbix_piddir	/var/run
+%define zabbix_logdir	/var/log
+
+%description
+The ZABBIX server is a network monitor
+
+%package client
+Summary:	ZABBIX network monitor agent daemon
+Group:		System Environment/Daemons
+%description client
+The ZABBIX client is a network monitor
+
+%package server
+Summary:	ZABBIX network monitor server daemon
+Group:		System Environment/Daemons
+BuildPrereq: postgresql-devel
+BuildPrereq: net-snmp-devel
+#BuildPrereq: gnutls-devel
+#BuildPrereq: libtasn1-devel
+
+Requires: gnutls
+Requires: postgresql-server
+Requires: net-snmp
+
+%description server
+The ZABBIX server is a network monitor
+
+%package gui
+Summary:	ZABBIX network monitor server frontend
+Group:		Productivity/Networking/Web/Frontends
+Requires: php
+Requires: php-bcmath
+Requires: postgresql-server
+
+%description gui
+The ZABBIX gui frontend
+
+%prep
+%setup -n zabbix-1.6.1
+
+%build
+
+# TODO: there must be a better way.  unfortunately, this package doesn't build
+# after running ./configure from a subdir, i.e. mkdir client; cd client; ../configure... ; make-> fails.
+mkdir client
+cp -r * client || :
+mkdir server
+cp -r client/* server
+
+pushd client
+./configure --enable-static --enable-agent
+make
+popd
+
+pushd server
+./configure --enable-server --with-pgsql --with-net-snmp --with-libcurl
+make
+popd
+
+%clean
+rm -fr $RPM_BUILD_ROOT
+
+%install
+rm -fr $RPM_BUILD_ROOT
+
+################# SERVER
+
+# copy documentation
+install -d %{buildroot}%{zabbix_docdir}
+install -m 644 server/AUTHORS %{buildroot}%{zabbix_docdir}/AUTHORS
+install -m 644 server/COPYING %{buildroot}%{zabbix_docdir}/COPYING
+install -m 644 server/NEWS %{buildroot}%{zabbix_docdir}/NEWS
+install -m 644 server/README %{buildroot}%{zabbix_docdir}/README
+
+# copy binaries
+install -d %{buildroot}%{zabbix_bindir}
+install -s -m 755 server/src/zabbix_server/zabbix_server %{buildroot}%{zabbix_bindir}/zabbix_server
+
+# copy config files
+install -d %{buildroot}%{zabbix_confdir}
+install -m 755 server/misc/conf/zabbix_server.conf %{buildroot}%{zabbix_confdir}/zabbix_server.conf
+install -d %{buildroot}/etc/zabbix
+install -m 755 server/misc/conf/zabbix_server.conf %{buildroot}/etc/zabbix
+
+# copy startup script
+install -d %{buildroot}%{zabbix_initdir}
+install -m 755 server/misc/init.d/fedora/core/zabbix_server %{buildroot}%{zabbix_initdir}/zabbix_server
+
+install -d %{buildroot}%{zabbix_datadir}
+cp -r server/create %{buildroot}%{zabbix_datadir}
+
+################# CLIENT 
+# copy binaries
+install -d %{buildroot}%{zabbix_bindir}
+install -s -m 755 client/src/zabbix_agent/zabbix_agentd %{buildroot}%{zabbix_bindir}/zabbix_agentd
+
+# copy config files
+install -d %{buildroot}%{zabbix_confdir}
+install -m 755 client/misc/conf/zabbix_agentd.conf %{buildroot}%{zabbix_confdir}/zabbix_agentd.conf
+install -d %{buildroot}/etc/zabbix
+install -m 755 client/misc/conf/zabbix_agentd.conf %{buildroot}/etc/zabbix
+
+# copy startup script
+install -d %{buildroot}%{zabbix_initdir}
+install -m 755 client/misc/init.d/fedora/core/zabbix_agentd %{buildroot}%{zabbix_initdir}/zabbix_agentd
+
+################# GUI
+# copy php frontend
+install -d %{buildroot}%{zabbix_webdir}
+cp -r frontends/php/* %{buildroot}%{zabbix_webdir}
+
+%post client
+# create ZABBIX group
+if [ -z "`grep zabbix /etc/group`" ]; then
+  /usr/sbin/groupadd zabbix >/dev/null 2>&1
+fi
+
+# create ZABBIX uzer
+if [ -z "`grep zabbix /etc/passwd`" ]; then
+  /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
+fi
+
+# configure ZABBIX agentd daemon
+TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
+
+# TODO: setup Server=, Hostname=,
+SERVER=`grep PLC_MONITOR_HOST /etc/planetlab/plc_config | tr "'" ' ' | awk '{print $2}'`
+HOST=`hostname`
+sed	-e "s#Hostname=.*#Hostname=$HOST#g" \
+	-e "s#Server=.*#Server=$SERVER#g" \
+	-e "s#PidFile=/var/tmp/zabbix_agentd.pid#PidFile=%{zabbix_piddir}/zabbix_agentd.pid#g" \
+	-e "s#LogFile=/tmp/zabbix_agentd.log#LogFile=%{zabbix_logdir}/zabbix_agentd.log#g" \
+	%{zabbix_confdir}/zabbix_agentd.conf > $TMP_FILE
+cat $TMP_FILE > %{zabbix_confdir}/zabbix_agentd.conf
+mkdir -p /etc/zabbix
+cp %{zabbix_confdir}/zabbix_agentd.conf /etc/zabbix/
+# TODO: copy to /etc/zabbix/
+
+sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
+	-e "s#PIDFILE=/var/tmp/zabbix_agentd.pid#PIDFILE=%{zabbix_piddir}/zabbix_agentd.pid#g" \
+	%{zabbix_initdir}/zabbix_agentd > $TMP_FILE
+cat $TMP_FILE > %{zabbix_initdir}/zabbix_agentd
+# TODO: copy to /etc/init.d/
+cp %{zabbix_initdir}/zabbix_agentd /etc/init.d
+
+rm -f $TMP_FILE
+
+chkconfig zabbix_agentd on
+
+%post server
+
+# create ZABBIX group
+if [ -z "`grep zabbix /etc/group`" ]; then
+  /usr/sbin/groupadd zabbix >/dev/null 2>&1
+fi
+
+# create ZABBIX uzer
+if [ -z "`grep zabbix /etc/passwd`" ]; then
+  /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
+fi
+
+# configure ZABBIX server daemon
+TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
+
+# SETUP DBHost, DBName, DBUser, DBPassword
+#SERVER=`grep PLC_MONITOR_HOST /etc/planetlab/plc_config | tr "'" ' ' | awk '{print $2}'`
+
+sed	-e "s#AlertScriptsPath=/home/zabbix/bin/#AlertScriptsPath=%{zabbix_bindir}/#g" \
+	-e "s#PidFile=/var/tmp/zabbix_server.pid#PidFile=%{zabbix_piddir}/zabbix_server.pid#g" \
+	-e "s#LogFile=/tmp/zabbix_server.log#LogFile=%{zabbix_logdir}/zabbix_server.log#g" \
+	%{zabbix_confdir}/zabbix_server.conf > $TMP_FILE
+cat $TMP_FILE > %{zabbix_confdir}/zabbix_server.conf
+mkdir -p /etc/zabbix
+cp %{zabbix_confdir}/zabbix_server.conf /etc/zabbix/
+
+sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
+	-e "s#PIDFILE=/var/tmp/zabbix_server.pid#PIDFILE=%{zabbix_piddir}/zabbix_server.pid#g" \
+	%{zabbix_initdir}/zabbix_server > $TMP_FILE
+cat $TMP_FILE > %{zabbix_initdir}/zabbix_server
+cp %{zabbix_initdir}/zabbix_server /etc/init.d
+
+rm -f $TMP_FILE
+
+chkconfig zabbix_server on
+
+%postun 
+rm -f %{zabbix_piddir}/zabbix_server.pid
+rm -f %{zabbix_logdir}/zabbix_server.log
+
+rm -f %{zabbix_piddir}/zabbix_agentd.pid
+rm -f %{zabbix_logdir}/zabbix_agentd.log
+
+%files client
+%defattr(-,root,root)
+
+%dir %attr(0755,root,root) %{zabbix_confdir}
+%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
+
+%dir %attr(0755,root,root) %{zabbix_bindir}
+%attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
+
+%dir %attr(0755,root,root) %{zabbix_initdir}
+%attr(0755,root,root) %{zabbix_initdir}/zabbix_agentd
+
+%config /etc/zabbix/zabbix_agentd.conf
+
+%files server
+%defattr(-,root,root)
+
+%dir %attr(0755,root,root) %{zabbix_docdir}
+%attr(0644,root,root) %{zabbix_docdir}/AUTHORS
+%attr(0644,root,root) %{zabbix_docdir}/COPYING
+%attr(0644,root,root) %{zabbix_docdir}/NEWS
+%attr(0644,root,root) %{zabbix_docdir}/README
+
+%dir %attr(0755,root,root) %{zabbix_confdir}
+%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_server.conf
+
+%dir %attr(0755,root,root) %{zabbix_bindir}
+%attr(0755,root,root) %{zabbix_bindir}/zabbix_server
+
+%dir %attr(0755,root,root) %{zabbix_initdir}
+%attr(0755,root,root) %{zabbix_initdir}/zabbix_server
+
+%dir %attr(0755,root,root) %{zabbix_datadir}
+%attr(0755,root,root) %{zabbix_datadir}/create/
+
+%config /etc/zabbix/zabbix_server.conf
+
+%files gui
+%defattr(-,root,root)
+%dir %{zabbix_webdir}
+%{zabbix_webdir}
+
+%changelog
+* Tue Nov 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu>
+- 1.6.1
+- initial re-packaging
+
+* Thu Dec 01 2005 Eugene Grigorjev <eugene.grigorjev@zabbix.com>
+- 1.1beta2
+- initial packaging
+
