@@ -10,7 +10,6 @@
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
-Summary: Monitor account initialization for the root image.
 Name: %{name}
 Version: %{version}
 Release: %{release}
@@ -24,33 +23,125 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %(echo %{url} | cut -d ' ' -f 2)
 
+Summary: Monitor account initialization for the root image.
+Group: Applications/System
+
+%description
+Monitor is a collection of secondary scripts for configuring the node polling
+system, syncing the PLC db with the monitoring database, notifying users,
+interacting with PCU hardware, applying penalties to sites that violate
+acceptable use.
+
+%package client
+Summary: Monitor hooks for a PLC node
+Group: Applications/System
 Requires: curl
 Requires: coreutils
 
-%description
-Scripts for creating the monitor account in the root filesystem, to enable node access 
-without using the 'root' account.
+%description client
+The client scripts handle account creation inside of a node.  This will
+include configuration setup for the monitoring agent running on the node.  It
+will also include any cron or init scripts needed to perform this kind of
+maintenance.
+
+%package server
+Summary: Monitor hooks for the PLC server.
+Group: Applications/System
+Requires: curl
+Requires: nmap
+Requires: python
+
+%description server
+The server side include all python modules and scripts needed to fully
+operation, track, and interact with any third-party monitoring software, such
+as Zabbix DB.
 
 %prep
 %setup -q
 
 %build
-echo "There is no build stage.  Simply copy files."
+# NOTE: the build uses g++ cmdamt/
+# NOTE: TMPDIR is needed here b/c the tmpfs of the build vserver is too small.
+cd cmdamt
+export TMPDIR=$PWD/tmp
+make
+cd ..
 
 %install
 rm -rf $RPM_BUILD_ROOT
+#################### CLIENT 
 install -D -m 755 monitor.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
 install -D -m 755 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
+
+#################### SERVER
+install -d $RPM_BUILD_ROOT/usr/share/%{name}
+install -d $RPM_BUILD_ROOT/data/var/lib/%{name}
+install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
+install -d $RPM_BUILD_ROOT/var/lib/%{name}
+install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
+install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+
+echo " * Installing core scripts"
+rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
+	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
+
+echo " * Installing web pages"
+rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+
+echo " * Installing cron job for automated polling"
+install -D -m 644 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
+echo " * TODO: Setting up Monitor account in local MyPLC"
+# TODO: 
+
+install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
+install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
+# TODO: need a much better way to do this.
+rsync -a monitor/ $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
+#for file in __init__.py database.py config.py ; do 
+#	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
+#done
+install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
+
+touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
+chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
+
+install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
+cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files
+%files server
+%defattr(-,root,root)
+%config /usr/share/%{name}/monitorconfig.py
+%config /etc/monitor.conf
+/usr/share/%{name}
+/var/lib/%{name}
+/var/www/cgi-bin/monitor
+%{_sysconfdir}/cron.d/%{name}.cron
+%{python_sitearch}/threadpool.py
+%{python_sitearch}/threadpool.pyc
+%{python_sitearch}/threadpool.pyo
+%{python_sitearch}/monitor
+
+%files client
 %defattr(-,root,root)
 %{_initrddir}/monitor
 %{_sysconfdir}/cron.d/monitor
 
-%post
+%post server
+# TODO: this will be nice when we have a web-based service running., such as
+# 		an API server or so on.
+# TODO: create real monitorconfig.py from monitorconfig-default.py
+# TODO: create monitorconfig.php using phpconfig.py 
+# TODO: create symlink in /var/lib/monitor-server for chroot environments
+# TODO: update the content of automate_pl03.sh 
+# TODO: Use the installed version of bootcd to create custom boot images. ( or, use the api now).
+
+#chkconfig --add monitor-server
+#chkconfig monitor-server on
+
+%post client
 chkconfig --add monitor
 chkconfig monitor on
 
