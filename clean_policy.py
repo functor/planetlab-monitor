@@ -2,7 +2,6 @@ import config
 import database 
 import time
 import mailer
-from unified_model import cmpCategoryVal
 import sys
 import emailTxt
 import string
@@ -201,7 +200,7 @@ class MonitorMergeDiagnoseSendEscellate:
 					del diag['CloseRT']
 
 		else:
-			print "NOT sending email : %s %s" % (config.mail, record.data['rt'])
+			print "NOT sending email : %s" % config.mail
 
 		return
 

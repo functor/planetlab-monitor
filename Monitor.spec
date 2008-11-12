@@ -48,7 +48,11 @@ maintenance.
 %package server
 Summary: Monitor hooks for the PLC server.
 Group: Applications/System
+
 Requires: python
+Requires: python-sqlalchemy
+Requires: python-elixir
+
 Requires: openssh-clients
 Requires: perl-libwww-perl
 Requires: perl-IO-Socket-SSL 
@@ -78,7 +82,7 @@ cd ..
 rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
 install -D -m 755 monitor.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
-install -D -m 755 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
+install -D -m 644 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
 
 #################### SERVER
 install -d $RPM_BUILD_ROOT/usr/share/%{name}
@@ -96,7 +100,7 @@ echo " * Installing web pages"
 rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 
 echo " * Installing cron job for automated polling"
-install -D -m 644 %{name}.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/%{name}.cron
+install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
 echo " * TODO: Setting up Monitor account in local MyPLC"
 # TODO: 
 
@@ -125,7 +129,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}
 /var/lib/%{name}
 /var/www/cgi-bin/monitor
-%{_sysconfdir}/cron.d/%{name}.cron
+%{_sysconfdir}/cron.d/monitor-server.cron
 %{python_sitearch}/threadpool.py
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo

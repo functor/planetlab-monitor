@@ -45,7 +45,10 @@ def plc_print_nodeinfo(plcnode):
 
 def fb_print_nodeinfo(fbnode):
 	pf = PersistFlags(fbnode['hostname'], 1, db='node_persistflags')
-	fbnode['last_change'] = diff_time(pf.last_changed)
+	try:
+		fbnode['last_change'] = diff_time(pf.last_changed)
+	except:
+		fbnode['last_change'] = diff_time(time.time())
 	print "   Checked: ",
 	if 'checked' in fbnode:
 		print "%11.11s " % diff_time(fbnode['checked'])

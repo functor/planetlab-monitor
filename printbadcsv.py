@@ -115,13 +115,13 @@ def main():
 			print str
 
 	keys = categories.keys()
-	for cat in ['BOOT-ALPHA', 'BOOT-PROD', 'BOOT-OLDBOOTCD', 'DEBUG-ALPHA',
-	'DEBUG-PROD', 'DEBUG-OLDBOOTCD', 'DOWN-ERROR']:
+	for cat in ['BOOT-PROD', 'BOOT-OLDPROD', 'BOOT-OLDBOOTCD', 'DEBUG-PROD',
+	'DEBUG-OLDPROD', 'DEBUG-OLDBOOTCD', 'DOWN-ERROR']:
 		if cat not in keys:
 			categories[cat] = 0
 	keys = categories.keys()
-	for cat in ['BOOT-ALPHA', 'BOOT-PROD', 'BOOT-OLDBOOTCD', 'DEBUG-ALPHA',
-	'DEBUG-PROD', 'DEBUG-OLDBOOTCD', 'DOWN-ERROR']:
+	for cat in ['BOOT-PROD', 'BOOT-OLDPROD', 'BOOT-OLDBOOTCD', 'DEBUG-PROD',
+	'DEBUG-OLDPROD', 'DEBUG-OLDBOOTCD', 'DOWN-ERROR']:
 		if cat in keys:
 			print "%d," % categories[cat],
 	print ""

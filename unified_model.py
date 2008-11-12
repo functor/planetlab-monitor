@@ -36,6 +36,10 @@ def cmpValMap(v1, v2, map):
 		raise Exception("No index %s or %s in map" % (v1, v2))
 
 def cmpCategoryVal(v1, v2):
+	# Terrible hack to manage migration to no more 'ALPHA' states.
+	if v1 == 'ALPHA': v1 = "PROD"
+	if v2 == 'ALPHA': v2 = "PROD"
+	#map = array_to_priority_map([ None, 'PROD', 'ALPHA', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	return cmpValMap(v1,v2,map)
 
@@ -569,14 +573,17 @@ class Record(object):
 		if ADMIN & roles:
 			contacts += [config.email]
 		if TECH & roles:
-			contacts += [TECHEMAIL % self.loginbase]
+			#contacts += [TECHEMAIL % self.loginbase]
+			contacts += plc.getTechEmails(self.loginbase)
 		if PI & roles:
-			contacts += [PIEMAIL % self.loginbase]
+			#contacts += [PIEMAIL % self.loginbase]
+			contacts += plc.getSliceUserEmails(self.loginbase)
 		if USER & roles:
+			contacts += plc.getSliceUserEmails(self.loginbase)
 			slices = plc.slices(self.loginbase)
 			if len(slices) >= 1:
-				for slice in slices:
-					contacts += [SLICEMAIL % slice]
+				#for slice in slices:
+				#	contacts += [SLICEMAIL % slice]
 				print "SLIC: %20s : %d slices" % (self.loginbase, len(slices))
 			else:
 				print "SLIC: %20s : 0 slices" % self.loginbase

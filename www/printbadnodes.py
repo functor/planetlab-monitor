@@ -3,6 +3,7 @@ from monitor import database
 from monitor import config
 import string
 import sys
+import time
 
 categories = {}
 ssherror = False
@@ -62,11 +63,11 @@ def cmpState(l1, l2):
 	return cmpMap(l1,l2,'state', map)
 
 def cmpCategoryVal(v1, v2):
-	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
+	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDPROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	return cmpValMap(v1,v2,map)
 
 def cmpCategory(l1, l2):
-	map = array_to_priority_map([ 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'ERROR', ])
+	map = array_to_priority_map([ 'ALPHA', 'PROD', 'OLDPROD', 'OLDBOOTCD', 'UNKNOWN', 'ERROR', ])
 	return cmpMap(l1,l2,'category', map)
 
 def cmpPCU(l1, l2):
@@ -225,7 +226,7 @@ def fields_to_html(fields, vals):
 				#print "state: %s<br>" % pcu_state(vals['plcnode']['pcu_ids'][0])
 				#print "color: %s<br>" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
 				bgcolor = "bgcolor='%s'" % pcu_colorMap[pcu_state(vals['plcnode']['pcu_ids'][0])]
-				url = "<a href='/cgi-bin/printbadpcus.php#id%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
+				url = "<a href='/cgi-bin/monitor/printbadpcus.php?id=%s'>PCU</a>" % vals['plcnode']['pcu_ids'][0]
 				r_str += "<td nowrap %s>%s</td>" % (bgcolor, url)
 		else:
 			r_str += "<td nowrap %s>%s</td>" % (bgcolor, f)
@@ -234,10 +235,56 @@ def fields_to_html(fields, vals):
 	
 	return r_str
 
+def my_diff_time(timestamp):
+        now = time.time()
+        if timestamp == None:
+                return "not yet contacted"
+        diff = now - timestamp
+        # return the number of seconds as a difference from current time.
+        t_str = ""
+        if diff < 60: # sec in min.
+                t = diff
+                t_str = "%s sec ago" % t
+        elif diff < 60*60: # sec in hour
+                t = diff // (60)
+                t_str = "%s min ago" % int(t)
+        elif diff < 60*60*24: # sec in day
+                t = diff // (60*60)
+                t_str = "%s hours ago" % int(t)
+        elif diff < 60*60*24*7: # sec in week
+                t = diff // (60*60*24)
+                t_str = "%s days ago" % int(t)
+        elif diff < 60*60*24*30: # approx sec in month
+                t = diff // (60*60*24*7)
+                t_str = "%s weeks ago" % int(t)
+        elif diff > 60*60*24*30 and diff < 60*60*24*30*2: # approx sec in month
+                month = int( diff // (60*60*24*30) )
+                weeks = (diff - (month * (60*60*24*30))) // (60*60*24*7) 
+                if weeks == 0:
+                        t_str = "%s month ago" % int(month)
+                elif weeks == 4:
+                        t_str = "2 months ago"
+                else:
+                        t_str = "%s month and %s weeks ago" % ( int(month) , int(weeks) )
+        elif diff >= 60*60*24*30*2:                
+                month =  diff // (60*60*24*30)
+                t_str = "%s months ago" % int(month)
+        return t_str
 
 
 def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	global fb
+	import os
+	import datetime
+	if nodeonlyfilter == None:
+		print "<html><body>\n"
+
+		try:
+			mtime = os.stat("/var/lib/monitor-server/production.findbad.pkl")[-2]
+			print "Last Updated: %s GMT" % datetime.datetime.fromtimestamp(mtime)
+		except:
+			pass
+
 
 	db = database.dbLoad(config.dbname)
 	fb = database.dbLoad("findbadpcus")
@@ -251,6 +298,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 						'state' : 5, 
 						'kernel' : 10.65, 
 						'comonstats' : 5, 
+						'last_contact' : 10.65,
 						'plcsite' : 12,
 						'bootcd' : 10.65}
 	## create format string based on config.fields
@@ -259,6 +307,7 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	format_fields = []
 	for f in config.fields.split(','):
 		fields[f] = "%%(%s)s" % f
+		#print f
 		#if f in maxFieldLengths:
 		#	fields[f] = "%%(%s)%ds" % (f, maxFieldLengths[f])
 		#else:
@@ -356,16 +405,19 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 	if comonfilter != None:	cmf = re.compile(comonfilter)
 	else: 					cmf = None
 
+
+	output_str = ""
 	#l_loginbase = bysite.keys()
 	#l_loginbase.sort()
 	if nodeonlyfilter == None:
-		print "<table width=80% border=1>"
+		output_str += "<table width=80% border=1>"
 
 	prev_sitestring = ""
 	for row in d2:
 
 		vals = row
 
+		#added by guto about last contact information
 		if (catfilter != None and cf.match(vals['category']) == None):
 			continue
 
@@ -376,16 +428,16 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			continue
 
 		if nodeonlyfilter != None:
-			print vals['nodename']
+			output_str += vals['nodename']
 			continue
 
 		site_string = row['site_string']
 		if site_string != prev_sitestring:
-			print "<tr><td bgcolor=lightblue nowrap>" 
-			print site_string
-			print "</td>"
+			output_str += "<tr><td bgcolor=lightblue nowrap>" 
+			output_str += site_string
+			output_str += "</td>"
 		else:
-			print "<tr><td>&nbsp;</td>"
+			output_str += "<tr><td>&nbsp;</td>"
 
 		prev_sitestring = site_string
 
@@ -431,6 +483,12 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			url = "<a href='https://%s/db/nodes/index.php?nodepattern=%s'>%s</a>" % (config.MONITOR_HOSTNAME, vals['nodename'], vals['nodename'])
 			vals['nodename'] = url
 
+		if 'plcnode' in vals:
+			if vals['plcnode']['status'] == "GN_FAILED":
+				vals['last_contact'] = "UNKNOWN"
+			else:
+				vals['last_contact'] = my_diff_time(vals['plcnode']['last_contact'])
+
 		try:
 			str_fields = []
 			count = 0
@@ -441,15 +499,15 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 			print >>sys.stderr, vals
 
 		s = fields_to_html(str_fields, vals)
-		print s
+		output_str += s
 			
-		print "\n</tr>"
+		output_str += "\n</tr>"
 
 	if nodeonlyfilter == None:
-		print "</table>"
-		print "<table>"
+		output_str += "</table>"
 	keys = categories.keys()
 	keys.sort()
+	print "<table>"
 	for cat in keys:
 		print "<tr>"
 		print "<th nowrap align=left>Total %s</th>" % cat
@@ -457,6 +515,10 @@ def main(sitefilter, catfilter, statefilter, comonfilter, nodeonlyfilter):
 		print "</tr>"
 	if nodeonlyfilter == None:
 		print "</table>"
+
+	print output_str
+	if nodeonlyfilter == None:
+		print "</body></html>\n"
 
 
 
@@ -496,7 +558,7 @@ if __name__ == '__main__':
 
 	config.cmpdays=False
 	config.comon="sshstatus"
-	config.fields="nodename,ping,ssh,pcu,category,state,comonstats,kernel,bootcd"
+	config.fields="nodename,ping,ssh,pcu,category,state,last_contact,kernel,bootcd"
 	config.dbname="findbad"
 	config.cmpping=False 
 	config.cmpdns=False
@@ -505,11 +567,7 @@ if __name__ == '__main__':
 	config.cmpcategory=False
 
 	print "Content-Type: text/html\r\n"
-	if mynodeonly == None:
-		print "<html><body>\n"
 	if len(sys.argv) > 1:
 		if sys.argv[1] == "ssherror":
 			ssherror = True
 	main(myfilter, mycategory, mystate, mycomon,mynodeonly)
-	if mynodeonly == None:
-		print "</body></html>\n"
