@@ -9,6 +9,7 @@
 %define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
+%global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
 
 Name: %{name}
 Version: %{version}
@@ -47,9 +48,15 @@ maintenance.
 %package server
 Summary: Monitor hooks for the PLC server.
 Group: Applications/System
-Requires: curl
-Requires: nmap
 Requires: python
+Requires: openssh-clients
+Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
+Requires: MySQL-python
+Requires: rt3 == 3.4.1
+Requires: nmap
+Requires: PLCWWW >= 4.2
+Requires: bootcd-planetlab-i386 >= 4.2
 
 %description server
 The server side include all python modules and scripts needed to fully
