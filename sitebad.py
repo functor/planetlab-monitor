@@ -11,20 +11,19 @@ from monitor.pcu import reboot
 from monitor import parser as parsermodule
 from monitor import config
 from monitor.database import HistorySiteRecord, FindbadNodeRecord
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
-import syncplcdb
 from unified_model import *
 
 api = plc.getAuthAPI()
 
 def main(config):
 
-	l_nodes = syncplcdb.create_plcdb()
-	l_plcsites = database.dbLoad("l_plcsites")
+	l_nodes = plccache.l_nodes
+	l_plcsites = plccache.l_sites
 
 	if config.site:
 		l_sites = [config.site]
@@ -49,7 +48,7 @@ def getnodesup(nodelist):
 
 def checkAndRecordState(l_sites, l_plcsites):
 	count = 0
-	lb2hn = database.dbLoad("plcdb_lb2hn")
+	lb2hn = plccache.plcdb_lb2hn
 	for sitename in l_sites:
 		d_site = None
 		for site in l_plcsites:

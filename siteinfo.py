@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
-import database
-import reboot
+from monitor import database
+from monitor.pcu import reboot
 
 import time
 from model import *
 from nodecommon import *
 
-import util.file
-
-import parser as parsermodule
+from monitor import util
+from monitor import parser as parsermodule
+from unified_model import *
 
 
 parser = parsermodule.getParser()
@@ -31,7 +31,6 @@ parser.add_option("", "--disable", dest="disable", action="store_true",
 					help="")
 config = parsermodule.parse_args(parser)
 
-from unified_model import *
 def color_sitestatus(status):
 	if status == "good":
 		return green(status)
@@ -69,7 +68,7 @@ def plc_print_siteinfo(plcsite):
 	print "   Checked: %s" % time.ctime()
 	print "\t                               host     | state | obs   |   created   |   updated   | last_contact "
 	for plcnode in nodes:
-		fbnode = fb['nodes'][plcnode['hostname']]['values']
+		fbnode = FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname']).to_dict()
 		plcnode['state'] = color_boot_state(get_current_state(fbnode))
 		print "\t  %37s |  %5s |  %5s | %11.11s | %11.11s | %12s " % \
 		(plcnode['hostname'], color_boot_state(plcnode['boot_state']), plcnode['state'], 
@@ -77,7 +76,6 @@ def plc_print_siteinfo(plcsite):
 		diff_time(plcnode['last_contact']))
 
 
-fb = database.dbLoad("findbad")
 act_all = database.dbLoad("act_all")
 
 for site in config.args:

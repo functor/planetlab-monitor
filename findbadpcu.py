@@ -17,7 +17,7 @@ from monitor.pcu import reboot
 from monitor import config
 from monitor.database import FindbadPCURecordSync, FindbadPCURecord
 from monitor import util 
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 from nodequery import pcu_select
 
 plc_lock = threading.Lock()
@@ -49,7 +49,7 @@ def get_pcu(pcuname):
 	except:
 		try:
 			#print "GetPCU from file %s" % pcuname
-			l_pcus = database.dbLoad("pculist")
+			l_pcus = plccache.l_pcus
 			for i in l_pcus:
 				if i['pcu_id'] == pcuname:
 					l_pcu = i
@@ -67,7 +67,7 @@ def get_nodes(node_ids):
 		l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 'node_id', 'ports'])
 	except:
 		try:
-			plc_nodes = database.dbLoad("l_plcnodes")
+			plc_nodes = plccache.l_plcnodes
 			for n in plc_nodes:
 				if n['node_id'] in node_ids:
 					l_node.append(n)
@@ -123,7 +123,7 @@ def get_plc_site_values(site_id):
 			d_site = d_site[0]
 	except:
 		try:
-			plc_sites = database.dbLoad("l_plcsites")
+			plc_sites = plccache.l_plcsites
 			for site in plc_sites:
 				if site['site_id'] == site_id:
 					d_site = site
@@ -274,6 +274,7 @@ def recordPingAndSSH(request, result):
 
 		fbrec = FindbadPCURecord(
 					date_checked=datetime.fromtimestamp(values['date_checked']),
+					record=fbsync.round,
 					plc_pcuid=pcu_id,
 					plc_pcu_stats=values['plc_pcu_stats'],
 					dns_status=values['dnsmatch'],
@@ -344,7 +345,8 @@ def checkAndRecordState(l_pcus, cohash):
 def main():
 	global global_round
 
-	l_pcus = monitor.database.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
+	#  monitor.database.if_cached_else_refresh(1, config.refresh, "pculist", lambda : plc.GetPCUs())
+	l_pcus = plccache.l_pcus
 	cohash = {}
 
 	fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, if_new_set={'round' : global_round})

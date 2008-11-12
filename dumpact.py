@@ -6,11 +6,12 @@ import sys
 import time
 import getopt
 import database 
+from monitor.wrapper import plccache
 
 def main():
 
 	act_all = database.dbLoad(sys.argv[1])
-	plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+	plcdb_hn2lb = plccache.plcdb_hn2lb
 	s_nodenames = ""
 	sickdb = {}
 

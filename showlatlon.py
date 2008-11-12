@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
 import sys
@@ -86,9 +86,9 @@ def main():
 	fbstr = get_filefromglob(d, "production.findbad")
 	fbpcustr = get_filefromglob(d, "production.findbadpcus")
 
-	l_plcnodes = database.dbLoad("l_plcnodes")
-	l_plcsites = database.dbLoad("l_plcsites")
-	lb2hn = database.dbLoad("plcdb_lb2hn")
+	l_plcnodes = plccache.l_nodes
+	l_plcsites = plccache.l_sites
+	lb2hn = plccache.plcdb_lb2hn
 	fb = archive.load(fbstr) 
 	fbpcu = archive.load(fbpcustr)
 	reboot.fb = fbpcu

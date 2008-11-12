@@ -2,7 +2,7 @@
 
 from monitor import database
 
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 from monitor.wrapper import mailer
 import time
 
@@ -64,8 +64,6 @@ class PenaltyMap:
 	# connect one penalty to another, in a FSM diagram.  After one
 	# 	condition/penalty is applied, move to the next phase.
 
-
-#fb = database.dbLoad("findbad")
 
 class RT(object):
 	def __init__(self, ticket_id = None):
@@ -410,7 +408,7 @@ class Record(object):
 	def __init__(self, hostname, data):
 		self.hostname = hostname
 		self.data = data
-		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = plccache.plcdb_hn2lb
 		self.loginbase = self.plcdb_hn2lb[self.hostname]
 		return
 
@@ -490,15 +488,27 @@ class Record(object):
 		return daysdown
 	getStrDaysDown = classmethod(getStrDaysDown)
 
-	#def getStrDaysDown(cls, diag_record):
-	#	daysdown = cls.getDaysDown(diag_record)
-	#	if daysdown > 0:
-	#		return "%d days down"%daysdown
-	#	elif daysdown == -1:
-	#		return "Never online"
-	#	else:
-	#		return "%d days up"% -daysdown
-	#getStrDaysDown = classmethod(getStrDaysDown)
+	def getSendEmailFlag(self):
+		if not config.mail:
+			return False
+
+		# resend if open & created longer than 30 days ago.
+		if  'rt' in self.data and \
+			'Status' in self.data['rt'] and \
+			"open" in self.data['rt']['Status'] and \
+			self.data['rt']['Created'] > int(time.time() - 60*60*24*30):
+			# if created-time is greater than the thirty days ago from the current time
+			return False
+
+		return True
+
+	def getMostRecentStage(self):
+		lastact = self.data['last_action_record']
+		return lastact.stage
+
+	def getMostRecentTime(self):
+		lastact = self.data['last_action_record']
+		return lastact.date_action_taken
 
 	def takeAction(self, index=0):
 		pp = PersistSitePenalty(self.hostname, 0, db='persistpenalty_hostnames')
@@ -524,7 +534,7 @@ class Record(object):
 			hlist = "    %s %s - %s\n" % (info[0], info[2], info[1]) #(node,ver,daysdn)
 		return hlist
 	def saveAction(self):
-		if 'save-act-all' in self.data and self.data['save-act-all'] == True:
+		if 'save_act_all' in self.data and self.data['save_act_all'] == True:
 			return True
 		else:
 			return False
@@ -579,79 +589,6 @@ class NodeRecord:
 		self.hostname = hostname
 		self.ticket = None
 		self.target = target
-		#if hostname in fb['nodes']:
-		#	self.data = fb['nodes'][hostname]['values']
-		#else:
-		#	raise Exception("Hostname not in scan database")
-
-	def stageIswaitforever(self):
-		if 'waitforever' in self.data['stage']:
-			return True
-		else:
-			return False
-
-	def severity(self):
-		category = self.data['category']
-		prev_category = self.data['prev_category']
-		print "IMPROVED: ", category, prev_category
-		val = cmpCategoryVal(category, prev_category)
-		return val 
-
-	def improved(self):
-		return self.severity() > 0
-	
-	def end_record(self):
-		return node_end_record(self.hostname)
-
-	def reset_stage(self):
-		self.data['stage'] = 'findbad'
-		return True
-
-	def open_tickets(self):
-		if self.ticket and self.ticket.status['status'] == 'open':
-			return 1
-		return 0
-	def setIntrospect(self):
-		pass
-
-	def email_notice(self):
-		message = self._get_message_for_condition()
-		message.send(self._get_contacts_for_condition())
-		return True
-	def close_ticket(self):
-		if self.ticket:
-			self.ticket.closeTicket()
-
-	def exempt_from_penalties(self):
-		bl = database.dbLoad("l_blacklist")
-		return self.hostname in bl
-
-	def penalties(self):
-		return []
-	def escellate_penalty(self):
-		return True
-	def reduce_penalty(self):
-		return True
-
-
-	def atTarget(self):
-		return self.target.verify(self.data)
-
-	def _get_condition(self):
-		return self.data['category'].lower()
-
-	def _get_stage(self):
-		"improvement"
-		"firstnotice_noop"
-		"secondnotice_noslicecreation"
-		"thirdnotice_disableslices"
-
-		delta = current_time - self.data['time']
-
-	def _get_message_for_condition(self):
-		pass
-	def _get_contacts_for_condition(self):
-		pass
 
 class Action(MonRecord):
 	def __init__(self, host, data):

@@ -8,11 +8,10 @@ from datetime import datetime,timedelta
 
 from nodequery import verify,query_to_dict,node_select
 
-import syncplcdb
 from nodecommon import *
 
 from monitor import config
-from monitor.wrapper import plc
+from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 from monitor.database import  FindbadNodeRecord, HistoryNodeRecord
 
@@ -25,8 +24,7 @@ count = 0
 
 def main(config):
 
-	l_nodes = syncplcdb.create_plcdb()
-	l_plcnodes = database.dbLoad("l_plcnodes")
+	l_plcnodes = plccache.l_nodes
 	l_nodes = get_nodeset(config)
 	
 	checkAndRecordState(l_nodes, l_plcnodes)
@@ -49,7 +47,7 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 		try:
 			# Find the most recent record
 			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==nodename).order_by(FindbadNodeRecord.date_checked.desc()).first()
-			print "NODEREC: ", noderec.date_checked
+			#print "NODEREC: ", noderec.date_checked
 		except:
 			print "COULD NOT FIND %s" % nodename
 			import traceback

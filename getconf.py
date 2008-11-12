@@ -1,10 +1,11 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc
+from monitor import config
+import monitor.parser as parsermodule
 api = plc.getAuthAPI()
 import sys
 import os
-import config
 
 def getconf(hostname, force=False, media=None):
 	n = api.GetNodes(hostname)
@@ -36,8 +37,6 @@ def getconf(hostname, force=False, media=None):
 	return args
 
 if __name__ == '__main__':
-	import parser as parsermodule
-
 	parser = parsermodule.getParser()
 	parser.set_defaults(media='both', force=False)
 	parser.add_option("", "--media", dest="media", metavar="usb, iso, both", 
@@ -46,7 +45,7 @@ if __name__ == '__main__':
 						help="""Force the recreation of the usb images.""")
 	parser = parsermodule.getParser(['defaults'], parser)
 
-	config = parsesrmodule.parse_args(parser)
+	config = parsermodule.parse_args(parser)
 
 	ret = {'url_list' : ''} 
 	for i in config.args:

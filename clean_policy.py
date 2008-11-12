@@ -6,6 +6,8 @@ from unified_model import cmpCategoryVal
 import sys
 import emailTxt
 import string
+from monitor.wrapper import plccache
+from datetime import datetime
 
 from rt import is_host_in_rt_tickets
 import plc
@@ -20,101 +22,76 @@ from const import *
 
 from unified_model import *
 
-def get_ticket_id(record):
-	if 'ticket_id' in record and record['ticket_id'] is not "" and record['ticket_id'] is not None:
-		return record['ticket_id']
-	elif 		'found_rt_ticket' in record and \
-		 record['found_rt_ticket'] is not "" and \
-		 record['found_rt_ticket'] is not None:
-		return record['found_rt_ticket']
-	else:
-		return None
-
 class MonitorMergeDiagnoseSendEscellate:
 	act_all = None
-	fb = None
 
 	def __init__(self, hostname, act):
 		self.hostname = hostname
 		self.act = act
 		self.plcdb_hn2lb = None
 		if self.plcdb_hn2lb is None:
-			self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+			self.plcdb_hn2lb = plccache.plcdb_hn2lb 
 		self.loginbase = self.plcdb_hn2lb[self.hostname]
 		return
 
-	def getFBRecord(self):
-		if MonitorMergeDiagnoseSendEscellate.fb == None:
-			MonitorMergeDiagnoseSendEscellate.fb = database.dbLoad("findbad")
-
-		fb = MonitorMergeDiagnoseSendEscellate.fb
-
-		if self.hostname in fb['nodes']:
-			fbnode = fb['nodes'][self.hostname]['values']
+	def getFBRecords(self):
+		fbrecs = FindbadNodeRecord.get_latest_n_by(hostname=self.hostname)
+		fbnodes = None
+		if fbrec: 
+			fbnodes = fbrecs
 		else:
-			raise Exception("Hostname %s not in scan database"% self.hostname)
-		return fbnode
+			fbnodes = None
+		return fbnodes
 
-	def getActionRecord(self):
-		# update ticket status
-		if MonitorMergeDiagnoseSendEscellate.act_all == None:
-			MonitorMergeDiagnoseSendEscellate.act_all = database.dbLoad("act_all")
-
-		act_all = MonitorMergeDiagnoseSendEscellate.act_all 
-
-		if self.hostname in act_all and len(act_all[self.hostname]) > 0:
-			actnode = act_all[self.hostname][0]
+	def getLastActionRecord(self):
+		actrec = ActionRecord.get_latest_by(hostname=self.hostname)
+		actnode = None
+		if actrec:
+			actnode = actrec
 		else:
 			actnode = None
 		return actnode
 
-	def getKernel(self, unamestr):
-		s = unamestr.split()
-		if len(s) > 2:
-			return s[2]
+	def getPreviousCategory(self, actrec):
+		ret = None
+		if actrec:
+			ret = actrec.findbad_records[0].observed_category
 		else:
-			return ""
+			ret = "ERROR"
+		return ret
 
-	def mergeRecord(self, fbnode, actnode):
-		fbnode['kernel'] = self.getKernel(fbnode['kernel'])
-		fbnode['stage'] = "findbad"
-		fbnode['message'] = None
-		fbnode['args'] = None
-		fbnode['info'] = None
-		fbnode['log'] = None
-		fbnode['time'] = time.time()
-		fbnode['email'] = TECH
-		fbnode['action-level'] = 0
-		fbnode['action'] = ['noop']
-		fbnode['date_created'] = time.time()
 
-		if actnode is None: # there is no entry in act_all
-			actnode = {} 
-			actnode.update(fbnode)
-			actnode['ticket_id'] = ""
-			actnode['prev_category'] = "ERROR" 
-		else:
-			actnode['prev_category']= actnode['category']
-			actnode['comonstats']	= fbnode['comonstats']
-			actnode['category']		= fbnode['category']
-			actnode['state'] 		= fbnode['state']
-			actnode['kernel']		= fbnode['kernel']
-			actnode['bootcd']		= fbnode['bootcd']
-			actnode['plcnode']		= fbnode['plcnode']
-			ticket = get_ticket_id(actnode)
-			if ticket is None: actnode['ticket_id'] = ""
-			actnode['rt'] = mailer.getTicketStatus(ticket)
+	def mergeRecord(self, fbnodes, actrec):
 
-			#for key in actnode.keys():
-			#	print "%10s %s %s " % (key, "==", actnode[key])
-			#print "----------------------------"
+		actdefault = {}
+		actdefault['date_created'] = datetime.now()
+		actdefault['date_action_taken'] = datetime.now()
 
-		return actnode
+		actdefault['stage'] = "initial"
+		actdefault['message_series'] = None
+		actdefault['message_index'] = None
+		actdefault['message_arguments'] = None
+
+		actdefault['send_email_to'] = TECH
+		actdefault['penalty_level'] = 0
+		actdefault['action'] = [ 'noop' ]
+		actdefault['take_action'] = False
+
+		actdefault['ticket_id'] = ""
+		actdefault['findbad_records'] = fbnodes
+		actdefault['last_action_record'] = actrec
+
+		actdefault['prev_category'] = self.getPreviousCategory(actrec)
+		actdefault['category']		= fbnodes[0].observed_category
+
+		actdefault['rt'] = mailer.getTicketStatus(actrec.ticket_id)
+
+		return actdefault
 
 	def run(self):
-		fbnode = self.getFBRecord()
-		actnode= self.getActionRecord()
-		actrec = self.mergeRecord(fbnode, actnode)
+		fbnodes = self.getFBRecords()
+		actnode= self.getLastActionRecord()
+		actrec = self.mergeRecord(fbnodes, actnode)
 		record = Record(self.hostname, actrec)
 		diag   = self.diagnose(record)
 		if self.act and diag is not None:
@@ -122,26 +99,21 @@ class MonitorMergeDiagnoseSendEscellate:
 	
 	def diagnose(self, record):
 
-		diag = PersistFlags(record.hostname, 60*60*24, db='persist_diagnose_flags')
+		diag = {}
 		# NOTE: change record stage based on RT status.
-		#diag.setFlag('ResetStage')
 		if record.stageIswaitforever():
 			ticket = record.data['rt']
 			if 'new' in ticket['Status']:
 				print "Resetting Stage!!!!!"
-			#	diag.setFlag('ResetStage')
 				record.reset_stage()
-			#if diag.getFlag('ResetStage'):
-			#	print "diagnose: resetting stage"
-			#	diag.resetFlag('ResetStage')
 				
 			if 'resolved' in ticket['Status']:
-				diag.setFlag('RTEndRecord')
+				diag['RTEndRecord'] = True
 
 		# NOTE: take category, and prepare action
 		category = record.getCategory()
 		if category == "error":
-			diag.setFlag('SendNodedown')
+			diag['SendNodedown'] = True
 			record.data['message_series'] = emailTxt.mailtxt.newdown
 			record.data['log'] = self.getDownLog(record)
 
@@ -149,7 +121,7 @@ class MonitorMergeDiagnoseSendEscellate:
 			state = record.getState()
 			if state == "boot":
 				if record.severity() != 0:
-					diag.setFlag('SendThankyou')
+					diag['SendThankyou'] = True
 					print "RESETTING STAGE: improvement"
 					record.data['stage'] = 'improvement'
 					record.data['message_series'] = emailTxt.mailtxt.newthankyou
@@ -167,105 +139,85 @@ class MonitorMergeDiagnoseSendEscellate:
 
 
 		# TODO: how to not send email?...
-		record = self.checkStageAndTime(diag,record)
+		record = self.checkStageAndTime(record)
 		#if record:
 		print "diagnose: checkStageAndTime Returned Valid Record"
-		site = PersistFlags(self.loginbase, 1, db='site_persistflags')
+		siterec = HistorySiteRecord.by_loginbase(self.loginbase)
 
-		if "good" not in site.status: #  != "good":
+		if "good" not in siterec.status: #  != "good":
 			print "diagnose: Setting site %s for 'squeeze'" % self.loginbase
-			diag.setFlag('Squeeze')
+			diag['Squeeze'] = True
 		else:
 			print "diagnose: Setting site %s for 'backoff'" % self.loginbase
-			diag.setFlag('BackOff')
+			diag['BackOff'] = True
 
-		diag.save()
 		return diag
-		#else:
-		#	print "checkStageAndTime Returned NULL Record"
-		#	return None
 
 	def action(self, record, diag):
 
 		message = None
 
-		#print record.data['stage']
-		#print "improvement" in record.data['stage']
-		#print self.getSendEmailFlag(record)
 		print "%s %s DAYS DOWN" % ( self.hostname, Record.getDaysDown(record.data) )
 		if ( self.getSendEmailFlag(record) and Record.getDaysDown(record.data) >= 2 ) or \
 			"monitor-end-record" in record.data['stage']:
 			print "action: getting message"
+			#### Send EMAIL
 			message = record.getMessage(record.data['ticket_id'])
 			if message:
-				#message.reset()
 				print "action: sending email"
 				message.send(record.getContacts())
-				#print "DEBUG NOT SENDING MESSAGE WHEN I SHOULD BE!!!!!"
-				#print "DEBUG NOT SENDING MESSAGE WHEN I SHOULD BE!!!!!"
-				#print "DEBUG NOT SENDING MESSAGE WHEN I SHOULD BE!!!!!"
-				#print message
 				if message.rt.ticket_id:
 					print "action: setting record ticket_id"
 					record.data['ticket_id'] = message.rt.ticket_id
 
-			if ( record.data['takeaction'] and diag.getFlag('Squeeze') ): 
+			#### APPLY PENALTY
+			if ( record.data['take_action'] and diag['Squeeze'] ): 
 				print "action: taking action"
-				record.takeAction(record.data['action-level'])
-				diag.resetFlag('Squeeze')
-				diag.save()
+				record.takeAction(record.data['penalty_level'])
+				del diag['Squeeze']
 			if diag.getFlag('BackOff'):
 				record.takeAction(0)
-				diag.resetFlag('BackOff')
-				diag.save()
+				del diag['BackOff']
 
+			#### SAVE TO DB
 			if record.saveAction():
 				print "action: saving act_all db"
 				self.add_and_save_act_all(record)
 			else:
 				print "action: NOT saving act_all db"
-				print "stage: %s %s" % ( record.data['stage'], record.data['save-act-all'] )
+				print "stage: %s %s" % ( record.data['stage'], record.data['save_act_all'] )
 
-			if record.improved() or diag.getFlag('RTEndRecord'):
+			#### END RECORD
+			if record.improved() or diag['RTEndRecord']:
 				print "action: end record for %s" % self.hostname
 				record.end_record()
-				diag.setFlag('CloseRT')
-				diag.resetFlag('RTEndRecord')
-				diag.save()
-				#return None
+				diag['CloseRT'] = True
+				del diag['RTEndRecord']
 
+			#### CLOSE RT TICKET
 			if message:
-				if diag.getFlag('CloseRT'):
+				if diag['CloseRT']:
 					message.rt.closeTicket()
-					diag.resetFlag('CloseRT')
-					diag.save()
+					del diag['CloseRT']
 
 		else:
 			print "NOT sending email : %s %s" % (config.mail, record.data['rt'])
 
 		return
 
-	def getSendEmailFlag(self, record):
-		if not config.mail:
-			return False
-
-		# resend if open & created longer than 30 days ago.
-		if  'rt' in record.data and \
-			'Status' in record.data['rt'] and \
-			"open" in record.data['rt']['Status'] and \
-			record.data['rt']['Created'] > int(time.time() - 60*60*24*30):
-			# if created-time is greater than the thirty days ago from the current time
-			return False
-
-		return True
-
 	def add_and_save_act_all(self, record):
-		self.act_all = database.dbLoad("act_all")
-		if self.hostname not in self.act_all:
-			self.act_all[self.hostname] = []
-		self.act_all[self.hostname].insert(0,record.data)
-		database.dbDump("act_all", self.act_all)
-		
+		"""
+			Read the sync record for this node, and increment the round and
+			create an ActionRecord for this host using the record.data values.
+		"""
+		recsync = RecordActionSync.get_by(hostname=self.hostname)
+		rec = RecordAction(hostname=self.hostname)
+		recsync.round += 1
+		record.data['round'] = recsync.round
+		# TODO: we will need to delete some of these before setting them in the DB.
+		rec.set(**record.data)
+		rec.flush()
+
 	def getDownLog(self, record):
 
 		record.data['args'] = {'nodename': self.hostname}
@@ -300,140 +252,82 @@ class MonitorMergeDiagnoseSendEscellate:
 			log = "IMPR: %s improved to %s " % (self.hostname, record.data['category'])
 		return log
 
-	def checkStageAndTime(self, diag, record):
-		current_time = time.time()
-		delta = current_time - record.data['time']
-		#print record.data
-		if   'findbad' in record.data['stage']:
-			# The node is bad, and there's no previous record of it.
-			record.data['email'] = TECH
-			record.data['action'] = ['noop']
-			record.data['takeaction'] = False
-			record.data['message'] = record.data['message_series'][0]
-			record.data['stage'] = 'stage_actinoneweek'
-			record.data['save-act-all'] = True
-			record.data['action-level'] = 0
+	def makeRecord(self, **kwargs):
+		rec = {}
+		for key in kwargs.keys():
+			rec[key] = kwargs[key]
+		return rec
 
-		elif 'reboot_node' in record.data['stage']:
-			record.data['email'] = TECH
-			record.data['action'] = ['noop']
-			record.data['message'] = record.data['message_series'][0]
-			record.data['stage'] = 'stage_actinoneweek'
-			record.data['takeaction'] = False
-			record.data['save-act-all'] = False
-			record.data['action-level'] = 0
-			
+	def checkStageAndTime(self, record):
+	"""
+		The core variables are:
+
+			send_email_to  : defines who to send messages to at this time
+			take_action    : whether or not to take action
+			penalty_level  : how much of a penalty to apply
+			message_index  : where in the escellation sequence we are.
+			save_act_all   : whether or not to save the action record in the db.
+
+			action/stage   : stage tracks which state we're in.
+	"""
+		stages = {
+			"initial"		: [ { action='noop', next="weekone"}],
+			"weekone"		: [ { action='noop',         index=0, save=True, email=TECH,         length=7*SPERDAY,  next="weektwo" }, ],
+			"weektwo"		: [ { action='nocreate',     index=1, save=True, email=TECH|PI,      length=7*SPERDAY,  next="waitforever" }, ],
+			"waitforever"	: [ { action='suspendslices',index=2, save=True, email=TECH|PI|USER, length=7*SPERDAY,  next="waitforever" }, ],
+			"paused"		: [ { action='noop', 				  save=True						 length=30*SPERDAY, next="weekone" }, ]
+			"improvement"	: [ { action='close_rt',     index=0, save=True, email=TECH,         next="monitor-end-record" }, ],
+		}
+		# TODO: make this time relative to the PREVIOUS action taken.
+		current_time = time.time()
+		current_stage = record.getMostRecentStage()
+		recent_time   = record.getMostRecentTime()
+
+		delta = current_time - recent_time
+
+		if current_stage in stages:
+			values = stages[current_stage][0]
+
+		if delta >= values['length']:
+			print "checkStageAndTime: transition to next stage"
+			new_stage = values['next']
+			values = stages[new_stage]
+
+		elif delta >= values['length']/3 and not 'second_mail_at_oneweek' in record.data:
+			print "checkStageAndTime: second message in one week for stage two"
+			take_action=False
+			pass
+		else:
+			# DO NOTHING
+			take_action=False, 
+			save_act_all=False, 
+			message_index=None, 
+			print "checkStageAndTime: second message in one week for stage two"
+
+		rec = self.makeRecord( stage=new_stage, send_email_to=values['email'],
+							   action=values['action'], message_index=values['index'], 
+							   save_act_all=values['save'], penalty_level=values['index'], 
+							   date_action_taken=current_time)
+		record.data.update(rec)
+
+
+		if   'initial' in record.data['stage']:
+			# The node is bad, and there's no previous record of it.
+			rec = self.makeRecord(
+							stage="weekone", send_email_to=TECH, 
+							action=['noop'], take_action=False, 
+							message_index=0, save_act_all=True, 
+							penalty_level=0, )
+			record.data.update(rec)
+
 		elif 'improvement' in record.data['stage']:
 			print "checkStageAndTime: backing off of %s" % self.hostname
-			record.data['action'] = ['close_rt']
-			record.data['takeaction'] = True
-			record.data['message'] = record.data['message_series'][0]
-			record.data['stage'] = 'monitor-end-record'
-			record.data['save-act-all'] = True
-			record.data['action-level'] = 0
-
-		elif 'actinoneweek' in record.data['stage']:
-			if delta >= 7 * SPERDAY: 
-				print "checkStageAndTime: transition to next stage actintwoweeks"
-				record.data['email'] = TECH | PI
-				record.data['stage'] = 'stage_actintwoweeks'
-				record.data['message'] = record.data['message_series'][1]
-				record.data['action'] = ['nocreate' ]
-				record.data['time'] = current_time		# reset clock for waitforever
-				record.data['takeaction'] = True
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 1
-			elif delta >= 3* SPERDAY and not 'second-mail-at-oneweek' in record.data:
-				print "checkStageAndTime: second message in one week"
-				record.data['email'] = TECH 
-				record.data['message'] = record.data['message_series'][0]
-				record.data['action'] = ['sendmailagain-waitforoneweekaction' ]
-				record.data['second-mail-at-oneweek'] = True
-				record.data['takeaction'] = False
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 0
-			else:
-				record.data['message'] = None
-				record.data['action'] = ['waitforoneweekaction' ]
-				record.data['takeaction'] = False
-				record.data['save-act-all'] = False
-				record.data['action-level'] = 0
-				print "checkStageAndTime: ignoring this record for: %s" % self.hostname
-				#return None 			# don't send if there's no action
-
-		elif 'actintwoweeks' in record.data['stage']:
-			if delta >= 7 * SPERDAY:
-				print "checkStageAndTime: transition to next stage waitforever"
-				record.data['email'] = TECH | PI | USER
-				record.data['stage'] = 'stage_waitforever'
-				record.data['message'] = record.data['message_series'][2]
-				record.data['action'] = ['suspendslices']
-				record.data['time'] = current_time		# reset clock for waitforever
-				record.data['takeaction'] = True
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 2
-			elif delta >= 3* SPERDAY and not 'second-mail-at-twoweeks' in record.data:
-				print "checkStageAndTime: second message in one week for stage two"
-				record.data['email'] = TECH | PI
-				record.data['message'] = record.data['message_series'][1]
-				record.data['action'] = ['sendmailagain-waitfortwoweeksaction' ]
-				record.data['second-mail-at-twoweeks'] = True
-				record.data['takeaction'] = False
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 1
-			else:
-				record.data['message'] = None
-				record.data['takeaction'] = False
-				record.data['action'] = ['waitfortwoweeksaction']
-				record.data['save-act-all'] = False
-				print "checkStageAndTime: second message in one week for stage two"
-				record.data['action-level'] = 1
-				#return None 			# don't send if there's no action
-
-		elif 'ticket_waitforever' in record.data['stage']:
-			record.data['email'] = TECH
-			record.data['takeaction'] = True
-			if 'first-found' not in record.data:
-				record.data['first-found'] = True
-				record.data['log'] += " firstfound"
-				record.data['action'] = ['ticket_waitforever']
-				record.data['message'] = None
-				record.data['time'] = current_time
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 2
-			else:
-				if delta >= 7*SPERDAY:
-					record.data['action'] = ['ticket_waitforever']
-					record.data['message'] = None
-					record.data['time'] = current_time		# reset clock
-					record.data['save-act-all'] = True
-					record.data['action-level'] = 2
-				else:
-					record.data['action'] = ['ticket_waitforever']
-					record.data['message'] = None
-					record.data['takeaction'] = False
-					record.data['save-act-all'] = False
-					record.data['action-level'] = 2
-					#return None
-
-		elif 'waitforever' in record.data['stage']:
-			# more than 3 days since last action
-			# TODO: send only on weekdays.
-			# NOTE: expects that 'time' has been reset before entering waitforever stage
-			record.data['takeaction'] = True
-			if delta >= 3*SPERDAY:
-				record.data['action'] = ['email-againwaitforever']
-				record.data['message'] = record.data['message_series'][2]
-				record.data['time'] = current_time		# reset clock
-				record.data['save-act-all'] = True
-				record.data['action-level'] = 2
-			else:
-				record.data['action'] = ['waitforever']
-				record.data['message'] = None
-				record.data['takeaction'] = False
-				record.data['save-act-all'] = False
-				record.data['action-level'] = 2
-				#return None 			# don't send if there's no action
+			rec = self.makeRecord(
+							stage='monitor-end-record', send_email_to=TECH, 
+							action=['close_rt'], take_action=True, 
+							message_index=0, save_act_all=True, 
+							penalty_level=0, )
+			record.data.update(rec)
 
 		else:
 			# There is no action to be taken, possibly b/c the stage has
@@ -443,16 +337,15 @@ class MonitorMergeDiagnoseSendEscellate:
 			#	2. delta is not big enough to bump it to the next stage.
 			# TODO: figure out which. for now assume 2.
 			print "UNKNOWN stage for %s; nothing done" % self.hostname
-			record.data['action'] = ['unknown']
-			record.data['message'] = record.data['message_series'][0]
-
-			record.data['email'] = TECH
-			record.data['action'] = ['noop']
-			record.data['message'] = record.data['message_series'][0]
-			record.data['stage'] = 'stage_actinoneweek'
-			record.data['time'] = current_time		# reset clock
-			record.data['takeaction'] = False
-			record.data['save-act-all'] = True
+			rec = self.makeRecord(
+							stage='weekone', send_email_to=TECH,
+							action=['noop'], 
+							take_action=False, 
+							save_act_all=True, 
+							date_action_taken=current_time,
+							message_index=0, 
+							penalty_level=0, )
+			record.data.update(rec)
 
 		print "%s" % record.data['log'],
 		print "%15s" % record.data['action']

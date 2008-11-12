@@ -100,6 +100,7 @@ def init():
 	
 	return l_nodes
 
+
 def create_plcdb():
 
 	# get sites, and stats
@@ -132,7 +133,9 @@ def create_plcdb():
 		database.dbDump("l_plcsites", l_sites)
 	
 	return l_nodes
-	
 
 if __name__ == '__main__':
 	create_plcdb()
+else:
+	print "calling plccache init()"
+	init()

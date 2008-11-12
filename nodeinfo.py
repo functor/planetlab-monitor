@@ -1,20 +1,19 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 from monitor import *
-#import database
-import reboot
+from monitor import util
+from monitor import parser as parsermodule
+
+from monitor import database
+from monitor.pcu import reboot
 
 import time
 from model import *
 from nodecommon import *
 from unified_model import node_end_record, PersistFlags
-
-import util.file
-
-import parser as parsermodule
 
 parser = parsermodule.getParser()
 parser.set_defaults(node=None, 
@@ -138,11 +137,11 @@ if config.findbad:
 for node in config.args:
 	config.node = node
 
-	fb = database.dbLoad("findbad")
 	plc_nodeinfo = api.GetNodes({'hostname': config.node}, None)[0]
-	fb_nodeinfo  = fb['nodes'][config.node]['values']
-
+	fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
+	fb_nodeinfo = fb_noderec.to_dict()
 	plc_print_nodeinfo(plc_nodeinfo)
+
 	fb_nodeinfo['hostname'] = node
 	fb_print_nodeinfo(fb_nodeinfo)
 

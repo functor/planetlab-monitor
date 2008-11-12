@@ -13,9 +13,8 @@ from monitor.util import command
 from monitor import config
 from monitor.database import FindbadNodeRecordSync, FindbadNodeRecord
 from monitor.sources import comon
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 
-import syncplcdb
 from nodequery import verify,query_to_dict,node_select
 import traceback
 
@@ -255,6 +254,7 @@ def recordPingAndSSH(request, result):
 
 			fbrec = FindbadNodeRecord(
 						date_checked=datetime.fromtimestamp(values['date_checked']),
+						round=global_round,
 						hostname=nodename,
 						loginbase=values['loginbase'],
 						kernel_version=values['kernel'],
@@ -274,6 +274,7 @@ def recordPingAndSSH(request, result):
 						ssh_status = (values['ssh'] == "SSH"),
 						ssh_error = values['ssherror'],
 						observed_status = values['state'],
+						observed_category = values['category'],
 					)
 			fbnodesync.round = global_round
 
@@ -353,7 +354,7 @@ def main():
 	# history information for all nodes
 	#cohash = {}
 	cohash = cotop.coget(cotop_url)
-	l_nodes = syncplcdb.create_plcdb()
+	l_nodes = plccache.l_nodes
 	if config.nodelist:
 		f_nodes = util.file.getListFromFile(config.nodelist)
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)

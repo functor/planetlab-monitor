@@ -13,19 +13,19 @@
 # Given a nodelist, it could tag each one with a nodegroup name.
 #  * 
 
-import plc
+from monitor import database
+from monitor.database import FindbadNodeRecord
+from monitor import util
+from monitor.wrapper import plc
+from monitor import parser as parsermodule
+
 api = plc.getAuthAPI()
 
-import parser as parsermodule
-from sets import Set
 from nodequery import verify,query_to_dict,node_select
-
 from nodecommon import *
-import database
-import util.file
+from sets import Set
 
 def main():
-	fb = database.dbLoad("findbad")
 
 	parser = parsermodule.getParser(['nodesets'])
 	parser.set_defaults( list=True,
@@ -121,7 +121,9 @@ def main():
 		i = 1
 		for node in nodelist:
 			print "%-2d" % i, 
-			print nodegroup_display(node, fb, config)
+			fbrec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fbdata = fbrec.to_dict()
+			print nodegroup_display(node, fbdata, config)
 			i += 1
 
 	else:

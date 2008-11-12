@@ -12,30 +12,29 @@
 #  * do something else to them all.
 # 
 
-import plc
+from monitor import config
+from monitor import util
+from monitor import const
+from monitor import database
+from monitor import parser as parsermodule
+from monitor.pcu import reboot
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 import traceback
-import config
-import util.file
 from optparse import OptionParser
 
-import const
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
-import database
 from unified_model import *
 import os
 
 import time
-import parser as parsermodule
-
 from model import *
+
 import bootman 		# debug nodes
-import reboot		# down nodes without pcu
-import mailmonitor 	# down nodes with pcu
+import mailmonitor 	# down nodes without pcu
 from emailTxt import mailtxt
-#reboot.verbose = 0
 import sys
 
 class Reboot(object):
@@ -237,10 +236,11 @@ if config.node or config.nodelist:
 	if config.node: hostnames = [ config.node ] 
 	else: hostnames = util.file.getListFromFile(config.nodelist)
 
-fb = database.dbLoad("findbad")
+fbquery = FindbadNodeRecord.get_all_latest()
+fb_nodelist = [ n.hostname for n in fbquery ]
 
 if config.nodeselect:
-	hostnames = node_select(config.nodeselect, fb['nodes'].keys(), fb)
+	hostnames = node_select(config.nodeselect, fb_nodelist)
 
 if config.findbad:
 	# rerun findbad with the nodes in the given nodes.

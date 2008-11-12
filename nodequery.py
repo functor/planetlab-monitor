@@ -14,15 +14,13 @@ import re
 import string
 
 from monitor.pcu import reboot
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
-from monitor.database import FindbadNodeRecord, FindbadNodeRecordSync
+from monitor.database import FindbadNodeRecord, FindbadPCURecord
 from monitor import util
 from monitor import config
 
-fb = None
-fbpcu = None
 
 class NoKeyException(Exception): pass
 
@@ -69,8 +67,12 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 			format += "%%(%s)s " % f
 		print format % fbnode
 
+def first(path):
+	indexes = path.split(".")
+	return indexes[0]
+	
 def get(fb, path):
-    indexes = path.split("/")
+    indexes = path.split(".")
     values = fb
     for index in indexes:
         if index in values:
@@ -216,19 +218,18 @@ def verify(constraints, data):
 
 		for key in con.keys():
 			#print "looking at key: %s" % key
-			if key in data: 
+			if first(key) in data: 
 				value_re = re.compile(con[key])
-				if type([]) == type(data[key]):
+				if type([]) == type(get(data,key)):
 					local_or_true = False
-					for val in data[key]:
+					for val in get(data,key):
 						local_or_true = local_or_true | (value_re.search(val) is not None)
 					con_and_true = con_and_true & local_or_true
 				else:
-					if data[key] is not None:
-						con_and_true = con_and_true & (value_re.search(data[key]) is not None)
-			elif key not in data:
-				print "missing key %s" % key,
-				pass
+					if get(data,key) is not None:
+						con_and_true = con_and_true & (value_re.search(get(data,key)) is not None)
+			elif first(key) not in data:
+				print "missing key %s" % first(key)
 
 		con_or_true = con_or_true | con_and_true
 
@@ -260,38 +261,35 @@ def pcu_in(fbdata):
 	return False
 
 def pcu_select(str_query, nodelist=None):
-	global fb
-	global fbpcu
 	pcunames = []
 	nodenames = []
 	if str_query is None: return (nodenames, pcunames)
 
-	if fb is None:
-		fb = database.dbLoad("findbad")
-	if fbpcu is None:
-		fbpcu = database.dbLoad("findbadpcus")
+	if True:
+		fbquery = FindbadNodeRecord.get_all_latest()
+		fb_nodelist = [ n.hostname for n in fbquery ]
+	if True:
+		fbpcuquery = FindbadPCURecord.get_all_latest()
+		fbpcu_list = [ p.plc_pcuid for p in fbpcuquery ]
 
-	#print str_query
 	dict_query = query_to_dict(str_query)
-	#print dict_query
 
-	for node in fb['nodes'].keys():
+	for noderec in fbquery:
 		if nodelist is not None: 
-			if node not in nodelist: continue
+			if noderec.hostname not in nodelist: continue
 	
-		fb_nodeinfo  = fb['nodes'][node]['values']
+		fb_nodeinfo  = noderec.to_dict()
 		if pcu_in(fb_nodeinfo):
-			pcuinfo = fbpcu['nodes']['id_%s' % fb_nodeinfo['plcnode']['pcu_ids'][0]]['values']
+			pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=get(fb_nodeinfo, 'plc_node_stats.pcu_ids')[0])
+			pcuinfo = pcurec.to_dict()
 			if verify(dict_query, pcuinfo):
-				nodenames.append(node)
+				nodenames.append(noderec.hostname)
 				str = "cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
 							(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
-				#pcunames.append(str)
-				pcunames.append(pcuinfo['pcu_id'])
+				pcunames.append(pcuinfo['plc_pcuid'])
 	return (nodenames, pcunames)
 
-def node_select(str_query, nodelist=None, fbdb=None):
-	global fb
+def node_select(str_query, nodelist=None, fb=None):
 
 	hostnames = []
 	if str_query is None: return hostnames
@@ -300,16 +298,14 @@ def node_select(str_query, nodelist=None, fbdb=None):
 	dict_query = query_to_dict(str_query)
 	#print dict_query
 
-	if fbdb is not None:
-		fb = fbdb
-
 	for node in nodelist:
 		#if nodelist is not None: 
 		#	if node not in nodelist: continue
 
 		try:
 			fb_noderec = None
-			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			#fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node)
 		except:
 			print traceback.print_exc()
 			continue
@@ -323,6 +319,7 @@ def node_select(str_query, nodelist=None, fbdb=None):
 
 			#if verifyDBrecord(dict_query, fb_nodeinfo):
 			if verify(dict_query, fb_nodeinfo):
+				#print fb_nodeinfo.keys()
 				#print node #fb_nodeinfo
 				hostnames.append(node)
 			else:
@@ -333,13 +330,11 @@ def node_select(str_query, nodelist=None, fbdb=None):
 
 
 def main():
-	global fb
-	global fbpcu
 
 	from monitor import parser as parsermodule
 	parser = parsermodule.getParser()
 
-	parser.set_defaults(node=None, fromtime=None, select=None, list=None, 
+	parser.set_defaults(node=None, fromtime=None, select=None, list=None, listkeys=False,
 						pcuselect=None, nodelist=None, daysdown=None, fields=None)
 	parser.add_option("", "--daysdown", dest="daysdown", action="store_true",
 						help="List the node state and days down...")
@@ -352,6 +347,8 @@ def main():
 	parser.add_option("", "--pcuselect", dest="pcuselect", metavar="key=value", 
 						help="List all nodes with the given key=value pattern")
 	parser.add_option("", "--nodelist", dest="nodelist", metavar="nodelist.txt", 
+						help="A list of nodes to bring out of debug mode.")
+	parser.add_option("", "--listkeys", dest="listkeys", action="store_true",
 						help="A list of nodes to bring out of debug mode.")
 	parser.add_option("", "--fromtime", dest="fromtime", metavar="YYYY-MM-DD",
 					help="Specify a starting date from which to begin the query.")
@@ -372,18 +369,16 @@ def main():
 		fb = archive.load(file[:-4])
 	else:
 		#fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
-		#fb = database.dbLoad("findbad")
 		fb = None
 
-	fbpcu = database.dbLoad("findbadpcus")
-	reboot.fb = fbpcu
+	#reboot.fb = fbpcu
 
 	if config.nodelist:
 		nodelist = util.file.getListFromFile(config.nodelist)
 	else:
 		# NOTE: list of nodes should come from findbad db.   Otherwise, we
 		# don't know for sure that there's a record in the db..
-		plcnodes = database.dbLoad("l_plcnodes")
+		plcnodes = plccache.l_nodes
 		nodelist = [ node['hostname'] for node in plcnodes ]
 		#nodelist = ['planetlab-1.cs.princeton.edu']
 
@@ -411,7 +406,15 @@ def main():
 			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
 		except:
 			print traceback.print_exc()
-			pass #fb_nodeinfo  = fb['nodes'][node]['values']
+			pass
+
+		if config.listkeys:
+			fb_nodeinfo = fb_noderec.to_dict()
+			print "Primary keys available in the findbad object:"
+			for key in fb_nodeinfo.keys():
+				print "\t",key
+			sys.exit(0)
+			
 
 		if config.list:
 			print node

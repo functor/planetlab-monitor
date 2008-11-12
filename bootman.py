@@ -36,13 +36,6 @@ from Rpyc import SocketConnection, Async
 from Rpyc.Utils import *
 fb = None
 
-def get_fbnode(node):
-	global fb
-	if fb is None:
-		fb = database.dbLoad("findbad")
-	fbnode = fb['nodes'][node]['values']
-	return fbnode
-
 class NodeConnection:
 	def __init__(self, connection, node, config):
 		self.node = node
@@ -314,7 +307,7 @@ def reboot(hostname, config=None, forced_action=None):
 
 	# NOTE: Nothing works if the bootcd is REALLY old.
 	#       So, this is the first step.
-	fbnode = get_fbnode(hostname)
+	fbnode = FindbadNodeRecord.get_latest_by(hostname=hostname).to_dict()
 	if fbnode['category'] == "OLDBOOTCD":
 		print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
 		args = {}

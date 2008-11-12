@@ -6,9 +6,7 @@ import parser as parsermodule
 from www.printbadnodes import *
 
 def main():
-	global fb
 	db = database.dbLoad(config.dbname)
-	fb = database.dbLoad("findbadpcus")
 	act= database.dbLoad("act_all")
 
 	## Field widths used for printing

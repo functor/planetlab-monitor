@@ -30,10 +30,10 @@ if not config.run:
 	print "Add --run to actually perform the command"
 	sys.exit(1)
 
-pculist = database.if_cached_else_refresh(1, 
-							config.refresh, 
-							"pculist", 
-							lambda : plc.GetPCUs())
+pculist = plccache.l_pcus # database.if_cached_else_refresh(1, 
+						  #	config.refresh, 
+						  #	"pculist", 
+						  #	lambda : plc.GetPCUs())
 for pcu in pculist:
 	#print pcu
 	#sys.exit(1)

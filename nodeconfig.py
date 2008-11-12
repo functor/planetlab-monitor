@@ -1,14 +1,15 @@
 #!/usr/bin/python
 
 
-import plc
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
-import parser as parsermodule
+from monitor import parser as parsermodule
 from sets import Set
 
 from nodecommon import *
-import database
+from monitor import database
+from monitor.database import FindbadNodeRecord
 
 def network_config_to_str(net):
 
@@ -21,7 +22,6 @@ def network_config_to_str(net):
 	
 
 def main():
-	fb = database.dbLoad("findbad")
 
 	parser = parsermodule.getParser()
 	parser.set_defaults(nodelist=None,
@@ -67,7 +67,8 @@ def main():
 			i = 1
 			for node in nodelist:
 				print "%-2d" % i, 
-				print nodegroup_display(node, fb)
+				fbdata = FindbadNodeRecord.get_latest_by(hostname=node['hostname'])
+				print nodegroup_display(node, fbdata.to_dict())
 				i += 1
 
 		elif config.add and config.nodegroup:

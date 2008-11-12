@@ -5,7 +5,7 @@ from monitor.pcu import reboot
 
 from monitor import util
 from monitor import database
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 
 from datetime import datetime 
 from unified_model import PersistFlags
@@ -34,8 +34,8 @@ def blue(str):
 	return BLUE + str + NORMAL
 
 def get_current_state(fbnode):
-	if 'state' in fbnode:
-		state = fbnode['state']
+	if 'observed_status' in fbnode:
+		state = fbnode['observed_status']
 	else:
 		state = "none"
 	l = state.lower()
@@ -122,40 +122,36 @@ def getvalue(fb, path):
             return None
     return values
 
-def nodegroup_display(node, fb, conf=None):
-	if node['hostname'] in fb['nodes']:
-		node['current'] = get_current_state(fb['nodes'][node['hostname']]['values'])
-	else:
-		node['current'] = 'none'
+def nodegroup_display(node, fbdata, conf=None):
+	node['current'] = get_current_state(fbdata)
 
-	if fb['nodes'][node['hostname']]['values'] == []:
-		return ""
-
-	s = fb['nodes'][node['hostname']]['values']['kernel'].split()
+	s = fbdata['kernel_version'].split()
 	if len(s) >=3:
-		node['kernel'] = s[2]
+		node['kernel_version'] = s[2]
 	else:
-		node['kernel'] = fb['nodes'][node['hostname']]['values']['kernel']
+		node['kernel_version'] = fbdata['kernel_version']
 		
-	if '2.6' not in node['kernel']: node['kernel'] = ""
+	if '2.6' not in node['kernel_version']: node['kernel_version'] = ""
 	if conf and not conf.nocolor:
 	    node['boot_state']	= color_boot_state(node['boot_state'])
 	    node['current'] 	= color_boot_state(node['current'])
-	#node['boot_state']	= node['boot_state']
-	#node['current'] 	= node['current']
-	node['pcu'] = fb['nodes'][node['hostname']]['values']['pcu']
+
+	if type(fbdata['plc_node_stats']['pcu_ids']) == type([]):
+		node['pcu'] = "PCU"
 	node['lastupdate'] = diff_time(node['last_contact'])
+
 	pf = PersistFlags(node['hostname'], 1, db='node_persistflags')
 	try:
 		node['lc'] = diff_time(pf.last_changed)
 	except:
 		node['lc'] = "err"
-	ut = fb['nodes'][node['hostname']]['values']['comonstats']['uptime']
+
+	ut = fbdata['comon_stats']['uptime']
 	if ut != "null":
-		ut = diff_time(float(fb['nodes'][node['hostname']]['values']['comonstats']['uptime']), False)
+		ut = diff_time(float(fbdata['comon_stats']['uptime']), False)
 	node['uptime'] = ut
 
-	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel)35.35s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
+	return "%(hostname)-42s %(boot_state)8s %(current)5s %(pcu)6s %(key)10.10s... %(kernel_version)35.35s %(lastupdate)12s, %(lc)s, %(uptime)s" % node
 
 def datetime_fromstr(str):
 	if '-' in str:
@@ -176,7 +172,7 @@ def get_nodeset(config):
 		evaluates to.
 	"""
 	api = plc.getAuthAPI()
-	l_nodes = database.dbLoad("l_plcnodes")
+	l_nodes = plccache.l_nodes
 
 	if config.nodelist:
 		f_nodes = util.file.getListFromFile(config.nodelist)
@@ -196,8 +192,9 @@ def get_nodeset(config):
 	# perform this query after the above options, so that the filter above
 	# does not break.
 	if config.nodeselect:
-		fb = database.dbLoad("findbad")
-		l_nodes = node_select(config.nodeselect, fb['nodes'].keys(), fb)
+		fbquery = FindbadNodeRecord.get_all_latest()
+		node_list = [ n.hostname for n in fbquery ]
+		l_nodes = node_select(config.nodeselect, node_list, None)
 
 	return l_nodes
 	

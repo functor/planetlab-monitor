@@ -1,4 +1,60 @@
 
+for each node:
+	Check Status ->
+		if Pass Threshold -> 
+			Create Issue -> 
+				Take Action -> 
+					email
+					bm
+					pcu
+					plc reset
+					apply penalties
+					flag for admin
+
+for each issue
+	check issue.status
+	if issue.status is "open": 
+		issue.take_next_action()
+	if issue.closed:
+		issue.shutdown()
+	if issue.paused:
+		pass
+
+action_list for issuetype (pcudown)
+	send email
+		yield
+	send email, apply penalty
+		yield
+	send email, apply second penalty
+		yield
+	send email
+
+action_list for issuetype (badhardware)
+action_list for issuetype (dnserror)
+action_list for issuetype (nodeconfig)
+action_list for issuetype (oldbootcd)
+
+action_list for issuetype (nodedown)
+	if pcuok, reboot
+		yield
+	if pcuok, and reboot failed, set rins, reboot
+		yield
+	create_issue pcubroken
+	send email
+		yield
+	send email, apply penalty
+		yield
+	send email, apppy second penalty
+		yield
+	send email
+	
+
+TOOLS:
+  * add a '--nocache'  to the default set of options.
+  * add a cache parameter in the monitor.conf file.
+
+
+
 TODO:
  * install openssh-server, passwd, perl-libwww-perl (for rt), rt-3.4.1,  MySQL-python
  	* had to mount -t devpts devpts /dev/pts to get ssh to work inside the

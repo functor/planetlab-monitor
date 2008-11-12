@@ -6,6 +6,7 @@ from unified_model import cmpCategoryVal
 import sys
 import emailTxt
 import string
+from monitor.wrapper import plccache
 
 from rt import is_host_in_rt_tickets
 import plc
@@ -56,7 +57,7 @@ class Merge:
 		self.merge_list = l_merge
 
 		# the hostname to loginbase mapping
-		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = plccache.plcdb_hn2lb
 
 		# Previous actions taken on nodes.
 		self.act_all = database.if_cached_else(1, "act_all", lambda : {})
@@ -264,7 +265,7 @@ class RT:
 class Diagnose:
 	def __init__(self, record_list):
 		self.record_list = record_list
-		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = plccache.plcdb_hn2lb
 		self.findbad = database.if_cached_else(1, "findbad", lambda : {})
 
 		self.diagnose_in = {}
@@ -845,7 +846,7 @@ def reboot_node(args):
 class Action:
 	def __init__(self, diagnose_out):
 		# the hostname to loginbase mapping
-		self.plcdb_hn2lb = database.dbLoad("plcdb_hn2lb")
+		self.plcdb_hn2lb = plccache.plcdb_hn2lb
 
 		# Actions to take.
 		self.diagnose_db = diagnose_out
