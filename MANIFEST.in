@@ -1,0 +1,8 @@
+include *.conf
+include *.spec
+
+recursive-include monitor *
+
+recursive-exclude plcwww *
+recursive-exclude pdb *
+recursive-exclude archive-pdb *
