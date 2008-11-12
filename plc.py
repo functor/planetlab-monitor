@@ -128,19 +128,20 @@ def nodesDbg():
 Returns loginbase for given nodename
 '''
 def siteId(nodename):
-	api = xmlrpclib.Server(auth.server, verbose=False)
-	anon = {'AuthMethod': "anonymous"}
-	site_id = api.GetNodes (anon, {"hostname": nodename}, ['site_id'])
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
+	site_id = api.GetNodes (auth.auth, {"hostname": nodename}, ['site_id'])
 	if len(site_id) == 1:
-		loginbase = api.GetSites (anon, site_id[0], ["login_base"])
+		loginbase = api.GetSites (auth.auth, site_id[0], ["login_base"])
 		return loginbase[0]['login_base']
+	else:
+		print "Not nodes returned!!!!"
 
 '''
 Returns list of slices for a site.
 '''
 def slices(loginbase):
 	siteslices = []
-	api = xmlrpclib.Server(auth.server, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	sliceids = api.GetSites (auth.auth, {"login_base" : loginbase}, ["slice_ids"])[0]['slice_ids']
 	for slice in api.GetSlices(auth.auth, {"slice_id" : sliceids}, ["name"]):
 		siteslices.append(slice['name'])
@@ -150,7 +151,7 @@ def slices(loginbase):
 Returns dict of PCU info of a given node.
 '''
 def getpcu(nodename):
-	api = xmlrpclib.Server(auth.server, verbose=False)
+	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	anon = {'AuthMethod': "anonymous"}
 	nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
 	if nodeinfo['pcu_ids']:
