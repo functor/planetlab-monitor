@@ -35,8 +35,8 @@ export PGPORT=$PLC_DB_PORT
 ###    add zabbix to pg_hba.conf
 ##   setup zabbix.conf.php 
 ##   
-DB_USER="zabbixuser"
-DB_NAME="zabbix"
+ZABBIX_DB_USER="zabbixuser"
+ZABBIX_DB_NAME="zabbix"
 
 function check_user_and_db()
 {
@@ -54,7 +54,8 @@ function check_user_and_db()
 
     # Create/update the unprivileged database user and password
     if [ -z "$PLC_MONITOR_DBPASSWORD" ] ; then
-        PLC_MONITOR_DBPASSWORD=$(uuidgen)
+        # Zabbix doesn't like plain uuidgen passwords
+        PLC_MONITOR_DBPASSWORD=$( uuidgen | md5sum - | awk '{print $1}' )
         plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
         psql -d template1 -U postgres -c "ALTER USER $ZABBIX_DB_NAME WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
         service plc reload
@@ -73,6 +74,7 @@ function check_schema_and_data()
 {
     schema_present=$( psql -U $ZABBIX_DB_USER $ZABBIX_DB_NAME -c "\d;" < /dev/null | grep hosts )
     if [ -z $schema_present ] ; then
+        echo "... initial import can take SEVERAL minutes. please wait ..."
         if_present_load "/usr/local/zabbix/misc/create/schema/postgresql.sql"
         if_present_load "/usr/local/zabbix/misc/create/data/data.sql"
         if_present_load "/usr/local/zabbix/misc/create/data/images_pgsql.sql"
@@ -108,7 +110,7 @@ case "$1" in
 		sed -e "s/#DBHost=.*/DBHost=$PLC_MONITOR_HOST/g" \
 		    -e "s#DBName=.*#DBName=$ZABBIX_DB_NAME#g" \
 		    -e "s#DBUser=.*#DBUser=$ZABBIX_DB_USER#g" \
-		    -e "s#DBPassword=.*#$PLC_MONITOR_DBPASSWORD#g" \
+		    -e "s#DBPassword=.*#DBPassword=$PLC_MONITOR_DBPASSWORD#g" \
 		    ${ZABBIXCFG}/zabbix_server.conf > $TMP_FILE
 		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_server.conf
 	fi

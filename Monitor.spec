@@ -81,7 +81,7 @@ cd ..
 %install
 rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
-install -D -m 755 monitor.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
+install -D -m 755 monitor-client.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
 install -D -m 644 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
 
 #################### SERVER
@@ -91,6 +91,8 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+
+install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 
 echo " * Installing core scripts"
 rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
