@@ -221,7 +221,7 @@ chkconfig zabbix_server on
 # 
 
 TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
-sed	-e "s#;date.timezone =#date.timezone = 'UTC'#g" \
+sed	-e "s#;date.timezone =#date.timezone = UTC#g" \
 	-e "s#max_execution_time = 30 #max_execution_time = 300 #g" \
 	%{_sysconfdir}/php.ini > $TMP_FILE
 cat $TMP_FILE > %{_sysconfdir}/php.ini
