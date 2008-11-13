@@ -28,8 +28,8 @@ Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 #%define zabbix_piddir	%{_tmppath}
 #%define zabbix_logdir	%{_tmppath}
 
-%define zabbix_piddir	/var/run
-%define zabbix_logdir	/var/log
+%define zabbix_piddir	/var/tmp
+%define zabbix_logdir	/var/tmp
 
 %description
 The ZABBIX server is a network monitor
@@ -171,7 +171,7 @@ sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
 	%{zabbix_initdir}/zabbix_agentd > $TMP_FILE
 cat $TMP_FILE > %{zabbix_initdir}/zabbix_agentd
 # TODO: copy to /etc/init.d/
-cp %{zabbix_initdir}/zabbix_agentd /etc/init.d
+cp %{zabbix_initdir}/zabbix_agentd %{_initrddir}
 
 rm -f $TMP_FILE
 
@@ -192,26 +192,40 @@ fi
 # configure ZABBIX server daemon
 TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
 
-# SETUP DBHost, DBName, DBUser, DBPassword
-#SERVER=`grep PLC_MONITOR_HOST /etc/planetlab/plc_config | tr "'" ' ' | awk '{print $2}'`
-
 sed	-e "s#AlertScriptsPath=/home/zabbix/bin/#AlertScriptsPath=%{zabbix_bindir}/#g" \
 	-e "s#PidFile=/var/tmp/zabbix_server.pid#PidFile=%{zabbix_piddir}/zabbix_server.pid#g" \
 	-e "s#LogFile=/tmp/zabbix_server.log#LogFile=%{zabbix_logdir}/zabbix_server.log#g" \
 	%{zabbix_confdir}/zabbix_server.conf > $TMP_FILE
 cat $TMP_FILE > %{zabbix_confdir}/zabbix_server.conf
-mkdir -p /etc/zabbix
-cp %{zabbix_confdir}/zabbix_server.conf /etc/zabbix/
+mkdir -p %{_sysconfdir}/zabbix
+cp %{zabbix_confdir}/zabbix_server.conf %{_sysconfdir}/zabbix/
 
 sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
 	-e "s#PIDFILE=/var/tmp/zabbix_server.pid#PIDFILE=%{zabbix_piddir}/zabbix_server.pid#g" \
 	%{zabbix_initdir}/zabbix_server > $TMP_FILE
 cat $TMP_FILE > %{zabbix_initdir}/zabbix_server
-cp %{zabbix_initdir}/zabbix_server /etc/init.d
+cp %{zabbix_initdir}/zabbix_server %{_initrddir}
 
 rm -f $TMP_FILE
 
 chkconfig zabbix_server on
+
+%post gui
+# Setup the necessary values in /etc/php.ini
+# NOTE:  Zabbix requires max_execution_time to be 300 seconds
+# NOTE:  Zabbix requires a default date.timezone 
+
+# also edit  /var/www/html/zabbix/conf/zabbix.conf.php
+#       touch  /var/www/html/zabbix/conf/zabbix.conf.php
+#       chmod 644  /var/www/html/zabbix/conf/zabbix.conf.php
+# 
+
+TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
+sed	-e "s#;date.timezone =#date.timezone = 'UTC'#g" \
+	-e "s#max_execution_time = 30 #max_execution_time = 300 #g" \
+	%{_sysconfdir}/php.ini > $TMP_FILE
+cat $TMP_FILE > %{_sysconfdir}/php.ini
+
 
 %postun 
 rm -f %{zabbix_piddir}/zabbix_server.pid

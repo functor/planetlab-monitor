@@ -1,0 +1,161 @@
+#!/bin/bash
+#
+# priority: 850
+#
+# Manage settings for the Zabbix installtion and 
+#	other monitor-related things
+#
+# Stephen Soltesz <soltesz@cs.princeton.edu>
+# Copyright (C) 2008 The Trustees of Princeton University
+#
+# $Id$
+#
+
+# Source function library and configuration
+. /etc/plc.d/functions
+. /etc/planetlab/plc_config
+local_config=/etc/planetlab/configs/site.xml
+
+# Be verbose
+set -x
+
+# Default locations
+PGDATA=/var/lib/pgsql/data
+postgresql_conf=$PGDATA/postgresql.conf
+pghba_conf=$PGDATA/pg_hba.conf
+
+# Export so that we do not have to specify -p to psql invocations
+export PGPORT=$PLC_DB_PORT
+
+
+# TODO:
+##   setup database
+###    import schema & data
+###    tweak values
+###    add zabbix to pg_hba.conf
+##   setup zabbix.conf.php 
+##   
+DB_USER="zabbixuser"
+DB_NAME="zabbix"
+
+function check_user_and_db()
+{
+    # confirm user is present or create it
+    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $ZABBIX_DB_NAME )
+    if [ -z $user_present ] ; then 
+        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $ZABBIX_DB_NAME -U postgres
+    fi
+    
+    # confirm database is present or create it
+    db_present=$( psql -U postgres -c "select * from pg_database;" -d template1 | grep $ZABBIX_DB_NAME )
+    if [ -z $db_present ] ; then
+        createdb --owner=$ZABBIX_DB_NAME $ZABBIX_DB_NAME -U postgres
+    fi
+
+    # Create/update the unprivileged database user and password
+    if [ -z "$PLC_MONITOR_DBPASSWORD" ] ; then
+        PLC_MONITOR_DBPASSWORD=$(uuidgen)
+        plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
+        psql -d template1 -U postgres -c "ALTER USER $ZABBIX_DB_NAME WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
+        service plc reload
+    fi
+}
+
+function if_present_load ()
+{
+    file=$1
+    if [ -f $file ] ; then
+        psql -d $ZABBIX_DB_NAME -U $ZABBIX_DB_USER < $file
+    fi
+}
+
+function check_schema_and_data() 
+{
+    schema_present=$( psql -U $ZABBIX_DB_USER $ZABBIX_DB_NAME -c "\d;" < /dev/null | grep hosts )
+    if [ -z $schema_present ] ; then
+        if_present_load "/usr/local/zabbix/misc/create/schema/postgresql.sql"
+        if_present_load "/usr/local/zabbix/misc/create/data/data.sql"
+        if_present_load "/usr/local/zabbix/misc/create/data/images_pgsql.sql"
+	## TODO: update ZABBIX Server entry, "update hosts set status=0, host='MyPLC Server' where hostid=10017"
+    fi
+}
+
+
+case "$1" in
+    start)
+	if [ "$PLC_MONITOR_ENABLED" != "1" ] ; then
+	    exit 0
+	fi
+	MESSAGE=$"Bootstrap Monitoring"
+	dialog "$MESSAGE"
+
+	check_user_and_db 
+	check_schema_and_data
+        
+	mkdir -p /var/lib/pgsql/data/pg_hba.conf.d
+	ZABCONF=/var/lib/pgsql/data/pg_hba.conf.d/zabbix.conf
+	if [ ! -f $ZABCONF ] ; then
+		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER 127.0.0.1/32 password"   > $ZAB
+		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER $PLC_MONITOR_IP/32 password" >> $ZAB
+	fi
+
+        # UPDATE /etc/zabbix/*.conf
+	ZABBIXCFG=/etc/zabbix
+	TMP_FILE=`mktemp /tmp/zbxtmpXXXXXX`
+	# TODO:  How to know if I need to restart the services?
+
+	if [ -f ${ZABBIXCFG}/zabbix_server.conf ] ; then
+		sed -e "s/#DBHost=.*/DBHost=$PLC_MONITOR_HOST/g" \
+		    -e "s#DBName=.*#DBName=$ZABBIX_DB_NAME#g" \
+		    -e "s#DBUser=.*#DBUser=$ZABBIX_DB_USER#g" \
+		    -e "s#DBPassword=.*#$PLC_MONITOR_DBPASSWORD#g" \
+		    ${ZABBIXCFG}/zabbix_server.conf > $TMP_FILE
+		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_server.conf
+	fi
+	if [ -f ${ZABBIXCFG}/zabbix_agentd.conf ] ; then
+		HOST=`hostname`
+		sed -e "s#Server=.*#Server=$PLC_MONITOR_HOST#g" \
+		    -e "s#Hostname=.*#Hostname=$HOST#g" \
+		    ${ZABBIXCFG}/zabbix_agentd.conf > $TMP_FILE
+		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_agentd.conf 
+	fi
+	service zabbix_server start
+	service zabbix_agentd start
+
+	# SETUP zabbix gui configuration
+	ZABBIX_WEB_CFG=/var/www/html/zabbix/conf/zabbix.conf.php 
+	if [ ! -f $ZABBIX_WEB_CFG ] ; then
+		touch  $ZABBIX_WEB_CFG
+		cat <<EOF > $ZABBIX_WEB_CFG
+<?php
+global \$DB;
+
+\$DB["TYPE"]		= "POSTGRESQL";
+\$DB["SERVER"]		= "localhost";
+\$DB["PORT"]		= "0";
+\$DB["DATABASE"]		= "$ZABBIX_DB_NAME";
+\$DB["USER"]		= "$ZABBIX_DB_USER";
+\$DB["PASSWORD"]		= "$PLC_MONITOR_DBPASSWORD";
+\$ZBX_SERVER		= "$PLC_MONITOR_HOST";
+\$ZBX_SERVER_PORT	= "10051";
+\$IMAGE_FORMAT_DEFAULT	= IMAGE_FORMAT_PNG;
+?>
+EOF
+		chmod 644 $ZABBIX_WEB_CFG
+	fi
+
+	result "$MESSAGE"
+	;;
+
+    stop)
+	MESSAGE=$"Stopping Monitor"
+	dialog "$MESSAGE"
+
+	service zabbix_server stop
+	service zabbix_agentd stop
+	# TODO: is there anything to stop?
+	result "$MESSAGE"
+	;;
+esac
+
+exit $ERRORS
