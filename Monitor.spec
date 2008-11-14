@@ -136,6 +136,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
+%{_sysconfdir}/plc.d/monitor
 
 %files client
 %defattr(-,root,root)
