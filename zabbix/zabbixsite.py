@@ -6,7 +6,8 @@ import sys
 import md5
 
 from monitor import config
-from monitor.database.dborm import * 
+from monitor.database.dborm import zab_session as session
+from monitor.database.zabbixapi.model import *
 from monitor.database.zabbixapi.emailZabbix import *
 from monitor.database.zabbixapi import defines
 
@@ -87,7 +88,7 @@ def setup_global():
 	zabbixserver = Host.get_by(host="ZABBIX Server")
 	if zabbixserver:
 		print "UPDATING Primary Zabbix server entry"
-		zabbixserver.host="MyPLC Server"
+		zabbixserver.host=config.MONITOR_HOSTNAME
 		zabbixserver.ip=config.MONITOR_IP
 		zabbixserver.dns=config.MONITOR_HOSTNAME
 		zabbixserver.useip=1
@@ -113,21 +114,25 @@ def setup_global():
 
 def setup_site(loginbase, techemail, piemail, iplist):
 
-	# TODO: Initially adding this info is ok. what about updates to users,
-	# additional hosts, removed users from plc, 
 	# TODO: send a message when host is discovered.
+
 	# TODO: update 'discovered' hosts with dns name.
 	# TODO: remove old nodes that are no longer in the plcdb.
+	# TODO: remove old users that are no longer in the plcdb.
+	# TODO: consider creating two user groups for Tech & PI emails
 
 	BI_WEEKLY_ESC_PERIOD = int(60*60*24)
 	BI_WEEKLY_ESC_PERIOD = int(60) # testing...
 
 	# User Group
-	site_user_group = UsrGrp.find_or_create(name="%s_usergroup" % loginbase)
-	for user in set(techemail + piemail):
+	site_user_group = UsrGrp.find_or_create(name=USERGROUP_NAME % loginbase)
+	for user in set(techemail + piemail + [config.cc_email]):
+		if not user: continue
 		# USER
 		u = User.find_or_create(alias=user, type=1,
 								set_if_new={'passwd' : md5.md5(user).hexdigest()},
+								# exec_if_new avoids creating a Media object that
+								# will not actually be used, if the user already exists
 								exec_if_new=lambda obj: \
 								obj.media_list.append( Media(mediatypeid=1, sendto=user)))
 
@@ -136,7 +141,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 
 	# HOST GROUP
 	plc_host_group = HostGroup.find_or_create(name="MyPLC Hosts")
-	site_host_group = HostGroup.find_or_create(name="%s_hostgroup" % loginbase)
+	site_host_group = HostGroup.find_or_create(name=HOSTGROUP_NAME % loginbase)
 	plctemplate = Host.get_by(host="Template_Linux_PLHost")
 	escalation_action_name = ESCALATION_ACTION_NAME % loginbase
 	discovery_action_name = DISCOVERY_ACTION_NAME % loginbase
@@ -263,7 +268,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=10, esc_step_to=10, 
 					esc_period=0,
 					shortdata="",
-					longdata="zabbixserver:/usr/share/monitor-server/checkslices.py {HOSTNAME} disablesite", 
+					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} disablesite" % config.MONITOR_HOSTNAME, 
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
 					shortdata=mailtxt.nodedown_two_subject,
@@ -287,7 +292,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=17, esc_step_to=17, 
 					esc_period=0, 
 					shortdata="",
-					longdata="zabbixserver:/usr/share/monitor-server/checkslices.py {HOSTNAME} disableslices", 
+					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} disableslices" % config.MONITOR_HOSTNAME, 
 					# TODO: send notice to users of slices
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
@@ -303,7 +308,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=21, esc_step_to=0, 
 					esc_period=int(BI_WEEKLY_ESC_PERIOD*3.5),
 					shortdata="",
-					longdata="zabbixserver:/usr/share/monitor-server/checkslices.py {HOSTNAME} forever", 
+					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} forever" % config.MONITOR_HOSTNAME, 
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
 					shortdata=mailtxt.nodedown_four_subject,

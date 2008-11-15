@@ -88,20 +88,20 @@ To help, please confirm that a verison 3.0 or greater BootCD is installed in the
 
 If the machine has booted successfully, you may check directly by logging in with your site_admin account, and running:
 
-	sudo /usr/sbin/vps ax
+    sudo /usr/sbin/vps ax
 
 If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contact's Guide:
 
-	https://www.planet-lab.org/doc/guides/bootcdsetup
+    https://www.planet-lab.org/doc/guides/bootcdsetup
 
 If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting, and letting us know what the problem is at mailto:%(support_email)s
 
-	http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
+    http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
     http://%(hostname)s/zabbix/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}
 
 Thank you for your help,
-	-- PlanetLab Central (%(support_email)s)
-	"""
+    -- PlanetLab Central (%(support_email)s)
+"""
 	nodedown_four_subject="Server {HOSTNAME} is unreachable: Waiting Forever"
 	nodedown_four=""" 
 Hello,
@@ -114,11 +114,11 @@ We have not heard a response from you regarding this machine.  We will continue 
 
 You can acknowledge this notice by visiting the link below or by letting us know what the problem is by replying to this message.
 
-	http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
+    http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
     http://%(hostname)s/zabbix/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}
 
 Thank you for your help,
-	-- PlanetLab Central (%(support_email)s)
+    -- PlanetLab Central (%(support_email)s)
 """
 	thankyou_nodeup = """
 While monitoring your site, we noticed that the following nodes *improved* their states:

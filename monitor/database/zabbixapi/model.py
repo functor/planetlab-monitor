@@ -4,7 +4,7 @@ pkg_resources.require("Elixir>=0.4.0")
 # import the basic Elixir classes and functions for declaring the data model
 # (see http://elixir.ematia.de/trac/wiki/TutorialDivingIn)
 from elixir import EntityMeta, Entity, Field, OneToMany, ManyToOne, ManyToMany
-from elixir import options_defaults, using_options, setup_all, metadata, entities
+from elixir import options_defaults, using_options, setup_all, entities
 # import some datatypes for table columns from Elixir
 # (see http://www.sqlalchemy.org/docs/04/types.html for more)
 from elixir import String, Unicode, Integer, DateTime
@@ -24,11 +24,10 @@ from sqlalchemy import Sequence
 
 import defines
 
+from monitor.database.dborm import zab_metadata, zab_session
 
-#from elixir import metadata
-#from monitor.database.dborm import zabbix_db, zabbix_session
-#__metadata__ = zabbix_db
-#__session__  = zabbix_session
+__metadata__ = zab_metadata
+__session__  = zab_session
 
 # TODO:
 #   - declare association between Media and MediaType so that look ups can
@@ -438,8 +437,8 @@ class Right(ZabbixEntity):
 	# currently since the rights table is merely treated as an intermediate
 	# table for the m2m between usrgrp and groups.
 
-rights = Table('rights', metadata, autoload=True)
-hostsgroups = Table('hosts_groups', metadata, autoload=True)
+rights = Table('rights', __metadata__, autoload=True)
+hostsgroups = Table('hosts_groups', __metadata__, autoload=True)
 
 	
 # m2m table between hosts and groups below
@@ -636,7 +635,7 @@ class Media(ZabbixEntity):
 					foreign_keys=lambda: [Media.userid],
 					ondelete='cascade') 
 
-users_groups = Table('users_groups', metadata, autoload=True)
+users_groups = Table('users_groups', __metadata__, autoload=True)
 
 class User(ZabbixEntity): # parent of media
 	using_options(

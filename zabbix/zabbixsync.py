@@ -40,35 +40,9 @@ if __name__=="__main__":
 	#sites = api.GetSites({'peer_id' : None}, ['login_base'])
 	for loginbase in ['princeton', 'princetondsl', 'monitorsite']:
 		add_loginbase(loginbase)
+		session.flush()
+	# TODO: for any site that is in the db, call zabbixsite.delete_site()
 
-	session.flush()
-
-## Scripts : includes external scripts to: 
-#		  - reboot.py
-#		  - nmap
-
-## UserGroups
-# define technical contact, principal investigator groups
-# define a Group for every site
-
-## Users
-# define a User for every user with admin/tech/pi roles
-# 		get passwords from a combination of site&name, perhaps?
-#		I'm guessing we could use the grpid or userid as part of the passwd,
-#		so that it varies in general, and can be guessed from the templates
-# add user to groups
-
-## Discovery Rules and Actions
-# define a discovery rule for every site's hosts.
-# define discovery action for online hosts.
-
-## Messages & Escalations
-# define actions and escellations for trigger sources:
-#		- unreachable host,
-
-## HostGroups
-# add host group for every site
-# add host group for global network (PLC name)
 
 ## Hosts & Templates
 # no need to define hosts?
