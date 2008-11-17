@@ -4,7 +4,7 @@ from distutils.core import setup
 #from setuptools import setup, find_packages
 
 packages=['monitor', 'monitor.database', 'monitor.database.zabbixapi', 
-		'monitor.database.infovacuum', 'monitor.database.infovacuum.model', 'monitor.pcu',
+		'monitor.database.infovacuum', 'monitor.pcu',
 		'monitor.sources', 'monitor.util', 'monitor.wrapper' ]
 
 #packages = find_packages(exclude=('Rpyc', 'www', 'ssh', 'pyssh',

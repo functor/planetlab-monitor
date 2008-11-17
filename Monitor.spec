@@ -62,6 +62,10 @@ Requires: nmap
 Requires: PLCWWW >= 4.2
 Requires: bootcd-planetlab-i386 >= 4.2
 
+Requires: zabbix-client
+Requires: zabbix-gui
+Requires: zabbix-server
+
 %description server
 The server side include all python modules and scripts needed to fully
 operation, track, and interact with any third-party monitoring software, such

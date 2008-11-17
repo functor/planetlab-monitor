@@ -40,16 +40,19 @@ ZABBIX_DB_NAME="zabbix"
 
 function check_user_and_db()
 {
+    CREATED=
     # confirm user is present or create it
-    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $ZABBIX_DB_NAME )
+    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $ZABBIX_DB_USER )
     if [ -z $user_present ] ; then 
-        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $ZABBIX_DB_NAME -U postgres
+        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $ZABBIX_DB_USER -U postgres
+		CREATED="true"
     fi
     
     # confirm database is present or create it
     db_present=$( psql -U postgres -c "select * from pg_database;" -d template1 | grep $ZABBIX_DB_NAME )
     if [ -z $db_present ] ; then
-        createdb --owner=$ZABBIX_DB_NAME $ZABBIX_DB_NAME -U postgres
+        createdb --owner=$ZABBIX_DB_USER $ZABBIX_DB_NAME -U postgres
+		CREATED="true"
     fi
 
     # Create/update the unprivileged database user and password
@@ -57,8 +60,11 @@ function check_user_and_db()
         # Zabbix doesn't like plain uuidgen passwords
         PLC_MONITOR_DBPASSWORD=$( uuidgen | md5sum - | awk '{print $1}' )
         plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
-        psql -d template1 -U postgres -c "ALTER USER $ZABBIX_DB_NAME WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
         service plc reload
+		CREATED="true"
+    fi
+    if [ -n "$CREATED" ] ; then
+        psql -d template1 -U postgres -c "ALTER USER $ZABBIX_DB_USER WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
     fi
 }
 
@@ -91,15 +97,19 @@ case "$1" in
 	MESSAGE=$"Bootstrap Monitoring"
 	dialog "$MESSAGE"
 
-	check_user_and_db 
-	check_schema_and_data
-        
+	#### SETUP ACCESS to this user and database
 	mkdir -p /var/lib/pgsql/data/pg_hba.conf.d
 	ZABCONF=/var/lib/pgsql/data/pg_hba.conf.d/zabbix.conf
 	if [ ! -f $ZABCONF ] ; then
 		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER 127.0.0.1/32 password"   > $ZAB
 		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER $PLC_MONITOR_IP/32 password" >> $ZAB
 	fi
+
+	# NOTE: restart db to enable access by users granted above.
+	service plc restart posgresql
+
+	check_user_and_db 
+	check_schema_and_data
 
         # UPDATE /etc/zabbix/*.conf
 	ZABBIXCFG=/etc/zabbix

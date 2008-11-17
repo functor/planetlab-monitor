@@ -195,6 +195,7 @@ TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
 sed	-e "s#AlertScriptsPath=/home/zabbix/bin/#AlertScriptsPath=%{zabbix_bindir}/#g" \
 	-e "s#PidFile=/var/tmp/zabbix_server.pid#PidFile=%{zabbix_piddir}/zabbix_server.pid#g" \
 	-e "s#LogFile=/tmp/zabbix_server.log#LogFile=%{zabbix_logdir}/zabbix_server.log#g" \
+	-e "s|#DBPassword|DBPassword|g" \
 	%{zabbix_confdir}/zabbix_server.conf > $TMP_FILE
 cat $TMP_FILE > %{zabbix_confdir}/zabbix_server.conf
 mkdir -p %{_sysconfdir}/zabbix
