@@ -16,6 +16,8 @@
 . /etc/planetlab/plc_config
 local_config=/etc/planetlab/configs/site.xml
 
+MONITORPATH=/usr/share/monitor-server
+
 # Be verbose
 set -x
 
@@ -28,15 +30,22 @@ pghba_conf=$PGDATA/pg_hba.conf
 export PGPORT=$PLC_DB_PORT
 
 
-# TODO:
-##   setup database
-###    import schema & data
-###    tweak values
-###    add zabbix to pg_hba.conf
-##   setup zabbix.conf.php 
-##   
 ZABBIX_DB_USER="zabbixuser"
 ZABBIX_DB_NAME="zabbix"
+
+function check_pg_hba ()
+{
+	#### SETUP ACCESS to this user and database
+	mkdir -p $PGDATA/pg_hba.conf.d
+	ZABCONF=$PGDATA/pg_hba.conf.d/zabbix.conf
+	if [ ! -f $ZABCONF ] ; then
+		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER 127.0.0.1/32 password"   > $ZABCONF
+		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER $PLC_MONITOR_IP/32 password" >> $ZABCONF
+
+		# NOTE: restart db to enable access by users granted above.
+		service plc restart posgresql
+	fi
+}
 
 function check_user_and_db()
 {
@@ -88,33 +97,87 @@ function check_schema_and_data()
     fi
 }
 
+function check_monitor_conf ()
+{
+	MONITOR_CONFIG=/etc/monitor.conf
 
-case "$1" in
-    start)
-	if [ "$PLC_MONITOR_ENABLED" != "1" ] ; then
-	    exit 0
-	fi
-	MESSAGE=$"Bootstrap Monitoring"
-	dialog "$MESSAGE"
-
-	#### SETUP ACCESS to this user and database
-	mkdir -p /var/lib/pgsql/data/pg_hba.conf.d
-	ZABCONF=/var/lib/pgsql/data/pg_hba.conf.d/zabbix.conf
-	if [ ! -f $ZABCONF ] ; then
-		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER 127.0.0.1/32 password"   > $ZAB
-		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER $PLC_MONITOR_IP/32 password" >> $ZAB
+	if [ -z "$PLC_MONITOR_IP" ] ; then
+		PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
 	fi
 
-	# NOTE: restart db to enable access by users granted above.
-	service plc restart posgresql
+	# Using plcsh add default, monitor user
+	plcsh <<EOF &>/dev/null 
+AddPerson({'first_name' : 'Monitor', 'last_name' : 'Server', 'password' : '${PLC_MONITOR_DBPASSWORD}', 'email' : '${PLC_MONITOR_EMAIL}'})
+AddRoleToPerson('admin', '${PLC_MONITOR_EMAIL}')
+AddPersonToSite('${PLC_MONITOR_EMAIL}', '${PLC_SLICE_PREFIX}')
+UpdatePerson('${PLC_MONITOR_EMAIL}', { 'enabled' : True, 'password' : '${PLC_MONITOR_DBPASSWORD}' })
+EOF
 
-	check_user_and_db 
-	check_schema_and_data
+	if [ ! -f ${MONITOR_CONFIG} ] ; then
+		cat <<EOF > ${MONITOR_CONFIG}
+[monitorconfig]
+RT_DB_HOST=rt.planet-lab.org
+RT_DB_USER=
+RT_DB_PASSWORD=
+RT_DB_NAME=
 
-        # UPDATE /etc/zabbix/*.conf
+# RT Web user account
+RT_WEB_SERVER=https://rt.planet-lab.org/
+RT_WEB_TOOLS_PATH=
+RT_WEB_USER=
+RT_WEB_PASSWORD=
+RT_WEB_DEBUG=0
+RT_QUEUE=
+
+# PLC admin account
+API_SERVER=https://${PLC_BOOT_HOST}/PLCAPI/
+API_AUTH_USER=${PLC_MONITOR_EMAIL}
+API_AUTH_PASSWORD=${PLC_MONITOR_DBPASSWORD}
+
+# SERVER PATHS
+MONITOR_SCRIPT_ROOT=/usr/share/monitor-server
+MONITOR_DATA_ROOT=/var/lib/monitor-server
+MONITOR_ARCHIVE_ROOT=/var/lib/monitor-server/archive-pdb
+
+MONITOR_HOSTNAME=${PLC_MONITOR_HOST}
+MONITOR_IP=${PLC_MONITOR_IP}
+
+# used for debug mode
+email=
+
+# all messages will appear to be from this address
+from_email=${PLC_MONITOR_EMAIL}
+
+# a separate address for support messages
+support_email=${PLC_MAIL_SUPPORT_ADDRESS}
+
+# mailing list copied on all out-going messages
+cc_email=
+
+[monitordatabase]
+monitor_dburi=postgres://monitoruser:${PLC_MONITOR_DBPASSWORD}@localhost:5432/monitor
+zabbix_dburi=postgres://zabbixuser:${PLC_MONITOR_DBPASSWORD}@localhost:5432/zabbix
+
+cachetime=60
+
+[commandline]
+echo=False
+debug=False
+mail=True
+bcc=False
+run=False
+checkopt=False
+squeeze=True
+policysavedb=True
+EOF
+
+	fi
+}
+
+function check_zab_server ()
+{
 	ZABBIXCFG=/etc/zabbix
 	TMP_FILE=`mktemp /tmp/zbxtmpXXXXXX`
-	# TODO:  How to know if I need to restart the services?
 
 	if [ -f ${ZABBIXCFG}/zabbix_server.conf ] ; then
 		sed -e "s/#DBHost=.*/DBHost=$PLC_MONITOR_HOST/g" \
@@ -124,6 +187,14 @@ case "$1" in
 		    ${ZABBIXCFG}/zabbix_server.conf > $TMP_FILE
 		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_server.conf
 	fi
+	service zabbix_server start
+	rm -f $TMP_FILE
+
+}
+function check_zab_agentd ()
+{
+	ZABBIXCFG=/etc/zabbix
+	TMP_FILE=`mktemp /tmp/zbxtmpXXXXXX`
 	if [ -f ${ZABBIXCFG}/zabbix_agentd.conf ] ; then
 		HOST=`hostname`
 		sed -e "s#Server=.*#Server=$PLC_MONITOR_HOST#g" \
@@ -131,9 +202,11 @@ case "$1" in
 		    ${ZABBIXCFG}/zabbix_agentd.conf > $TMP_FILE
 		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_agentd.conf 
 	fi
-	service zabbix_server start
 	service zabbix_agentd start
-
+	rm -f $TMP_FILE
+}
+function check_zab_webconfig()
+{
 	# SETUP zabbix gui configuration
 	ZABBIX_WEB_CFG=/var/www/html/zabbix/conf/zabbix.conf.php 
 	if [ ! -f $ZABBIX_WEB_CFG ] ; then
@@ -155,18 +228,52 @@ global \$DB;
 EOF
 		chmod 644 $ZABBIX_WEB_CFG
 	fi
+}
 
-	result "$MESSAGE"
+if [ "$PLC_MONITOR_ENABLED" != "1" ] ; then
+    exit 0
+fi
+
+case "$1" in
+	start)
+		MESSAGE=$"Bootstrap Monitoring"
+		dialog "$MESSAGE"
+
+
+		# DATABASE acces, creation, and data loading
+		check_pg_hba
+		check_user_and_db 
+		check_schema_and_data
+
+		# WRITE default /etc/monitor.conf
+		check_monitor_conf
+
+		# START zabbix services.  SETUP default config files.
+		check_zab_server
+		check_zab_agentd
+		check_zab_webconfig
+
+
+		result "$MESSAGE"
 	;;
 
-    stop)
-	MESSAGE=$"Stopping Monitor"
-	dialog "$MESSAGE"
+	sync)
+		MESSAGE=$"Syncing PLC db with Zabbix DB"
+		dialog "$MESSAGE"
 
-	service zabbix_server stop
-	service zabbix_agentd stop
-	# TODO: is there anything to stop?
-	result "$MESSAGE"
+		$MONITORPATH/zabbix/zabbixsync.py --setupglobal &> /var/log/monitor-server
+		
+		result "$MESSAGE"
+	;;
+
+	stop)
+		MESSAGE=$"Stopping Monitor"
+		dialog "$MESSAGE"
+
+		service zabbix_server stop
+		service zabbix_agentd stop
+		# TODO: is there anything to stop?
+		result "$MESSAGE"
 	;;
 esac
 

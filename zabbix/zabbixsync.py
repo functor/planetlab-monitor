@@ -37,13 +37,30 @@ def add_loginbase(loginbase):
 	zabbixsite.setup_site(loginbase, techs, pis, iplist)
 
 if __name__=="__main__":
-	#sites = api.GetSites({'peer_id' : None}, ['login_base'])
-	for loginbase in ['princeton', 'princetondsl', 'monitorsite']:
-		add_loginbase(loginbase)
-		session.flush()
-	# TODO: for any site that is in the db, call zabbixsite.delete_site()
 
+	from monitor import parser as parsermodule
+	parser = parsermodule.getParser()
+	parser.set_defaults( setupglobal=False, syncsite=True, site=None)
+	parser.add_option("", "--setupglobal", action="store_true", dest="setupglobal",
+						help="Setup global settings.")
+	parser.add_option("", "--nosite", action="store_true", dest="syncsite",
+						help="Do not sync sites.")
+	parser.add_option("", "--site", dest="site",
+						help="Sync only given site name.")
+	opts = parsermodule.parse_args(parser)
 
-## Hosts & Templates
-# no need to define hosts?
-# add template?  It appears that the xml-based tempate system is sufficient.
+	if opts.setupglobal:
+		zabbixsite.setup_global()
+
+	if opts.syncsite:
+		query = {'peer_id' : None}
+		if opts.site:
+			query.update({'login_base' : opts.site})
+
+		sites = api.GetSites(query, ['login_base'])
+		for site in sites:
+			add_loginbase(site['login_base'])
+			session.flush()
+
+	# TODO: for any removed site that is in the db, call zabbixsite.delete_site()
+
