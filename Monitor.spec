@@ -130,7 +130,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files server
 %defattr(-,root,root)
-%config /usr/share/%{name}/monitorconfig.py
+#%config /usr/share/%{name}/monitorconfig.py
 %config /etc/monitor.conf
 /usr/share/%{name}
 /var/lib/%{name}
