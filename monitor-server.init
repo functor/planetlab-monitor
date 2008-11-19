@@ -261,7 +261,12 @@ case "$1" in
 		MESSAGE=$"Syncing PLC db with Zabbix DB"
 		dialog "$MESSAGE"
 
+		# turn off zabbix server, etc. before writing to the db.
+		service plc stop monitor 
+
 		$MONITORPATH/zabbix/zabbixsync.py --setupglobal &> /var/log/monitor-server
+
+		service plc start monitor 
 		
 		result "$MESSAGE"
 	;;

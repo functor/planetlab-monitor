@@ -122,8 +122,8 @@ install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
-install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
-cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
+#install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
+#cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -155,6 +155,9 @@ rm -rf $RPM_BUILD_ROOT
 # TODO: create symlink in /var/lib/monitor-server for chroot environments
 # TODO: update the content of automate_pl03.sh 
 # TODO: Use the installed version of bootcd to create custom boot images. ( or, use the api now).
+
+# NOTE: generate the python defines from zabbix include files.
+php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
 
 #chkconfig --add monitor-server
 #chkconfig monitor-server on

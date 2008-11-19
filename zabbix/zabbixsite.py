@@ -73,6 +73,7 @@ def setup_global():
 	print "checking for correct configuration"
 	mediatype = MediaType.get_by(smtp_email=config.from_email)
 	if not mediatype:
+		mediatype = MediaType.get_by(description="Email")
 		# NOTE: assumes smtp server is local to this machine.
 		print "updating email server configuration"
 		mediatype.smtp_server='localhost'

@@ -21,6 +21,10 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 	lb2hn = {}
 	dsn = {}
 	hn2lb = {}
+	for id in id2lb:
+		if id2lb[id] not in lb2hn:
+			lb2hn[id2lb[id]] = []
+
 	for node in l_nodes:
 		# this won't reach sites without nodes, which I guess isn't a problem.
 		if node['site_id'] in id2lb.keys():

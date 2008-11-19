@@ -2,17 +2,16 @@
 
 import sys
 import site
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 from monitor import database
 
 import zabbixsite
-from monitor.database.dborm import session
+from monitor.database.dborm import zab_session as session
 
-print "test"
 
-plcdb = database.dbLoad("l_plcsites")
-netid2ip = database.dbLoad("plcdb_netid2ip")
-lb2hn = database.dbLoad("plcdb_lb2hn")
+plcdb = plccache.l_sites # database.dbLoad("l_plcsites")
+netid2ip = plccache.plcdb_netid2ip # database.dbLoad("plcdb_netid2ip")
+lb2hn = plccache.plcdb_lb2hn # database.dbLoad("plcdb_lb2hn")
 
 def get_site_iplist(loginbase):
 	node_list = lb2hn[loginbase]
@@ -43,7 +42,7 @@ if __name__=="__main__":
 	parser.set_defaults( setupglobal=False, syncsite=True, site=None)
 	parser.add_option("", "--setupglobal", action="store_true", dest="setupglobal",
 						help="Setup global settings.")
-	parser.add_option("", "--nosite", action="store_true", dest="syncsite",
+	parser.add_option("", "--nosite", action="store_false", dest="syncsite",
 						help="Do not sync sites.")
 	parser.add_option("", "--site", dest="site",
 						help="Sync only given site name.")
@@ -53,6 +52,7 @@ if __name__=="__main__":
 		zabbixsite.setup_global()
 
 	if opts.syncsite:
+		api = plc.getAuthAPI()
 		query = {'peer_id' : None}
 		if opts.site:
 			query.update({'login_base' : opts.site})
