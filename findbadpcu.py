@@ -15,7 +15,8 @@ import threading
 import monitor
 from monitor.pcu import reboot
 from monitor import config
-from monitor.database import FindbadPCURecordSync, FindbadPCURecord
+from monitor.database.infovacuum import FindbadPCURecordSync, FindbadPCURecord
+from monitor.database.dborm import mon_session as session
 from monitor import util 
 from monitor.wrapper import plc, plccache
 from nodequery import pcu_select
@@ -340,6 +341,7 @@ def checkAndRecordState(l_pcus, cohash):
 
 	print FindbadPCURecordSync.query.count()
 	print FindbadPCURecord.query.count()
+	session.flush()
 
 
 def main():

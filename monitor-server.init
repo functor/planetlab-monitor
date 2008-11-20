@@ -33,34 +33,46 @@ export PGPORT=$PLC_DB_PORT
 ZABBIX_DB_USER="zabbixuser"
 ZABBIX_DB_NAME="zabbix"
 
+MONITOR_DB_USER="monitoruser"
+MONITOR_DB_NAME="monitor"
+
+WROTE_PG_CONFIG=
+
+if [ -z "$PLC_MONITOR_IP" ] ; then
+	PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
+fi
+
 function check_pg_hba ()
 {
+	NAME=$1
+	USER=$2
 	#### SETUP ACCESS to this user and database
 	mkdir -p $PGDATA/pg_hba.conf.d
-	ZABCONF=$PGDATA/pg_hba.conf.d/zabbix.conf
-	if [ ! -f $ZABCONF ] ; then
-		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER 127.0.0.1/32 password"   > $ZABCONF
-		echo "host $ZABBIX_DB_NAME $ZABBIX_DB_USER $PLC_MONITOR_IP/32 password" >> $ZABCONF
+	CONF=$PGDATA/pg_hba.conf.d/${NAME}.conf
+	if [ ! -f $CONF ] ; then
+		echo "host $NAME $USER 127.0.0.1/32 password"   > $CONF
+		echo "host $NAME $USER $PLC_MONITOR_IP/32 password" >> $CONF
 
-		# NOTE: restart db to enable access by users granted above.
-		service plc restart posgresql
+		WROTE_PG_CONFIG="true"
 	fi
 }
 
 function check_user_and_db()
 {
     CREATED=
+	NAME=$1
+	USER=$2
     # confirm user is present or create it
-    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $ZABBIX_DB_USER )
+    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $USER )
     if [ -z $user_present ] ; then 
-        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $ZABBIX_DB_USER -U postgres
+        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $USER -U postgres
 		CREATED="true"
     fi
     
     # confirm database is present or create it
-    db_present=$( psql -U postgres -c "select * from pg_database;" -d template1 | grep $ZABBIX_DB_NAME )
+    db_present=$( psql -U postgres -c "select * from pg_database;" -d template1 | grep $NAME )
     if [ -z $db_present ] ; then
-        createdb --owner=$ZABBIX_DB_USER $ZABBIX_DB_NAME -U postgres
+        createdb --owner=$USER $NAME -U postgres
 		CREATED="true"
     fi
 
@@ -73,7 +85,7 @@ function check_user_and_db()
 		CREATED="true"
     fi
     if [ -n "$CREATED" ] ; then
-        psql -d template1 -U postgres -c "ALTER USER $ZABBIX_DB_USER WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
+        psql -d template1 -U postgres -c "ALTER USER $USER WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
     fi
 }
 
@@ -84,8 +96,13 @@ function if_present_load ()
         psql -d $ZABBIX_DB_NAME -U $ZABBIX_DB_USER < $file
     fi
 }
+function check_monitor_schema_and_data() 
+{
+	# NOTE: call create_all() to setup the database from the infovacuum model.
+	python -c "from monitor.database.infovacuum import *; from elixir import create_all; create_all()"
+}
 
-function check_schema_and_data() 
+function check_zabbix_schema_and_data() 
 {
     schema_present=$( psql -U $ZABBIX_DB_USER $ZABBIX_DB_NAME -c "\d;" < /dev/null | grep hosts )
     if [ -z $schema_present ] ; then
@@ -97,7 +114,7 @@ function check_schema_and_data()
     fi
 }
 
-function check_templates_and_import ()
+function check_zabbix_templates_and_import ()
 {
 	# LOG IN
 	COOKIE_FILE=/tmp/cookiejar.txt
@@ -141,9 +158,6 @@ function check_monitor_conf ()
 {
 	MONITOR_CONFIG=/etc/monitor.conf
 
-	if [ -z "$PLC_MONITOR_IP" ] ; then
-		PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
-	fi
 
 	# Using plcsh add default, monitor user
 	plcsh <<EOF &>/dev/null 
@@ -195,12 +209,15 @@ support_email=${PLC_MAIL_SUPPORT_ADDRESS}
 cc_email=
 
 [monitordatabase]
-monitor_dburi=postgres://monitoruser:${PLC_MONITOR_DBPASSWORD}@localhost:5432/monitor
-zabbix_dburi=postgres://zabbixuser:${PLC_MONITOR_DBPASSWORD}@localhost:5432/zabbix
+monitor_dburi=postgres://${MONITOR_DB_NAME}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${MONITOR_DB_NAME}
+zabbix_dburi=postgres://${ZABBIX_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${ZABBIX_DB_NAME}
 
 cachetime=60
 
+# Evaluated as true or false
 [commandline]
+cachecalls=True
+
 echo=False
 debug=False
 mail=True
@@ -280,10 +297,20 @@ case "$1" in
 		dialog "$MESSAGE"
 
 		# DATABASE acces, creation, and data loading
-		check_pg_hba
-		check_user_and_db 
-		check_schema_and_data
-		check_templates_and_import
+		check_pg_hba $MONITOR_DB_NAME $MONITOR_DB_USER
+		check_user_and_db $MONITOR_DB_NAME $MONITOR_DB_USER
+		check_monitor_schema_and_data
+
+		check_pg_hba $ZABBIX_DB_NAME $ZABBIX_DB_USER
+		check_user_and_db $ZABBIX_DB_NAME $ZABBIX_DB_USER
+
+		if [ -n "$WROTE_PG_CONFIG" ] ; then
+			# NOTE: restart db to enable access by users granted above.
+			service plc restart postgresql
+		fi
+
+		check_zabbix_schema_and_data
+		check_zabbix_templates_and_import
 
 		# WRITE default /etc/monitor.conf
 		check_monitor_conf
@@ -292,7 +319,6 @@ case "$1" in
 		check_zab_server
 		check_zab_agentd
 		check_zab_webconfig
-
 
 		result "$MESSAGE"
 	;;
@@ -306,7 +332,7 @@ case "$1" in
 
 		$MONITORPATH/zabbix/zabbixsync.py --setupglobal &> /var/log/monitor-server
 		# import any templates
-		check_templates_and_import
+		check_zabbix_templates_and_import
 
 		service plc start monitor 
 		

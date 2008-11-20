@@ -40,7 +40,7 @@ def findby_or_create(cls, if_new_set={}, **kwargs):
 	return result
 Entity.findby_or_create = classmethod(findby_or_create)
 
-from monitor.database.infovacuum.model.actionrecord import *
-from monitor.database.infovacuum.model.findbadrecord import *
-from monitor.database.infovacuum.model.historyrecord import *
+from monitor.database.infovacuum.actionrecord import *
+from monitor.database.infovacuum.findbad import *
+from monitor.database.infovacuum.historyrecord import *
 setup_all()

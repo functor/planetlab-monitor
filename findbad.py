@@ -11,7 +11,10 @@ import threading
 from monitor import util
 from monitor.util import command
 from monitor import config
-from monitor.database import FindbadNodeRecordSync, FindbadNodeRecord
+
+from monitor.database.infovacuum import FindbadNodeRecordSync, FindbadNodeRecord
+from monitor.database.dborm import mon_session as session
+
 from monitor.sources import comon
 from monitor.wrapper import plc, plccache
 
@@ -277,6 +280,9 @@ def recordPingAndSSH(request, result):
 						observed_category = values['category'],
 					)
 			fbnodesync.round = global_round
+			fbnodesync.flush()
+			fbsync.flush()
+			fbrec.flush()
 
 			count += 1
 			print "%d %s %s" % (count, nodename, values)
@@ -300,8 +306,9 @@ def checkAndRecordState(l_nodes, cohash):
 	# CREATE all the work requests
 	for nodename in l_nodes:
 		fbnodesync = FindbadNodeRecordSync.findby_or_create(hostname=nodename, if_new_set={'round':0})
-
 		node_round   = fbnodesync.round
+		fbnodesync.flush()
+
 		if node_round < global_round:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
@@ -333,6 +340,7 @@ def checkAndRecordState(l_nodes, cohash):
 
 	print FindbadNodeRecordSync.query.count()
 	print FindbadNodeRecord.query.count()
+	session.flush()
 
 def main():
 	global global_round
@@ -346,14 +354,16 @@ def main():
 		global_round += 1
 		fbsync.round = global_round
 
+	fbsync.flush()
+
 	cotop = comon.Comon()
 	# lastcotop measures whether cotop is actually running.  this is a better
 	# metric than sshstatus, or other values from CoMon
 	cotop_url = COMON_COTOPURL
 
 	# history information for all nodes
-	#cohash = {}
-	cohash = cotop.coget(cotop_url)
+	cohash = {}
+	#cohash = cotop.coget(cotop_url)
 	l_nodes = plccache.l_nodes
 	if config.nodelist:
 		f_nodes = util.file.getListFromFile(config.nodelist)

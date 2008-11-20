@@ -17,7 +17,8 @@ from monitor.pcu import reboot
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
-from monitor.database import FindbadNodeRecord, FindbadPCURecord
+from monitor.database.infovacuum import FindbadNodeRecordSync, FindbadNodeRecord
+from monitor.database.dborm import mon_session as session
 from monitor import util
 from monitor import config
 

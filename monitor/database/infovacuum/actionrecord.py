@@ -9,34 +9,34 @@ from monitor.database.dborm import mon_metadata, mon_session
 __metadata__ = mon_metadata
 __session__  = mon_session
 
-class IssueType(Entity):
-	shortname = Field(String, default=None)
-	description = Field(String, default=None)
-	issue_record = ManyToMany('IssueRecord')
+#class IssueType(Entity):
+#	shortname = Field(String, default=None)
+#	description = Field(String, default=None)
+#	issue_record = ManyToMany('IssueRecord')
 
-class IssueRecord(Entity):
-	date_created = Field(DateTime,default=datetime.now)
-	date_last_updated = Field(DateTime,default=datetime.now)
-	date_action_taken = Field(DateTime,default=datetime.now)
-
-	hostname = Field(String,default=None)
-	loginbase = Field(String)
-
-	ticket_id = Field(Integer, default=0)
-	rt = Field(PickleType, default=None)
-
-	# open, paused, closed
-	status = Field(String, default="open")
-
-	take_action = Field(Boolean, default=False)
-	send_email = Field(Boolean, default=True)
-
-	message_series =  Field(String, default="nodedown")
-	message_index = Field(Integer, default=0)
-	penalty_level = Field(Integer, default=0)
-
-	issue_type = ManyToMany('IssueType')
-	actions = OneToMany('ActionRecord', order_by='-date_created')
+#class IssueRecord(Entity):
+#	date_created = Field(DateTime,default=datetime.now)
+#	date_last_updated = Field(DateTime,default=datetime.now)
+#	date_action_taken = Field(DateTime,default=datetime.now)
+#
+#	hostname = Field(String,default=None)
+#	loginbase = Field(String)
+#
+#	ticket_id = Field(Integer, default=0)
+#	rt = Field(PickleType, default=None)
+#
+#	# open, paused, closed
+#	status = Field(String, default="open")
+#
+#	take_action = Field(Boolean, default=False)
+#	send_email = Field(Boolean, default=True)
+#
+#	message_series =  Field(String, default="nodedown")
+#	message_index = Field(Integer, default=0)
+#	penalty_level = Field(Integer, default=0)
+#
+#	issue_type = ManyToMany('IssueType')
+#	actions = OneToMany('ActionRecord', order_by='-date_created')
 
 
 class ActionRecord(Entity):
@@ -50,7 +50,7 @@ class ActionRecord(Entity):
 	hostname = Field(String,default=None)
 	loginbase = Field(String)
 
-	issue = ManyToOne('IssueRecord')
+	#issue = ManyToOne('IssueRecord')
 	# NOTE: this is the parent relation to fb records.  first create the
 	# action record, then append to this value all of the findbad records we
 	# want to have in our set.
