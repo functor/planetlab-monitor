@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # NOTE: Must be an absolute path to guarantee it is read.
-INSTALLPATH=/usr/share/monitor-server/
+INSTALLPATH=/usr/share/monitor/
 # Generate an 'sh' style file full of variables in monitor.conf
 $INSTALLPATH/shconfig.py >  $INSTALLPATH/monitorconfig.sh
 source $INSTALLPATH/monitorconfig.sh

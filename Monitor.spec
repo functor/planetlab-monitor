@@ -152,7 +152,7 @@ rm -rf $RPM_BUILD_ROOT
 # 		an API server or so on.
 # TODO: create real monitorconfig.py from monitorconfig-default.py
 # TODO: create monitorconfig.php using phpconfig.py 
-# TODO: create symlink in /var/lib/monitor-server for chroot environments
+# TODO: create symlink in /var/lib/monitor for chroot environments
 # TODO: update the content of automate_pl03.sh 
 # TODO: Use the installed version of bootcd to create custom boot images. ( or, use the api now).
 

@@ -38,7 +38,7 @@ def add_loginbase(loginbase):
 if __name__=="__main__":
 
 	from monitor import parser as parsermodule
-	parser = parsermodule.getParser()
+	parser = parsermodule.getParser(['cacheset'])
 	parser.set_defaults( setupglobal=False, syncsite=True, site=None)
 	parser.add_option("", "--setupglobal", action="store_true", dest="setupglobal",
 						help="Setup global settings.")
@@ -53,7 +53,7 @@ if __name__=="__main__":
 		session.flush()
 
 	if opts.syncsite:
-		api = plc.getAuthAPI()
+		api = plc.getCachedAuthAPI()
 		query = {'peer_id' : None}
 		if opts.site:
 			query.update({'login_base' : opts.site})

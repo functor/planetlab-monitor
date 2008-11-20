@@ -12,15 +12,17 @@ class mailtxt:
 				#print getattr(cls,f)
 		return
 
+	# NOTE: using the literal --> ' <-- character in messages will cause the db or zabbix_server to fail.
+
 	nodedown_one_subject="Server {HOSTNAME} is unreachable: First Notice"
 	nodedown_one = """
 Hello,
 
-We hope that you're having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
+We hope that you are having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
 
     {HOSTNAME} : Since {EVENT.AGE}
 
-We're writing because we need your help returning them to their regular operation.
+We are writing because we need your help returning them to their regular operation.
 
 To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the monitor status page to verify that your node is accessible.  
 
@@ -28,11 +30,11 @@ If the machine has booted successfully, you may check directly by logging in wit
 
     sudo /usr/sbin/vps ax
 
-If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contacts Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
-There is no need to respond to this message unless there are any console messages relating to the node's failure.  In this case, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you've taken.
+There is no need to respond to this message unless there are any console messages relating to the node failure.  In this case, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you have taken.
 
 Finally, you can track the current status of your machines using this Google Gadget:
 
@@ -46,18 +48,18 @@ Thank you for your help,
 	nodedown_two = """
 Hello, 
 
-We hope that you're having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
+We hope that you are having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
 
     {HOSTNAME} : Since {EVENT.AGE}
 
-We're writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
+We are writing again because our previous correspondence, sent only to the registered Technical Contact, has gone unacknowledged for at least a week, and we need your help returning these machines to their regular operation.  We understand that machine maintenance can take time.  So, while we wait for the machines to return to their regular operation slice creation has been suspended at your site.  No new slices may be created, but the existing slices and services running within them will be unaffected.
 
 To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the monitor status page to verify that your node is accessible.  
 
 If the machine has booted successfully, you may check directly by logging in with your site_admin account, and running:
 
     sudo /usr/sbin/vps ax                                                                                  
-If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contacts Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
@@ -78,11 +80,11 @@ Thank you for your help,
 	nodedown_three ="""
 Hello,
 
-We hope that you're having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
+We hope that you are having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
 
     {HOSTNAME} : Since {EVENT.AGE}
 
-We understand that machine maintenance can take time.  We're writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.  
+We understand that machine maintenance can take time.  We are writing again because our previous correspondences, sent first to the registered Technical Contact then the the Site PI, have gone unacknowledged for at least two weeks, and we need your help returning these machines to their regular operation.  This is the third time attempting to contact someone in regard to these machines at your site.  So, while we wait for the machines to return to their regular operation all current slice activity will be suspended.  Current experiments will be stopped and will not be be able to start again until there is evidence that you have begun to help with the maintenance of these machines.  
 
 To help, please confirm that a verison 3.0 or greater BootCD is installed in the machine.  Then, after checking that the node is properly networked, power cycle the machine.  Note that rebooting the machine may not fully resolve the problems we are seeing.  Once the machine has come back up, please visit the monitor status page to verify that your node is accessible.
 
@@ -90,7 +92,7 @@ If the machine has booted successfully, you may check directly by logging in wit
 
     sudo /usr/sbin/vps ax
 
-If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contact's Guide:
+If you have a BootCD older than 3.0, you will need to create a new BootImage on CD or USB.  You can find instructions for this at the Technical Contacts Guide:
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
@@ -106,7 +108,7 @@ Thank you for your help,
 	nodedown_four=""" 
 Hello,
 
-We hope that you're having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
+We hope that you are having a good day.  As part of PlanetLab node monitoring, we noticed the following node is down at your site:
 
     {HOSTNAME} : Since {EVENT.AGE}
 

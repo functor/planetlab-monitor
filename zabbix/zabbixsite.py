@@ -90,6 +90,8 @@ def setup_global():
 	print "checking zabbix server host info"
 	zabbixserver = Host.get_by(host="ZABBIX Server")
 	if zabbixserver:
+		# TODO: verify that this works.  it has failed once on fresh
+		# install... not sure why.
 		print "Removing default Zabbix server entry"
 		zabbixserver.delete()
 
@@ -98,7 +100,7 @@ def setup_global():
 		# 		copying that the php code does during a host add.
 		# NOTE: Instead, reformat any *xml.in templates and import those
 		# 		during /etc/plc.d/monitor sync
-		for file in glob.glob("/usr/share/monitor/templates/*.xml.in"):
+		for file in glob.glob("%s/zabbix/templates/*.xml.in" config.MONITOR_SCRIPT_ROOT):
 			if 'zabbix_server' in file:
 				buf = loadFile(file)
 				args = {'hostname' : config.MONITOR_HOSTNAME, 'ip' : config.MONITOR_IP}
@@ -110,7 +112,7 @@ def setup_global():
 	print "checking scripts"
 	script1 = Script.find_or_create(name="RebootNode",
 									set_if_new = {
-										'command':"/usr/share/monitor-server/reboot.py {HOST.CONN}",
+										'command':"%s/reboot.py {HOST.CONN}" % config.MONITOR_SCRIPT_ROOT,
 										'host_access':3 # r/w)
 									})
 	script2 = Script.find_or_create(name="NMap",
@@ -129,8 +131,16 @@ def setup_site(loginbase, techemail, piemail, iplist):
 	# TODO: remove old users that are no longer in the plcdb.
 	# TODO: consider creating two user groups for Tech & PI emails
 
+	# NOTE: setup default valus for EMAIL
+	mailtxt.reformat({'hostname' : config.MONITOR_HOSTNAME, 
+					  'support_email' : config.support_email})
+
+	# NOTE: verify arguments
+	if len(iplist) > 255:
+		raise Exception("iplist length is too long!")
+
 	BI_WEEKLY_ESC_PERIOD = int(60*60*24)
-	BI_WEEKLY_ESC_PERIOD = int(60) # testing...
+	#BI_WEEKLY_ESC_PERIOD = int(60) # testing...
 
 	# User Group
 	site_user_group = UsrGrp.find_or_create(name=USERGROUP_NAME % loginbase)
@@ -169,10 +179,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 										key_="system.uname", ports=10050) )
 			)
 	if dr.iprange != iplist:
-		if len(iplist) < 255:
-			dr.iprange = iplist
-		else:
-			raise Exception("iplist length is too long!")
+		dr.iprange = iplist
 		
 
 	# DISCOVERY ACTION for these servers
@@ -228,7 +235,11 @@ def setup_site(loginbase, techemail, piemail, iplist):
 				]
 	else:
 		# TODO: verify iplist is up-to-date
-		pass
+		# NOTE: len(a.actioncondition_list) > 0
+		ip_condition  = a.actioncondition_list[0]
+		assert ip_condition.conditiontype == defines.CONDITION_TYPE_DHOST_IP
+		if ip_condition.value != iplist:
+			ip_condition.value = iplist
 
 	# ESCALATION ACTION for these servers
 	ea = Action.find_or_create(name=escalation_action_name,
@@ -276,7 +287,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=10, esc_step_to=10, 
 					esc_period=0,
 					shortdata="",
-					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} disablesite" % config.MONITOR_HOSTNAME, 
+					longdata="%s:%s/checkslices.py {HOSTNAME} disablesite" % ( config.MONITOR_HOSTNAME, config.MONITOR_SCRIPT_ROOT ), 
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
 					shortdata=mailtxt.nodedown_two_subject,
@@ -300,7 +311,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=17, esc_step_to=17, 
 					esc_period=0, 
 					shortdata="",
-					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} disableslices" % config.MONITOR_HOSTNAME, 
+					longdata="%s:%s/checkslices.py {HOSTNAME} disableslices" % ( config.MONITOR_HOSTNAME, config.MONITOR_SCRIPT_ROOT ), 
 					# TODO: send notice to users of slices
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
@@ -316,7 +327,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=21, esc_step_to=0, 
 					esc_period=int(BI_WEEKLY_ESC_PERIOD*3.5),
 					shortdata="",
-					longdata="%s:/usr/share/monitor-server/checkslices.py {HOSTNAME} forever" % config.MONITOR_HOSTNAME, 
+					longdata="%s:%s/checkslices.py {HOSTNAME} forever" % ( config.MONITOR_HOSTNAME, config.MONITOR_SCRIPT_ROOT), 
 					operationcondition_list=[ OperationConditionNotAck() ]),
 				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
 					shortdata=mailtxt.nodedown_four_subject,

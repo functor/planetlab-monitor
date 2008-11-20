@@ -16,7 +16,7 @@
 . /etc/planetlab/plc_config
 local_config=/etc/planetlab/configs/site.xml
 
-MONITORPATH=/usr/share/monitor-server
+MONITORPATH=/usr/share/monitor
 
 # Be verbose
 set -x
@@ -101,7 +101,8 @@ function check_templates_and_import ()
 {
 	# LOG IN
 	COOKIE_FILE=/tmp/cookiejar.txt
-	TEMPLATES_DIR=/usr/share/monitor/zabbix/templates
+	rm -f ${COOKIE_FILE}
+	TEMPLATES_DIR=${MONITORPATH}/zabbix/templates
 	curl -s --cookie $COOKIE_FILE --cookie-jar $COOKIE_FILE \
 			--form "enter=Enter" \
 			--form "name=Admin" \
@@ -174,9 +175,9 @@ API_AUTH_USER=${PLC_MONITOR_EMAIL}
 API_AUTH_PASSWORD=${PLC_MONITOR_DBPASSWORD}
 
 # SERVER PATHS
-MONITOR_SCRIPT_ROOT=/usr/share/monitor-server
-MONITOR_DATA_ROOT=/var/lib/monitor-server
-MONITOR_ARCHIVE_ROOT=/var/lib/monitor-server/archive-pdb
+MONITOR_SCRIPT_ROOT=${MONITORPATH}
+MONITOR_DATA_ROOT=/var/lib/monitor
+MONITOR_ARCHIVE_ROOT=/var/lib/monitor/archive-pdb
 
 MONITOR_HOSTNAME=${PLC_MONITOR_HOST}
 MONITOR_IP=${PLC_MONITOR_IP}

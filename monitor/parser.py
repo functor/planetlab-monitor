@@ -71,6 +71,17 @@ def parseSetDefaults(parser=None):
 					"debug is enabled or for bcc when it is not")
 	return parser
 
+def parseSetCacheSet(parser=None):
+	if parser == None:
+		parser = OptionParser()
+
+	parser.set_defaults(cachecalls=True, cachetime=60)
+	parser.add_option("", "--nocache", dest="cachecalls", action="store_false",
+					help="When using PLCCache objects, temporarily disable the use of caching. i.e. refresh")
+	parser.add_option("", "--cachetime", dest="cachetime", 
+					help="How long to preserve a cached value. Minutes")
+	return parser
+
 def parseSetNodeSets(parser=None):
 	if parser == None:
 		parser = OptionParser()
@@ -94,6 +105,9 @@ def getParser(parsesets=[], parser=None):
 		p = OptionParser()
 	else:
 		p = parser
+
+	if 'cacheset' in parsesets:
+		p = parseSetCacheSet(p)
 
 	if 'nodesets' in parsesets:
 		p = parseSetNodeSets(p)

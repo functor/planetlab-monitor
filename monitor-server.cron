@@ -1,6 +1,6 @@
 # Runs every three hours to poll all nodes and PCUs, as well as take some
 # automated actions for debug nodes.
 
-01 * * * * root /usr/share/monitor-server/automate.sh 2>&1 > /usr/share/monitor-server/monitor.log
+01 * * * * root /usr/share/monitor/automate.sh 2>&1 > /usr/share/monitor/monitor.log
 
 

@@ -27,6 +27,10 @@ def cachedRecently(name, length=int(config.cachetime), type=None):
 		return true or false based on whether the modified time of the cached
 		file is within 'length' minutes.
 	"""
+	if hasattr(config, 'cachecalls') and not config.cachecalls:
+		# don't use cached calls if cachecalls is false
+		return False
+
 	try:
 		t = lastModified(name, type)
 	except:

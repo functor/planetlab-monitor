@@ -2046,7 +2046,7 @@
 						<application>Processes</application>
 					</applications>
 				</item>
-				<item type="0" key="proc.num[httpd]" value_type="3">
+				<item type="0" key="proc.num[plc_httpd]" value_type="3">
 					<description>Number of running processes apache</description>
 					<ipmi_sensor></ipmi_sensor>
 					<delay>60</delay>
@@ -3340,7 +3340,7 @@
 				<trigger>
 					<description>Apache is not running on {HOSTNAME}</description>
 					<type>0</type>
-					<expression>{{HOSTNAME}:proc.num[httpd].last(0)}&lt;1</expression>
+					<expression>{{HOSTNAME}:proc.num[plc_httpd].last(0)}&lt;1</expression>
 					<url></url>
 					<status>0</status>
 					<priority>3</priority>
