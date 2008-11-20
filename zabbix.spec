@@ -174,7 +174,7 @@ cat $TMP_FILE > %{zabbix_initdir}/zabbix_agentd
 # NOTE: Run every runlevel as soon as possible, and stop as late as possible
 cp %{zabbix_initdir}/zabbix_agentd %{_initrddir}
 sed	-i -e "s#chkconfig: - 90 10#chkconfig: 2345 12 90#g" \
-	%{_initrddir}/zabbix_server 
+	%{_initrddir}/zabbix_agentd
 
 rm -f $TMP_FILE
 
