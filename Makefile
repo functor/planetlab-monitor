@@ -5,8 +5,10 @@ SHA1SUM	= sha1sum
 # default - overridden by the build
 SPECFILE = zabbix.spec
 
-main.URL	:= http://voxel.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.1.tar.gz 
-main.SHA1SUM:= 6e66efdbbdf23dc3de01379b30ded7b005fb49d9
+#main.URL	:= http://voxel.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.1.tar.gz 
+#main.SHA1SUM:= 6e66efdbbdf23dc3de01379b30ded7b005fb49d9
+main.URL	:= http://voxel.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.tar.gz 
+main.SHA1SUM:= f57a5e86e9c39973d0c11c275289c8feb8c13af2
 main.FILE	:= $(notdir $(main.URL))
 
 # Thierry - when called from within the build, PWD is /build
