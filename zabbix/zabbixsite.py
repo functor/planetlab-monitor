@@ -4,12 +4,14 @@ from os import getcwd
 from os.path import dirname, exists, join
 import sys
 import md5
+import glob
 
 from monitor import config
 from monitor.database.dborm import zab_session as session
 from monitor.database.zabbixapi.model import *
 from monitor.database.zabbixapi.emailZabbix import *
 from monitor.database.zabbixapi import defines
+from monitor.util.file import *
 
 
 
@@ -88,15 +90,20 @@ def setup_global():
 	print "checking zabbix server host info"
 	zabbixserver = Host.get_by(host="ZABBIX Server")
 	if zabbixserver:
-		print "UPDATING Primary Zabbix server entry"
-		zabbixserver.host=config.MONITOR_HOSTNAME
-		zabbixserver.ip=config.MONITOR_IP
-		zabbixserver.dns=config.MONITOR_HOSTNAME
-		zabbixserver.useip=1
+		print "Removing default Zabbix server entry"
+		zabbixserver.delete()
 
-	############################ DEFAULT TEMPLATES
-	# pltemplate - via web, xml import
-	# TODO: os.system("curl --post default_templates.xml")
+		# NOTE: creating a host and assigning a template cannot work 
+		#       due to the crazy item, trigger, action
+		# 		copying that the php code does during a host add.
+		# NOTE: Instead, reformat any *xml.in templates and import those
+		# 		during /etc/plc.d/monitor sync
+		for file in glob.glob("/usr/share/monitor/templates/*.xml.in"):
+			if 'zabbix_server' in file:
+				buf = loadFile(file)
+				args = {'hostname' : config.MONITOR_HOSTNAME, 'ip' : config.MONITOR_IP}
+				dumpFile(file[:-3], buf % args)
+
 
 	##################### SCRIPTS 
 	## TODO: add calls to check/reset the boot states.
@@ -143,7 +150,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 	# HOST GROUP
 	plc_host_group = HostGroup.find_or_create(name="MyPLC Hosts")
 	site_host_group = HostGroup.find_or_create(name=HOSTGROUP_NAME % loginbase)
-	plctemplate = Host.get_by(host="Template_Linux_PLHost")
+	plctemplate = Host.get_by(host="Template_Linux_PLC_Host")
 	escalation_action_name = ESCALATION_ACTION_NAME % loginbase
 	discovery_action_name = DISCOVERY_ACTION_NAME % loginbase
 	discovery_rule_name = DISCOVERY_RULE_NAME % loginbase

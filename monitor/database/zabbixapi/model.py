@@ -439,6 +439,7 @@ class Right(ZabbixEntity):
 
 rights = Table('rights', __metadata__, autoload=True)
 hostsgroups = Table('hosts_groups', __metadata__, autoload=True)
+hoststemplates = Table('hosts_templates', __metadata__, autoload=True)
 
 	
 # m2m table between hosts and groups below
@@ -447,6 +448,13 @@ class HostsGroups(ZabbixEntity):
 		tablename='hosts_groups',
 		autoload=True,
 		auto_primarykey='hostgroupid',
+	)
+
+class HostsTemplates(ZabbixEntity):
+	using_options(
+		tablename='hosts_templates',
+		autoload=True,
+		auto_primarykey='hosttemplateid',
 	)
 
 class Host(ZabbixEntity):
@@ -462,8 +470,29 @@ class Host(ZabbixEntity):
 		primaryjoin=lambda: Host.hostid==hostsgroups.c.hostid,
 		secondaryjoin=lambda: HostGroup.groupid==hostsgroups.c.groupid,
 	)
+	template_list = ManyToMany(
+		'Host',
+		table=hoststemplates,
+		foreign_keys=lambda: [hoststemplates.c.hostid, hoststemplates.c.templateid],
+		primaryjoin=lambda: Host.hostid==hoststemplates.c.hostid,
+		secondaryjoin=lambda: Host.hostid==hoststemplates.c.templateid,
+	)
+
+	def append_template(self, template):
+		row = HostsTemplates(hostid=self.hostid, templateid=template.hostid)
+		return template
+
+	def remove_template(self, template):
+		row = HostsTemplates.get_by(hostid=self.hostid, templateid=template.hostid)
+		if row is not None:
+			row.delete()
+
 	def delete(self):
 		# NOTE: media objects are automatically handled.
+		hosts_templates_match = HostsTemplates.query.filter_by(hostid=self.hostid).all()
+		for row in hosts_templates_match:
+			row.delete()
+
 		hosts_groups_match = HostsGroups.query.filter_by(hostid=self.hostid).all()
 		for row in hosts_groups_match:
 			row.delete()

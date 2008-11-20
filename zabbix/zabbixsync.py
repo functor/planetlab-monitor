@@ -50,6 +50,7 @@ if __name__=="__main__":
 
 	if opts.setupglobal:
 		zabbixsite.setup_global()
+		session.flush()
 
 	if opts.syncsite:
 		api = plc.getAuthAPI()

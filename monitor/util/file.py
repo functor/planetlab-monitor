@@ -17,3 +17,14 @@ def getListFromFile(file):
 		list += [line]
 	return list
 
+def loadFile(file):
+	f = open(file,'r')
+	buf = f.read()
+	f.close()
+	return buf
+
+def dumpFile(file, buf):
+	f = open(file, 'w')
+	f.write(buf)
+	f.close()
+	return

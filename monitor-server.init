@@ -97,6 +97,45 @@ function check_schema_and_data()
     fi
 }
 
+function check_templates_and_import ()
+{
+	# LOG IN
+	COOKIE_FILE=/tmp/cookiejar.txt
+	TEMPLATES_DIR=/usr/share/monitor/zabbix/templates
+	curl -s --cookie $COOKIE_FILE --cookie-jar $COOKIE_FILE \
+			--form "enter=Enter" \
+			--form "name=Admin" \
+			--form "password=zabbix" \
+			"http://${PLC_MONITOR_HOST}/zabbix/index.php?login=1"
+	
+	deleted=$( grep 'deleted' $COOKIE_FILE )
+	if [ -n "$deleted" ] ; then
+		echo "Login to the zabbix web server failed!!!"
+		return 1
+	fi
+
+	for file in ${TEMPLATES_DIR}/*.xml ; do 
+		# 0 - update , 1 - skip, 0 - add
+		echo "############### IMPORTING $file" >> /var/log/monitor.log
+		curl -s --cookie $COOKIE_FILE --cookie-jar $COOKIE_FILE \
+			--form "config=1" \
+			--form "import_file=@${file}" \
+			--form "rules[host][exist]=0" \
+			--form "rules[host][missed]=0" \
+			--form "rules[template][exist]=0" \
+			--form "rules[template][missed]=1" \
+			--form "rules[item][exist]=0" \
+			--form "rules[item][missed]=0" \
+			--form "rules[trigger][exist]=0" \
+			--form "rules[trigger][missed]=0" \
+			--form "rules[graph][exist]=0" \
+			--form "rules[graph][missed]=0" \
+			--form "import=Import" \
+			"http://${PLC_MONITOR_HOST}/zabbix/exp_imp.php" >> /var/log/monitor.log
+	done
+}
+
+
 function check_monitor_conf ()
 {
 	MONITOR_CONFIG=/etc/monitor.conf
@@ -239,11 +278,11 @@ case "$1" in
 		MESSAGE=$"Bootstrap Monitoring"
 		dialog "$MESSAGE"
 
-
 		# DATABASE acces, creation, and data loading
 		check_pg_hba
 		check_user_and_db 
 		check_schema_and_data
+		check_templates_and_import
 
 		# WRITE default /etc/monitor.conf
 		check_monitor_conf
@@ -265,6 +304,8 @@ case "$1" in
 		service plc stop monitor 
 
 		$MONITORPATH/zabbix/zabbixsync.py --setupglobal &> /var/log/monitor-server
+		# import any templates
+		check_templates_and_import
 
 		service plc start monitor 
 		

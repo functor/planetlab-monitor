@@ -170,11 +170,15 @@ sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
 	-e "s#PIDFILE=/var/tmp/zabbix_agentd.pid#PIDFILE=%{zabbix_piddir}/zabbix_agentd.pid#g" \
 	%{zabbix_initdir}/zabbix_agentd > $TMP_FILE
 cat $TMP_FILE > %{zabbix_initdir}/zabbix_agentd
-# TODO: copy to /etc/init.d/
+
+# NOTE: Run every runlevel as soon as possible, and stop as late as possible
 cp %{zabbix_initdir}/zabbix_agentd %{_initrddir}
+sed	-i -e "s#chkconfig: - 90 10#chkconfig: 2345 12 90#g" \
+	%{_initrddir}/zabbix_server 
 
 rm -f $TMP_FILE
 
+chkconfig --add zabbix_agentd 
 chkconfig zabbix_agentd on
 
 %post server
@@ -205,10 +209,14 @@ sed	-e "s#BASEDIR=/opt/zabbix#BASEDIR=%{_prefix}#g" \
 	-e "s#PIDFILE=/var/tmp/zabbix_server.pid#PIDFILE=%{zabbix_piddir}/zabbix_server.pid#g" \
 	%{zabbix_initdir}/zabbix_server > $TMP_FILE
 cat $TMP_FILE > %{zabbix_initdir}/zabbix_server
-cp %{zabbix_initdir}/zabbix_server %{_initrddir}
-
 rm -f $TMP_FILE
 
+# NOTE: Run every runlevel as soon as possible, and stop as late as possible
+cp %{zabbix_initdir}/zabbix_server %{_initrddir}
+sed	-i -e "s#chkconfig: - 90 10#chkconfig: 2345 12 90#g" \
+	%{_initrddir}/zabbix_server 
+
+chkconfig --add zabbix_server
 chkconfig zabbix_server on
 
 %post gui
