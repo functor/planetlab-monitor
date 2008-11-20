@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<zabbix_export version="1.0" date="20.11.08" time="00.16">
+    <hosts>
+        <host name="%(hostname)s">
+            <useip>1</useip>
+            <dns>%(hostname)s</dns>
+            <ip>%(ip)s</ip>
+            <port>10050</port>
+            <status>0</status>
+            <groups>
+                <group>ZABBIX Servers</group>
+            </groups>
+            <templates>
+                <template>Template_Linux_PLC_Server</template>
+            </templates>
+        </host>
+    </hosts>
+</zabbix_export>
