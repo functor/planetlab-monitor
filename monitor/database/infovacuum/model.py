@@ -1,3 +1,3 @@
-from actionrecord import *
-from findbadrecord import *
-from historyrecord import *
+from monitor.database.info.action import *
+from monitor.database.info.findbad import *
+from monitor.database.info.history import *
