@@ -3,7 +3,7 @@
 %define _prefix		/usr/local/zabbix
 
 Name:		zabbix
-Version:	1.6.1
+Version:	1.6
 Release:	1
 Group:		System Environment/Daemons
 License:	GPL
@@ -11,7 +11,7 @@ Summary:	ZABBIX network monitor server
 Vendor:		ZABBIX SIA
 URL:		http://www.zabbix.org
 Packager:	Eugene Grigorjev <eugene.grigorjev@zabbix.com>
-Source:		zabbix-1.6.1.tar.gz
+Source:		zabbix-%{version}.tar.gz
 
 Autoreq:	no
 Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
