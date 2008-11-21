@@ -66,7 +66,7 @@ Requires: postgresql-server
 The ZABBIX gui frontend
 
 %prep
-%setup -n zabbix-1.6.1
+%setup -n zabbix-%{version}
 
 %build
 
