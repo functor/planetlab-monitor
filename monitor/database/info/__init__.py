@@ -1,4 +1,3 @@
-#__connection__ = hub = PackageHub('infovacuum')
 try:
 	import pkg_resources
 	pkg_resources.require("SQLAlchemy>=0.4.9")
@@ -27,6 +26,8 @@ from elixir import Entity, Field, OneToMany, ManyToOne, ManyToMany
 from elixir import options_defaults, using_options, setup_all
 from elixir import String, Unicode, Integer, DateTime
 options_defaults['autosetup'] = False
+# NOTE: due to the module path length, this is required.
+options_defaults['shortnames'] = True
 
 from monitor.database.dborm import mon_metadata, mon_session
 __metadata__ = mon_metadata

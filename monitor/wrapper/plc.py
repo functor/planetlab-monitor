@@ -22,8 +22,14 @@ except:
 logger = logging.getLogger("monitor")
 	
 class Auth:
-	def __init__(self):
-		self.auth = {'AuthMethod': "anonymous"}
+	def __init__(self, username=None, password=None):
+		if username==None and password==None:
+			self.auth = {'AuthMethod': "anonymous"}
+		else:
+			self.auth = {'Username' : username,
+	             		'AuthMethod' : 'password',
+				 		'AuthString' : password}
+			
 
 # NOTE: this host is used by default when there are no auth files.
 XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"

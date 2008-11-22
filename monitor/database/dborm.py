@@ -9,6 +9,3 @@ mon_session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker(autoflus
 zab_metadata = sqlalchemy.MetaData()
 zab_metadata.bind = sqlalchemy.create_engine(config.zabbix_dburi, echo=config.echo)
 zab_session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker(autoflush=False,autocommit=True))
-
-#from monitor.database.infovacuum.model import *
-#from monitor.database.zabbixapi.model import *

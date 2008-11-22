@@ -15,8 +15,7 @@ import threading
 import monitor
 from monitor.pcu import reboot
 from monitor import config
-from monitor.database.infovacuum import FindbadPCURecordSync, FindbadPCURecord
-from monitor.database.dborm import mon_session as session
+from monitor.database.info.model import FindbadPCURecordSync, FindbadPCURecord, session
 from monitor import util 
 from monitor.wrapper import plc, plccache
 from nodequery import pcu_select
@@ -275,7 +274,7 @@ def recordPingAndSSH(request, result):
 
 		fbrec = FindbadPCURecord(
 					date_checked=datetime.fromtimestamp(values['date_checked']),
-					record=fbsync.round,
+					round=fbsync.round,
 					plc_pcuid=pcu_id,
 					plc_pcu_stats=values['plc_pcu_stats'],
 					dns_status=values['dnsmatch'],
@@ -284,6 +283,11 @@ def recordPingAndSSH(request, result):
 					reboot_trial_status="%s" % values['reboot'],
 				)
 		fbnodesync.round = global_round
+
+		fbnodesync.flush()
+		fbsync.flush()
+		fbrec.flush()
+
 		count += 1
 		print "%d %s %s" % (count, nodename, values)
 
@@ -309,6 +313,7 @@ def checkAndRecordState(l_pcus, cohash):
 	for pcuname in l_pcus:
 		pcu_id = int(pcuname)
 		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
+		fbnodesync.flush()
 
 		node_round   = fbnodesync.round
 		if node_round < global_round:
@@ -359,6 +364,8 @@ def main():
 		# update global round number to force refreshes across all nodes
 		global_round += 1
 		fbsync.round = global_round
+
+	fbsync.flush()
 
 	if config.site is not None:
 		api = plc.getAuthAPI()

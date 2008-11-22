@@ -122,6 +122,23 @@ def setup_global():
 						})
 	return
 
+def merge_iplist(iplist):
+	# TODO:  rewrite addresses as x.x.x.y-z rather than x.x.x.y,x.x.x.z if y-z==1
+	ips = iplist.split(',')
+	ips.sort()
+	prev=None
+	newlist=""
+	for ip in ips:
+		fields = ip.split('.')
+		first = ".".join(fields[:2])
+		last  = int(fields[3])
+		if prev:
+			if last - prev == 1:
+				pass
+		prev=last
+		newlist += "%s,"
+	return newlist[:-1]
+
 def setup_site(loginbase, techemail, piemail, iplist):
 
 	# TODO: send a message when host is discovered.

@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc
 import sys
 import time
 
-email_list = [ 'monitor@planet-lab.org', 
+email_list = [ 'soltesz@cs.princeton.edu',
 			 # 'soltesz@cs.princeton.edu',
 			 # 'justin@cs.arizona.edu',
              # 'bakers@cs.arizona.edu',
@@ -15,21 +15,20 @@ email_list = [ 'monitor@planet-lab.org',
         	 # 'vivek@cs.princeton.edu',
 		]
 
-import config
-api   = plc.PLC(config.API_AUTH, config.API_SERVER)
-api06 = plc.PLC(config.API_AUTH06, config.API_SERVER06)
-
+from monitor import config
+api   = plc.PLC(plc.Auth(config.API_AUTH_USER,   config.API_AUTH_PASSWORD).auth,   config.API_SERVER)
+api06 = plc.PLC(plc.Auth(config.API06_AUTH_USER, config.API06_AUTH_PASSWORD).auth, config.API06_SERVER)
 
 # add planetlab-15.cs.princeton.edu, and use the key on the CD.
-id = api06.AddNode(1, {'boot_state': 'rins', 'model': 'Dell Optiplex',
-						  'hostname' : 'planetlab-15.cs.princeton.edu',
-						  'version' : '3.3'})
-api06.AddNodeNetwork(id, {'ip': '128.112.139.39',
-								  'type' : 'ipv4',
-								  'is_primary' : True,
-								  'method' : 'dhcp', })
-api06.UpdateNode(id, {'key': "wptNagk8SgRxzN1lXfKMAjUYhQbOBymKnKg9Uv0LwGM"})
-
+#id = api06.AddNode(1, {'boot_state': 'rins', 'model': 'Dell Optiplex',
+#						  'hostname' : 'planetlab-15.cs.princeton.edu',
+#						  'version' : '3.3'})
+#api06.AddNodeNetwork(id, {'ip': '128.112.139.39',
+#								  'type' : 'ipv4',
+##								  'is_primary' : True,
+#								  'method' : 'dhcp', })
+#api06.UpdateNode(id, {'key': "wptNagk8SgRxzN1lXfKMAjUYhQbOBymKnKg9Uv0LwGM"})
+#
 
 #print "adding vsys attributes"
 #api06.AddSliceAttribute('princeton_slicestat', 'vsys', 'pl-ps')
@@ -77,6 +76,13 @@ def slice_exists(slice):
     except:
         return False
 
+def node_exists(node):
+	x = api06.GetNodes({'hostname':node['hostname']})
+	if len(x) == 0:
+		return False
+	else:
+		return True
+
 # Renew  slices
 slices = api06.GetSlices()
 for slice in slices:
@@ -114,11 +120,25 @@ for email in email_list:
     sites = api.GetSites(user['site_ids'])
     print "Adding sites:",
     for site in sites:
-        if not site_exists(site):
-            print "%s" % site['login_base'],
-            api06.AddSite(site)
-            api06.AddPersonToSite(user['email'], site['login_base'])
-            sys.stdout.flush()
+		nodes = api.GetNodes(site['node_ids'])
+
+		if not site_exists(site):
+			print "%s" % site['login_base']
+			api06.AddSite(site)
+			api06.AddPersonToSite(user['email'], site['login_base'])
+			sys.stdout.flush()
+
+		for node in nodes:
+			if not node_exists(node):
+				id = api06.AddNode(site['login_base'], {'boot_state': node['boot_state'],
+									  'model': node['model'],
+									  'hostname' : node['hostname'],
+									  'version' : node['version']})
+				nnets = api.GetNodeNetworks(node['nodenetwork_ids'])
+				for nnet in nnets:
+					del nnet['nodenetwork_id']
+					del nnet['nodenetwork_setting_ids']
+					api06.AddNodeNetwork(id, nnet) 
     print ""
 
     nodes = api06.GetNodes()

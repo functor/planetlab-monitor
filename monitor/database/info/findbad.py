@@ -79,12 +79,13 @@ class FindbadNodeRecord(Entity):
 class FindbadPCURecord(Entity):
 	@classmethod
 	def get_all_latest(cls):
-		fbsync = cls.get_by(hostname="global")
+		fbsync = FindbadPCURecordSync.get_by(plc_pcuid=0)
+		print "round: ", fbsync.round
 		return cls.query.filter_by(round=fbsync.round)
 
 	@classmethod
 	def get_latest_by(cls, **kwargs):
-		fbsync = cls.get_by(hostname="global")
+		fbsync = FindbadPCURecordSync.get_by(plc_pcuid=0)
 		kwargs['round'] = fbsync.round
 		return cls.query.filter_by(**kwargs)
 # ACCOUNTING

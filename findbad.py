@@ -12,8 +12,7 @@ from monitor import util
 from monitor.util import command
 from monitor import config
 
-from monitor.database.infovacuum import FindbadNodeRecordSync, FindbadNodeRecord
-from monitor.database.dborm import mon_session as session
+from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, session
 
 from monitor.sources import comon
 from monitor.wrapper import plc, plccache
