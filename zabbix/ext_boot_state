@@ -1,0 +1,54 @@
+#!/usr/bin/python
+
+import os
+import sys
+import time
+
+def port_status(str):
+	fields = str.split('/')
+	return fields[1]
+
+def get_state_from_port(host):
+	#nmap = os.popen("nmap -oG - -P0 -p 22,80,806 %s 2>/dev/null | tr ':' '\n' | grep -E 'tcp|Timeout'" % host, 'r')
+	nmap = os.popen("nmap -oG - -p 22,80,806 %s 2>/dev/null | tr ':' '\n' | grep -E 'tcp|Timeout'" % host, 'r')
+	line = nmap.readline()
+	#####
+	#####   22  80  806
+	#####   0    0    0   - down
+	#####   1    0    0   - dbg
+	#####   0    1    0   - unknown
+	#####   1    1    0   - unknown
+	#####   0    0    1   - firewall
+	#####   1    0    1   - error or firewall
+	#####   0    1    1   - firewall
+	#####   1    1    1   - boot
+	#####
+	#####   boot     - 4
+	#####   debug    - 3
+	#####   firewall - 2
+	#####   unknown - 1
+	#####   down - 0
+	#####
+	mapping = {'down' : 0,
+			   'unknown' : 1,
+			   'firewall' : 2,
+			   'debug' : 3,
+			   'boot' : 4,
+			   }
+	#print "--%s--" % line
+	#print "--%s--" % type(line)
+	if line.strip() == "" or line.strip() == "Timeout":
+		return mapping["down"]
+	(p22, p80, p806) = line.split()
+	if port_status(p22) == "open" and \
+	   port_status(p80) == "open" and \
+	   port_status(p806) == "open":
+		return mapping["boot"]
+	elif port_status(p22) == "open" and port_status(p806) != "open":
+		return mapping["debug"]
+	elif port_status(p806) == "open":
+		return mapping["firewall"]
+	else:
+		return mapping["unknown"]
+
+print get_state_from_port(sys.argv[1])
