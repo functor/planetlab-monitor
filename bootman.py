@@ -324,7 +324,8 @@ def reboot(hostname, config=None, forced_action=None):
 							mailtxt.newbootcd_one[1] % args, True, db='bootcd_persistmessages')
 
 		loginbase = plc.siteId(hostname)
-		m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+		emails = plc.getTechEmails(loginbase)
+		m.send(emails) 
 
 		print "\tDisabling %s due to out-of-date BOOTCD" % hostname
 		api.UpdateNode(hostname, {'boot_state' : 'disable'})
@@ -455,7 +456,8 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.set_nodestate('disable')
 			return False
 
@@ -674,7 +676,7 @@ def reboot(hostname, config=None, forced_action=None):
 		m = PersistMessage(hostname, mailtxt.unknownsequence[0] % args,
 									 mailtxt.unknownsequence[1] % args, False, db='unknown_persistmessages')
 		m.reset()
-		m.send(['monitor-list@lists.planet-lab.org'])
+		m.send([config.cc_email]) 
 
 		conn.restart_bootmanager('boot')
 
@@ -712,7 +714,7 @@ def reboot(hostname, config=None, forced_action=None):
 			m = PersistMessage(hostname, "Suspicous error from BootManager on %s" % args,
 										 mailtxt.unknownsequence[1] % args, False, db='suspect_persistmessages')
 			m.reset()
-			m.send(['monitor-list@lists.planet-lab.org'])
+			m.send([config.cc_email]) 
 
 			conn.restart_bootmanager('boot')
 
@@ -723,7 +725,8 @@ def reboot(hostname, config=None, forced_action=None):
 			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
 								True, db='nodeid_persistmessages')
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.dump_plconf_file()
 			conn.set_nodestate('disable')
 
@@ -735,7 +738,8 @@ def reboot(hostname, config=None, forced_action=None):
 			m = PersistMessage(hostname,  mailtxt.plnode_network[0] % args,  mailtxt.plnode_cfg[1] % args, 
 								True, db='nodenet_persistmessages')
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.dump_plconf_file()
 			conn.set_nodestate('disable')
 
@@ -750,7 +754,8 @@ def reboot(hostname, config=None, forced_action=None):
 								mailtxt.newalphacd_one[1] % args, True, db='bootcd_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 
 			print "\tDisabling %s due to out-of-date BOOTCD" % hostname
 			conn.set_nodestate('disable')
@@ -768,7 +773,8 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.set_nodestate('disable')
 
 		elif sequences[s] == "update_hardware_email":
@@ -780,7 +786,8 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.minimalhardware[1] % args, True, db='minhardware_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.set_nodestate('disable')
 
 		elif sequences[s] == "bad_dns_email":
@@ -803,7 +810,8 @@ def reboot(hostname, config=None, forced_action=None):
 										 mailtxt.baddns[1] % args, True, db='baddns_persistmessages')
 
 			loginbase = plc.siteId(hostname)
-			m.send([const.PIEMAIL % loginbase, const.TECHEMAIL % loginbase])
+			emails = plc.getTechEmails(loginbase)
+			m.send(emails) 
 			conn.set_nodestate('disable')
 
 	if flag_set:

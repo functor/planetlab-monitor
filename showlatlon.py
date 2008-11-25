@@ -83,8 +83,8 @@ def main():
 		begin = time.strftime(format)
 
 	d = datetime_fromstr(begin)
-	fbstr = get_filefromglob(d, "production.findbad")
-	fbpcustr = get_filefromglob(d, "production.findbadpcus")
+	fbstr = get_filefromglob(d, "production.findbad")[0]
+	fbpcustr = get_filefromglob(d, "production.findbadpcus")[0]
 
 	l_plcnodes = database.dbLoad("l_plcnodes")
 	l_plcsites = database.dbLoad("l_plcsites")

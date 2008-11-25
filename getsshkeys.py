@@ -17,7 +17,12 @@ except:
 
 args = {}
 args['known_hosts'] =  os.environ['HOME'] + os.sep + ".ssh" + os.sep + "known_hosts"
-args['XMLRPC_SERVER'] = 'https://boot.planet-lab.org/PLCAPI/'
+try:
+	import config
+	args['XMLRPC_SERVER'] = config.API_SERVER
+except:
+	args['XMLRPC_SERVER'] = 'https://boot.planet-lab.org/PLCAPI/'
+	print "Using default API server %s"  args['XMLRPC_SERVER']
 
 class SSHKnownHosts:
 	def __init__(self, args = args):
