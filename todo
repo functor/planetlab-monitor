@@ -1,4 +1,42 @@
+Structure:
 
+monitor module
+	plc wrapper
+	util functions
+	pkl database access
+	database models
+	third-party data sources
+
+pcucontrol
+	reboot.py
+	maps types to code
+	pyssh 
+	hpilo cmds
+	amt cmds
+	racadm cmd
+	ipmitool cmd
+
+web
+	cgi scripts
+	tgweb
+		project...
+
+cmds
+	py scripts
+	node
+	site
+	pcu
+	query
+	grouprins
+
+bootman
+	rpyc
+	
+
+
+
+
+###############################
 for each node:
 	Check Status ->
 		if Pass Threshold -> 
