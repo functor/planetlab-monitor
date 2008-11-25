@@ -20,7 +20,7 @@ from sets import Set
 import ssh.pxssh as pxssh
 import ssh.fdpexpect as fdpexpect
 import ssh.pexpect as pexpect
-from unified_model import *
+from monitor.model import *
 from emailTxt import mailtxt
 from nodeconfig import network_config_to_str
 import traceback

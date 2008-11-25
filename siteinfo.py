@@ -7,12 +7,11 @@ from monitor import database
 from monitor.pcu import reboot
 
 import time
-from model import *
 from nodecommon import *
 
 from monitor import util
 from monitor import parser as parsermodule
-from unified_model import *
+from monitor.model import *
 
 
 parser = parsermodule.getParser()

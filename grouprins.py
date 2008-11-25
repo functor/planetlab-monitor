@@ -26,11 +26,10 @@ from optparse import OptionParser
 
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
-from unified_model import *
+from monitor.model import *
 import os
 
 import time
-from model import *
 
 import bootman 		# debug nodes
 import mailmonitor 	# down nodes without pcu

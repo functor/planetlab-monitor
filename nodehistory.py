@@ -11,7 +11,7 @@ import calendar
 
 import sys
 import time
-from model import *
+from monitor.model import *
 from nodecommon import *
 
 def get_filefromglob(d, str):

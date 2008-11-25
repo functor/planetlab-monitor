@@ -8,7 +8,7 @@ from monitor import database
 from monitor.wrapper import plc, plccache
 
 from datetime import datetime 
-from unified_model import PersistFlags
+from monitor.model import PersistFlags
 
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"

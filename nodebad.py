@@ -15,7 +15,7 @@ from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 from monitor.database import  FindbadNodeRecord, HistoryNodeRecord
 
-from unified_model import *
+from monitor.model import *
 
 api = plc.getAuthAPI()
 

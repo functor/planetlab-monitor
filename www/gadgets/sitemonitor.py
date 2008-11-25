@@ -6,7 +6,7 @@ cgitb.enable()
 print "Content-Type: text/html\r\n"
 
 import time
-from unified_model import *
+from monitor.model import *
 from monitor import database
 from HyperText.HTML import A, BR, IMG, TABLE, TR, TH, TD, EM, quote_body, CENTER
 from HyperText.Documents import Document

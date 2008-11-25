@@ -16,7 +16,7 @@ from monitor.const import MINUP
 
 from nodecommon import *
 from nodequery import verify,query_to_dict,node_select
-from unified_model import *
+from monitor.model import *
 
 api = plc.getAuthAPI()
 

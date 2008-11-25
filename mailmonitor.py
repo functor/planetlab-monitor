@@ -14,7 +14,7 @@ import sys
 import plc
 api = plc.getAuthAPI()
 
-from clean_policy import *
+from monitor.policy import *
 
 def reboot(hostname):
 	print "CALLING: mailmonitor.reboot(%s)" % hostname

@@ -11,9 +11,9 @@ from monitor import database
 from monitor.pcu import reboot
 
 import time
-from model import *
+from monitor.model import *
 from nodecommon import *
-from unified_model import node_end_record, PersistFlags
+#from monitor.model import node_end_record, PersistFlags
 
 parser = parsermodule.getParser()
 parser.set_defaults(node=None, 

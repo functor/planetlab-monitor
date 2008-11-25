@@ -19,7 +19,7 @@ SUMTO = "soltesz@cs.princeton.edu"
 
 from const import *
 
-from unified_model import *
+from monitor.model import *
 
 class MonitorMergeDiagnoseSendEscellate:
 	act_all = None

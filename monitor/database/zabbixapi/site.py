@@ -5,7 +5,7 @@ from os import getcwd
 from os.path import dirname, exists, join
 import sys
 
-from model import *
+from monitor.model import *
 from emailZabbix import *
 from monitor import config
 

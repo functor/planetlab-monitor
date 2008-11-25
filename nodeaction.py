@@ -6,7 +6,7 @@ api = plc.getAuthAPI()
 import reboot
 
 import time
-from model import *
+from monitor.model import *
 
 import parser as parsermodule
 
