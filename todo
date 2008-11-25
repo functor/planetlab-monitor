@@ -8,13 +8,19 @@ monitor module
 	third-party data sources
 
 pcucontrol
-	reboot.py
 	maps types to code
-	pyssh 
-	hpilo cmds
-	amt cmds
-	racadm cmd
-	ipmitool cmd
+	reboot.py
+	interface.py
+
+	transport:
+		pyssh 
+		ssh
+		telnetlib
+	models:
+		hpilo cmds
+		intelamt cmds
+		racadm cmd
+		ipmitool cmd
 
 web
 	cgi scripts
