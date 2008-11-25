@@ -117,7 +117,7 @@ rsync -a monitor/ $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
 #for file in __init__.py database.py config.py ; do 
 #	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
 #done
-rsync -a pcucontrol $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol
+rsync -a pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 
 touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
