@@ -17,7 +17,7 @@ from monitor import util
 from monitor import const
 from monitor import database
 from monitor import parser as parsermodule
-from monitor.pcu import reboot
+from pcucontrol  import reboot
 from monitor.wrapper import plc
 api = plc.getAuthAPI()
 

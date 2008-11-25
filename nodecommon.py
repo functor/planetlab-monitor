@@ -1,7 +1,7 @@
 
 import time
 import struct
-from monitor.pcu import reboot
+from pcucontrol import reboot
 
 from monitor import util
 from monitor import database

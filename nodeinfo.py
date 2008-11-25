@@ -8,7 +8,7 @@ from monitor import util
 from monitor import parser as parsermodule
 
 from monitor import database
-from monitor.pcu import reboot
+from pcucontrol  import reboot
 
 import time
 from monitor.model import *

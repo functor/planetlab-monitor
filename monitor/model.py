@@ -600,6 +600,45 @@ class NodeRecord:
 		self.ticket = None
 		self.target = target
 
+
+class MonRecord(object):
+	def __init__(self, data):
+		self.keys = data.keys()
+		self.keys.sort()
+		self.__dict__.update(data)
+		return
+
+	def get(self):
+		ret= {}
+		for k in self.keys:
+			ret[k] = self.__dict__[k]
+		return ret
+
+	def __repr__(self):
+		str = ""
+		str += self.host + "\n"
+		for k in self.keys:
+			if "message" in k or "msg" in k:
+				continue
+			if 'time' in k:
+				s_time=time.strftime("%Y/%m/%d %H:%M:%S", 
+							time.gmtime(self.__dict__[k]))
+				str += "\t'%s' : %s\n" % (k, s_time)
+			else:
+				str += "\t'%s' : %s\n" % (k, self.__dict__[k])
+		str += "\t--"
+		return str
+
+	def delField(self, field):
+		if field in self.__dict__:
+			del self.__dict__[field]
+		
+		if field in self.keys:
+			for i in range(0,len(self.keys)):
+				if self.keys[i] == field:
+					del self.keys[i]
+					break
+
 class Action(MonRecord):
 	def __init__(self, host, data):
 		self.host = host
@@ -647,43 +686,6 @@ def node_end_record(node):
 	del act_all
 	return True
 
-class MonRecord(object):
-	def __init__(self, data):
-		self.keys = data.keys()
-		self.keys.sort()
-		self.__dict__.update(data)
-		return
-
-	def get(self):
-		ret= {}
-		for k in self.keys:
-			ret[k] = self.__dict__[k]
-		return ret
-
-	def __repr__(self):
-		str = ""
-		str += self.host + "\n"
-		for k in self.keys:
-			if "message" in k or "msg" in k:
-				continue
-			if 'time' in k:
-				s_time=time.strftime("%Y/%m/%d %H:%M:%S", 
-							time.gmtime(self.__dict__[k]))
-				str += "\t'%s' : %s\n" % (k, s_time)
-			else:
-				str += "\t'%s' : %s\n" % (k, self.__dict__[k])
-		str += "\t--"
-		return str
-
-	def delField(self, field):
-		if field in self.__dict__:
-			del self.__dict__[field]
-		
-		if field in self.keys:
-			for i in range(0,len(self.keys)):
-				if self.keys[i] == field:
-					del self.keys[i]
-					break
 
 class LogRoll:
 	def __init__(self, list=None):

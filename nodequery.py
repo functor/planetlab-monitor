@@ -13,7 +13,7 @@ import time
 import re
 import string
 
-from monitor.pcu import reboot
+from pcucontrol  import reboot
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 

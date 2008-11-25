@@ -14,16 +14,16 @@ import array, struct
 from monitor.wrapper import plc
 import base64
 from subprocess import PIPE, Popen
-import ssh.pxssh as pxssh
-import ssh.pexpect as pexpect
+import pcucontrol.transports.ssh.pxssh as pxssh
+import pcucontrol.transports.ssh.pexpect as pexpect
 import socket
 from monitor.util import command
 
 # Use our versions of telnetlib and pyssh
 sys.path.insert(0, os.path.dirname(sys.argv[0]))
-import telnetlib
+import pcucontrol.transports.telnetlib as telnetlib
 sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")    
-import pyssh
+import pcucontrol.transports.pyssh as pyssh
 
 # Timeouts in seconds
 TELNET_TIMEOUT = 45

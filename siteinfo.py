@@ -4,7 +4,7 @@ from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 from monitor import database
-from monitor.pcu import reboot
+from pcucontrol  import reboot
 
 import time
 from nodecommon import *

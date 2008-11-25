@@ -258,7 +258,7 @@ class MonitorMergeDiagnoseSendEscellate:
 		return rec
 
 	def checkStageAndTime(self, record):
-	"""
+		"""
 		The core variables are:
 
 			send_email_to  : defines who to send messages to at this time
@@ -268,15 +268,15 @@ class MonitorMergeDiagnoseSendEscellate:
 			save_act_all   : whether or not to save the action record in the db.
 
 			action/stage   : stage tracks which state we're in.
-	"""
-		stages = {
-			"initial"		: [ { action='noop', next="weekone"}],
-			"weekone"		: [ { action='noop',         index=0, save=True, email=TECH,         length=7*SPERDAY,  next="weektwo" }, ],
-			"weektwo"		: [ { action='nocreate',     index=1, save=True, email=TECH|PI,      length=7*SPERDAY,  next="waitforever" }, ],
-			"waitforever"	: [ { action='suspendslices',index=2, save=True, email=TECH|PI|USER, length=7*SPERDAY,  next="waitforever" }, ],
-			"paused"		: [ { action='noop', 				  save=True						 length=30*SPERDAY, next="weekone" }, ]
-			"improvement"	: [ { action='close_rt',     index=0, save=True, email=TECH,         next="monitor-end-record" }, ],
-		}
+		"""
+		#stages = {
+		#	"initial"		: [ { action='noop', next="weekone"}],
+		#	"weekone"		: [ { action='noop',         index=0, save=True, email=TECH,         length=7*SPERDAY,  next="weektwo" }, ],
+		#	"weektwo"		: [ { action='nocreate',     index=1, save=True, email=TECH|PI,      length=7*SPERDAY,  next="waitforever" }, ],
+		#	"waitforever"	: [ { action='suspendslices',index=2, save=True, email=TECH|PI|USER, length=7*SPERDAY,  next="waitforever" }, ],
+		#	"paused"		: [ { action='noop', 				  save=True						 length=30*SPERDAY, next="weekone" }, ]
+		#	"improvement"	: [ { action='close_rt',     index=0, save=True, email=TECH,         next="monitor-end-record" }, ],
+		#}
 		# TODO: make this time relative to the PREVIOUS action taken.
 		current_time = time.time()
 		current_stage = record.getMostRecentStage()
