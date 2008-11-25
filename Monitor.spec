@@ -141,6 +141,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
+%{python_sitearch}/pcucontrol
 %{_sysconfdir}/plc.d/monitor
 
 %files client
