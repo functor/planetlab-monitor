@@ -77,7 +77,7 @@ as Zabbix DB.
 %build
 # NOTE: the build uses g++ cmdamt/
 # NOTE: TMPDIR is needed here b/c the tmpfs of the build vserver is too small.
-cd cmdamt
+cd pcucontrol/models/intelamt
 export TMPDIR=$PWD/tmp
 make
 cd ..
