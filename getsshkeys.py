@@ -22,7 +22,7 @@ try:
 	args['XMLRPC_SERVER'] = config.API_SERVER
 except:
 	args['XMLRPC_SERVER'] = 'https://boot.planet-lab.org/PLCAPI/'
-	print "Using default API server %s"  args['XMLRPC_SERVER']
+	print "Using default API server %s" %  args['XMLRPC_SERVER']
 
 class SSHKnownHosts:
 	def __init__(self, args = args):
