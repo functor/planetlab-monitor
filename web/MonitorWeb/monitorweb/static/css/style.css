@@ -10,7 +10,7 @@ html, body {
   padding: 0;
 }
 
-td, th {padding:3px;border:none;}
+td, th {padding:2px;border:none;}
 tr th {text-align:left;background-color:#f0f0f0;color:#333;}
 tr.odd td {background-color:#edf3fe;}
 tr.even td {background-color:#fff;}
@@ -28,6 +28,21 @@ a.link, a, a.active {
   color: #369;
 }
 
+#portopen     { background-color: lightgreen; }
+#portclosed   { background-color: indianred; }
+#portfiltered { background-color: gold; }
+
+#dns-DNS-OK { background-color: lightgreen; }
+#dns-NOHOSTNAME { background-color: white; }
+#dns-DNS-MISMATCH { background-color: gold; }
+#dns-DNS-NOENTRY { background-color: indianred; }
+#dns-NO-DNS-OR-IP { background-color: indianred; }
+
+#status-NetDown { background-color: lightgrey; }
+#status-Not_Run  { background-color: lightgrey; }
+#status-ok     { background-color: darkseagreen; }
+#status-0     { background-color: darkseagreen; }
+#status-error  { background-color: indianred; width="200px"; }
 
 #main_content {
   color: black;
