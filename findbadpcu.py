@@ -16,6 +16,7 @@ import monitor
 from pcucontrol  import reboot
 from monitor import config
 from monitor.database.info.model import FindbadPCURecordSync, FindbadPCURecord, session
+from monitor import database
 from monitor import util 
 from monitor.wrapper import plc, plccache
 from nodequery import pcu_select

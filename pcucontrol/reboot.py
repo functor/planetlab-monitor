@@ -218,6 +218,9 @@ class Transport:
 			
 
 class PCUControl(Transport,PCUModel,PCURecord):
+
+	supported_ports = []
+
 	def __init__(self, plc_pcu_record, verbose, supported_ports=[]):
 		PCUModel.__init__(self, plc_pcu_record)
 		PCURecord.__init__(self, plc_pcu_record)
@@ -282,6 +285,7 @@ class IPAL(PCUControl):
 		prefer it to Telnet, and Web access, since it's much lighter weight
 		and, more importantly, IT WORKS!! HHAHHHAHAHAHAHAHA!
 	"""
+	supported_ports = [23,80,9100]
 
 	def format_msg(self, data, cmd):
 		esc = chr(int('1b',16))
@@ -303,6 +307,37 @@ class IPAL(PCUControl):
 		return ret
 
 	def run(self, node_port, dryrun):
+		if self.type == Transport.IPAL:
+			return self.run_ipal(node_port, dryrun)
+		elif self.type == Transport.TELNET:
+			return self.run_telnet(node_port, dryrun)
+		else:
+			raise Exception("Unimplemented Transport for IPAL")
+	
+	def run_telnet(self, node_port, dryrun):
+		# TELNET version of protocol...
+		self.open(self.host)
+		## XXX Some iPals require you to hit Enter a few times first
+		self.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
+		# Login
+		self.ifThenSend("Password >", self.password, ExceptionPassword)
+		self.transport.write("\r\n\r\n")
+		if not dryrun: # P# - Pulse relay
+			print "node_port %s" % node_port
+			self.ifThenSend("Enter >", 
+							"P7", # % node_port, 
+							ExceptionNotFound)
+			print "send newlines"
+			self.transport.write("\r\n\r\n")
+			print "after new lines"
+		# Get the next prompt
+		print "wait for enter"
+		self.ifElse("Enter >", ExceptionTimeout)
+		print "closing "
+		self.close()
+		return 0
+
+	def run_ipal(self, node_port, dryrun):
 		import errno
 
 		power_on = False
@@ -329,7 +364,6 @@ class IPAL(PCUControl):
 
 		if ret == '':
 			raise Exception("Status returned 'another session already open' %s : %s" % (node_port, ret))
-			
 				
 		if node_port < len(ret):
 			status = ret[node_port]
@@ -380,27 +414,6 @@ class IPAL(PCUControl):
 		s.close()
 		return 0
 
-# TELNET version of protocol...
-#		#self.open(self.host)
-#		## XXX Some iPals require you to hit Enter a few times first
-#		#self.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
-#		# Login
-#		self.ifThenSend("Password >", self.password, ExceptionPassword)
-#		self.transport.write("\r\n\r\n")
-#		if not dryrun: # P# - Pulse relay
-#			print "node_port %s" % node_port
-#			self.ifThenSend("Enter >", 
-#							"P7", # % node_port, 
-#							ExceptionNotFound)
-#			print "send newlines"
-#			self.transport.write("\r\n\r\n")
-#			print "after new lines"
-#		# Get the next prompt
-#		print "wait for enter"
-#		self.ifElse("Enter >", ExceptionTimeout)
-#		print "closing "
-#		self.close()
-#		return 0
 
 class APCEurope(PCUControl):
 	def run(self, node_port, dryrun):
@@ -498,6 +511,7 @@ class APCFolsom(PCUControl):
 		return 0
 
 class APCMaster(PCUControl):
+	supported_ports = [22,23]
 	def run(self, node_port, dryrun):
 		print "Rebooting %s" % self.host
 		self.open(self.host, self.username)
@@ -557,11 +571,13 @@ class APC(PCUControl):
 			return ret
 
 class IntelAMT(PCUControl):
+	supported_ports = [16992]
+
 	def run(self, node_port, dryrun):
 
 		cmd = command.CMD()
-		#[cmd_str = "IntelAMTSDK/Samples/RemoteControl/remoteControl"
-		cmd_str = "cmdamt/remoteControl"
+		# TODO: need to make this path universal; not relative to pwd.
+		cmd_str = "pcucontrol/models/intelamt/remoteControl"
 
 		if dryrun:
 			# NOTE: -p checks the power state of the host.
@@ -582,6 +598,7 @@ class DRACRacAdm(PCUControl):
 		return 0
 
 class DRAC(PCUControl):
+	supported_ports = [22,443,5869]
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
@@ -601,6 +618,7 @@ class DRAC(PCUControl):
 		return 0
 
 class HPiLO(PCUControl):
+	supported_ports = [22,443]
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
@@ -622,6 +640,7 @@ class HPiLO(PCUControl):
 
 		
 class HPiLOHttps(PCUControl):
+	supported_ports = [22,443]
 	def run(self, node_port, dryrun):
 
 		locfg = command.CMD()
@@ -821,6 +840,7 @@ class BayTechCtrlC(PCUControl):
 		return 0
 
 class BayTech(PCUControl):
+	supported_ports = [22,23]
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
@@ -851,6 +871,7 @@ class BayTech(PCUControl):
 		return 0
 
 class WTIIPS4(PCUControl):
+	supported_ports = [23]
 	def run(self, node_port, dryrun):
 		self.open(self.host)
 		self.sendPassword(self.password, "Enter Password:")
@@ -967,6 +988,7 @@ class ePowerSwitchOld(PCUControl):
 		return 0
 
 class ePowerSwitch(PCUControl):
+	supported_ports = [80]
 	def run(self, node_port, dryrun):
 		self.url = "http://%s:%d/" % (self.host,80)
 		uri = "%s:%d" % (self.host,80)
@@ -1232,6 +1254,29 @@ def reboot_policy(nodename, continue_probe, dryrun):
 	else:
 		print "return true"
 		return True
+
+class Unknown(PCUControl):
+	supported_ports = [22,23,80,443,5869,9100,16992]
+
+def model_to_object(modelname):
+	if "AMT" in modelname:
+		return IntelAMT
+	elif "DS4-RPC" in modelname:
+		return BayTech
+	elif "ilo2" in modelname:
+		return HPiLO
+	elif "IP-41x" in modelname:
+		return IPAL
+	elif "AP79xx" in modelname or "Masterswitch" in modelname:
+		return APCMaster
+	elif "DRAC" in modelname:
+		return DRAC
+	elif "WTI" in modelname:
+		return WTIIPS4
+	elif "ePowerSwitch" in modelname:
+		return ePowerSwitch
+	else:
+		return Unknown
 
 def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 	rb_ret = ""
