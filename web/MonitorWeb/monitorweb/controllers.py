@@ -51,13 +51,17 @@ class Root(controllers.RootController):
 					node.pcu_status = pcu.reboot_trial_status
 				else:
 					node.pcu_status = "nodata"
+				node.pcu_short_status = format_pcu_shortstatus(pcu)
+
 			else:
 				node.pcu_status = "nopcu"
+				node.pcu_short_status = "none"
 
 			if node.kernel_version:
 				node.kernel = node.kernel_version.split()[2]
 			else:
 				node.kernel = ""
+
 
 			# NOTE: count filters
 			if node.observed_status != 'DOWN':
@@ -102,7 +106,6 @@ class Root(controllers.RootController):
 			else:
 				filtercount['pending'] += 1
 				
-			print reboot.pcu_name(node.plc_pcu_stats)
 			node.ports = format_ports(node)
 			node.status = format_pcu_shortstatus(node)
 
@@ -123,10 +126,32 @@ class Root(controllers.RootController):
 				
 		return dict(query=query, fc=filtercount)
 
-	@expose(template="monitorweb.templates.pculist")
+	@expose(template="monitorweb.templates.sitelist")
 	def site(self, filter='all'):
-		filtercount = {'ok' : 0, 'NetDown': 0, 'Not_Run' : 0, 'pending' : 0, 'all' : 0}
-		return dict(query=[], fc=filtercount)
+		filtercount = {'good' : 0, 'down': 0, 'new' : 0, 'pending' : 0, 'all' : 0}
+		fbquery = HistorySiteRecord.query.all()
+		query = []
+		for site in fbquery:
+			# count filter
+			filtercount['all'] += 1
+			if site.new and site.slices_used == 0 and not site.enabled:
+				filtercount['new'] += 1
+			elif not site.enabled:
+				filtercount['pending'] += 1
+			else:
+				filtercount[site.status] += 1
+
+			# apply filter
+			if filter == "all":
+				query.append(site)
+			elif filter == 'new' and site.new and site.slices_used == 0 and not site.enabled:
+				query.append(site)
+			elif filter == "pending" and not site.enabled:
+				query.append(site)
+			elif filter == site.status:
+				query.append(site)
+				
+		return dict(query=query, fc=filtercount)
 
 	@expose(template="monitorweb.templates.pculist")
 	def action(self, filter='all'):

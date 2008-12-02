@@ -11,6 +11,7 @@ from elixir import String, Unicode, Integer, DateTime
 
 options_defaults['autosetup'] = False
 
+from monitor.database.info.model import *
 
 # your data model
 

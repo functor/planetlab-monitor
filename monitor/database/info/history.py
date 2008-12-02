@@ -40,7 +40,13 @@ class HistorySiteRecord(Entity):
 
 	nodes_total = Field(Int,default=0)
 	nodes_up = Field(Int,default=0)
+	slices_total = Field(Int,default=0)
 	slices_used = Field(Int,default=0)
+
+	# all nodes offline and never-contact.
+	new = Field(Boolean,default=False)
+
+	enabled = Field(Boolean,default=False)
 
 	status = Field(String,default="unknown")
 

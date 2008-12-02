@@ -15,7 +15,7 @@ def pcu_link(pcu):
       xmlns:py="http://purl.org/kid/ns#">
 
   <div py:match="item.tag == 'content'">
-  	<table width="100%">
+  	<table id="sub-table" width="100%">
 		<thead>
 			<tr>
 				<th><a href="${tg.url('pcu', filter='ok')}">Ok(${fc['ok']})</a></th>
@@ -28,7 +28,7 @@ def pcu_link(pcu):
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table border="1">
+		<table border="1" width="100%">
 			<thead>
 				<tr>
 					<th>Site</th>
@@ -52,7 +52,7 @@ def pcu_link(pcu):
 						<span py:for="port,state in node.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
-					<td id="status-${node.status}" py:content="node.reboot_trial_status"></td>
+					<td width="40" id="status-${node.status}" py:content="node.reboot_trial_status"></td>
 					<td py:content="node.plc_pcu_stats['model']"></td>
 					<td py:content="len(node.plc_pcu_stats['node_ids'])"></td>
 				</tr>

@@ -10,7 +10,7 @@ from monitor import database
 from pcucontrol  import reboot
 from monitor import parser as parsermodule
 from monitor import config
-from monitor.database import HistorySiteRecord, FindbadNodeRecord
+from monitor.database.info.model import HistorySiteRecord, FindbadNodeRecord, session
 from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
@@ -31,6 +31,19 @@ def main(config):
 		l_sites = [site['login_base'] for site in l_plcsites]
 	
 	checkAndRecordState(l_sites, l_plcsites)
+
+def getnewsite(nodelist):
+	new = True
+	for node in nodelist:
+		try:
+			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			if noderec is not None and \
+				noderec.plc_node_stats['last_contact'] != None:
+				new = False
+		except:
+			import traceback
+			print traceback.print_exc()
+	return new
 
 def getnodesup(nodelist):
 	up = 0
@@ -62,9 +75,12 @@ def checkAndRecordState(l_sites, l_plcsites):
 			pf = HistorySiteRecord.findby_or_create(loginbase=sitename)
 
 			pf.last_checked = datetime.now()
+			pf.slices_total = d_site['max_slices']
 			pf.slices_used = len(d_site['slice_ids'])
 			pf.nodes_total = len(lb2hn[sitename])
 			pf.nodes_up = getnodesup(lb2hn[sitename])
+			pf.new = getnewsite(lb2hn[sitename])
+			pf.enabled = d_site['enabled']
 
 			if pf.nodes_up >= MINUP:
 				if pf.status != "good": pf.last_changed = datetime.now()
@@ -76,7 +92,10 @@ def checkAndRecordState(l_sites, l_plcsites):
 			count += 1
 			print "%d %15s slices(%2s) nodes(%2s) up(%2s) %s" % (count, sitename, pf.slices_used, 
 											pf.nodes_total, pf.nodes_up, pf.status)
+			pf.flush()
+
 	print HistorySiteRecord.query.count()
+	session.flush()
 
 	return True
 

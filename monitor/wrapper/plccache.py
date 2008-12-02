@@ -87,7 +87,7 @@ def init():
 	api = plc.getCachedAuthAPI()
 	l_sites = api.GetSites({'peer_id':None}, 
 							['login_base', 'site_id', 'abbreviated_name', 'latitude', 
-							'longitude', 'max_slices', 'slice_ids', 'node_ids' ])
+							'longitude', 'max_slices', 'slice_ids', 'node_ids', 'enabled' ])
 	l_nodes = api.GetNodes({'peer_id':None}, 
 							['hostname', 'node_id', 'ports', 'site_id', 'version', 'last_updated', 
 							 'date_created', 'last_contact', 'pcu_ids', 'nodenetwork_ids'])

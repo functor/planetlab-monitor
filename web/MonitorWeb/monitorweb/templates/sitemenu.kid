@@ -6,11 +6,11 @@
   </head>
 
   <body>
-    <h1>Monitor : ${page_title}</h1>
-  	<table valign="top" border="1" bgcolor="white" align="center" width="800">
+    <div id="header">Monitor : ${page_title}</div>
+  	<table valign="top" border="1" bgcolor="white" align="center" width="60em">
 	<tr>
 		<td>
-			<table>
+			<table id="nps-table" width="100%">
 			<thead>
 			<tr>
 				<th><a href="${tg.url('node')}">Nodes</a></th>
@@ -32,6 +32,6 @@
 	</tr>
   	</table>
 
-    <div class="footer">Copywrite XYZ</div>
+    <div id="footer">Copywrite © 2007-2008 The Trustees of Princeton University</div>
   </body>
 </html>

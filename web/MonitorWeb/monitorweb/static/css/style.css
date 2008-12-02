@@ -10,18 +10,20 @@ html, body {
   padding: 0;
 }
 
-td, th {padding:2px;border:none;}
+td, th {padding:1px;border:none;}
 tr th {text-align:left;background-color:#f0f0f0;color:#333;}
 tr.odd td {background-color:#edf3fe;}
 tr.even td {background-color:#fff;}
 
 #header {
-  height: 80px;
-  width: 777px;
-  background: blue URL('../images/header_inner.png') no-repeat;
+  height: 40px;
+  width: 780px;
+  /*background: blue URL('../images/header_inner.png') no-repeat;*/
   border-left: 1px solid #aaa;
   border-right: 1px solid #aaa;
   margin: 0 auto 0 auto;
+  text-align: center;
+  font-size: 180%;
 }
 
 a.link, a, a.active {
@@ -42,7 +44,16 @@ a.link, a, a.active {
 #status-Not_Run  { background-color: lightgrey; }
 #status-ok     { background-color: darkseagreen; }
 #status-0     { background-color: darkseagreen; }
-#status-error  { background-color: indianred; width="200px"; }
+#status-error  { background-color: indianred; }
+#status-none   { background-color: white; }
+
+#site-good { background-color : darkseagreen; }
+#site-down { background-color: indianred; }
+
+/*#nps-table { background-color: lightgrey; }*/
+/*#sub-table { background-color: lightgrey; }*/
+/* td, th {padding:2px;border:none;} */
+/* tr th {text-align:left;background-color:#f0f0f0;color:#333;} */
 
 #main_content {
   color: black;
@@ -112,7 +123,7 @@ h2 {
   padding: 10px;
   font-size: 80%;
   text-align: center;
-  width: 757px;
+  width: 765px;
   margin: 0 auto 1em auto;
 }
 
