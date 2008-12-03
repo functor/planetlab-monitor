@@ -10,7 +10,7 @@
 
   <body>
     <div id="header">Monitor : ${page_title}</div>
-  	<table valign="top" border="1" bgcolor="white" align="center" width="60em">
+  	<table valign="top" border="1" bgcolor="white" align="center" width="700px">
 	<tr>
 		<td>
 			<table id="nps-table" width="100%">

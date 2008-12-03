@@ -246,22 +246,25 @@ function create_httpd_conf ()
 	# TODO: make proxy port configurable.
 
 	cat <<EOF > ${MONITOR_HTTP_CONF}
-NameVirtualHost ${PLC_MONITOR_IP}:80
+NameVirtualHost *
 
-<VirtualHost ${PLC_MONITOR_IP}:80>
+<VirtualHost *>
     ServerName ${PLC_MONITOR_HOST}
     ServerAdmin ${PLC_MONITOR_EMAIL}
     UseCanonicalName Off
     ServerSignature Off
 
-    DocumentRoot ${MONITORPATH}/web/MonitorWeb/monitorweb
+	# NOTE: this appears to alter the global document root, for port 80...
+	#  not sure if it's possible to serve two different 'virtualhosts' from
+	#  the same port and same hostname with different document roots...
+    #DocumentRoot ${MONITORPATH}/web/MonitorWeb/monitorweb
 
-    <Directory "${MONITORPATH}/web/MonitorWeb/monitorweb">
-        Options Indexes FollowSymLinks
-        AllowOverride None
-        Order allow,deny
-        Allow from all
-    </Directory>
+    #<Directory "${MONITORPATH}/web/MonitorWeb/monitorweb">
+    #    Options Indexes FollowSymLinks
+    #    AllowOverride None
+    #    Order allow,deny
+    #    Allow from all
+    #</Directory>
 
     #LogLevel debug
     Errorlog /var/log/httpd/monitorwebapp-error_log
