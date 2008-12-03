@@ -15,7 +15,7 @@ import traceback
 from monitor import database
 
 try:
-	import config
+	from monitor import config
 	debug = config.debug
 except:
 	debug = False
