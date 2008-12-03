@@ -231,6 +231,68 @@ EOF
 	fi
 }
 
+function create_httpd_conf ()
+{
+	MONITOR_HTTP_CONF=/etc/httpd/conf.d/monitorweb.conf
+
+	if [ ! -f ${MONITOR_HTTP_CONF} ] ; then
+		# note: we need to either start this script before httpd, or always
+		# restart httpd, since there's no way to know beyond file's existence
+		# whether the values have changed or not.
+		WROTE_HTTP_CONFIG="true"
+	fi
+
+	# TODO: make http port configurable.
+	# TODO: make proxy port configurable.
+
+	cat <<EOF > ${MONITOR_HTTP_CONF}
+NameVirtualHost ${PLC_MONITOR_IP}:80
+
+<VirtualHost ${PLC_MONITOR_IP}:80>
+    ServerName ${PLC_MONITOR_HOST}
+    ServerAdmin ${PLC_MONITOR_EMAIL}
+    UseCanonicalName Off
+    ServerSignature Off
+
+    DocumentRoot ${MONITORPATH}/web/MonitorWeb/monitorweb
+
+    <Directory "${MONITORPATH}/web/MonitorWeb/monitorweb">
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    #LogLevel debug
+    Errorlog /var/log/httpd/monitorwebapp-error_log
+    Customlog /var/log/httpd/monitorwebapp-access_log common
+
+    AddDefaultCharset utf-8
+
+    #NOTE: This doesn't work as expected.
+    #	Load everything out of the DocumentRoot that is static
+    #	ProxyPass /monitor/static !
+
+    ProxyPass /tg_js http://127.0.0.1:8080/tg_js
+    ProxyPassReverse /tg_js http://127.0.0.1:8080/tg_js
+
+    ProxyPass /monitor http://127.0.0.1:8080
+    ProxyPassReverse /monitor http://127.0.0.1:8080
+
+    ProxyPreserveHost On
+    ProxyRequests Off
+
+</VirtualHost>
+EOF
+}
+
+function start_tg_server ()
+{
+	pushd ${MONITORPATH}/web/MonitorWeb/
+	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log
+	popd
+}
+
 function check_zab_server ()
 {
 	ZABBIXCFG=/etc/zabbix
@@ -308,6 +370,7 @@ case "$1" in
 		if [ -n "$WROTE_PG_CONFIG" ] ; then
 			# NOTE: restart db to enable access by users granted above.
 			service plc restart postgresql
+			service plc restart httpd
 		fi
 
 		check_zabbix_schema_and_data
@@ -315,6 +378,14 @@ case "$1" in
 
 		# WRITE default /etc/monitor.conf
 		check_monitor_conf
+
+		# create /etc/httpd/conf.d/monitorweb.conf
+		create_httpd_conf
+		if [ -n "$WROTE_HTTP_CONFIG" ] ; then
+			# NOTE: restart web server to enable access web cfg
+			service plc restart httpd
+		fi
+		start_tg_server
 
 		# START zabbix services.  SETUP default config files.
 		check_zab_server

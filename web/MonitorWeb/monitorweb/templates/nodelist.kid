@@ -5,7 +5,8 @@ from monitor.util import diff_time
 from time import mktime
 ?>
 <html py:layout="'sitemenu.kid'"
-      xmlns:py="http://purl.org/kid/ns#">
+      xmlns:py="http://purl.org/kid/ns#"
+	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
   	<table width="100%">
@@ -22,9 +23,11 @@ from time import mktime
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table id="sub-table" border="1" width="100%">
+		<table id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
+					<th mochi:format="int"></th>
+					<th mochi:format="str">Site</th>
 					<th>Hostname</th>
 					<th>ping</th>
 					<!--th>ssh</th-->
@@ -36,6 +39,8 @@ from time import mktime
 			</thead>
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+					<td></td>
+					<td><a href="">${node.loginbase}</a></td>
 				  <td nowrap="true" py:content="node.hostname"></td>
 				  <td py:content="node.ping_status"></td>
 				  <!--td py:content="node.ssh_status"></td-->

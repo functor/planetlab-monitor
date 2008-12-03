@@ -1054,6 +1054,7 @@ class ManualPCU(PCUControl):
 			# TODO: send email message to monitor admin requesting manual
 			# intervention.  This should always be an option for ridiculous,
 			# custom jobs.
+			pass
 		return 0
 
 ### rebooting european BlackBox PSE boxes

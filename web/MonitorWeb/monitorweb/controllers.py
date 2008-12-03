@@ -50,6 +50,7 @@ class Root(controllers.RootController):
 		query = []
 		filtercount = {'DOWN' : 0, 'BOOT': 0, 'DEBUG' : 0, 'neverboot' : 0, 'pending' : 0, 'all' : 0}
 		for node in fbquery:
+			# NOTE: reformat some fields.
 			if node.plc_pcuid:
 				pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
 				if pcu:
@@ -66,6 +67,11 @@ class Root(controllers.RootController):
 				node.kernel = node.kernel_version.split()[2]
 			else:
 				node.kernel = ""
+
+			try:
+				node.loginbase = site_id2lb[node.plc_node_stats['site_id']]
+			except:
+				node.loginbase = "unknown"
 
 
 			# NOTE: count filters
