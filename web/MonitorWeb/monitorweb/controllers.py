@@ -5,13 +5,18 @@ from turbogears import controllers, expose, flash
 # log = logging.getLogger("monitorweb.controllers")
 from monitor.database.info.model import *
 from pcucontrol import reboot
+from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 
 def format_ports(pcu):
 	retval = []
 	if pcu.port_status and len(pcu.port_status.keys()) > 0 :
 		obj = reboot.model_to_object(pcu.plc_pcu_stats['model'])
 		for port in obj.supported_ports:
-			state = pcu.port_status[str(port)]
+			try:
+				state = pcu.port_status[str(port)]
+			except:
+				state = "unknown"
+				
 			retval.append( (port, state) )
 
 	if retval == []: 
@@ -106,6 +111,11 @@ class Root(controllers.RootController):
 			else:
 				filtercount['pending'] += 1
 				
+			try:
+				node.loginbase = site_id2lb[node.plc_pcu_stats['site_id']]
+			except:
+				node.loginbase = "unknown"
+
 			node.ports = format_ports(node)
 			node.status = format_pcu_shortstatus(node)
 

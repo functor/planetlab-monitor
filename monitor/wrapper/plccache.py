@@ -74,6 +74,7 @@ l_nodenetworks = None
 plcdb_hn2lb = None
 plcdb_lb2hn = None
 plcdb_netid2ip = None
+plcdb_id2lb = None
 
 def init():
 	global l_sites
@@ -83,6 +84,7 @@ def init():
 	global plcdb_hn2lb
 	global plcdb_lb2hn
 	global plcdb_netid2ip
+	global plcdb_id2lb
 
 	api = plc.getCachedAuthAPI()
 	l_sites = api.GetSites({'peer_id':None}, 
@@ -101,6 +103,7 @@ def init():
 	plcdb_hn2lb = hn2lb
 	plcdb_lb2hn = lb2hn
 	plcdb_netid2ip = netid2ip
+	plcdb_id2lb = id2lb
 	
 	return l_nodes
 

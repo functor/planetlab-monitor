@@ -317,7 +317,7 @@ def checkAndRecordState(l_pcus, cohash):
 		fbnodesync.flush()
 
 		node_round   = fbnodesync.round
-		if node_round < global_round:
+		if node_round < global_round or config.force:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
 			req = threadpool.WorkRequest(collectPingAndSSH, [pcuname, cohash], {}, 
@@ -416,6 +416,7 @@ if __name__ == '__main__':
 						dbname="findbadpcus", 
 						cachenodes=False,
 						refresh=False,
+						force=False,
 						)
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
 						help="Provide the input file for the node list")
@@ -434,6 +435,8 @@ if __name__ == '__main__':
 						help="Refresh the cached values")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
+	parser.add_option("", "--force", action="store_true", dest="force", 
+						help="Force probe without incrementing global 'round'.")
 	parser = parsermodule.getParser(['defaults'], parser)
 	config = parsermodule.parse_args(parser)
 	try:

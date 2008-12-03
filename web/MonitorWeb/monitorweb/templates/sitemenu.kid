@@ -2,7 +2,10 @@
 <html xmlns:py="http://purl.org/kid/ns#">
   <head>
     <title>App Name - ${page_title}</title>
-    <link href="/static/css/style.css" type="text/css" rel="stylesheet" />
+    <link href="static/css/style.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="${tg.tg_js}/MochiKit.js"></script>
+    <script type="text/javascript" src="static/javascript/sortable_tables.js"></script>
+
   </head>
 
   <body>

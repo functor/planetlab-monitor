@@ -117,7 +117,7 @@ class Transport:
 	HTTP   = 3
 	IPAL   = 4
 
-	TELNET_TIMEOUT = 60
+	TELNET_TIMEOUT = 120
 
 	def __init__(self, type, verbose):
 		self.type = type
@@ -204,6 +204,7 @@ class Transport:
 		if self.transport != None:
 			output = self.transport.read_until(expected, self.TELNET_TIMEOUT)
 			if output.find(expected) == -1:
+				print "OUTPUT: --%s--" % output
 				raise ErrorClass, "'%s' not found" % expected
 			else:
 				self.transport.write(buffer + "\r\n")
@@ -278,7 +279,30 @@ class PCUControl(Transport,PCUModel,PCURecord):
 			import traceback
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
-		
+
+class IPMI(PCUControl):
+
+	supported_ports = [80,443,623]
+
+	# TODO: get exit codes to determine success or failure...
+	def run(self, node_port, dryrun):
+
+		if not dryrun:
+			cmd = "ipmitool -I lanplus -H %s -U %s -P '%s' power cycle"
+			p = os.popen(cmd % ( self.host, self.username, self.password) )
+			result = p.read()
+			print "RESULT: ", result
+		else:
+			cmd = "ipmitool -I lanplus -H %s -U %s -P '%s' user list"
+			p = os.popen(cmd % ( self.host, self.username, self.password) )
+			result = p.read()
+			print "RESULT: ", result
+
+		if "Error" in result:
+			return result
+		else:
+			return 0
+			
 class IPAL(PCUControl):
 	""" 
 		This now uses a proprietary format for communicating with the PCU.  I
@@ -1022,6 +1046,15 @@ class ePowerSwitch(PCUControl):
 		self.close()
 		return 0
 		
+class ManualPCU(PCUControl):
+	supported_ports = [22,23,80,443,9100,16992]
+
+	def run(self, node_port, dryrun):
+		if not dryrun:
+			# TODO: send email message to monitor admin requesting manual
+			# intervention.  This should always be an option for ridiculous,
+			# custom jobs.
+		return 0
 
 ### rebooting european BlackBox PSE boxes
 # Thierry Parmentelat - May 11 2005
@@ -1031,6 +1064,29 @@ class ePowerSwitch(PCUControl):
 # first curl-based script was
 # curl --http1.0 --basic --user <username>:<password> --data P<port>=r \
 #	http://<hostname>:<http_port>/cmd.html && echo OK
+
+# log in:
+
+## BB PSMaverick
+class BlackBoxPSMaverick(PCUControl):
+	supported_ports = [80]
+
+	def run(self, node_port, dryrun):
+		if not dryrun:
+			# send reboot signal.
+			cmd = "curl -s --data 'P%s=r' --anyauth --user '%s:%s' http://%s/config/home_f.html" % ( node_port, self.username, self.password, self.host)
+		else:
+			# else, just try to log in
+			cmd = "curl -s --anyauth --user '%s:%s' http://%s/config/home_f.html" % ( self.username, self.password, self.host)
+
+		p = os.popen(cmd)
+		result = p.read()
+		print "RESULT: ", result
+
+		if len(result.split()) > 3:
+			return 0
+		else:
+			return result
 
 def bbpse_reboot (pcu_ip,username,password,port_in_pcu,http_port, dryrun):
 
@@ -1275,6 +1331,10 @@ def model_to_object(modelname):
 		return WTIIPS4
 	elif "ePowerSwitch" in modelname:
 		return ePowerSwitch
+	elif "ipmi" in modelname:
+		return IPMI
+	elif "bbsemaverick" in modelname:
+		return BlackBoxPSMaverick
 	else:
 		return Unknown
 
@@ -1303,11 +1363,11 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				apc = APCBrazil(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1221,1225,1220]:
+			elif values['pcu_id'] in [1221,1225,1220,1192]:
 				apc = APCBerlin(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
-			elif values['pcu_id'] in [1173,1240,47]:
+			elif values['pcu_id'] in [1173,1240,47,1363,1405,1401,1372,1371]:
 				apc = APCFolsom(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
@@ -1375,7 +1435,17 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				amt = IntelAMT(values, verbose, ['16992'])
 				rb_ret = amt.reboot(values[nodename], dryrun)
 
-		# BlackBox PSExxx-xx (e.g. PSE505-FR)
+		elif continue_probe and values['model'].find("bbsemaverick") >=0:
+			print "TRYING BlackBoxPSMaverick"
+			bbe = BlackBoxPSMaverick(values, verbose, ['80'])
+			rb_ret = bbe.reboot(values[nodename], dryrun)
+
+		elif continue_probe and values['model'].find("ipmi") >=0:
+
+			print "TRYING IPMI"
+			ipmi = IPMI(values, verbose, ['80', '443', '623'])
+			rb_ret = ipmi.reboot(values[nodename], dryrun)
+
 		elif continue_probe and values['model'].find("ePowerSwitch") >=0:
 			# TODO: allow a different port than http 80.
 			if values['pcu_id'] in [1089, 1071, 1046, 1035, 1118]:

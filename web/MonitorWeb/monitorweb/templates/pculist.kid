@@ -5,14 +5,15 @@ from pcucontrol.reboot import pcu_name, model_to_object
 from monitor import config
 
 def plc_site_link(pcu):
-	return "https://" + config.MONITOR_HOSTNAME + "/db/sites/index.php?id=" + str(pcu['site_id'])
+	return "https://" + config.PLC_WEB_HOSTNAME + "/db/sites/index.php?id=" + str(pcu['site_id'])
 
 def pcu_link(pcu):
-	return "https://" + config.MONITOR_HOSTNAME + "/db/sites/pcu.php?id=" + str(pcu['pcu_id'])
+	return "https://" + config.PLC_WEB_HOSTNAME + "/db/sites/pcu.php?id=" + str(pcu['pcu_id'])
 
 ?>
 <html py:layout="'sitemenu.kid'"
-      xmlns:py="http://purl.org/kid/ns#">
+      xmlns:py="http://purl.org/kid/ns#"
+	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
   	<table id="sub-table" width="100%">
@@ -28,10 +29,11 @@ def pcu_link(pcu):
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table border="1" width="100%">
+		<table id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th>Site</th>
+					<th mochi:format="int"></th>
+					<th mochi:format="str">Site</th>
 					<th>PCU Name</th>
 					<th>Missing Fields</th>
 					<th>DNS Status</th>
@@ -43,7 +45,8 @@ def pcu_link(pcu):
 			</thead>
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
-					<td><a href="${plc_site_link(node.plc_pcu_stats)}">sitename</a></td>
+					<td></td>
+					<td><a href="${plc_site_link(node.plc_pcu_stats)}">${node.loginbase}</a></td>
 					<td nowrap="true" >
 						<a href="${pcu_link(node.plc_pcu_stats)}">${pcu_name(node.plc_pcu_stats)}</a></td>
 					<td py:content="node.entry_complete"></td>
