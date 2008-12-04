@@ -2,7 +2,7 @@
 """This module contains functions called from console script entry points."""
 
 import sys
-from os import getcwd
+from os import getcwd, getpid
 from os.path import dirname, exists, join
 
 import pkg_resources
@@ -44,6 +44,11 @@ def start():
                 "config/default.cfg")
         except pkg_resources.DistributionNotFound:
             raise ConfigurationError("Could not find default configuration.")
+
+	if "prod" in configfile:
+		f = open("/var/run/monitorweb.pid", 'w')
+		f.write(str(getpid()))
+		f.close()
 
     turbogears.update_config(configfile=configfile,
         modulename="monitorweb.config")

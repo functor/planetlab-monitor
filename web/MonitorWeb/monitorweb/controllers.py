@@ -3,9 +3,15 @@ from turbogears import controllers, expose, flash
 # from monitorweb import model
 # import logging
 # log = logging.getLogger("monitorweb.controllers")
+import re
 from monitor.database.info.model import *
+from monitor.database.zabbixapi.model import *
+from monitor.database.dborm import zab_session as session
+from monitor.database.dborm import zab_metadata as metadata
+
 from pcucontrol import reboot
 from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
+from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
 
 def format_ports(pcu):
 	retval = []
@@ -169,7 +175,66 @@ class Root(controllers.RootController):
 				
 		return dict(query=query, fc=filtercount)
 
-	@expose(template="monitorweb.templates.pculist")
+	@expose(template="monitorweb.templates.actionlist")
 	def action(self, filter='all'):
-		filtercount = {'ok' : 0, 'NetDown': 0, 'Not_Run' : 0, 'pending' : 0, 'all' : 0}
-		return dict(query=[], fc=filtercount)
+		session.bind = metadata.bind
+		filtercount = {'active' : 0, 'acknowledged': 0, 'all' : 0}
+		# With Acknowledgement
+		sql_ack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,a.message '+ \
+              ' FROM triggers t,hosts h,items i,functions f, hosts_groups hg,escalations e,acknowledges a ' + \
+              ' WHERE f.itemid=i.itemid ' + \
+                  ' AND h.hostid=i.hostid ' + \
+                  ' AND hg.hostid=h.hostid ' + \
+                  ' AND t.triggerid=f.triggerid ' + \
+                  ' AND t.triggerid=e.triggerid ' + \
+                  ' AND a.eventid=e.eventid ' + \
+                  ' AND t.status=' + str(defines.TRIGGER_STATUS_ENABLED) + \
+                  ' AND i.status=' + str(defines.ITEM_STATUS_ACTIVE) + \
+                  ' AND h.status=' + str(defines.HOST_STATUS_MONITORED) + \
+                  ' AND t.value=' + str(defines.TRIGGER_VALUE_TRUE) + \
+              ' ORDER BY t.lastchange DESC';
+
+		# WithOUT Acknowledgement
+		sql_noack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,e.eventid ' + \
+              ' FROM triggers t,hosts h,items i,functions f, hosts_groups hg,escalations e,acknowledges a ' + \
+              ' WHERE f.itemid=i.itemid ' + \
+                  ' AND h.hostid=i.hostid ' + \
+                  ' AND hg.hostid=h.hostid ' + \
+                  ' AND t.triggerid=f.triggerid ' + \
+                  ' AND t.triggerid=e.triggerid ' + \
+                  ' AND e.eventid not in (select eventid from acknowledges) ' + \
+                  ' AND t.status=' + str(defines.TRIGGER_STATUS_ENABLED) + \
+                  ' AND i.status=' + str(defines.ITEM_STATUS_ACTIVE) + \
+                  ' AND h.status=' + str(defines.HOST_STATUS_MONITORED) + \
+                  ' AND t.value=' + str(defines.TRIGGER_VALUE_TRUE) + \
+              ' ORDER BY t.lastchange DESC';
+		# for i in session.execute(sql): print i
+
+		query=[]
+		replace = re.compile(' {.*}')
+		for sql,ack in [(sql_ack,True), (sql_noack,False)]:
+			result = session.execute(sql)
+			for row in result:
+				try:
+					newrow = [ site_hn2lb[row[0].lower()] ] + [ r for r in row ]
+				except:
+					print site_hn2lb.keys()
+					newrow = [ "unknown" ] + [ r for r in row ]
+
+				newrow[2] = replace.sub("", newrow[2]) # strip {.*} expressions
+
+				# NOTE: filter count
+				filtercount['all'] += 1
+				if not ack: # for unacknowledged
+					filtercount['active'] += 1
+					if filter == 'active':
+						query.append(newrow)
+				else:
+					filtercount['acknowledged'] += 1
+					if filter == 'acknowledged':
+						query.append(newrow)
+					
+				if filter != "acknowledged" and filter != "active":
+					query.append(newrow)
+
+		return dict(query=query, fc=filtercount)

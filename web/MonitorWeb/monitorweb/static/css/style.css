@@ -50,6 +50,13 @@ a.link, a, a.active {
 #site-good { background-color : darkseagreen; }
 #site-down { background-color: indianred; }
 
+#severity-0     {   background-color: #AADDAA;  }
+#severity-1     {   background-color: #CCE2CC;  }
+#severity-2     {   background-color: #EFEFCC;  }
+#severity-3     {   background-color: #DDAAAA;  }
+#severity-4     {   background-color: #FF8888;  }
+#severity-5     {   background-color: #FF0000;  }
+
 /*#nps-table { background-color: lightgrey; }*/
 /*#sub-table { background-color: lightgrey; }*/
 /* td, th {padding:2px;border:none;} */

@@ -15,8 +15,7 @@
             text-align: right;
         }
     </style>
-    <link rel="stylesheet" type="text/css" media="screen" href="../static/css/style.css"
-        py:attrs="href=tg.url('/static/css/style.css')"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="${tg.url('static/css/style.css')}"/>
 </head>
 
 <body py:match="item.tag=='{http://www.w3.org/1999/xhtml}body'" py:attrs="item.items()">

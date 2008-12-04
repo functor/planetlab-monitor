@@ -242,50 +242,33 @@ function create_httpd_conf ()
 		WROTE_HTTP_CONFIG="true"
 	fi
 
-	# TODO: make http port configurable.
+	# TODO: support HTTPS as well as port 80.  currently not specifying port
+	# 		80 breaks https for other content on the myplc.
 	# TODO: make proxy port configurable.
 
 	cat <<EOF > ${MONITOR_HTTP_CONF}
-NameVirtualHost *
 
-<VirtualHost *>
-    ServerName ${PLC_MONITOR_HOST}
-    ServerAdmin ${PLC_MONITOR_EMAIL}
-    UseCanonicalName Off
-    ServerSignature Off
+# NOTE: I've tried other means of redirection, including mod_rewrite, but did
+# 	not have any success.  The means below is not idea, b/c it does not keep
+# 	non-ssl session as non-ssl.  But it works.
 
-	# NOTE: this appears to alter the global document root, for port 80...
-	#  not sure if it's possible to serve two different 'virtualhosts' from
-	#  the same port and same hostname with different document roots...
-    #DocumentRoot ${MONITORPATH}/web/MonitorWeb/monitorweb
+# NOTE: redirect path without trailing '/' to path with.  Favor SSL.
+Redirect /monitor https://${MONITOR_HOSTNAME}:${PLC_WWW_SSL_PORT}/monitor/
 
-    #<Directory "${MONITORPATH}/web/MonitorWeb/monitorweb">
-    #    Options Indexes FollowSymLinks
-    #    AllowOverride None
-    #    Order allow,deny
-    #    Allow from all
-    #</Directory>
-
+# NOTE: this directive strips '/monitor/' from the requested path and pastes
+#       the remaining part to the end of the ProxyPass url below.  All TG urls
+#       should be relative to their current position, or the absolute path
+#       that includes /monitor/ at the beginning.  
+# TODO: make location configurable.
+<Location '/monitor/'>
     #LogLevel debug
-    Errorlog /var/log/httpd/monitorwebapp-error_log
-    Customlog /var/log/httpd/monitorwebapp-access_log common
+    #Errorlog /var/log/httpd/monitorwebapp-error_log
+    #Customlog /var/log/httpd/monitorwebapp-access_log common
 
-    AddDefaultCharset utf-8
+    ProxyPass http://127.0.0.1:8080/
+    ProxyPassReverse http://127.0.0.1:8080/
+</Location>
 
-    #NOTE: This doesn't work as expected.
-    #	Load everything out of the DocumentRoot that is static
-    #	ProxyPass /monitor/static !
-
-    ProxyPass /tg_js http://127.0.0.1:8080/tg_js
-    ProxyPassReverse /tg_js http://127.0.0.1:8080/tg_js
-
-    ProxyPass /monitor http://127.0.0.1:8080
-    ProxyPassReverse /monitor http://127.0.0.1:8080
-
-    ProxyPreserveHost On
-    ProxyRequests Off
-
-</VirtualHost>
 EOF
 }
 
@@ -294,6 +277,14 @@ function start_tg_server ()
 	pushd ${MONITORPATH}/web/MonitorWeb/
 	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log
 	popd
+}
+
+function stop_tg_server ()
+{
+        pid=$( cat /var/run/monitorweb.pid )
+        if [ -n "$pid" ] ; then
+                kill $pid
+        fi
 }
 
 function check_zab_server ()
@@ -306,7 +297,7 @@ function check_zab_server ()
 		    -e "s#DBName=.*#DBName=$ZABBIX_DB_NAME#g" \
 		    -e "s#DBUser=.*#DBUser=$ZABBIX_DB_USER#g" \
 		    -e "s#DBPassword=.*#DBPassword=$PLC_MONITOR_DBPASSWORD#g" \
-		    -e "s/.*ExternalScripts=.*/ExternalScripts=${MONITORPATH}\/zabbix/g" \
+		    -e "s#.*ExternalScripts=.*#ExternalScripts=${MONITORPATH}/zabbix#g" \
 		    ${ZABBIXCFG}/zabbix_server.conf > $TMP_FILE
 		cat $TMP_FILE > ${ZABBIXCFG}/zabbix_server.conf
 	fi
@@ -418,6 +409,7 @@ case "$1" in
 		MESSAGE=$"Stopping Monitor"
 		dialog "$MESSAGE"
 
+		stop_tg_server
 		service zabbix_server stop
 		service zabbix_agentd stop
 		# TODO: is there anything to stop?

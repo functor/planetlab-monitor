@@ -422,6 +422,42 @@ class IDs(Entity):
 		autoload=True,
 	)
 
+class Escalation(ZabbixEntity):
+	using_options(
+		tablename='escalations',
+		autoload=True,
+		auto_primarykey='escalationid'
+	)
+
+class Event(ZabbixEntity):
+	using_options(
+		tablename='events',
+		autoload=True,
+		auto_primarykey='eventid'
+	)
+
+class Item(ZabbixEntity):
+	using_options(
+		tablename='items',
+		autoload=True,
+		auto_primarykey='itemid'
+	)
+
+class Acknowledge(ZabbixEntity):
+	using_options(
+		tablename='acknowledges',
+		autoload=True,
+		auto_primarykey='acknowledgeid'
+	)
+
+class Trigger(ZabbixEntity):
+	using_options(
+		tablename='triggers',
+		autoload=True,
+		auto_primarykey='triggerid'
+	)
+	
+
 class Right(ZabbixEntity):
 	# rights of a usergroup to interact with hosts of a hostgroup
 	using_options(
