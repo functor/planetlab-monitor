@@ -50,6 +50,10 @@ a.link, a, a.active {
 #site-good { background-color : darkseagreen; }
 #site-down { background-color: indianred; }
 
+#node-BOOT { background-color: darkseagreen; }
+#node-DOWN { background-color: indianred; }
+#node-DEBUG { background-color: gold; }
+
 #severity-0     {   background-color: #AADDAA;  }
 #severity-1     {   background-color: #CCE2CC;  }
 #severity-2     {   background-color: #EFEFCC;  }

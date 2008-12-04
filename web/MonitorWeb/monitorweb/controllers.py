@@ -12,6 +12,7 @@ from monitor.database.dborm import zab_metadata as metadata
 from pcucontrol import reboot
 from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
+from monitor.wrapper.plccache import plcdb_lb2hn as site_lb2hn
 
 def format_ports(pcu):
 	retval = []
@@ -41,6 +42,40 @@ def format_pcu_shortstatus(pcu):
 
 	return status
 
+def prep_pcu_for_display(pcu):
+		
+	try:
+		pcu.loginbase = site_id2lb[pcu.plc_pcu_stats['site_id']]
+	except:
+		pcu.loginbase = "unknown"
+
+	pcu.ports = format_ports(pcu)
+	pcu.status = format_pcu_shortstatus(pcu)
+
+def prep_node_for_display(node):
+	if node.plc_pcuid:
+		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+		if pcu:
+			node.pcu_status = pcu.reboot_trial_status
+		else:
+			node.pcu_status = "nodata"
+		node.pcu_short_status = format_pcu_shortstatus(pcu)
+
+	else:
+		node.pcu_status = "nopcu"
+		node.pcu_short_status = "none"
+
+	if node.kernel_version:
+		node.kernel = node.kernel_version.split()[2]
+	else:
+		node.kernel = ""
+
+	try:
+		node.loginbase = site_id2lb[node.plc_node_stats['site_id']]
+	except:
+		node.loginbase = "unknown"
+	
+
 class Root(controllers.RootController):
 	@expose(template="monitorweb.templates.welcome")
 	def index(self):
@@ -48,6 +83,17 @@ class Root(controllers.RootController):
 		# log.debug("Happy TurboGears Controller Responding For Duty")
 		flash("Your application is now running")
 		return dict(now=time.ctime())
+
+	@expose(template="monitorweb.templates.nodeview")
+	def nodeview(self, hostname=None):
+		nodequery=[]
+		if hostname:
+			for node in FindbadNodeRecord.get_latest_by(hostname=hostname):
+				# NOTE: reformat some fields.
+				prep_node_for_display(node)
+				nodequery += [node]
+
+		return dict(nodequery=nodequery)
 
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='BOOT'):
@@ -57,28 +103,7 @@ class Root(controllers.RootController):
 		filtercount = {'DOWN' : 0, 'BOOT': 0, 'DEBUG' : 0, 'neverboot' : 0, 'pending' : 0, 'all' : 0}
 		for node in fbquery:
 			# NOTE: reformat some fields.
-			if node.plc_pcuid:
-				pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
-				if pcu:
-					node.pcu_status = pcu.reboot_trial_status
-				else:
-					node.pcu_status = "nodata"
-				node.pcu_short_status = format_pcu_shortstatus(pcu)
-
-			else:
-				node.pcu_status = "nopcu"
-				node.pcu_short_status = "none"
-
-			if node.kernel_version:
-				node.kernel = node.kernel_version.split()[2]
-			else:
-				node.kernel = ""
-
-			try:
-				node.loginbase = site_id2lb[node.plc_node_stats['site_id']]
-			except:
-				node.loginbase = "unknown"
-
+			prep_node_for_display(node)
 
 			# NOTE: count filters
 			if node.observed_status != 'DOWN':
@@ -107,6 +132,17 @@ class Root(controllers.RootController):
 				
 		return dict(now=time.ctime(), query=query, fc=filtercount)
 
+	@expose(template="monitorweb.templates.pcuview")
+	def pcuview(self, pcuid=None):
+		pcuquery=[]
+		if pcuid:
+			for pcu in FindbadPCURecord.get_latest_by(plc_pcuid=pcuid):
+				# NOTE: count filter
+				prep_pcu_for_display(pcu)
+				pcuquery += [pcu]
+
+		return dict(pcuquery=pcuquery)
+
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):
 		import time
@@ -116,20 +152,14 @@ class Root(controllers.RootController):
 		for node in fbquery:
 
 			# NOTE: count filter
-			if node.reboot_trial_status == str(0):
+			if pcu.reboot_trial_status == str(0):
 				filtercount['ok'] += 1
-			elif node.reboot_trial_status == 'NetDown' or node.reboot_trial_status == 'Not_Run':
-				filtercount[node.reboot_trial_status] += 1
+			elif pcu.reboot_trial_status == 'NetDown' or pcu.reboot_trial_status == 'Not_Run':
+				filtercount[pcu.reboot_trial_status] += 1
 			else:
 				filtercount['pending'] += 1
-				
-			try:
-				node.loginbase = site_id2lb[node.plc_pcu_stats['site_id']]
-			except:
-				node.loginbase = "unknown"
 
-			node.ports = format_ports(node)
-			node.status = format_pcu_shortstatus(node)
+			prep_pcu_for_display(node)
 
 			# NOTE: apply filter
 			if filter == "all":
@@ -147,6 +177,18 @@ class Root(controllers.RootController):
 					query.append(node)
 				
 		return dict(query=query, fc=filtercount)
+
+	@expose(template="monitorweb.templates.siteview")
+	def siteview(self, loginbase='pl'):
+		# get site query
+		sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
+		nodequery = []
+		for plcnode in site_lb2hn[loginbase]:
+			for node in FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname']):
+				# NOTE: reformat some fields.
+				prep_node_for_display(node)
+				nodequery += [node]
+		return dict(sitequery=sitequery, nodequery=nodequery, fc={})
 
 	@expose(template="monitorweb.templates.sitelist")
 	def site(self, filter='all'):

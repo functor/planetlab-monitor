@@ -30,8 +30,11 @@ class FindbadNodeRecord(Entity):
 	@classmethod
 	def get_latest_by(cls, **kwargs):
 		fbsync = FindbadNodeRecordSync.get_by(hostname="global")
-		kwargs['round'] = fbsync.round
-		return cls.query.filter_by(**kwargs)
+		if fbsync:
+			kwargs['round'] = fbsync.round
+			return cls.query.filter_by(**kwargs)
+		else:
+			return []
 
 	@classmethod
 	def get_latest_n_by(cls, n=3, **kwargs):
