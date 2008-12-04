@@ -30,7 +30,7 @@ layout_params['page_title'] = "Monitor Site View"
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
-				  <td nowrap="true"><a href="">${site.loginbase}</a></td>
+				  <td nowrap="true"><a href="siteview?loginbase=${site.loginbase}">${site.loginbase}</a></td>
 				  <td id="site-${site.status}" py:content="site.last_changed"></td>
 				  <td>${site.slices_used}/${site.slices_total}</td>
 				  <td>${site.nodes_up} / ${site.nodes_total}</td>
