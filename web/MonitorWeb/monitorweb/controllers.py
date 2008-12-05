@@ -152,10 +152,10 @@ class Root(controllers.RootController):
 		for node in fbquery:
 
 			# NOTE: count filter
-			if pcu.reboot_trial_status == str(0):
+			if node.reboot_trial_status == str(0):
 				filtercount['ok'] += 1
-			elif pcu.reboot_trial_status == 'NetDown' or pcu.reboot_trial_status == 'Not_Run':
-				filtercount[pcu.reboot_trial_status] += 1
+			elif node.reboot_trial_status == 'NetDown' or node.reboot_trial_status == 'Not_Run':
+				filtercount[node.reboot_trial_status] += 1
 			else:
 				filtercount['pending'] += 1
 

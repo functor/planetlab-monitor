@@ -30,6 +30,14 @@ a.link, a, a.active {
   color: #369;
 }
 
+/*@media screen {*/
+ a.ext-link .icon {
+  background: URL(../images/extlink.gif) left center no-repeat;
+  padding-left: 16px;
+ }
+ /** html a.ext-link .icon { display: inline-block; }*/
+/*}*/
+
 #portopen     { background-color: lightgreen; }
 #portclosed   { background-color: indianred; }
 #portfiltered { background-color: gold; }

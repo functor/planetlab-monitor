@@ -32,9 +32,15 @@ def pcu_link(pcu):
 			<tbody>
 				<tr py:for="i,node in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="${plc_site_link(node.plc_pcu_stats)}">${node.loginbase}</a></td>
+					<td><a class="ext-link" href="${plc_site_link(node.plc_pcu_stats)}">
+							<span class="icon">${node.loginbase}</span>
+						</a>
+					</td>
 					<td nowrap="true" >
-						<a href="${pcu_link(node.plc_pcu_stats)}">${pcu_name(node.plc_pcu_stats)}</a></td>
+						<a class="ext-link" href="${pcu_link(node.plc_pcu_stats)}">
+							<span class="icon">${pcu_name(node.plc_pcu_stats)}</span>
+						</a>
+					</td>
 					<td py:content="node.entry_complete"></td>
 					<td id="dns-${node.dns_status}" py:content="node.dns_status"></td>
 					<td>
@@ -47,9 +53,14 @@ def pcu_link(pcu):
 				</tr>
 			</tbody>
 		</table>
+	<h3>Controls</h3>
+		... node list ...
+		<br/>
+		form for reboot
 
-	<h3>Legends</h3>
-	<table border="1" align="center">
+	<h3>Legend</h3>
+
+	<table border="1" align="center" width="80%">
 		<tr><th colspan="2">Legend for 'DNS Status'</th></tr>
 
 		<tr><td id="dns-DNS-OK">DNS-OK</td>
