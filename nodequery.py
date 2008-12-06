@@ -17,7 +17,7 @@ from pcucontrol  import reboot
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
-from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, session
+from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, FindbadPCURecord, session
 from monitor import util
 from monitor import config
 
@@ -75,10 +75,10 @@ def get(fb, path):
     indexes = path.split(".")
     values = fb
     for index in indexes:
-        if index in values:
-            values = values[index]
-        else:
-            raise NoKeyException(index)
+		if values and index in values:
+			values = values[index]
+		else:
+			raise NoKeyException(index)
     return values
 
 def verifyType(constraints, data):
@@ -254,9 +254,10 @@ def query_to_dict(query):
 	return ad
 
 def pcu_in(fbdata):
-	if 'plcnode' in fbdata:
-		if 'pcu_ids' in fbdata['plcnode']:
-			if len(fbdata['plcnode']['pcu_ids']) > 0:
+	#if 'plcnode' in fbdata:
+	if 'plc_node_stats' in fbdata:
+		if 'pcu_ids' in fbdata['plc_node_stats']:
+			if len(fbdata['plc_node_stats']['pcu_ids']) > 0:
 				return True
 	return False
 
@@ -273,6 +274,7 @@ def pcu_select(str_query, nodelist=None):
 		fbpcu_list = [ p.plc_pcuid for p in fbpcuquery ]
 
 	dict_query = query_to_dict(str_query)
+	print "dict_query", dict_query
 
 	for noderec in fbquery:
 		if nodelist is not None: 
@@ -280,13 +282,12 @@ def pcu_select(str_query, nodelist=None):
 	
 		fb_nodeinfo  = noderec.to_dict()
 		if pcu_in(fb_nodeinfo):
-			pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=get(fb_nodeinfo, 'plc_node_stats.pcu_ids')[0])
-			pcuinfo = pcurec.to_dict()
-			if verify(dict_query, pcuinfo):
-				nodenames.append(noderec.hostname)
-				str = "cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
-							(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
-				pcunames.append(pcuinfo['plc_pcuid'])
+			pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=get(fb_nodeinfo, 'plc_node_stats.pcu_ids')[0]).first()
+			if pcurec:
+				pcuinfo = pcurec.to_dict()
+				if verify(dict_query, pcuinfo):
+					nodenames.append(noderec.hostname)
+					pcunames.append(pcuinfo['plc_pcuid'])
 	return (nodenames, pcunames)
 
 def node_select(str_query, nodelist=None, fb=None):

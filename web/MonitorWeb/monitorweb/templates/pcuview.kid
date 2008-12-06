@@ -1,13 +1,10 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Site View"
+layout_params['page_title'] = "Monitor PCU View"
 from monitor.util import diff_time
 from monitor import config
 from pcucontrol.reboot import pcu_name, model_to_object
-def plc_site_link(pcu):
-	return "https://" + config.PLC_WEB_HOSTNAME + "/db/sites/index.php?id=" + str(pcu['site_id'])
-def pcu_link(pcu):
-	return "https://" + config.PLC_WEB_HOSTNAME + "/db/sites/pcu.php?id=" + str(pcu['pcu_id'])
+from links import *
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
@@ -32,12 +29,12 @@ def pcu_link(pcu):
 			<tbody>
 				<tr py:for="i,node in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a class="ext-link" href="${plc_site_link(node.plc_pcu_stats)}">
+					<td><a class="ext-link" href="${plc_site_link_id(node.plc_pcu_stats['site_id'])}">
 							<span class="icon">${node.loginbase}</span>
 						</a>
 					</td>
 					<td nowrap="true" >
-						<a class="ext-link" href="${pcu_link(node.plc_pcu_stats)}">
+						<a class="ext-link" href="${plc_pcu_link_id(node.plc_pcu_stats['pcu_id'])}">
 							<span class="icon">${pcu_name(node.plc_pcu_stats)}</span>
 						</a>
 					</td>

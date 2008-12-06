@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]))
 import pcucontrol.transports.telnetlib as telnetlib
 sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")    
 import pcucontrol.transports.pyssh as pyssh
+from monitor import config
 
 # Timeouts in seconds
 TELNET_TIMEOUT = 45
@@ -601,7 +602,7 @@ class IntelAMT(PCUControl):
 
 		cmd = command.CMD()
 		# TODO: need to make this path universal; not relative to pwd.
-		cmd_str = "pcucontrol/models/intelamt/remoteControl"
+		cmd_str = config.MONITOR_SCRIPT_ROOT + "/pcucontrol/models/intelamt/remoteControl"
 
 		if dryrun:
 			# NOTE: -p checks the power state of the host.
@@ -668,25 +669,29 @@ class HPiLOHttps(PCUControl):
 	def run(self, node_port, dryrun):
 
 		locfg = command.CMD()
-		cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
-					self.host, "iloxml/Get_Network.xml", 
+
+		cmd_str = config.MONITOR_SCRIPT_ROOT + "/pcucontrol/models/hpilo/"
+		
+		cmd = cmd_str + "locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
+					self.host, cmd_str+"iloxml/Get_Network.xml", 
 					self.username, self.password)
 		sout, serr = locfg.run_noexcept(cmd)
 
-		if sout.strip() != "":
+		if sout.strip() != "" or serr.strip() != "":
 			print "sout: %s" % sout.strip()
-			return sout.strip()
+			return sout.strip() + serr.strip()
 
 		if not dryrun:
 			locfg = command.CMD()
-			cmd = "cmdhttps/locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
-						self.host, "iloxml/Reset_Server.xml", 
+			cmd = cmd_str + "locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
+						self.host, cmd_str+"iloxml/Reset_Server.xml", 
 						self.username, self.password)
 			sout, serr = locfg.run_noexcept(cmd)
 
 			if sout.strip() != "":
 				print "sout: %s" % sout.strip()
 				#return sout.strip()
+
 		return 0
 
 class BayTechAU(PCUControl):

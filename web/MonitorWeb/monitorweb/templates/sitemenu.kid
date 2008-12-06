@@ -3,7 +3,7 @@
   <head>
     <title>App Name - ${page_title}</title>
     <link href="static/css/style.css" type="text/css" rel="stylesheet" />
-    <script type="text/javascript" src="${tg.tg_js}/MochiKit.js"></script>
+    <script type="text/javascript" src="tg_js/MochiKit.js"></script>
     <script type="text/javascript" src="static/javascript/sortable_tables.js"></script>
 
   </head>
@@ -16,9 +16,9 @@
 			<table id="nps-table" width="100%">
 			<thead>
 			<tr>
-				<th><a href="${tg.url('node')}">Nodes</a></th>
-				<th><a href="${tg.url('pcu')}">PCUs</a></th>
 				<th><a href="${tg.url('site')}">Sites</a></th>
+				<th><a href="${tg.url('pcu')}">PCUs</a></th>
+				<th><a href="${tg.url('node')}">Nodes</a></th>
 				<th><a href="${tg.url('action')}">Actions</a></th>
 			</tr>
 			</thead>

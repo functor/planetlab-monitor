@@ -361,12 +361,6 @@ def main():
 
 	global_round = fbsync.round
 
-	if config.increment:
-		# update global round number to force refreshes across all nodes
-		global_round += 1
-		fbsync.round = global_round
-
-	fbsync.flush()
 
 	if config.site is not None:
 		api = plc.getAuthAPI()
@@ -379,6 +373,7 @@ def main():
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 	elif config.pcuselect is not None:
 		n, pcus = pcu_select(config.pcuselect)
+		print pcus
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
@@ -391,6 +386,12 @@ def main():
 	elif config.pcuid is not None:
 		l_pcus = [ config.pcuid ] 
 		l_pcus = [int(pcu) for pcu in l_pcus]
+
+	if config.increment:
+		# update global round number to force refreshes across all nodes
+		global_round += 1
+		fbsync.round = global_round
+	fbsync.flush()
 
 	checkAndRecordState(l_pcus, cohash)
 

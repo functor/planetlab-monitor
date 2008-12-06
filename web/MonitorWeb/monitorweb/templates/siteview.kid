@@ -2,6 +2,7 @@
 <?python
 layout_params['page_title'] = "Monitor Site View"
 from monitor.util import diff_time
+from links import *
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
@@ -21,7 +22,9 @@ from monitor.util import diff_time
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
-				  <td nowrap="true"><a href="">${site.loginbase}</a></td>
+					<td nowrap="true"><a class="ext-link" href="${plc_site_link(site.loginbase)}">
+							<span class="icon">${site.loginbase}</span></a>
+					</td>
 				  <td id="site-${site.status}" py:content="site.last_changed"></td>
 				  <td py:content="site.enabled"></td>
 				  <td>${site.slices_used}/${site.slices_total}</td>
@@ -47,7 +50,10 @@ from monitor.util import diff_time
 					<td></td>
 					<td id="node-${node.observed_status}" nowrap="true"><a href="nodeview?hostname=${node.hostname}" py:content="node.hostname">your.host.org</a></td>
 					<td py:content="node.ping_status"></td>
-					<td id="status-${node.pcu_short_status}" py:content="node.pcu_short_status"></td>
+					<td py:if="node.pcu_short_status != 'none'" id="status-${node.pcu_short_status}">
+						<a href="pcuview?pcuid=${node.plc_node_stats['pcu_ids']}">${node.pcu_short_status}</a></td>
+					<td py:if="node.pcu_short_status == 'none'" id="status-${node.pcu_short_status}">
+						${node.pcu_short_status}</td>
 					<td nowrap="true" py:content="node.kernel"></td>
 					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
 				</tr>

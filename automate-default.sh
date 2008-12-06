@@ -64,25 +64,15 @@ source ${MONITOR_SCRIPT_ROOT}/agent.sh
 echo "Performing Findbad Nodes"
 #########################
 # 1. FINDBAD NODES 
-rm -f ${MONITOR_DATA_ROOT}/production.findbad2.pkl
-${MONITOR_SCRIPT_ROOT}/findbad.py --increment --cachenodes --debug=0 --dbname="findbad2" $DATE || :
-cp ${MONITOR_DATA_ROOT}/production.findbad2.pkl ${MONITOR_DATA_ROOT}/production.findbad.pkl
+${MONITOR_SCRIPT_ROOT}/findbad.py --increment $DATE || :
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 echo "Performing Findbad PCUs"
 #########################
 # 2. FINDBAD PCUS
-rm -f ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl
-${MONITOR_SCRIPT_ROOT}/findbadpcu.py --increment --refresh --debug=0 --dbname=findbadpcus2 $DATE || :
-cp ${MONITOR_DATA_ROOT}/production.findbadpcus2.pkl ${MONITOR_DATA_ROOT}/production.findbadpcus.pkl
+${MONITOR_SCRIPT_ROOT}/findbadpcu.py --increment $DATE || :
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
-
-#echo "Generating web data"
-# badcsv.txt
-#${MONITOR_SCRIPT_ROOT}/printbadcsv.py  | grep -v loading | tr -d ' ' > badcsv.txt
-#cp badcsv.txt /plc/data/var/www/html/monitor/
-#${MONITOR_SCRIPT_ROOT}/showlatlon.py | head -9 | awk 'BEGIN {print "<table>"} { print "<tr><td>", $0, "</td></tr>"} END{print "</table>"}'  | sed -e 's\|\</td><td>\g' > /plc/data/var/www/html/monitor/regions.html
 
 echo "Performing uptime changes for sites, nodes, and pcus"
 ########################
@@ -90,21 +80,6 @@ echo "Performing uptime changes for sites, nodes, and pcus"
 ${MONITOR_SCRIPT_ROOT}/sitebad.py --increment || :
 ${MONITOR_SCRIPT_ROOT}/nodebad.py --increment || :
 ${MONITOR_SCRIPT_ROOT}/pcubad.py --increment || :
-
-echo "Converting pkl files to phpserial"
-#########################
-# 4. convert pkl to php serialize format.
-${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbadpcus2 -o findbadpcus
-for f in act_all plcdb_hn2lb ; do
-	if [ -f ${MONITOR_DATA_ROOT}/production.$f.pkl ]; then
-		${MONITOR_SCRIPT_ROOT}/pkl2php.py -i $f -o $f
-	else
-		echo "Warning: ${MONITOR_DATA_ROOT}/production.$f.pkl does not exist."
-	fi
-done
-${MONITOR_SCRIPT_ROOT}/pkl2php.py -i findbad -o findbadnodes
-#${MONITOR_SCRIPT_ROOT}/pkl2php.py -i ad_dbTickets -o ad_dbTickets
-#${MONITOR_SCRIPT_ROOT}/pkl2php.py -i idTickets -o idTickets
 
 echo "Archiving pkl files"
 #########################
@@ -117,11 +92,11 @@ for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistfl
 	fi
 done
 
-echo "Running grouprins on all dbg nodes"
+#echo "Running grouprins on all dbg nodes"
 ############################
 # 5. Check if there are any nodes in dbg state.  Clean up afterward.
-${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DOWN&&boot_state=(boot|rins|dbg|diag)' --stopselect "state=BOOT" || :
-${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DEBUG&&boot_state=(rins|dbg|boot)' --stopselect 'state=BOOT' || :
+#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DOWN&&boot_state=(boot|rins|dbg|diag)' --stopselect "state=BOOT" || :
+#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DEBUG&&boot_state=(rins|dbg|boot)' --stopselect 'state=BOOT' || :
 
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log
 rm -f $MONITOR_PID

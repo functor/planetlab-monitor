@@ -13,7 +13,7 @@ from nodecommon import *
 from monitor import config
 from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
-from monitor.database import  FindbadNodeRecord, HistoryNodeRecord
+from monitor.database.info.model import  FindbadNodeRecord, HistoryNodeRecord
 
 from monitor.model import *
 

@@ -33,12 +33,13 @@ def format_ports(pcu):
 
 def format_pcu_shortstatus(pcu):
 	status = "error"
-	if pcu.reboot_trial_status == str(0):
-		status = "ok"
-	elif pcu.reboot_trial_status == "NetDown" or pcu.reboot_trial_status == "Not_Run":
-		status = pcu.reboot_trial_status
-	else:
-		status = "error"
+	if pcu:
+		if pcu.reboot_trial_status == str(0):
+			status = "ok"
+		elif pcu.reboot_trial_status == "NetDown" or pcu.reboot_trial_status == "Not_Run":
+			status = pcu.reboot_trial_status
+		else:
+			status = "error"
 
 	return status
 

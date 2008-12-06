@@ -62,6 +62,11 @@ def delete_site(loginbase):
 	return
 
 
+# NOTE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+##     These functions can ONLY be run when the server and gui are offline.
+##     Any changes to the db while this is running risks introducing a failure
+##	   to commit, and therefore error.
+# NOTE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def setup_global():
 	# GLOBAL:
 	#	update mediatype for email.
@@ -100,7 +105,7 @@ def setup_global():
 		# 		copying that the php code does during a host add.
 		# NOTE: Instead, reformat any *xml.in templates and import those
 		# 		during /etc/plc.d/monitor sync
-		for file in glob.glob("%s/zabbix/templates/*.xml.in" config.MONITOR_SCRIPT_ROOT):
+		for file in glob.glob("%s/zabbix/templates/*.xml.in" % config.MONITOR_SCRIPT_ROOT):
 			if 'zabbix_server' in file:
 				buf = loadFile(file)
 				args = {'hostname' : config.MONITOR_HOSTNAME, 'ip' : config.MONITOR_IP}

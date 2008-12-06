@@ -77,7 +77,7 @@ function check_user_and_db()
     fi
 
     # Create/update the unprivileged database user and password
-    if [ -z "$PLC_MONITOR_DBPASSWORD" ] ; then
+    if [ -z "$PLC_MONITOR_DBPASSWORD" || "$PLC_MONITOR_DBPASSWORD" = "None" ] ; then
         # Zabbix doesn't like plain uuidgen passwords
         PLC_MONITOR_DBPASSWORD=$( uuidgen | md5sum - | awk '{print $1}' )
         plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
@@ -196,6 +196,8 @@ MONITOR_ARCHIVE_ROOT=/var/lib/monitor/archive-pdb
 MONITOR_HOSTNAME=${PLC_MONITOR_HOST}
 MONITOR_IP=${PLC_MONITOR_IP}
 
+PLC_WWW_HOSTNAME=${PLC_WWW_HOST}
+
 # used for debug mode
 email=
 
@@ -209,7 +211,7 @@ support_email=${PLC_MAIL_SUPPORT_ADDRESS}
 cc_email=
 
 [monitordatabase]
-monitor_dburi=postgres://${MONITOR_DB_NAME}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${MONITOR_DB_NAME}
+monitor_dburi=postgres://${MONITOR_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${MONITOR_DB_NAME}
 zabbix_dburi=postgres://${ZABBIX_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${ZABBIX_DB_NAME}
 
 cachetime=60
@@ -275,7 +277,7 @@ EOF
 function start_tg_server ()
 {
 	pushd ${MONITORPATH}/web/MonitorWeb/
-	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log
+	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log &
 	popd
 }
 
@@ -350,12 +352,14 @@ fi
 
 case "$1" in
 	start)
-		MESSAGE=$"Bootstrap Monitoring"
+		MESSAGE=$"Bootstrap Monitoring (please wait...)"
 		dialog "$MESSAGE"
 
 		# DATABASE acces, creation, and data loading
 		check_pg_hba $MONITOR_DB_NAME $MONITOR_DB_USER
 		check_user_and_db $MONITOR_DB_NAME $MONITOR_DB_USER
+		# WRITE default /etc/monitor.conf
+		check_monitor_conf
 		check_monitor_schema_and_data
 
 		check_pg_hba $ZABBIX_DB_NAME $ZABBIX_DB_USER
@@ -365,19 +369,21 @@ case "$1" in
 			# NOTE: restart db to enable access by users granted above.
 			service plc restart postgresql
 			service plc restart httpd
+			MESSAGE=$"Bootstrap Monitoring 2 (please wait...)"
+			dialog "$MESSAGE"
 		fi
 
 		check_zabbix_schema_and_data
 		check_zabbix_templates_and_import
 
-		# WRITE default /etc/monitor.conf
-		check_monitor_conf
 
 		# create /etc/httpd/conf.d/monitorweb.conf
 		create_httpd_conf
 		if [ -n "$WROTE_HTTP_CONFIG" ] ; then
 			# NOTE: restart web server to enable access web cfg
 			service plc restart httpd
+			MESSAGE=$"Bootstrap Monitoring 3 (please wait...)"
+			dialog "$MESSAGE"
 		fi
 		start_tg_server
 
@@ -386,6 +392,16 @@ case "$1" in
 		check_zab_agentd
 		check_zab_webconfig
 
+		result "$MESSAGE"
+	;;
+
+	restartweb)
+		MESSAGE=$"Restarting monitor web app..."
+		dialog "$MESSAGE"
+
+		stop_tg_server
+		start_tg_server
+		
 		result "$MESSAGE"
 	;;
 

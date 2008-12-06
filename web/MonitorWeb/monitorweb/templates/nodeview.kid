@@ -1,7 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Site View"
+layout_params['page_title'] = "Monitor Node View"
 from monitor.util import diff_time
+from links import *
 ?>
 <html	py:layout="'sitemenu.kid'"
 	xmlns:py="http://purl.org/kid/ns#"
@@ -25,10 +26,18 @@ from monitor.util import diff_time
 			<tbody>
 				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="">${node.loginbase}</a></td>
-					<td id="node-${node.observed_status}" nowrap="true" py:content="node.hostname"></td>
+					<td><a class="ext-link" href="${plc_site_link_id(node.plc_node_stats['site_id'])}">
+							<span class="icon">${node.loginbase}</span></a>
+					</td>
+					<td id="node-${node.observed_status}" nowrap="true" >
+						<a class="ext-link" href="${plc_node_link(node.hostname)}">
+							<span class="icon">${node.hostname}</span></a>
+					</td>
 					<td py:content="node.ping_status"></td>
-					<td id="status-${node.pcu_short_status}"><a href="pcuview?pcuid=${node.plc_node_stats['pcu_ids']}" py:content="node.pcu_short_status"></a></td>
+					<td py:if="node.pcu_short_status != 'none'" id="status-${node.pcu_short_status}">
+						<a href="pcuview?pcuid=${node.plc_node_stats['pcu_ids']}">${node.pcu_short_status}</a></td>
+					<td py:if="node.pcu_short_status == 'none'" id="status-${node.pcu_short_status}">
+						${node.pcu_short_status}</td>
 					<td nowrap="true" py:content="node.kernel"></td>
 					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
 				</tr>

@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Node View"
+layout_params['page_title'] = "Monitor Node List"
 from monitor.util import diff_time
 from time import mktime
 ?>
@@ -40,14 +40,13 @@ from time import mktime
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="">${node.loginbase}</a></td>
-				  <td nowrap="true" py:content="node.hostname"></td>
-				  <td py:content="node.ping_status"></td>
-				  <!--td py:content="node.ssh_status"></td-->
-				  <td id="status-${node.pcu_short_status}" py:content="node.pcu_short_status"></td>
-				  <td py:content="node.observed_status"></td>
-				  <td nowrap="true" py:content="node.kernel"></td>
-				  <td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
+					<td><a href="siteview?loginbase=${node.loginbase}">${node.loginbase}</a></td>
+					<td nowrap="true"><a href="nodeview?hostname=${node.hostname}" py:content="node.hostname"></a></td>
+					<td py:content="node.ping_status"></td>
+					<td id="status-${node.pcu_short_status}" py:content="node.pcu_short_status"></td>
+					<td py:content="node.observed_status"></td>
+					<td nowrap="true" py:content="node.kernel"></td>
+					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
 				</tr>
 			</tbody>
 		</table>

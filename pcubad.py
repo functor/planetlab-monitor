@@ -10,7 +10,7 @@ from monitor import database
 from pcucontrol  import reboot
 from monitor import parser as parsermodule
 from monitor import config
-from monitor.database import HistoryPCURecord, FindbadPCURecord
+from monitor.database.info.model import HistoryPCURecord, FindbadPCURecord
 from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 
@@ -22,7 +22,6 @@ api = plc.getAuthAPI()
 
 def main(config):
 
-	#l_plcpcus = database.if_cached_else_refresh(1, 1, "pculist", lambda : plc.GetPCUs())
 	l_plcpcus = plccache.l_pcus 
 
 	l_pcus = None

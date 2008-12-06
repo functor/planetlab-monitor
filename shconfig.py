@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import config
+from monitor import config
 
 for attr in dir(config):
 	val = config.__getattribute__(attr)
