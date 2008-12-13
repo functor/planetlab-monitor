@@ -20,7 +20,7 @@ from monitor.wrapper import plc, plccache
 from nodequery import verify,query_to_dict,node_select
 import traceback
 
-print "starting sqlfindbad.py"
+#print "starting sqlfindbad.py"
 # QUERY all nodes.
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
 				"table=table_nodeview&" + \
@@ -254,34 +254,51 @@ def recordPingAndSSH(request, result):
 			fbnodesync = FindbadNodeRecordSync.findby_or_create(hostname=nodename,
 															if_new_set={'round' : global_round})
 
-			fbrec = FindbadNodeRecord(
-						date_checked=datetime.fromtimestamp(values['date_checked']),
+			# NOTE: This code will either add a new record for the new global_round, 
+			# 		OR it will find the previous value, and update it
+			# 		with new information.
+			#		The data that is 'lost' is not that important, b/c older
+			#		history still exists.  
+			fbrec = FindbadNodeRecord.findby_or_create(
 						round=global_round,
-						hostname=nodename,
-						loginbase=values['loginbase'],
-						kernel_version=values['kernel'],
-						bootcd_version=values['bootcd'],
-						nm_status=values['nm'],
-						fs_status=values['readonlyfs'],
-						dns_status=values['dns'],
-						princeton_comon_dir=values['princeton_comon'],
-						princeton_comon_running=values['princeton_comon_running'],
-						princeton_comon_procs=values['princeton_comon_procs'],
-						plc_node_stats = values['plcnode'],
-						plc_site_stats = values['plcsite'],
-						plc_pcuid = values['pcu'],
-						comon_stats = values['comonstats'],
-						ping_status = (values['ping'] == "PING"),
-						ssh_portused = values['sshport'],
-						ssh_status = (values['ssh'] == "SSH"),
-						ssh_error = values['ssherror'],
-						observed_status = values['state'],
-						observed_category = values['category'],
-					)
+						hostname=nodename)
+			before = fbrec.to_dict()
+			print "BEFORE, ", before
+			fbrec.flush()
+			time.sleep(2)
+			print "Setting VALUES"
+			fbrec.set(  date_checked=datetime.fromtimestamp(values['date_checked']),
+			  			loginbase=values['loginbase'],
+			  			kernel_version=values['kernel'],
+			  			bootcd_version=values['bootcd'],
+			  			nm_status=values['nm'],
+			  			fs_status=values['readonlyfs'],
+			  			dns_status=values['dns'],
+			  			princeton_comon_dir=values['princeton_comon'],
+			  			princeton_comon_running=values['princeton_comon_running'],
+			  			princeton_comon_procs=values['princeton_comon_procs'],
+			  			plc_node_stats = values['plcnode'],
+			  			plc_site_stats = values['plcsite'],
+			  			plc_pcuid = values['pcu'],
+			  			comon_stats = values['comonstats'],
+			  			ping_status = (values['ping'] == "PING"),
+			  			ssh_portused = values['sshport'],
+			  			ssh_status = (values['ssh'] == "SSH"),
+			  			ssh_error = values['ssherror'],
+			  			observed_status = values['state'],
+			  			observed_category = values['category'])
+			after = fbrec.to_dict()
+			print "AFTER , ", after
+
+			for v in before.keys():
+				if before[v] == after[v]:
+					print "SAME FOR KEY %s" % v
+				print "%s : %s\t%s" % ( v, before[v], after[v] )
+
+			fbrec.flush()
 			fbnodesync.round = global_round
 			fbnodesync.flush()
 			fbsync.flush()
-			fbrec.flush()
 
 			count += 1
 			print "%d %s %s" % (count, nodename, values)
@@ -295,6 +312,16 @@ def handle_exception(request, result):
 	for i in result:
 		print "Result: %s" % i
 
+def probe(hostname):
+	try:
+		(nodename, values) = collectPingAndSSH(hostname, {})
+		recordPingAndSSH(None, (nodename, values))
+		session.flush()
+		return True
+	except:
+		print traceback.print_exc()
+		return False
+		
 
 def checkAndRecordState(l_nodes, cohash):
 	global global_round

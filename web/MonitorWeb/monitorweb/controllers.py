@@ -1,5 +1,7 @@
 import turbogears as tg
-from turbogears import controllers, expose, flash
+from turbogears import controllers, expose, flash, exception_handler
+from cherrypy import request, response
+import cherrypy
 # from monitorweb import model
 # import logging
 # log = logging.getLogger("monitorweb.controllers")
@@ -13,6 +15,10 @@ from pcucontrol import reboot
 from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
 from monitor.wrapper.plccache import plcdb_lb2hn as site_lb2hn
+
+from monitorweb.templates.links import *
+
+import findbad
 
 def format_ports(pcu):
 	retval = []
@@ -132,17 +138,83 @@ class Root(controllers.RootController):
 				query.append(node)
 				
 		return dict(now=time.ctime(), query=query, fc=filtercount)
+	
+	def nodeaction_handler(self, tg_exceptions=None):
+		"""Handle any kind of error."""
+		refurl = request.headers.get("Referer",link("pcu"))
+		print refurl
+		# TODO: do this more intelligently...
+		if len(urllib.splitquery(refurl)) > 1:
+			pcuid = urllib.splitvalue(urllib.splitquery(refurl)[1])[1]
+		else:
+			pcuid=None
 
+		cherry_trail = cherrypy._cputil.get_object_trail()
+		for i in cherry_trail:
+			print "trail: ", i
+
+		print pcuid
+		return self.pcuview(pcuid, **dict(exceptions=tg_exceptions))
+		#return dict(pcuquery=[], nodequery=[], exceptions=tg_exceptions)
+
+	def nodeaction(self, **data):
+		for item in data.keys():
+			print "%s %s" % ( item, data[item] )
+
+		if 'hostname' in data:
+			hostname = data['hostname']
+		else:
+			flash("No hostname given in submitted data")
+			return
+
+		if 'submit' in data:
+			action = data['submit']
+		else:
+			flash("No submit action given in submitted data")
+			return
+
+		if action == "Reboot":
+			print "REBOOT: %s" % hostname
+			ret = reboot.reboot_str(str(hostname))
+			print ret
+			if ret: raise RuntimeError("Error using PCU: " + ret)
+
+		elif action == "ExternalProbe":
+			raise RuntimeError("THIS IS A PROBLEM")
+
+		elif action == "DeepProbe":
+			findbad.probe(str(hostname))
+		else:
+			# unknown action
+			flash("Unknown action given")
+		return
+
+	# TODO: add form validation
 	@expose(template="monitorweb.templates.pcuview")
-	def pcuview(self, pcuid=None):
+	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
+	def pcuview(self, pcuid=None, **data):
 		pcuquery=[]
+		nodequery=[]
+		if 'submit' in data.keys():
+			self.nodeaction(**data)
+		if 'exceptions' in data:
+			exceptions = data['exceptions']
+		else:
+			exceptions = None
+
 		if pcuid:
 			for pcu in FindbadPCURecord.get_latest_by(plc_pcuid=pcuid):
 				# NOTE: count filter
 				prep_pcu_for_display(pcu)
 				pcuquery += [pcu]
-
-		return dict(pcuquery=pcuquery)
+			for nodename in pcu.plc_pcu_stats['nodenames']: 
+				print "query for %s" % nodename
+				node = FindbadNodeRecord.get_latest_by(hostname=nodename).first()
+				print "%s" % node
+				if node:
+					prep_node_for_display(node)
+					nodequery += [node]
+		return dict(pcuquery=pcuquery, nodequery=nodequery, exceptions=exceptions)
 
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):

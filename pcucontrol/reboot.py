@@ -26,6 +26,8 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")
 import pcucontrol.transports.pyssh as pyssh
 from monitor import config
 
+from monitor.database.info.model import FindbadPCURecord
+
 # Timeouts in seconds
 TELNET_TIMEOUT = 45
 
@@ -101,9 +103,9 @@ class PCUModel(PCU):
 # This class captures the observed pcu records from FindBadPCUs.py
 class PCURecord:
 	def __init__(self, pcu_record_dict):
-		for field in ['nodenames', 'portstatus', 
-						'dnsmatch', 
-						'complete_entry', ]:
+		for field in ['port_status', 
+						'dns_status', 
+						'entry_complete', ]:
 			if field in pcu_record_dict:
 				if field == "reboot":
 					self.__setattr__("reboot_str", pcu_record_dict[field])
@@ -116,7 +118,8 @@ class Transport:
 	TELNET = 1
 	SSH    = 2
 	HTTP   = 3
-	IPAL   = 4
+	HTTPS  = 4
+	IPAL   = 5
 
 	TELNET_TIMEOUT = 120
 
@@ -227,26 +230,27 @@ class PCUControl(Transport,PCUModel,PCURecord):
 		PCUModel.__init__(self, plc_pcu_record)
 		PCURecord.__init__(self, plc_pcu_record)
 		type = None
-		if self.portstatus:
-			if '22' in supported_ports and self.portstatus['22'] == "open":
+		if self.port_status:
+			if '22' in supported_ports and self.port_status['22'] == "open":
 				type = Transport.SSH
-			elif '23' in supported_ports and self.portstatus['23'] == "open":
+			elif '23' in supported_ports and self.port_status['23'] == "open":
 				type = Transport.TELNET
-			elif '80' in supported_ports and self.portstatus['80'] == "open":
+			# NOTE: prefer https over http
+			elif '443' in supported_ports and self.port_status['443'] == "open":
+				type = Transport.HTTPS
+			elif '80' in supported_ports and self.port_status['80'] == "open":
 				type = Transport.HTTP
-			elif '443' in supported_ports and self.portstatus['443'] == "open":
-				type = Transport.HTTP
-			elif '5869' in supported_ports and self.portstatus['5869'] == "open":
+			elif '5869' in supported_ports and self.port_status['5869'] == "open":
 				# For DRAC cards. Racadm opens this port.
 				type = Transport.HTTP
-			elif '9100' in supported_ports and self.portstatus['9100'] == "open":
+			elif '9100' in supported_ports and self.port_status['9100'] == "open":
 				type = Transport.IPAL
-			elif '16992' in supported_ports and self.portstatus['16992'] == "open":
+			elif '16992' in supported_ports and self.port_status['16992'] == "open":
 				type = Transport.HTTP
 			else:
 				raise ExceptionPort("Unsupported Port: No transport from open ports")
 		else:
-			raise Exception("No Portstatus: No transport because no open ports")
+			raise ExceptionPort("No Portstatus: No transport because no open ports")
 		Transport.__init__(self, type, verbose)
 
 	def run(self, node_port, dryrun):
@@ -259,19 +263,25 @@ class PCUControl(Transport,PCUModel,PCURecord):
 		except ExceptionNotFound, err:
 			return "error: " + str(err)
 		except ExceptionPassword, err:
-			return "password exception: " + str(err)
+			return "Password exception: " + str(err)
 		except ExceptionTimeout, err:
-			return "timeout exception: " + str(err)
+			return "Timeout exception: " + str(err)
 		except ExceptionUsername, err:
-			return "exception: no username prompt: " + str(err)
+			return "No username prompt: " + str(err)
 		except ExceptionSequence, err:
-			return "sequence error: " + str(err)
+			return "Sequence error: " + str(err)
 		except ExceptionPrompt, err:
-			return "prompt exception: " + str(err)
+			return "Prompt exception: " + str(err)
+		except ExceptionNoTransport, err:
+			return "No Transport: " + str(err)
 		except ExceptionPort, err:
-			return "no ports exception: " + str(err)
+			return "No ports exception: " + str(err)
 		except socket.error, err:
 			return "socket error: timeout: " + str(err)
+		except urllib2.HTTPError, err:
+			return "HTTPError: " + str(err)
+		except urllib2.URLError, err:
+			return "URLError: " + str(err)
 		except EOFError, err:
 			if self.verbose:
 				logger.debug("reboot: EOF")
@@ -337,7 +347,7 @@ class IPAL(PCUControl):
 		elif self.type == Transport.TELNET:
 			return self.run_telnet(node_port, dryrun)
 		else:
-			raise Exception("Unimplemented Transport for IPAL")
+			raise ExceptionNoTransport("Unimplemented Transport for IPAL")
 	
 	def run_telnet(self, node_port, dryrun):
 		# TELNET version of protocol...
@@ -439,17 +449,30 @@ class IPAL(PCUControl):
 		s.close()
 		return 0
 
+class APCControl(PCUControl):
+	supported_ports = [22,23,80,443]
+	reboot_sequence = []
 
-class APCEurope(PCUControl):
 	def run(self, node_port, dryrun):
+		print "RUNNING!!!!!!!!!!!!"
+		if self.type == Transport.HTTPS or self.type == Transport.HTTP:
+			print "APC via http...."
+			return self.run_http_or_https(node_port, dryrun)
+		else:
+			print "APC via telnet/ssh...."
+			return self.run_telnet_or_ssh(node_port, dryrun)
+
+	def run_telnet_or_ssh(self, node_port, dryrun):
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
 
-		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
-		self.ifThenSend("\r\n> ", "2")
-		self.ifThenSend("\r\n> ", str(node_port))
-		# 3- Immediate Reboot		  
-		self.ifThenSend("\r\n> ", "3")
+		first = True
+		for val in self.reboot_sequence:
+			if first:
+				self.ifThenSend("\r\n> ", val, ExceptionPassword)
+				first = False
+			else:
+				self.ifThenSend("\r\n> ", val)
 
 		if not dryrun:
 			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
@@ -463,137 +486,135 @@ class APCEurope(PCUControl):
 		self.close()
 		return 0
 
-class APCBrazil(PCUControl):
-	def run(self, node_port, dryrun):
-		self.open(self.host, self.username)
-		self.sendPassword(self.password)
-
-		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
-		self.ifThenSend("\r\n> ", str(node_port))
-		# 4- Immediate Reboot		  
-		self.ifThenSend("\r\n> ", "4")
-
+	def run_http_or_https(self, node_port, dryrun):
 		if not dryrun:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"YES\r\n",
-							ExceptionSequence)
+			# send reboot signal.
+			# TODO: send a ManualPCU() reboot request for this PCU.
+			# NOTE: this model defies automation because, the port numbering
+			# 	and the form numbers are not consistent across models.  There is
+			# 	not direct mapping from port# to form#.
+			return "Manual Reboot Required"
+
 		else:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"", ExceptionSequence)
-		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
+			# TODO: also send message for https, since that doesn't work this way...
+			if self.type == Transport.HTTPS:
+				cmd = self.get_https_cmd()
+			elif self.type == Transport.HTTP:
+				cmd = self.get_http_cmd()
+			else:
+				raise ExceptionNoTransport("Unsupported transport for http command")
 
-		self.close()
-		return 0
+		cmd = cmd % ( self.username, self.password, self.host)
+		print "CMD: %s" % cmd
 
-class APCBerlin(PCUControl):
+		p = os.popen(cmd)
+		result = p.read()
+		if len(result.split('\n')) > 2:
+			self.logout()
+			return 0
+		else:
+			# NOTE: an error has occurred, so no need to log out.
+			print "RESULT: ", result
+			return result
+
+	def get_https_cmd(self):
+		version = self.get_version()
+		print "VERSION: %s" % version
+		if "AP96" in version:
+			cmd = "curl -s --insecure --user '%s:%s' https://%s/outlets.htm " + \
+				  " | grep -E '^[^<]+' " + \
+				  " | grep -v 'Protected Object' "
+		else:
+			# NOTE: no other case known right now...
+			cmd = "curl -s --insecure --user '%s:%s' https://%s/outlets.htm " + \
+				  " | grep -E '^[^<]+' " + \
+				  " | grep -v 'Protected Object' "
+			
+		return cmd
+	
+	def get_http_cmd(self):
+		version = self.get_version()
+		print "VERSION: %s" % version
+		if "AP7900" in version:
+			cmd = "curl -s --anyauth --user '%s:%s' http://%s/rPDUout.htm | grep -E '^[^<]+'" 
+		elif "AP7920" in version:
+			cmd = "curl -s --anyauth --user '%s:%s' http://%s/ms3out.htm | grep -E '^[^<]+' " 
+		else:
+			# default case...
+			print "USING DEFAULT"
+			cmd = "curl -s --anyauth --user '%s:%s' http://%s/ms3out.htm | grep -E '^[^<]+' " 
+			
+		return cmd
+
+	def get_version(self):
+		# NOTE: this command returns and formats all data.
+		#cmd = """curl -s --anyauth --user '%s:%s' http://%s/about.htm """ +
+		#      """ | sed -e "s/<[^>]*>//g" -e "s/&nbsp;//g" -e "/^$/d" """ +
+		#	  """ | awk '{line=$0 ; if ( ! /:/ && length(pline) > 0 ) \
+		#	  		     { print pline, line } else { pline=line} }' """ + 
+		#	  """ | grep Model """
+
+		# NOTE: we may need to return software version, no model version to
+		# 		know which file to request on the server.
+
+		if self.type == Transport.HTTP:
+			cmd = """curl -s --anyauth --user '%s:%s' http://%s/about.htm """ + \
+				  """ | sed -e "s/<[^>]*>//g" -e "s/&nbsp;//g" -e "/^$/d" """ + \
+				  """ | grep -E "AP[[:digit:]]+" """
+				  #""" | grep -E "v[[:digit:]].*" """
+		elif self.type == Transport.HTTPS:
+			cmd = """curl -s --insecure --user '%s:%s' https://%s/about.htm """ + \
+				  """ | sed -e "s/<[^>]*>//g" -e "s/&nbsp;//g" -e "/^$/d" """ + \
+				  """ | grep -E "AP[[:digit:]]+" """
+				  #""" | grep -E "v[[:digit:]].*" """
+		else:
+			raise ExceptionNoTransport("Unsupported transport to get version")
+
+		cmd = cmd % ( self.username, self.password, self.host)
+		p = os.popen(cmd)
+		result = p.read()
+		return result.strip()
+
+	def logout(self):
+		# NOTE: log out again, to allow other uses to access the machine.
+		if self.type == Transport.HTTP:
+			cmd = """curl -s --anyauth --user '%s:%s' http://%s/logout.htm """ + \
+				  """ | grep -E '^[^<]+' """
+		elif self.type == Transport.HTTPS:
+			cmd = """curl -s --insecure --user '%s:%s' http://%s/logout.htm """ + \
+				  """ | grep -E '^[^<]+' """
+		else:
+			raise ExceptionNoTransport("Unsupported transport to logout")
+
+		cmd = cmd % ( self.username, self.password, self.host)
+		p = os.popen(cmd)
+		print p.read()
+
+class APCControl12p3(APCControl):
 	def run(self, node_port, dryrun):
-		self.open(self.host, self.username)
-		self.sendPassword(self.password)
+		self.reboot_sequence = ["1", "2", str(node_port), "3"]
+		return super(APCControl12p3, self).run(node_port, dryrun)
 
-		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
-		self.ifThenSend("\r\n> ", "2")
-		self.ifThenSend("\r\n> ", "1")
-		self.ifThenSend("\r\n> ", str(node_port))
-		# 3- Immediate Reboot		  
-		self.ifThenSend("\r\n> ", "3")
-
-		if not dryrun:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"YES\r\n",
-							ExceptionSequence)
-		else:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"", ExceptionSequence)
-		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
-
-		self.close()
-		return 0
-
-class APCFolsom(PCUControl):
+class APCControl1p4(APCControl):
 	def run(self, node_port, dryrun):
-		self.open(self.host, self.username)
-		self.sendPassword(self.password)
+		self.reboot_sequence = ["1", str(node_port), "4"]
+		return super(APCControl1p4, self).run(node_port, dryrun)
 
-		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
-		self.ifThenSend("\r\n> ", "2")
-		self.ifThenSend("\r\n> ", "1")
-		self.ifThenSend("\r\n> ", str(node_port))
-		self.ifThenSend("\r\n> ", "1")
-
-		# 3- Immediate Reboot		  
-		self.ifThenSend("\r\n> ", "3")
-
-		if not dryrun:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"YES\r\n",
-							ExceptionSequence)
-		else:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"", ExceptionSequence)
-		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
-
-		self.close()
-		return 0
-
-class APCMaster(PCUControl):
-	supported_ports = [22,23]
+class APCControl121p3(APCControl):
 	def run(self, node_port, dryrun):
-		print "Rebooting %s" % self.host
-		self.open(self.host, self.username)
-		self.sendPassword(self.password)
+		self.reboot_sequence = ["1", "2", "1", str(node_port), "3"]
+		return super(APCControl121p3, self).run(node_port, dryrun)
 
-		# 1- Device Manager
-		self.ifThenSend("\r\n> ", "1", ExceptionPassword)
-		# 3- Outlet Control/Config
-		self.ifThenSend("\r\n> ", "3")
-		# n- Outlet n
-		self.ifThenSend("\r\n> ", str(node_port))
-		# 1- Control Outlet
-		self.ifThenSend("\r\n> ", "1")
-		# 3- Immediate Reboot		  
-		self.ifThenSend("\r\n> ", "3")
-
-		if not dryrun:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"YES\r\n",
-							ExceptionSequence)
-		else:
-			self.ifThenSend("Enter 'YES' to continue or <ENTER> to cancel", 
-							"", ExceptionSequence)
-		self.ifThenSend("Press <ENTER> to continue...", "", ExceptionSequence)
-
-		self.close()
-		return 0
-
-class APC(PCUControl):
-	def __init__(self, plc_pcu_record, verbose):
-		PCUControl.__init__(self, plc_pcu_record, verbose)
-
-		self.master = APCMaster(plc_pcu_record, verbose)
-		self.folsom = APCFolsom(plc_pcu_record, verbose)
-		self.europe = APCEurope(plc_pcu_record, verbose)
-
+class APCControl121p1(APCControl):
 	def run(self, node_port, dryrun):
-		try_again = True
-		sleep_time = 1
+		self.reboot_sequence = ["1", "2", "1", str(node_port), "1", "3"]
+		return super(APCControl121p1, self).run(node_port, dryrun)
 
-		for pcu in [self.master, self.europe, self.folsom]:
-			if try_again:
-				try:
-					print "-*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"
-					try_again = False
-					print "sleeping 5"
-					time.sleep(sleep_time)
-					ret = pcu.reboot(node_port, dryrun)
-				except ExceptionSequence, err:
-					del pcu
-					sleep_time = 130
-					try_again = True
+class APCControl13p13(APCControl):
+	def run(self, node_port, dryrun):
+		self.reboot_sequence = ["1", "3", str(node_port), "1", "3"]
+		return super(APCControl13p13, self).run(node_port, dryrun)
 
-		if try_again:
-			return "Unknown reboot sequence for APC PCU"
-		else:
-			return ret
 
 class IntelAMT(PCUControl):
 	supported_ports = [16992]
@@ -614,7 +635,7 @@ class IntelAMT(PCUControl):
 		print cmd_str
 		return cmd.system(cmd_str, self.TELNET_TIMEOUT)
 
-class DRACRacAdm(PCUControl):
+class DRAC(PCUControl):
 	def run(self, node_port, dryrun):
 
 		print "trying racadm_reboot..."
@@ -622,7 +643,7 @@ class DRACRacAdm(PCUControl):
 
 		return 0
 
-class DRAC(PCUControl):
+class DRACDefault(PCUControl):
 	supported_ports = [22,443,5869]
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username)
@@ -645,6 +666,15 @@ class DRAC(PCUControl):
 class HPiLO(PCUControl):
 	supported_ports = [22,443]
 	def run(self, node_port, dryrun):
+		if self.type == Transport.SSH:
+			return self.run_ssh(node_port, dryrun)
+		elif self.type == Transport.HTTP or self.type == Transport.HTTPS:
+			return self.run_https(node_port, dryrun)
+		else:
+			raise ExceptionNoTransport("Unimplemented Transport for HPiLO %s" % self.type)
+
+	def run_ssh(self, node_port, dryrun):
+
 		self.open(self.host, self.username)
 		self.sendPassword(self.password)
 
@@ -662,11 +692,8 @@ class HPiLO(PCUControl):
 
 		self.close()
 		return 0
-
 		
-class HPiLOHttps(PCUControl):
-	supported_ports = [22,443]
-	def run(self, node_port, dryrun):
+	def run_https(self, node_port, dryrun):
 
 		locfg = command.CMD()
 
@@ -694,7 +721,7 @@ class HPiLOHttps(PCUControl):
 
 		return 0
 
-class BayTechAU(PCUControl):
+class BayTechRPC3NC(PCUControl):
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username, None, "Enter user name:")
 		self.sendPassword(self.password, "Enter Password:")
@@ -712,7 +739,7 @@ class BayTechAU(PCUControl):
 		self.close()
 		return 0
 
-class BayTechGeorgeTown(PCUControl):
+class BayTechRPC16(PCUControl):
 	def run(self, node_port, dryrun):
 		self.open(self.host, self.username, None, "Enter user name:")
 		self.sendPassword(self.password, "Enter Password:")
@@ -765,6 +792,7 @@ class BayTechCtrlCUnibe(PCUControl):
 
 				if index == 0:
 					print "Reboot %d" % node_port
+					time.sleep(5)
 					s.send("Reboot %d\r\n" % node_port)
 
 					time.sleep(5)
@@ -916,7 +944,7 @@ class WTIIPS4(PCUControl):
 		self.close()
 		return 0
 
-class ePowerSwitchGood(PCUControl):
+class ePowerSwitchNew(PCUControl):
 	# NOTE:
 	# 		The old code used Python's HTTPPasswordMgrWithDefaultRealm()
 	#		For some reason this both doesn't work and in some cases, actually
@@ -1016,7 +1044,7 @@ class ePowerSwitchOld(PCUControl):
 		self.close()
 		return 0
 
-class ePowerSwitch(PCUControl):
+class ePowerSwitchOld(PCUControl):
 	supported_ports = [80]
 	def run(self, node_port, dryrun):
 		self.url = "http://%s:%d/" % (self.host,80)
@@ -1061,6 +1089,9 @@ class ManualPCU(PCUControl):
 			# custom jobs.
 			pass
 		return 0
+
+class PM211MIP(ManualPCU):
+	supported_ports = [80,443]
 
 ### rebooting european BlackBox PSE boxes
 # Thierry Parmentelat - May 11 2005
@@ -1270,18 +1301,15 @@ def pcu_name(pcu):
 	else:
 		return None
 
-#import database
-from monitor import database
-fb = None
 
 def get_pcu_values(pcu_id):
-	global fb
-	if fb == None:
-		# this shouldn't be loaded each time...
-		fb = database.dbLoad("findbadpcus")
-		
+	print "pcuid: %s" % pcu_id
 	try:
-		values = fb['nodes']["id_%s" % pcu_id]['values']
+		pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=pcu_id).first()
+		if pcurec:
+			values = pcurec.to_dict()
+		else:
+			values = None
 	except:
 		values = None
 
@@ -1289,26 +1317,49 @@ def get_pcu_values(pcu_id):
 
 def reboot(nodename):
 	return reboot_policy(nodename, True, False)
+
+def reboot_str(nodename):
+	global verbose
+	continue_probe = True
+	dryrun=False
+
+	pcu = plc.getpcu(nodename)
+	if not pcu:
+		logger.debug("no pcu for %s" % nodename)
+		print "no pcu for %s" % nodename
+		return False # "%s has no pcu" % nodename
+
+	values = get_pcu_values(pcu['pcu_id'])
+	if values == None:
+		logger.debug("No values for pcu probe %s" % nodename)
+		print "No values for pcu probe %s" % nodename
+		return False #"no info for pcu_id %s" % pcu['pcu_id']
+	
+	# Try the PCU first
+	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
+
+	ret = reboot_test_new(nodename, values, verbose, dryrun)
+	return ret
 	
 def reboot_policy(nodename, continue_probe, dryrun):
 	global verbose
 
 	pcu = plc.getpcu(nodename)
 	if not pcu:
-		logger.debug("no pcu for %s" % hostname)
-		print "no pcu for %s" % hostname
+		logger.debug("no pcu for %s" % nodename)
+		print "no pcu for %s" % nodename
 		return False # "%s has no pcu" % nodename
 
 	values = get_pcu_values(pcu['pcu_id'])
 	if values == None:
-		logger.debug("No values for pcu probe %s" % hostname)
-		print "No values for pcu probe %s" % hostname
+		logger.debug("No values for pcu probe %s" % nodename)
+		print "No values for pcu probe %s" % nodename
 		return False #"no info for pcu_id %s" % pcu['pcu_id']
 	
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
 
-	ret = reboot_test(nodename, values, continue_probe, verbose, dryrun)
+	ret = reboot_test_new(nodename, values, verbose, dryrun)
 
 	if ret != 0:
 		print ret
@@ -1323,26 +1374,50 @@ class Unknown(PCUControl):
 def model_to_object(modelname):
 	if "AMT" in modelname:
 		return IntelAMT
-	elif "DS4-RPC" in modelname:
+	elif "BayTech" in modelname:
 		return BayTech
-	elif "ilo2" in modelname:
+	elif "HPiLO" in modelname:
 		return HPiLO
-	elif "IP-41x" in modelname:
+	elif "IPAL" in modelname:
 		return IPAL
-	elif "AP79xx" in modelname or "Masterswitch" in modelname:
-		return APCMaster
+	elif "APC" in modelname:
+		return APCControl
 	elif "DRAC" in modelname:
 		return DRAC
 	elif "WTI" in modelname:
 		return WTIIPS4
 	elif "ePowerSwitch" in modelname:
-		return ePowerSwitch
-	elif "ipmi" in modelname:
+		return ePowerSwitchNew
+	elif "IPMI" in modelname:
 		return IPMI
-	elif "bbsemaverick" in modelname:
+	elif "BlackBoxPSMaverick" in modelname:
 		return BlackBoxPSMaverick
+	elif "PM211MIP" in modelname:
+		return PM211MIP
+	elif "ManualPCU" in modelname:
+		return ManualPCU 
 	else:
+		print "UNKNOWN model %s"%modelname
 		return Unknown
+
+def reboot_test_new(nodename, values, verbose, dryrun):
+	rb_ret = ""
+	if 'plc_pcu_stats' in values:
+		values.update(values['plc_pcu_stats'])
+
+	try:
+		modelname = values['model']
+		if modelname:
+			object = eval('%s(values, verbose, ["22", "23", "80", "443", "9100", "16992", "5869"])' % modelname)
+			rb_ret = object.reboot(values[nodename], dryrun)
+		else:
+			rb_ret =  "Not_Run"
+		# TODO: how to handle the weird, georgetown pcus, the drac faults, and ilo faults
+	except ExceptionPort, err:
+		rb_ret = str(err)
+
+	return rb_ret
+
 
 def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 	rb_ret = ""
@@ -1362,23 +1437,23 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 			# TODO: make a more robust version of APC
 			if values['pcu_id'] in [1102,1163,1055,1111,1231,1113,1127,1128,1148]:
-				apc = APCEurope(values, verbose, ['22', '23'])
+				apc = APCControl12p3(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1110,86]:
-				apc = APCBrazil(values, verbose, ['22', '23'])
+				apc = APCControl1p4(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1221,1225,1220,1192]:
-				apc = APCBerlin(values, verbose, ['22', '23'])
+				apc = APCControl121p3(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1173,1240,47,1363,1405,1401,1372,1371]:
-				apc = APCFolsom(values, verbose, ['22', '23'])
+				apc = APCControl121p1(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 			else:
-				apc = APCMaster(values, verbose, ['22', '23'])
+				apc = APCControl13p13(values, verbose, ['22', '23'])
 				rb_ret = apc.reboot(values[nodename], dryrun)
 
 		# BayTech DS4-RPC
@@ -1389,7 +1464,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				rb_ret = baytech.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [93]:
-				baytech = BayTechAU(values, verbose, ['22', '23'])
+				baytech = BayTechRPC3NC(values, verbose, ['22', '23'])
 				rb_ret = baytech.reboot(values[nodename], dryrun)
 
 			elif values['pcu_id'] in [1057]:
@@ -1401,10 +1476,10 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 				# This pcu sometimes doesn't present the 'Username' prompt,
 				# unless you immediately try again...
 				try:
-					baytech = BayTechGeorgeTown(values, verbose, ['22', '23'])
+					baytech = BayTechRPC16(values, verbose, ['22', '23'])
 					rb_ret = baytech.reboot(values[nodename], dryrun)
 				except:
-					baytech = BayTechGeorgeTown(values, verbose, ['22', '23'])
+					baytech = BayTechRPC16(values, verbose, ['22', '23'])
 					rb_ret = baytech.reboot(values[nodename], dryrun)
 			else:
 				baytech = BayTech(values, verbose, ['22', '23'])
@@ -1424,13 +1499,13 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 
 		# DRAC ssh
 		elif continue_probe and values['model'].find("DRAC") >= 0:
-			# TODO: I don't think DRACRacAdm will throw an exception for the
+			# TODO: I don't think DRAC will throw an exception for the
 			# default method to catch...
 			try:
-				drac = DRACRacAdm(values, verbose, ['443', '5869'])
+				drac = DRAC(values, verbose, ['443', '5869'])
 				rb_ret = drac.reboot(0, dryrun)
 			except:
-				drac = DRAC(values, verbose, ['22'])
+				drac = DRACDefault(values, verbose, ['22'])
 				rb_ret = drac.reboot(0, dryrun)
 
 		elif continue_probe and values['model'].find("WTI IPS-4") >= 0:
@@ -1455,13 +1530,13 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 		elif continue_probe and values['model'].find("ePowerSwitch") >=0:
 			# TODO: allow a different port than http 80.
 			if values['pcu_id'] in [1089, 1071, 1046, 1035, 1118]:
-				eps = ePowerSwitchGood(values, verbose, ['80'])
+				eps = ePowerSwitchNew(values, verbose, ['80'])
 			elif values['pcu_id'] in [1003]:
 				# OLD EPOWER
 				print "OLD EPOWER"
-				eps = ePowerSwitch(values, verbose, ['80'])
+				eps = ePowerSwitchOld(values, verbose, ['80'])
 			else:
-				eps = ePowerSwitchGood(values, verbose, ['80'])
+				eps = ePowerSwitchNew(values, verbose, ['80'])
 
 			rb_ret = eps.reboot(values[nodename], dryrun)
 		elif continue_probe and values['pcu_id'] in [1122]:
@@ -1472,7 +1547,7 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			rb_ret = "Unsupported_PCU"
 
 		elif continue_probe == False:
-			if 'portstatus' in values:
+			if 'port_status' in values:
 				rb_ret = "NetDown"
 			else:
 				rb_ret = "Not_Run"
@@ -1519,6 +1594,5 @@ def main():
 		print err
 
 if __name__ == '__main__':
-	import plc
 	logger = logging.getLogger("monitor")
 	main()

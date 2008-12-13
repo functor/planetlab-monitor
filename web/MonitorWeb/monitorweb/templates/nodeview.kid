@@ -26,16 +26,16 @@ from links import *
 			<tbody>
 				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a class="ext-link" href="${plc_site_link_id(node.plc_node_stats['site_id'])}">
+					<td><a class="ext-link" href="${plc_site_uri_id(node.plc_node_stats['site_id'])}">
 							<span class="icon">${node.loginbase}</span></a>
 					</td>
 					<td id="node-${node.observed_status}" nowrap="true" >
-						<a class="ext-link" href="${plc_node_link(node.hostname)}">
+						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
 							<span class="icon">${node.hostname}</span></a>
 					</td>
 					<td py:content="node.ping_status"></td>
 					<td py:if="node.pcu_short_status != 'none'" id="status-${node.pcu_short_status}">
-						<a href="pcuview?pcuid=${node.plc_node_stats['pcu_ids']}">${node.pcu_short_status}</a></td>
+						<a href="${link('pcuview', pcuid=node.plc_node_stats['pcu_ids'])}">${node.pcu_short_status}</a></td>
 					<td py:if="node.pcu_short_status == 'none'" id="status-${node.pcu_short_status}">
 						${node.pcu_short_status}</td>
 					<td nowrap="true" py:content="node.kernel"></td>

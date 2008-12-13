@@ -26,7 +26,7 @@ global_round = 1
 errorState = {}
 count = 0
 
-def nmap_portstatus(status):
+def nmap_port_status(status):
 	ps = {}
 	l_nmap = status.split()
 	ports = l_nmap[4:]
@@ -179,31 +179,31 @@ def collectPingAndSSH(pcuname, cohash):
 
 		#### COMPLETE ENTRY   #######################
 
-		values['complete_entry'] = []
+		values['entry_complete'] = []
 		#if values['protocol'] is None or values['protocol'] is "":
-		#	values['complete_entry'] += ["protocol"]
+		#	values['entry_complete'] += ["protocol"]
 		if values['plc_pcu_stats']['model'] is None or values['plc_pcu_stats']['model'] is "":
-			values['complete_entry'] += ["model"]
+			values['entry_complete'] += ["model"]
 			# Cannot continue due to this condition
 			continue_probe = False
 
 		if values['plc_pcu_stats']['password'] is None or values['plc_pcu_stats']['password'] is "":
-			values['complete_entry'] += ["password"]
+			values['entry_complete'] += ["password"]
 			# Cannot continue due to this condition
 			continue_probe = False
 
-		if len(values['complete_entry']) > 0:
+		if len(values['entry_complete']) > 0:
 			continue_probe = False
 
 		if values['plc_pcu_stats']['hostname'] is None or values['plc_pcu_stats']['hostname'] is "":
-			values['complete_entry'] += ["hostname"]
+			values['entry_complete'] += ["hostname"]
 		if values['plc_pcu_stats']['ip'] is None or values['plc_pcu_stats']['ip'] is "":
-			values['complete_entry'] += ["ip"]
+			values['entry_complete'] += ["ip"]
 
 		# If there are no nodes associated with this PCU, then we cannot continue.
 		if len(values['plc_pcu_stats']['node_ids']) == 0:
 			continue_probe = False
-			values['complete_entry'] += ['NoNodeIds']
+			values['entry_complete'] += ['NoNodeIds']
 
 		#### DNS and IP MATCH #######################
 		if values['plc_pcu_stats']['hostname'] is not None and values['plc_pcu_stats']['hostname'] is not "" and \
@@ -212,21 +212,21 @@ def collectPingAndSSH(pcuname, cohash):
 			try:
 				ipaddr = socket.gethostbyname(values['plc_pcu_stats']['hostname'])
 				if ipaddr == values['plc_pcu_stats']['ip']:
-					values['dnsmatch'] = "DNS-OK"
+					values['dns_status'] = "DNS-OK"
 				else:
-					values['dnsmatch'] = "DNS-MISMATCH"
+					values['dns_status'] = "DNS-MISMATCH"
 					continue_probe = False
 
 			except Exception, err:
-				values['dnsmatch'] = "DNS-NOENTRY"
+				values['dns_status'] = "DNS-NOENTRY"
 				values['plc_pcu_stats']['hostname'] = values['plc_pcu_stats']['ip']
 				#print err
 		else:
 			if values['plc_pcu_stats']['ip'] is not None and values['plc_pcu_stats']['ip'] is not "":
-				values['dnsmatch'] = "NOHOSTNAME"
+				values['dns_status'] = "NOHOSTNAME"
 				values['plc_pcu_stats']['hostname'] = values['plc_pcu_stats']['ip']
 			else:
-				values['dnsmatch'] = "NO-DNS-OR-IP"
+				values['dns_status'] = "NO-DNS-OR-IP"
 				values['plc_pcu_stats']['hostname'] = "No_entry_in_DB"
 				continue_probe = False
 
@@ -235,14 +235,14 @@ def collectPingAndSSH(pcuname, cohash):
 			nmap = util.command.CMD()
 			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
 			# NOTE: an empty / error value for oval, will still work.
-			(values['portstatus'], continue_probe) = nmap_portstatus(oval)
+			(values['port_status'], continue_probe) = nmap_port_status(oval)
 		else:
-			values['portstatus'] = None
+			values['port_status'] = None
 			
 
 		######  DRY RUN  ############################
 		if 'node_ids' in values['plc_pcu_stats'] and len(values['plc_pcu_stats']['node_ids']) > 0:
-			rb_ret = reboot.reboot_test(values['plc_pcu_stats']['nodenames'][0], values, continue_probe, 1, True)
+			rb_ret = reboot.reboot_test_new(values['plc_pcu_stats']['nodenames'][0], values, continue_probe, 1, True)
 		else:
 			rb_ret = "Not_Run" # No nodes to test"
 
@@ -255,6 +255,7 @@ def collectPingAndSSH(pcuname, cohash):
 		print "____________________________________"
 		errors['traceback'] = traceback.format_exc()
 		print errors['traceback']
+		values['reboot'] = errors['traceback']
 
 	values['date_checked'] = time.time()
 	return (pcuname, values, errors)
@@ -278,9 +279,9 @@ def recordPingAndSSH(request, result):
 					round=fbsync.round,
 					plc_pcuid=pcu_id,
 					plc_pcu_stats=values['plc_pcu_stats'],
-					dns_status=values['dnsmatch'],
-					port_status=values['portstatus'],
-					entry_complete=" ".join(values['complete_entry']),
+					dns_status=values['dns_status'],
+					port_status=values['port_status'],
+					entry_complete=" ".join(values['entry_complete']),
 					reboot_trial_status="%s" % values['reboot'],
 				)
 		fbnodesync.round = global_round
@@ -398,6 +399,7 @@ def main():
 	return 0
 
 
+print "main"
 if __name__ == '__main__':
 	import logging
 	logger = logging.getLogger("monitor")
@@ -416,7 +418,7 @@ if __name__ == '__main__':
 						site=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
-						refresh=False,
+						cachecalls=True,
 						force=False,
 						)
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
@@ -432,7 +434,7 @@ if __name__ == '__main__':
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 						help="Specify the name of the database to which the information is saved")
-	parser.add_option("", "--refresh", action="store_true", dest="refresh",
+	parser.add_option("", "--nocachecalls", action="store_false", dest="cachecalls",
 						help="Refresh the cached values")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
@@ -440,6 +442,10 @@ if __name__ == '__main__':
 						help="Force probe without incrementing global 'round'.")
 	parser = parsermodule.getParser(['defaults'], parser)
 	config = parsermodule.parse_args(parser)
+	if hasattr(config, 'cachecalls') and not config.cachecalls:
+		# NOTE: if explicilty asked, refresh cached values.
+		print "Reloading PLCCache"
+		plccache.init()
 	try:
 		# NOTE: evidently, there is a bizarre interaction between iLO and ssh
 		# when LANG is set... Do not know why.  Unsetting LANG, fixes the problem.

@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 packages=['monitor', 'monitor.database', 'monitor.database.zabbixapi', 
-		'monitor.database.info', 'monitor.pcu', 'monitor.sources', 
+		'monitor.database.info', 'monitor.sources', 
 		'monitor.util', 'monitor.wrapper' ]
 
 print packages

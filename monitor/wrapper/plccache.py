@@ -14,7 +14,8 @@ def dsites_from_lsites(l_sites):
 			id2lb[site['site_id']] = site['login_base']
 		else:
 			#print "Two sites have the same login_base value %s!" % site['login_base']
-			sys.exit(1)
+			#sys.exit(1)
+			continue
 	return (d_sites, id2lb)
 
 def dsn_from_dsln(d_sites, id2lb, l_nodes):
@@ -114,6 +115,7 @@ def create_plcdb():
 	l_sites = plc.getSites({'peer_id':None}, ['login_base', 'site_id', 'abbreviated_name', 'latitude', 'longitude', 
 											  'max_slices', 'slice_ids', 'node_ids' ])
 	if len(l_sites) == 0:
+		print "no sites! exiting..."
 		sys.exit(1)
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
 

@@ -1,4 +1,5 @@
 from monitor import config 
+import turbogears as tg
 import urllib
 
 def plc_node_uri(hostname):
@@ -37,8 +38,8 @@ def query_to_path(**kwargs):
 			tgpath += '?' + query_string
 	return tgpath
 
-def link(base, ext=True, **kwargs):
-	if ext:
+def link(base, **kwargs):
+	if config.embedded:
 		str = "?query=" + base + query_to_path(**kwargs)
 	else:
 		str = tg.url(base, **kwargs)

@@ -15,6 +15,7 @@ def getconf(hostname, force=False, media=None):
 		f.write( api.AdmGenerateNodeConfFile(n[0]['node_id']) )
 		f.close()
 		print os.system("cd bootcd; ./build.sh -f %s.txt -t iso -o /plc/data/var/www/html/bootcds/%s.iso &> /dev/null" % ( hostname, hostname))
+		print "cd bootcd; ./build.sh -f %s.txt -t usb_partition -o /plc/data/var/www/html/bootcds/%s-partition.usb &> /dev/null" % ( hostname, hostname)
 		print os.system("cd bootcd; ./build.sh -f %s.txt -t usb_partition -o /plc/data/var/www/html/bootcds/%s-partition.usb &> /dev/null" % ( hostname, hostname))
 	else:
 		# assume that the images have already been generated..

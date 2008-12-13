@@ -35,8 +35,6 @@ def get_state_from_port(host):
 			   'debug' : 3,
 			   'boot' : 4,
 			   }
-	#print "--%s--" % line
-	#print "--%s--" % type(line)
 	if line.strip() == "" or line.strip() == "Timeout":
 		return mapping["down"]
 	(p22, p80, p806) = line.split()
@@ -51,4 +49,5 @@ def get_state_from_port(host):
 	else:
 		return mapping["unknown"]
 
-print get_state_from_port(sys.argv[1])
+if __name__ == "__main__":
+	print get_state_from_port(sys.argv[1])

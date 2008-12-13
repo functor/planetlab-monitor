@@ -3,6 +3,7 @@
 layout_params['page_title'] = "Monitor Node List"
 from monitor.util import diff_time
 from time import mktime
+from links import *
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
@@ -12,12 +13,12 @@ from time import mktime
   	<table width="100%">
 		<thead>
 			<tr>
-				<th><a href="${tg.url('node', filter='BOOT')}">Production(${fc['BOOT']})</a></th>
-				<th><a href="${tg.url('node', filter='DEBUG')}">Debug(${fc['DEBUG']})</a></th>
-				<th><a href="${tg.url('node', filter='DOWN')}">Down(${fc['DOWN']})</a></th>
-				<th><a href="${tg.url('node', filter='neverboot')}">Never Booted(${fc['neverboot']})</a></th>
-				<th><a href="${tg.url('node', filter='pending')}">Pending Reply(${fc['pending']})</a></th>
-				<th><a href="${tg.url('node', filter='all')}">All</a></th>
+				<th><a href="${link('node', filter='BOOT')}">Production(${fc['BOOT']})</a></th>
+				<th><a href="${link('node', filter='DEBUG')}">Debug(${fc['DEBUG']})</a></th>
+				<th><a href="${link('node', filter='DOWN')}">Down(${fc['DOWN']})</a></th>
+				<th><a href="${link('node', filter='neverboot')}">Never Booted(${fc['neverboot']})</a></th>
+				<th><a href="${link('node', filter='pending')}">Pending Reply(${fc['pending']})</a></th>
+				<th><a href="${link('node', filter='all')}">All</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -40,8 +41,8 @@ from time import mktime
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="siteview?loginbase=${node.loginbase}">${node.loginbase}</a></td>
-					<td nowrap="true"><a href="nodeview?hostname=${node.hostname}" py:content="node.hostname"></a></td>
+					<td><a href="${link('siteview', loginbase=node.loginbase)}">${node.loginbase}</a></td>
+					<td nowrap="true"><a target="_top" href="${link('nodeview', hostname=node.hostname)}" py:content="node.hostname"></a></td>
 					<td py:content="node.ping_status"></td>
 					<td id="status-${node.pcu_short_status}" py:content="node.pcu_short_status"></td>
 					<td py:content="node.observed_status"></td>

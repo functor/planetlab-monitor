@@ -87,6 +87,11 @@ class CachedPLC(PLC):
 		def run_or_returncached(*params):
 			cachename = self._param_to_str(name, *params)
 			#print "cachename is %s" % cachename
+			if hasattr(config, 'refresh'):
+				refresh = config.refresh
+			else:
+				refresh = False
+
 			if 'Get' in name:
 				if not database.cachedRecently(cachename):
 					load_old_cache = False
@@ -207,7 +212,10 @@ def getpcu(nodename):
 	anon = {'AuthMethod': "anonymous"}
 	nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
 	if nodeinfo['pcu_ids']:
+		print nodeinfo
 		sitepcu = api.GetPCUs(auth.auth, nodeinfo['pcu_ids'])[0]
+		print sitepcu
+		print nodeinfo["ports"]
 		sitepcu[nodename] = nodeinfo["ports"][0]
 		return sitepcu
 	else:

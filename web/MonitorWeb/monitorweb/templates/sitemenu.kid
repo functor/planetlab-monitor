@@ -6,6 +6,10 @@
     <script type="text/javascript" src="tg_js/MochiKit.js"></script>
     <script type="text/javascript" src="static/javascript/sortable_tables.js"></script>
 
+	<!-- If in an iframe, then include this... -->
+	<?python from monitor import config ?>
+	<base py:if="config.embedded" target="_top" href="https://${config.MONITOR_HOST}/db/monitor/" />
+
   </head>
 
   <body>
@@ -16,10 +20,11 @@
 			<table id="nps-table" width="100%">
 			<thead>
 			<tr>
-				<th><a href="${tg.url('site')}">Sites</a></th>
-				<th><a href="${tg.url('pcu')}">PCUs</a></th>
-				<th><a href="${tg.url('node')}">Nodes</a></th>
-				<th><a href="${tg.url('action')}">Actions</a></th>
+				<?python from monitorweb.templates.links import link ?>
+				<th><a href="${link('site')}">Sites</a></th>
+				<th><a href="${link('pcu')}">PCUs</a></th>
+				<th><a href="${link('node')}">Nodes</a></th>
+				<th><a href="${link('action')}">Actions</a></th>
 			</tr>
 			</thead>
 			<tbody>

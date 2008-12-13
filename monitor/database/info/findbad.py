@@ -32,7 +32,7 @@ class FindbadNodeRecord(Entity):
 		fbsync = FindbadNodeRecordSync.get_by(hostname="global")
 		if fbsync:
 			kwargs['round'] = fbsync.round
-			return cls.query.filter_by(**kwargs)
+			return cls.query.filter_by(**kwargs).order_by(FindbadNodeRecord.date_checked.desc())
 		else:
 			return []
 
@@ -95,7 +95,7 @@ class FindbadPCURecord(Entity):
 	def get_latest_by(cls, **kwargs):
 		fbsync = FindbadPCURecordSync.get_by(plc_pcuid=0)
 		kwargs['round'] = fbsync.round
-		return cls.query.filter_by(**kwargs)
+		return cls.query.filter_by(**kwargs).order_by(FindbadPCURecord.date_checked.desc())
 # ACCOUNTING
 	date_checked = Field(DateTime)
 	round = Field(Int,default=0)
