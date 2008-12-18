@@ -2,6 +2,7 @@
 <?python
 layout_params['page_title'] = "Monitor Site View"
 from monitor.util import diff_time
+from time import mktime
 from links import *
 ?>
 <html py:layout="'sitemenu.kid'"
@@ -14,10 +15,11 @@ from links import *
 			<thead>
 				<tr>
 					<th>Site name</th>
-					<th>Status</th>
 					<th>Enabled</th>
-					<th>Slices (created / max)</th>
-					<th>Nodes (online / registered)</th>
+					<th>Penalty</th>
+					<th>Slices/Max</th>
+					<th>Nodes/Total</th>
+					<th>Status</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -25,15 +27,19 @@ from links import *
 					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
-				  <td id="site-${site.status}" py:content="site.last_changed"></td>
-				  <td py:content="site.enabled"></td>
-				  <td>${site.slices_used}/${site.slices_total}</td>
-				  <td>${site.nodes_up} / ${site.nodes_total}</td>
+					<td py:content="site.enabled"></td>
+					<td>n/a</td>
+					<td>${site.slices_used}/${site.slices_total}</td>
+					<td>${site.nodes_up} / ${site.nodes_total}</td>
+					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
 				</tr>
 			</tbody>
 		</table>
     <h3>Node List</h3>
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
+		<p py:if="len(nodequery) == 0">
+			There are no registered nodes for this PCU.
+		</p>
+		<table py:if="len(nodequery) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
@@ -49,7 +55,7 @@ from links import *
 				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
 					<td id="node-${node.observed_status}" nowrap="true">
-						<a href="${link('nodeview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
+						<a href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
 					<td py:content="node.ping_status"></td>
 					<td py:if="node.pcu_short_status != 'none'" id="status-${node.pcu_short_status}">
 						<a href="${link('pcuview', pcuid=node.plc_node_stats['pcu_ids'])}">${node.pcu_short_status}</a></td>

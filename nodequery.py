@@ -256,7 +256,7 @@ def query_to_dict(query):
 def pcu_in(fbdata):
 	#if 'plcnode' in fbdata:
 	if 'plc_node_stats' in fbdata:
-		if 'pcu_ids' in fbdata['plc_node_stats']:
+		if fbdata['plc_node_stats'] and 'pcu_ids' in fbdata['plc_node_stats']:
 			if len(fbdata['plc_node_stats']['pcu_ids']) > 0:
 				return True
 	return False
@@ -275,19 +275,28 @@ def pcu_select(str_query, nodelist=None):
 
 	dict_query = query_to_dict(str_query)
 	print "dict_query", dict_query
+	print 'length %s' % len(fbpcuquery.all())
 
-	for noderec in fbquery:
-		if nodelist is not None: 
-			if noderec.hostname not in nodelist: continue
-	
-		fb_nodeinfo  = noderec.to_dict()
-		if pcu_in(fb_nodeinfo):
-			pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=get(fb_nodeinfo, 'plc_node_stats.pcu_ids')[0]).first()
-			if pcurec:
-				pcuinfo = pcurec.to_dict()
-				if verify(dict_query, pcuinfo):
-					nodenames.append(noderec.hostname)
-					pcunames.append(pcuinfo['plc_pcuid'])
+	for pcurec in fbpcuquery:
+		pcuinfo = pcurec.to_dict()
+		if verify(dict_query, pcuinfo):
+			#nodenames.append(noderec.hostname)
+			#print 'appending %s' % pcuinfo['plc_pcuid']
+			pcunames.append(pcuinfo['plc_pcuid'])
+
+	#for noderec in fbquery:
+	#	if nodelist is not None: 
+	#		if noderec.hostname not in nodelist: continue
+#	
+#		fb_nodeinfo  = noderec.to_dict()
+#		if pcu_in(fb_nodeinfo):
+#			pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=get(fb_nodeinfo, 
+#													'plc_node_stats.pcu_ids')[0]).first()
+#			if pcurec:
+#				pcuinfo = pcurec.to_dict()
+#				if verify(dict_query, pcuinfo):
+#					nodenames.append(noderec.hostname)
+#					pcunames.append(pcuinfo['plc_pcuid'])
 	return (nodenames, pcunames)
 
 def node_select(str_query, nodelist=None, fb=None):

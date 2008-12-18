@@ -11,6 +11,7 @@ from pcucontrol  import reboot
 from monitor import parser as parsermodule
 from monitor import config
 from monitor.database.info.model import HistoryPCURecord, FindbadPCURecord
+from monitor.database.dborm import mon_session as session
 from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 
@@ -93,6 +94,7 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 	# replace with another operations that also commits all pending ops, such
 	# as session.commit() or flush() or something
 	print HistoryPCURecord.query.count()
+	session.flush()
 
 	return True
 

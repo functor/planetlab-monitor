@@ -12,16 +12,40 @@ from links import *
 	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
-    <h3>PCU Status</h3>
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
+    <h3 py:if="len(sitequery) > 0">Site Status</h3>
+		<table py:if="len(sitequery) > 0" id="sub-table" border="1" width="100%">
+			<thead>
+				<tr>
+					<th>Site name</th>
+					<th>Enabled</th>
+					<th>Penalty</th>
+					<th>Slices/Max</th>
+					<th>Nodes/Total</th>
+					<th>Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
+					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
+							<span class="icon">${site.loginbase}</span></a>
+					</td>
+					<td py:content="site.enabled"></td>
+					<td>n/a</td>
+					<td>${site.slices_used}/${site.slices_total}</td>
+					<td>${site.nodes_up} / ${site.nodes_total}</td>
+					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+				</tr>
+			</tbody>
+		</table>
+    <h3 py:if="len(pcuquery) != 0" >PCU Status</h3>
+		<table py:if="len(pcuquery) != 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
-					<th mochi:format="str">Site</th>
 					<th>PCU Name</th>
 					<th>Missing Fields</th>
 					<th>DNS Status</th>
-					<th>Port Status</th>
+					<th nowrap='true'>Port Status</th>
 					<th width="80%">Test Results</th>
 					<th>Model</th>
 					<th>Nodes</th>
@@ -30,10 +54,6 @@ from links import *
 			<tbody>
 				<tr py:for="i,pcu in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a class="ext-link" href="${plc_site_uri_id(pcu.plc_pcu_stats['site_id'])}">
-							<span class="icon">${pcu.loginbase}</span>
-						</a>
-					</td>
 					<td nowrap="true" >
 						<a class="ext-link" href="${plc_pcu_uri_id(pcu.plc_pcu_stats['pcu_id'])}">
 							<span class="icon">${pcu_name(pcu.plc_pcu_stats)}</span>
@@ -41,17 +61,139 @@ from links import *
 					</td>
 					<td py:content="pcu.entry_complete"></td>
 					<td id="dns-${pcu.dns_status}" py:content="pcu.dns_status"></td>
-					<td>
+					<td nowrap='true'>
 						<span py:for="port,state in pcu.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
-					<td width="40" id="status-${pcu.status}"><pre py:content="pcu.reboot_trial_status"></pre></td>
+					<td width="40" id="status-${pcu.status}"><pre class="results" py:content="pcu.reboot_trial_status"></pre></td>
 					<td py:content="pcu.plc_pcu_stats['model']"></td>
 					<td py:content="len(pcu.plc_pcu_stats['node_ids'])"></td>
 				</tr>
 			</tbody>
 		</table>
-	<h4>Convenience Calls</h4>
+	<div class="oneline" id="legend" py:if="len(pcuquery) == 0">
+		<em>There no PCUs associated with this host.</em>
+	</div>
+	<div class="oneline" id="legend" py:if="len(pcuquery) > 0">
+		<em>Legend: </em>
+		<a class="info" href="#">DNS Status<span>
+			<table border="1" align="center" width="100%">
+				<tr><th colspan="2">Legend for 'DNS Status'</th></tr>
+
+				<tr><td id="dns-DNS-OK">DNS-OK</td>
+					<td>This indicates that the DNS name and registered IP address match.</td>
+				</tr>
+				<tr><td id="dns-DNS-MISMATCH">DNS-MISMATCH</td>
+					<td>Sometimes, the registered IP and DNS IP address do not match.  
+						In these cases it is not clear which is correct, 
+						so an error is flagged.</td>
+				</tr>
+				<tr><td id="dns-DNS-NOENTRY">DNS-NOENTRY</td>
+					<td>While a hostname is provided in the registration, the hostname is not actually registered in DNS.</td>
+				</tr>
+				<tr><td id="dns-NOHOSTNAME">NOHOSTNAME</td>
+					<td>While we prefer that a hostname be registered, it is not
+					strictly required, since simply the IP address, if it is static, is enough to access the PCU.</td>
+				</tr>
+			</table>
+			</span> </a> &nbsp;
+		<a class="info" href="#">Port Status<span>
+		<table border="1" align="center" width="100%">
+			<tr><th colspan="2">Legend for 'Port Status'</th></tr>
+
+			<tr><td id="portopen">Open</td>
+				<td>Green port numbers are believed to be open.</td>
+			</tr>
+			<tr><td id="portfiltered">Filtered</td>
+				<td>Gold port numbers are believed to be filtered or simply offline.</td>
+			</tr>
+			<tr><td id="portclosed">Closed</td>
+				<td>Finally, red ports appear to be closed.</td>
+			</tr>
+		</table>
+				</span> </a> &nbsp;
+		<a class="info" href="#">Test Results<span>
+		<table border="1" align="center" width="100%">
+			<tr><th colspan="2">Legend for 'Test Results'</th></tr>
+
+			<tr><td id="status-0">OK</td>
+				<td>The PCU is accessible, and short of actually rebooting the node, everything appears to work.</td>
+			</tr>
+			<tr><td id="status-NetDown">NetDown</td>
+				<td>The PCU is inaccessible from the PlanetLab address block 128.112.139.0/25, or it is simply offline.</td>
+			</tr>
+			<tr><td id="status-Not_Run">Not_Run</td>
+				<td>Previous errors, such as DNS or an incomplete configuration prevented the actual test from begin performed.</td>
+			</tr>
+			<tr><td id="status-error">Other Errors</td>
+				<td>Other errors are reported by the test that are more specific to the block encountered by the script.</td>
+			</tr>
+		</table>
+				</span> </a>
+	</div>
+	<h3>Nodes</h3>
+		<p py:if="len(nodequery) == 0">
+			There are no registered nodes for this site.
+		</p>
+		<table py:if="len(nodequery) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
+			<thead>
+				<tr>
+					<th mochi:format="int"></th>
+					<th>Hostname</th>
+					<th>last_contact</th>
+					<th>Last_checked</th>
+					<th nowrap='true'>Port Status</th>
+					<th></th>
+					<th></th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
+					<td></td>
+					<td id="node-${node.observed_status}" nowrap="true" >
+						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
+							<span class="icon">${node.hostname}</span></a>
+					</td>
+					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
+					<td py:content="diff_time(mktime(node.date_checked.timetuple()))"></td>
+					<td>
+						<span py:for="port,state in node.ports" 
+						id="port${state}" py:content="'%s, ' % port">80</span>
+					</td>
+					<td>
+						<!-- TODO: add some values/code to authenticate the operation.  -->
+	  					<form action="${link('pcuview', hostname=node.hostname)}" name="externalscan${i}" method='post'>
+						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+						<input type='hidden' name='type' value='ExternalScan' /> 
+	  					</form>
+						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a>
+					</td>
+					<td>
+						<!-- TODO: add some values/code to authenticate the operation.  -->
+	  					<form action="${link('pcuview', hostname=node.hostname)}" name="internalscan${i}" method='post'>
+						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+						<input type='hidden' name='type' value='InternalScan' /> 
+	  					</form>
+						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a>
+					</td>
+					<td py:if="len(pcuquery) > 0">
+						<!-- TODO: add some values/code to authenticate the operation.  -->
+	  					<form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
+						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+						<input type='hidden' name='type' value='Reboot' /> 
+	  					</form>
+						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="error" py:if="exceptions is not None">
+			${exceptions}
+		</div>
+		<div id="status_block" class="flash"
+            py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
+	<h4 py:if="len(pcuquery) > 0">Convenience Calls</h4>
 		<?python 
 			if len(pcuquery) == 0: pcu = None
 		?>
@@ -68,9 +210,14 @@ from links import *
 						<a href="http://${pcu_name(pcu.plc_pcu_stats)}">http://${pcu_name(pcu.plc_pcu_stats)}</a>
 					</span>
 					<span class="code" py:if="port == 443 and state == 'open'">
+						<br/>
 						<a href="https://${pcu_name(pcu.plc_pcu_stats)}">https://${pcu_name(pcu.plc_pcu_stats)}</a>
 						<br/>
-						/usr/share/monitor/racadm.py -r ${pcu.plc_pcu_stats['ip']} 
+						curl -s --form 'user=${pcu.plc_pcu_stats['username']}' 
+								--form 'password=${pcu.plc_pcu_stats['password']}' 
+								--insecure https://${pcu_name(pcu.plc_pcu_stats)}/cgi-bin/webcgi/index
+						<br/>
+						/usr/share/monitor/pcucontrol/models/racadm.py -r ${pcu.plc_pcu_stats['ip']} 
 							-u ${pcu.plc_pcu_stats['username']} -p '${pcu.plc_pcu_stats['password']}'
 						<br/>
 						/usr/share/monitor/pcucontrol/models/hpilo/locfg.pl 
@@ -86,109 +233,6 @@ from links import *
 					</span>
 			</span>
 		</div>
-	<h3>Controls</h3>
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
-			<thead>
-				<tr>
-					<th mochi:format="int"></th>
-					<th>Hostname</th>
-					<th>last_contact</th>
-					<th>Last_checked</th>
-					<th>External Probe</th>
-					<th>Internal Probe</th>
-					<th>Reboot</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<td id="node-${node.observed_status}" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
-							<span class="icon">${node.hostname}</span></a>
-					</td>
-					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
-					<td py:content="diff_time(mktime(node.date_checked.timetuple()))"></td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="nodeaction" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
-						<input type='submit' name='submit' value='ExternalProbe' /> 
-	  					</form>
-					</td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="nodeaction" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
-						<input type='submit' name='submit' value='DeepProbe' /> 
-	  					</form>
-					</td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="nodeaction" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
-						<input type='submit' name='submit' value='Reboot' /> 
-	  					</form>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<div class="error" py:if="exceptions is not None">
-			${exceptions}
-		</div>
-		<div id="status_block" class="flash"
-            py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
-	<h3>Legend</h3>
-
-	<table border="1" align="center" width="80%">
-		<tr><th colspan="2">Legend for 'DNS Status'</th></tr>
-
-		<tr><td id="dns-DNS-OK">DNS-OK</td>
-			<td>This indicates that the DNS name and registered IP address match.</td>
-		</tr>
-		<tr><td id="dns-DNS-MISMATCH">DNS-MISMATCH</td>
-			<td>Sometimes, the registered IP and DNS IP address do not match.  
-				In these cases it is not clear which is correct, 
-				so an error is flagged.</td>
-		</tr>
-		<tr><td id="dns-DNS-NOENTRY">DNS-NOENTRY</td>
-			<td>While a hostname is provided in the registration, the hostname is not actually registered in DNS.</td>
-		</tr>
-		<tr><td id="dns-NOHOSTNAME">NOHOSTNAME</td>
-			<td>While we prefer that a hostname be registered, it is not
-			strictly required, since simply the IP address, if it is static, is enough to access the PCU.</td>
-		</tr>
-		<tr><td>&nbsp;</td></tr>
-	<!--/table>
-	<table border=1-->
-		<tr><th colspan="2">Legend for 'Port Status'</th></tr>
-
-		<tr><td id="portopen">Open</td>
-			<td>Green port numbers are believed to be open.</td>
-		</tr>
-		<tr><td id="portfiltered">Filtered</td>
-			<td>Gold port numbers are believed to be filtered or simply offline.</td>
-		</tr>
-		<tr><td id="portclosed">Closed</td>
-			<td>Finally, red ports appear to be closed.</td>
-		</tr>
-		<tr><td>&nbsp;</td></tr>
-	<!--/table>
-	<table border=1-->
-		<tr><th colspan="2">Legend for 'Test Results'</th></tr>
-
-		<tr><td id="status-0">OK</td>
-			<td>The PCU is accessible, and short of actually rebooting the node, everything appears to work.</td>
-		</tr>
-		<tr><td id="status-NetDown">NetDown</td>
-			<td>The PCU is inaccessible from the PlanetLab address block 128.112.139.0/25, or it is simply offline.</td>
-		</tr>
-		<tr><td id="status-Not_Run">Not_Run</td>
-			<td>Previous errors, such as DNS or an incomplete configuration prevented the actual test from begin performed.</td>
-		</tr>
-		<tr><td id="status-error">Other Errors</td>
-			<td>Other errors are reported by the test that are more specific to the block encountered by the script.</td>
-		</tr>
-	</table>
 
   </div>
 

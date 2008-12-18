@@ -14,6 +14,7 @@ from monitor import config
 from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 from monitor.database.info.model import  FindbadNodeRecord, HistoryNodeRecord
+from monitor.database.dborm import  mon_session as session
 
 from monitor.model import *
 
@@ -54,6 +55,10 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 			print traceback.print_exc()
 			continue
 
+		if not noderec:
+			print "none object for %s"% nodename
+			continue
+
 		node_state = noderec.observed_status
 		if noderec.plc_node_stats:
 			boot_state = noderec.plc_node_stats['boot_state']
@@ -80,6 +85,7 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 	# replace with another operations that also commits all pending ops, such
 	# as session.commit() or flush() or something
 	print HistoryNodeRecord.query.count()
+	session.flush()
 
 	return True
 

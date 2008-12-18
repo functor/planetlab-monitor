@@ -20,24 +20,12 @@ from monitor import database
 from monitor import util 
 from monitor.wrapper import plc, plccache
 from nodequery import pcu_select
+from nodecommon import nmap_port_status
 
 plc_lock = threading.Lock()
 global_round = 1
 errorState = {}
 count = 0
-
-def nmap_port_status(status):
-	ps = {}
-	l_nmap = status.split()
-	ports = l_nmap[4:]
-
-	continue_probe = False
-	for port in ports:
-		results = port.split('/')
-		ps[results[0]] = results[1]
-		if results[1] == "open":
-			continue_probe = True
-	return (ps, continue_probe)
 
 def get_pcu(pcuname):
 	plc_lock.acquire()
@@ -176,7 +164,16 @@ def collectPingAndSSH(pcuname, cohash):
 
 		if b_except or not continue_probe: return (None, None, None)
 
-
+		#### RUN NMAP ###############################
+		if continue_probe:
+			nmap = util.command.CMD()
+			print "nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
+			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
+			# NOTE: an empty / error value for oval, will still work.
+			(values['port_status'], continue_probe) = nmap_port_status(oval)
+		else:
+			values['port_status'] = None
+			
 		#### COMPLETE ENTRY   #######################
 
 		values['entry_complete'] = []
@@ -203,7 +200,8 @@ def collectPingAndSSH(pcuname, cohash):
 		# If there are no nodes associated with this PCU, then we cannot continue.
 		if len(values['plc_pcu_stats']['node_ids']) == 0:
 			continue_probe = False
-			values['entry_complete'] += ['NoNodeIds']
+			values['entry_complete'] += ['nodeids']
+
 
 		#### DNS and IP MATCH #######################
 		if values['plc_pcu_stats']['hostname'] is not None and values['plc_pcu_stats']['hostname'] is not "" and \
@@ -230,19 +228,11 @@ def collectPingAndSSH(pcuname, cohash):
 				values['plc_pcu_stats']['hostname'] = "No_entry_in_DB"
 				continue_probe = False
 
-		#### RUN NMAP ###############################
-		if continue_probe:
-			nmap = util.command.CMD()
-			(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
-			# NOTE: an empty / error value for oval, will still work.
-			(values['port_status'], continue_probe) = nmap_port_status(oval)
-		else:
-			values['port_status'] = None
-			
 
 		######  DRY RUN  ############################
 		if 'node_ids' in values['plc_pcu_stats'] and len(values['plc_pcu_stats']['node_ids']) > 0:
-			rb_ret = reboot.reboot_test_new(values['plc_pcu_stats']['nodenames'][0], values, continue_probe, 1, True)
+			rb_ret = reboot.reboot_test_new(values['plc_pcu_stats']['nodenames'][0], 
+											values, 1, True)
 		else:
 			rb_ret = "Not_Run" # No nodes to test"
 
@@ -268,15 +258,15 @@ def recordPingAndSSH(request, result):
 
 	if values is not None:
 		pcu_id = int(nodename)
-		fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
-											if_new_set={'round': global_round})
-		global_round = fbsync.round
+		#fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
+		#									if_new_set={'round': global_round})
+		#global_round = fbsync.round
 		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, 
 											if_new_set={'round' : global_round})
 
 		fbrec = FindbadPCURecord(
 					date_checked=datetime.fromtimestamp(values['date_checked']),
-					round=fbsync.round,
+					round=global_round,
 					plc_pcuid=pcu_id,
 					plc_pcu_stats=values['plc_pcu_stats'],
 					dns_status=values['dns_status'],
@@ -287,7 +277,7 @@ def recordPingAndSSH(request, result):
 		fbnodesync.round = global_round
 
 		fbnodesync.flush()
-		fbsync.flush()
+		#fbsync.flush()
 		fbrec.flush()
 
 		count += 1
@@ -379,7 +369,7 @@ def main():
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.nodelist == None and config.pcuid == None:
-		print "Calling API GetPCUs() : refresh(%s)" % config.refresh
+		print "Calling API GetPCUs() : cachecalls(%s)" % config.cachecalls
 		l_pcus  = [pcu['pcu_id'] for pcu in l_pcus]
 	elif config.nodelist is not None:
 		l_pcus = util.file.getListFromFile(config.nodelist)
@@ -391,10 +381,14 @@ def main():
 	if config.increment:
 		# update global round number to force refreshes across all nodes
 		global_round += 1
-		fbsync.round = global_round
-	fbsync.flush()
 
 	checkAndRecordState(l_pcus, cohash)
+
+	if config.increment:
+		# update global round number to force refreshes across all nodes
+		fbsync.round = global_round
+		fbsync.flush()
+		session.flush()
 
 	return 0
 

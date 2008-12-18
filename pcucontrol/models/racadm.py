@@ -100,7 +100,9 @@ def racadm_reboot(host, username, password, dryrun, state="powercycle"):
 
 from optparse import OptionParser
 parser = OptionParser()
-parser.set_defaults(ip="", user="", password="", state="powercycle")
+parser.set_defaults(ip="", user="", password="", dryrun=False, state="powercycle")
+parser.add_option("-d", "", dest="dryrun", action="store_true",
+					help="enable dryrun tests.  no action is taken")
 parser.add_option("-r", "", dest="ip", metavar="nodename.edu", 
 					help="A single node name to add to the nodegroup")
 parser.add_option("-u", "", dest="user", metavar="username",
@@ -117,6 +119,6 @@ if __name__ == '__main__':
 		options.user is not "" and \
 		options.password is not "":
 
-		racadm_reboot(options.ip, options.user, options.password, False, options.state)
+		racadm_reboot(options.ip, options.user, options.password, options.dryrun, options.state)
 	else:
 		parser.print_help()

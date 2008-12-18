@@ -122,6 +122,20 @@ def getvalue(fb, path):
             return None
     return values
 
+def nmap_port_status(status):
+	ps = {}
+	l_nmap = status.split()
+	ports = l_nmap[4:]
+
+	continue_probe = False
+	for port in ports:
+		results = port.split('/')
+		ps[results[0]] = results[1]
+		if results[1] == "open":
+			continue_probe = True
+	return (ps, continue_probe)
+
+
 def nodegroup_display(node, fbdata, conf=None):
 	node['current'] = get_current_state(fbdata)
 

@@ -1,5 +1,6 @@
 import turbogears as tg
 from turbogears import controllers, expose, flash, exception_handler
+from turbogears import widgets
 from cherrypy import request, response
 import cherrypy
 # from monitorweb import model
@@ -20,20 +21,44 @@ from monitorweb.templates.links import *
 
 import findbad
 
-def format_ports(pcu):
+
+def query_to_dict(query):
+	""" take a url query string and chop it up """
+	val = {}
+	query_fields = query.split('&')
+	for f in query_fields:
+		(k,v) = urllib.splitvalue(f)
+		val[k] = v
+
+	return val
+
+def format_ports(data, pcumodel=None):
 	retval = []
-	if pcu.port_status and len(pcu.port_status.keys()) > 0 :
-		obj = reboot.model_to_object(pcu.plc_pcu_stats['model'])
-		for port in obj.supported_ports:
+	filtered_length=0
+
+	if pcumodel:
+		supported_ports=reboot.model_to_object(pcumodel).supported_ports
+	else:
+		# ports of a production node
+		supported_ports=[22,80,806]
+
+	if data and len(data.keys()) > 0 :
+		for port in supported_ports:
 			try:
-				state = pcu.port_status[str(port)]
+				state = data[str(port)]
 			except:
 				state = "unknown"
+
+			if state == "filtered":
+				filtered_length += 1
 				
 			retval.append( (port, state) )
 
 	if retval == []: 
 		retval = [( "Closed/Filtered", "state" )]
+
+	if filtered_length == len(supported_ports):
+		retval = [( "All Filtered", "state" )]
 
 	return retval
 
@@ -41,7 +66,7 @@ def format_pcu_shortstatus(pcu):
 	status = "error"
 	if pcu:
 		if pcu.reboot_trial_status == str(0):
-			status = "ok"
+			status = "Ok"
 		elif pcu.reboot_trial_status == "NetDown" or pcu.reboot_trial_status == "Not_Run":
 			status = pcu.reboot_trial_status
 		else:
@@ -56,21 +81,44 @@ def prep_pcu_for_display(pcu):
 	except:
 		pcu.loginbase = "unknown"
 
-	pcu.ports = format_ports(pcu)
+	pcu.ports = format_ports(pcu.port_status, pcu.plc_pcu_stats['model'])
 	pcu.status = format_pcu_shortstatus(pcu)
+
+	#print pcu.entry_complete
+	pcu.entry_complete_str = pcu.entry_complete
+	#pcu.entry_complete_str += "".join([ f[0] for f in pcu.entry_complete.split() ])
+	if pcu.dns_status == "NOHOSTNAME":
+		pcu.dns_short_status = 'NoHost'
+	elif pcu.dns_status == "DNS-OK":
+		pcu.dns_short_status = 'Ok'
+	elif pcu.dns_status == "DNS-NOENTRY":
+		pcu.dns_short_status = 'NoEntry'
+	elif pcu.dns_status == "NO-DNS-OR-IP":
+		pcu.dns_short_status = 'NoHostOrIP'
+	elif pcu.dns_status == "DNS-MISMATCH":
+		pcu.dns_short_status = 'Mismatch'
+
+class NodeWidget(widgets.Widget):
+	pass
 
 def prep_node_for_display(node):
 	if node.plc_pcuid:
 		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
 		if pcu:
 			node.pcu_status = pcu.reboot_trial_status
+			node.pcu_short_status = format_pcu_shortstatus(pcu)
+			node.pcu = pcu
+			prep_pcu_for_display(node.pcu)
 		else:
+			node.pcu_short_status = "none"
 			node.pcu_status = "nodata"
-		node.pcu_short_status = format_pcu_shortstatus(pcu)
+			node.pcu = None
 
 	else:
 		node.pcu_status = "nopcu"
 		node.pcu_short_status = "none"
+		node.pcu = None
+
 
 	if node.kernel_version:
 		node.kernel = node.kernel_version.split()[2]
@@ -81,7 +129,20 @@ def prep_node_for_display(node):
 		node.loginbase = site_id2lb[node.plc_node_stats['site_id']]
 	except:
 		node.loginbase = "unknown"
-	
+
+	if node.loginbase:
+		node.site = HistorySiteRecord.by_loginbase(node.loginbase)
+
+	node.history = HistoryNodeRecord.by_hostname(node.hostname)
+
+	if node.port_status:
+		node.ports = format_ports(node.port_status)
+	try:
+		exists = node.plc_node_stats['last_contact']
+	except:
+		node.plc_node_stats = {'last_contact' : None}
+
+
 
 class Root(controllers.RootController):
 	@expose(template="monitorweb.templates.welcome")
@@ -91,7 +152,7 @@ class Root(controllers.RootController):
 		flash("Your application is now running")
 		return dict(now=time.ctime())
 
-	@expose(template="monitorweb.templates.nodeview")
+	@expose(template="monitorweb.templates.pcuview")
 	def nodeview(self, hostname=None):
 		nodequery=[]
 		if hostname:
@@ -100,7 +161,7 @@ class Root(controllers.RootController):
 				prep_node_for_display(node)
 				nodequery += [node]
 
-		return dict(nodequery=nodequery)
+		return self.pcuview(None, hostname) # dict(nodequery=nodequery)
 
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='BOOT'):
@@ -116,7 +177,7 @@ class Root(controllers.RootController):
 			if node.observed_status != 'DOWN':
 				filtercount[node.observed_status] += 1
 			else:
-				if node.plc_node_stats['last_contact'] != None:
+				if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:
 					filtercount[node.observed_status] += 1
 				else:
 					filtercount['neverboot'] += 1
@@ -129,7 +190,7 @@ class Root(controllers.RootController):
 				else:
 					query.append(node)
 			elif filter == "neverboot":
-				if node.plc_node_stats['last_contact'] == None:
+				if not node.plc_node_stats or node.plc_node_stats['last_contact'] == None:
 					query.append(node)
 			elif filter == "pending":
 				# TODO: look in message logs...
@@ -137,15 +198,22 @@ class Root(controllers.RootController):
 			elif filter == "all":
 				query.append(node)
 				
-		return dict(now=time.ctime(), query=query, fc=filtercount)
+		widget = NodeWidget(template='monitorweb.templates.node_template')
+		return dict(now=time.ctime(), query=query, fc=filtercount, nodewidget=widget)
 	
 	def nodeaction_handler(self, tg_exceptions=None):
 		"""Handle any kind of error."""
 		refurl = request.headers.get("Referer",link("pcu"))
 		print refurl
+
 		# TODO: do this more intelligently...
-		if len(urllib.splitquery(refurl)) > 1:
-			pcuid = urllib.splitvalue(urllib.splitquery(refurl)[1])[1]
+		uri_fields = urllib.splitquery(refurl)
+		if uri_fields[1] is not None:
+			val = query_to_dict(uri_fields[1])
+			if 'pcuid' in val:
+				pcuid = val['pcuid']
+			elif 'hostname' in val:
+				pcuid = FindbadNodeRecord.get_latest_by(hostname=val['hostname']).first().plc_pcuid
 		else:
 			pcuid=None
 
@@ -155,7 +223,6 @@ class Root(controllers.RootController):
 
 		print pcuid
 		return self.pcuview(pcuid, **dict(exceptions=tg_exceptions))
-		#return dict(pcuquery=[], nodequery=[], exceptions=tg_exceptions)
 
 	def nodeaction(self, **data):
 		for item in data.keys():
@@ -167,8 +234,11 @@ class Root(controllers.RootController):
 			flash("No hostname given in submitted data")
 			return
 
-		if 'submit' in data:
-			action = data['submit']
+		if 'submit' in data or 'type' in data:
+			try:
+				action = data['submit']
+			except:
+				action = data['type']
 		else:
 			flash("No submit action given in submitted data")
 			return
@@ -178,43 +248,86 @@ class Root(controllers.RootController):
 			ret = reboot.reboot_str(str(hostname))
 			print ret
 			if ret: raise RuntimeError("Error using PCU: " + ret)
+			flash("Reboot appeared to work.  All at most 5 minutes.  Run ExternalScan to check current status.")
 
-		elif action == "ExternalProbe":
-			raise RuntimeError("THIS IS A PROBLEM")
-
-		elif action == "DeepProbe":
+		elif action == "ExternalScan":
+			findbad.externalprobe(str(hostname))
+			flash("External Scan Successful!")
+		elif action == "InternalScan":
 			findbad.probe(str(hostname))
+			flash("Internal Scan Successful!")
 		else:
 			# unknown action
-			flash("Unknown action given")
+			raise RuntimeError("Unknown action given")
 		return
 
 	# TODO: add form validation
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
-	def pcuview(self, pcuid=None, **data):
+	def pcuview(self, loginbase=None, pcuid=None, hostname=None, **data):
+		sitequery=[]
 		pcuquery=[]
 		nodequery=[]
-		if 'submit' in data.keys():
+		exceptions = None
+
+		for key in data:
+			print key, data[key]
+
+		if 'submit' in data.keys() or 'type' in data.keys():
+			if hostname: data['hostname'] = hostname
 			self.nodeaction(**data)
 		if 'exceptions' in data:
 			exceptions = data['exceptions']
-		else:
-			exceptions = None
 
-		if pcuid:
+		if loginbase:
+			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
+			pcus = {}
+			for plcnode in site_lb2hn[loginbase]:
+				for node in FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname']):
+					# NOTE: reformat some fields.
+					prep_node_for_display(node)
+					nodequery += [node]
+					if node.plc_pcuid: 	# not None
+						pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+						prep_pcu_for_display(pcu)
+						pcus[node.plc_pcuid] = pcu
+
+			for pcuid_key in pcus:
+				pcuquery += [pcus[pcuid_key]]
+
+		if pcuid and hostname is None:
+			print "pcuid: %s" % pcuid
 			for pcu in FindbadPCURecord.get_latest_by(plc_pcuid=pcuid):
 				# NOTE: count filter
 				prep_pcu_for_display(pcu)
 				pcuquery += [pcu]
-			for nodename in pcu.plc_pcu_stats['nodenames']: 
-				print "query for %s" % nodename
-				node = FindbadNodeRecord.get_latest_by(hostname=nodename).first()
-				print "%s" % node
-				if node:
-					prep_node_for_display(node)
-					nodequery += [node]
-		return dict(pcuquery=pcuquery, nodequery=nodequery, exceptions=exceptions)
+			if 'site_id' in pcu.plc_pcu_stats:
+				sitequery = [HistorySiteRecord.by_loginbase(pcu.loginbase)]
+				
+			if 'nodenames' in pcu.plc_pcu_stats:
+				for nodename in pcu.plc_pcu_stats['nodenames']: 
+					print "query for %s" % nodename
+					q = FindbadNodeRecord.get_latest_by(hostname=nodename)
+					node = q.first()
+					print "%s" % node.port_status
+					print "%s" % node.to_dict()
+					print "%s" % len(q.all())
+					if node:
+						prep_node_for_display(node)
+						nodequery += [node]
+
+		if hostname and pcuid is None:
+			for node in FindbadNodeRecord.get_latest_by(hostname=hostname):
+				# NOTE: reformat some fields.
+				prep_node_for_display(node)
+				sitequery = [node.site]
+				nodequery += [node]
+				if node.plc_pcuid: 	# not None
+					pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+					prep_pcu_for_display(pcu)
+					pcuquery += [pcu]
+			
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, exceptions=exceptions)
 
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):

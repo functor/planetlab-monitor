@@ -19,6 +19,7 @@ from monitor.wrapper import plc, plccache
 
 from nodequery import verify,query_to_dict,node_select
 import traceback
+from nodecommon import nmap_port_status
 
 #print "starting sqlfindbad.py"
 # QUERY all nodes.
@@ -35,6 +36,19 @@ round = 1
 global_round = round
 count = 0
 
+def collectNMAP(nodename, cohash):
+	#### RUN NMAP ###############################
+	values = {}
+	nmap = util.command.CMD()
+	print "nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename
+	(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
+	# NOTE: an empty / error value for oval, will still work.
+	(values['port_status'], continue_probe) = nmap_port_status(oval)
+
+	values['date_checked'] = datetime.now()
+			
+	return (nodename, values)
+
 def collectPingAndSSH(nodename, cohash):
 	### RUN PING ######################
 	ping = command.CMD()
@@ -45,9 +59,9 @@ def collectPingAndSSH(nodename, cohash):
 
 		if oval == "":
 			# An error occurred
-			values['ping'] = "NOPING"
+			values['ping_status'] = False
 		else:
-			values['ping'] = "PING"
+			values['ping_status'] = True
 
 		try:
 			for port in [22, 806]: 
@@ -55,13 +69,13 @@ def collectPingAndSSH(nodename, cohash):
 
 				(oval, errval) = ssh.run_noexcept2(""" <<\EOF
 					echo "{"
-					echo '  "kernel":"'`uname -a`'",'
+					echo '  "kernel_version":"'`uname -a`'",'
 					echo '  "bmlog":"'`ls /tmp/bm.log`'",'
-					echo '  "bootcd":"'`cat /mnt/cdrom/bootme/ID`'",'
-					echo '  "nm":"'`ps ax | grep nm.py | grep -v grep`'",'
-					echo '  "readonlyfs":"'`touch /var/log/monitor 2>&1`'",'
-					echo '  "dns":"'`host boot.planet-lab.org 2>&1`'",'
-					echo '  "princeton_comon":"'`ls -d /vservers/princeton_comon`'",'
+					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
+					echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
+					echo '  "fs_status":"'`touch /var/log/monitor 2>&1`'",'
+					echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
+					echo '  "princeton_comon_dir":"'`ls -d /vservers/princeton_comon`'",'
 
 					ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
 					echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
@@ -69,20 +83,20 @@ def collectPingAndSSH(nodename, cohash):
 					echo "}"
 EOF				""")
 				
-				values['ssherror'] = errval
+				values['ssh_error'] = errval
 				if len(oval) > 0:
 					#print "OVAL: %s" % oval
 					values.update(eval(oval))
-					values['sshport'] = port
+					values['ssh_portused'] = port
 					break
 				else:
-					values.update({'kernel': "", 'bmlog' : "", 'bootcd' : '', 
-									'nm' : '', 
-									'readonlyfs' : '',
-									'dns' : '',
-									'princeton_comon' : "", 
+					values.update({'kernel_version': "", 'bmlog' : "", 'bootcd_version' : '', 
+									'nm_status' : '', 
+									'fs_status' : '',
+									'dns_status' : '',
+									'princeton_comon_dir' : "", 
 									'princeton_comon_running' : "", 
-									'princeton_comon_procs' : "", 'sshport' : None})
+									'princeton_comon_procs' : "", 'ssh_portused' : None})
 		except:
 			print traceback.print_exc()
 			sys.exit(1)
@@ -94,79 +108,79 @@ EOF				""")
 		#errval = ""
 		#(oval, errval) = ssh.run_noexcept('echo `uname -a ; ls /tmp/bm.log`')
 
-		oval = values['kernel']
+		oval = values['kernel_version']
 		if "2.6.17" in oval or "2.6.2" in oval:
-			values['ssh'] = 'SSH'
-			values['category'] = 'PROD'
+			values['ssh_status'] = True
+			values['observed_category'] = 'PROD'
 			if "bm.log" in values['bmlog']:
-				values['state'] = 'DEBUG'
+				values['observed_status'] = 'DEBUG'
 			else:
-				values['state'] = 'BOOT'
+				values['observed_status'] = 'BOOT'
 		elif "2.6.12" in oval or "2.6.10" in oval:
-			values['ssh'] = 'SSH'
-			values['category'] = 'OLDPROD'
+			values['ssh_status'] = True
+			values['observed_category'] = 'OLDPROD'
 			if "bm.log" in values['bmlog']:
-				values['state'] = 'DEBUG'
+				values['observed_status'] = 'DEBUG'
 			else:
-				values['state'] = 'BOOT'
+				values['observed_status'] = 'BOOT'
 		
 		# NOTE: on 2.6.8 kernels, with 4.2 bootstrapfs, the chroot command fails.  I have no idea why.
 		elif "2.4" in oval or "2.6.8" in oval:
 			b_getbootcd_id = False
-			values['ssh'] = 'SSH'
-			values['category'] = 'OLDBOOTCD'
-			values['state'] = 'DEBUG'
+			values['ssh_status'] = True
+			values['observed_category'] = 'OLDBOOTCD'
+			values['observed_status'] = 'DEBUG'
 		elif oval != "":
-			values['ssh'] = 'SSH'
-			values['category'] = 'UNKNOWN'
+			values['ssh_status'] = True
+			values['observed_category'] = 'UNKNOWN'
 			if "bm.log" in values['bmlog']:
-				values['state'] = 'DEBUG'
+				values['observed_status'] = 'DEBUG'
 			else:
-				values['state'] = 'BOOT'
+				values['observed_status'] = 'BOOT'
 		else:
 			# An error occurred.
 			b_getbootcd_id = False
-			values['ssh'] = 'NOSSH'
-			values['category'] = 'ERROR'
-			values['state'] = 'DOWN'
+			values['ssh_status'] = False
+			values['observed_category'] = 'ERROR'
+			values['observed_status'] = 'DOWN'
 			val = errval.strip()
-			values['ssherror'] = val
-			values['kernel'] = ""
+			values['ssh_error'] = val
+			values['kernel_version'] = ""
 
-		#values['kernel'] = val
+		#values['kernel_version'] = val
 
 		if b_getbootcd_id:
 			# try to get BootCD for all nodes that are not 2.4 nor inaccessible
 			#(oval, errval) = ssh.run_noexcept('cat /mnt/cdrom/bootme/ID')
-			oval = values['bootcd']
+			oval = values['bootcd_version']
 			if "BootCD" in oval:
-				values['bootcd'] = oval
+				values['bootcd_version'] = oval
 				if "v2" in oval and \
 					( nodename is not "planetlab1.cs.unc.edu" and \
 					  nodename is not "planetlab2.cs.unc.edu" ):
-					values['category'] = 'OLDBOOTCD'
+					values['observed_category'] = 'OLDBOOTCD'
 			else:
-				values['bootcd'] = ""
+				values['bootcd_version'] = ""
 		else:
-			values['bootcd'] = ""
+			values['bootcd_version'] = ""
 
 		# TODO: get bm.log for debug nodes.
 		# 'zcat /tmp/bm.log'
 		
 		#(oval, errval) = ssh.run_noexcept('ps ax | grep nm.py | grep -v grep')
-		oval = values['nm']
+		oval = values['nm_status']
 		if "nm.py" in oval:
-			values['nm'] = "Y"
+			values['nm_status'] = "Y"
 		else:
-			values['nm'] = "N"
+			values['nm_status'] = "N"
 
 		continue_slice_check = True
 		#(oval, errval) = ssh.run_noexcept('ls -d /vservers/princeton_comon')
-		oval = values['princeton_comon']
-		if "princeton_comon" in oval:
-			values['princeton_comon'] = True
+		oval = values['princeton_comon_dir']
+		if "princeton_comon_dir" in oval:
+			values['princeton_comon_dir'] = True
 		else:
-			values['princeton_comon'] = False
+			values['princeton_comon_dir'] = False
 			continue_slice_check = False
 
 		if continue_slice_check:
@@ -189,9 +203,9 @@ EOF				""")
 
 			
 		if nodename in cohash: 
-			values['comonstats'] = cohash[nodename]
+			values['comon_stats'] = cohash[nodename]
 		else:
-			values['comonstats'] = {'resptime':  '-1', 
+			values['comon_stats'] = {'resptime':  '-1', 
 									'uptime':    '-1',
 									'sshstatus': '-1', 
 									'lastcotop': '-1',
@@ -208,7 +222,11 @@ EOF				""")
 		except:
 			traceback.print_exc()
 		plc_lock.release()
-		values['plcnode'] = d_node
+		values['plc_node_stats'] = d_node
+
+		##### NMAP  ###################
+		(n, v) = collectNMAP(nodename, None)
+		values.update(v)
 
 		### GET PLC PCU ######################
 		site_id = -1
@@ -220,7 +238,7 @@ EOF				""")
 
 			site_id = d_node['site_id']
 
-		values['pcu'] = d_pcu
+		values['plc_pcuid'] = d_pcu
 
 		### GET PLC SITE ######################
 		plc_lock.acquire()
@@ -234,8 +252,8 @@ EOF				""")
 			traceback.print_exc()
 		plc_lock.release()
 
-		values['plcsite'] = d_site 
-		values['date_checked'] = time.time()
+		values['plc_site_stats'] = d_site 
+		values['date_checked'] = datetime.now()
 	except:
 		print traceback.print_exc()
 
@@ -248,9 +266,9 @@ def recordPingAndSSH(request, result):
 
 	try:
 		if values is not None:
-			fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
-															if_new_set={'round' : global_round})
-			global_round = fbsync.round
+			#fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
+			#												if_new_set={'round' : global_round})
+			#global_round = fbsync.round
 			fbnodesync = FindbadNodeRecordSync.findby_or_create(hostname=nodename,
 															if_new_set={'round' : global_round})
 
@@ -262,43 +280,38 @@ def recordPingAndSSH(request, result):
 			fbrec = FindbadNodeRecord.findby_or_create(
 						round=global_round,
 						hostname=nodename)
-			before = fbrec.to_dict()
-			print "BEFORE, ", before
-			fbrec.flush()
-			time.sleep(2)
-			print "Setting VALUES"
-			fbrec.set(  date_checked=datetime.fromtimestamp(values['date_checked']),
-			  			loginbase=values['loginbase'],
-			  			kernel_version=values['kernel'],
-			  			bootcd_version=values['bootcd'],
-			  			nm_status=values['nm'],
-			  			fs_status=values['readonlyfs'],
-			  			dns_status=values['dns'],
-			  			princeton_comon_dir=values['princeton_comon'],
-			  			princeton_comon_running=values['princeton_comon_running'],
-			  			princeton_comon_procs=values['princeton_comon_procs'],
-			  			plc_node_stats = values['plcnode'],
-			  			plc_site_stats = values['plcsite'],
-			  			plc_pcuid = values['pcu'],
-			  			comon_stats = values['comonstats'],
-			  			ping_status = (values['ping'] == "PING"),
-			  			ssh_portused = values['sshport'],
-			  			ssh_status = (values['ssh'] == "SSH"),
-			  			ssh_error = values['ssherror'],
-			  			observed_status = values['state'],
-			  			observed_category = values['category'])
-			after = fbrec.to_dict()
-			print "AFTER , ", after
 
-			for v in before.keys():
-				if before[v] == after[v]:
-					print "SAME FOR KEY %s" % v
-				print "%s : %s\t%s" % ( v, before[v], after[v] )
+			fbrec.set(  **values ) 
+						#date_checked=values['date_checked'],
+			  			#loginbase=values['loginbase'],
+			  			#kernel_version=values['kernel_version'],
+			  			#bootcd_version=values['bootcd_version'],
+			  			#nm_status=values['nm_status'],
+			  			#fs_status=values['fs_status'],
+			  			#dns_status=values['dns_status'],
+			  			#princeton_comon_dir=values['princeton_comon_dir'],
+			  			#princeton_comon_running=values['princeton_comon_running'],
+			  			#princeton_comon_procs=values['princeton_comon_procs'],
+			  			#plc_node_stats = values['plc_node_stats'],
+			  			#plc_site_stats = values['plc_site_stats'],
+			  			#plc_pcuid = values['plc_pcuid'],
+			  			#comon_stats = values['comon_stats'],
+			  			#ping_status = values['ping_status'],
+			  			#ssh_portused = values['ssh_portused'],
+			  			#ssh_status = values['ssh_status'],
+			  			#ssh_error = values['ssh_error'],
+			  			#observed_status = values['observed_status'],
+			  			#observed_category = values['observed_category'])
+
+			#for v in before.keys():
+			#	if before[v] == after[v]:
+			#		print "SAME FOR KEY %s" % v
+			#	print "%s : %s\t%s" % ( v, before[v], after[v] )
 
 			fbrec.flush()
 			fbnodesync.round = global_round
 			fbnodesync.flush()
-			fbsync.flush()
+			#fbsync.flush()
 
 			count += 1
 			print "%d %s %s" % (count, nodename, values)
@@ -311,6 +324,16 @@ def handle_exception(request, result):
 	print "Exception occured in request %s" % request.requestID
 	for i in result:
 		print "Result: %s" % i
+
+def externalprobe(hostname):
+	try:
+		(nodename, values) = collectNMAP(hostname, {})
+		recordPingAndSSH(None, (nodename, values))
+		session.flush()
+		return True
+	except:
+		print traceback.print_exc()
+		return False
 
 def probe(hostname):
 	try:
@@ -335,7 +358,7 @@ def checkAndRecordState(l_nodes, cohash):
 		node_round   = fbnodesync.round
 		fbnodesync.flush()
 
-		if node_round < global_round:
+		if node_round < global_round or config.force:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
 			req = threadpool.WorkRequest(collectPingAndSSH, [nodename, cohash], {}, 
@@ -378,9 +401,6 @@ def main():
 	if config.increment:
 		# update global round number to force refreshes across all nodes
 		global_round += 1
-		fbsync.round = global_round
-
-	fbsync.flush()
 
 	cotop = comon.Comon()
 	# lastcotop measures whether cotop is actually running.  this is a better
@@ -417,6 +437,11 @@ def main():
 
 	checkAndRecordState(l_nodes, cohash)
 
+	if config.increment:
+		# update global round number to force refreshes across all nodes
+		fbsync.round = global_round
+		fbsync.flush()
+
 	return 0
 
 
@@ -425,13 +450,16 @@ if __name__ == '__main__':
 
 	parser = parsermodule.getParser(['nodesets'])
 
-	parser.set_defaults( increment=False, dbname="findbad", cachenodes=False)
+	parser.set_defaults( increment=False, dbname="findbad", cachenodes=False, 
+						force=False,)
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 						help="Specify the name of the database to which the information is saved")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
+	parser.add_option("", "--force", action="store_true", dest="force", 
+						help="Force probe without incrementing global 'round'.")
 
 	parser = parsermodule.getParser(['defaults'], parser)
 	

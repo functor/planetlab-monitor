@@ -4,6 +4,7 @@ layout_params['page_title'] = "Monitor Node View"
 from monitor.util import diff_time
 from monitor import config
 from time import mktime
+from links import *
 
 def zabbix_event_ack_link(eventid):
 	return "http://" + config.MONITOR_HOSTNAME + "/zabbix/acknow.php?eventid=" + str(eventid)
@@ -40,7 +41,7 @@ def zabbix_event_ack_link(eventid):
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="siteview?loginbase=${node[0]}">${node[0]}</a></td>
+					<td><a href="${link('pcuview', loginbase=node[0])}">${node[0]}</a></td>
 					<td nowrap="true" py:content="node[1]"></td>
 					<td nowrap='true' id="severity-${node[3]}" py:content="node[2]"></td>
 					<td nowrap='true' py:content="diff_time(int(node[4]))"></td>

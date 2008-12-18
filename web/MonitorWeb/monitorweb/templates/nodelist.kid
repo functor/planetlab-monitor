@@ -28,26 +28,13 @@ from links import *
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
-					<th mochi:format="str">Site</th>
-					<th>Hostname</th>
-					<th>ping</th>
-					<!--th>ssh</th-->
-					<th>pcu</th>
-					<th>status</th>
-					<th>kernel</th>
-					<th>last_contact</th>
+					${nodewidget.display(node=None, header=True)}
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="${link('siteview', loginbase=node.loginbase)}">${node.loginbase}</a></td>
-					<td nowrap="true"><a target="_top" href="${link('nodeview', hostname=node.hostname)}" py:content="node.hostname"></a></td>
-					<td py:content="node.ping_status"></td>
-					<td id="status-${node.pcu_short_status}" py:content="node.pcu_short_status"></td>
-					<td py:content="node.observed_status"></td>
-					<td nowrap="true" py:content="node.kernel"></td>
-					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
+					${nodewidget.display(node=node, header=None)}
 				</tr>
 			</tbody>
 		</table>

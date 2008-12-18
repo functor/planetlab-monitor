@@ -120,6 +120,7 @@ class Transport:
 	HTTP   = 3
 	HTTPS  = 4
 	IPAL   = 5
+	DRAC   = 6
 
 	TELNET_TIMEOUT = 120
 
@@ -231,7 +232,10 @@ class PCUControl(Transport,PCUModel,PCURecord):
 		PCURecord.__init__(self, plc_pcu_record)
 		type = None
 		if self.port_status:
-			if '22' in supported_ports and self.port_status['22'] == "open":
+			# NOTE: prefer racadm port over ssh
+			if '5869' in supported_ports and self.port_status['5869'] == "open":
+				type = Transport.DRAC# DRAC cards user this port.
+			elif '22' in supported_ports and self.port_status['22'] == "open":
 				type = Transport.SSH
 			elif '23' in supported_ports and self.port_status['23'] == "open":
 				type = Transport.TELNET
@@ -239,9 +243,6 @@ class PCUControl(Transport,PCUModel,PCURecord):
 			elif '443' in supported_ports and self.port_status['443'] == "open":
 				type = Transport.HTTPS
 			elif '80' in supported_ports and self.port_status['80'] == "open":
-				type = Transport.HTTP
-			elif '5869' in supported_ports and self.port_status['5869'] == "open":
-				# For DRAC cards. Racadm opens this port.
 				type = Transport.HTTP
 			elif '9100' in supported_ports and self.port_status['9100'] == "open":
 				type = Transport.IPAL
@@ -343,7 +344,13 @@ class IPAL(PCUControl):
 
 	def run(self, node_port, dryrun):
 		if self.type == Transport.IPAL:
-			return self.run_ipal(node_port, dryrun)
+			ret = self.run_ipal(node_port, dryrun)
+			if ret != 0:
+				ret2 = self.run_telnet(node_port, dryrun)
+				if ret2 != 0:
+					return ret
+				return ret2
+			return ret
 		elif self.type == Transport.TELNET:
 			return self.run_telnet(node_port, dryrun)
 		else:
@@ -636,10 +643,53 @@ class IntelAMT(PCUControl):
 		return cmd.system(cmd_str, self.TELNET_TIMEOUT)
 
 class DRAC(PCUControl):
+	supported_ports = [22,443,5869]
 	def run(self, node_port, dryrun):
+		if self.type == Transport.DRAC:
+			print "trying racadm_reboot..."
+			return racadm_reboot(self.host, self.username, self.password, node_port, dryrun)
+		elif self.type == Transport.SSH:
+			return self.run_ssh(node_port, dryrun)
+		else:
+			raise ExceptionNoTransport("No implementation for open ports")
 
-		print "trying racadm_reboot..."
-		racadm_reboot(self.host, self.username, self.password, node_port, dryrun)
+	def run_ssh(self, node_port, dryrun):
+		ssh_options="-o StrictHostKeyChecking=no "+\
+		            "-o PasswordAuthentication=yes "+\
+					"-o PubkeyAuthentication=no"
+		s = pxssh.pxssh()
+		if not s.login(self.host, self.username, self.password, ssh_options,
+						original_prompts="Dell", login_timeout=TELNET_TIMEOUT):
+			raise ExceptionPassword("Invalid Password")
+
+		print "logging in..."
+		s.send("\r\n\r\n")
+		try:
+			# Testing Reboot ?
+			#index = s.expect(["DRAC 5", "[%s]#" % self.username ])
+			# NOTE: be careful to escape any characters used by 're.compile'
+			index = s.expect(["\$", "\[%s\]#" % self.username ])
+			print "INDEX:", index
+			if dryrun:
+				if index == 0:
+					s.send("racadm getsysinfo")
+				elif index == 1:
+					s.send("getsysinfo")
+			else:
+				if index == 0:
+					s.send("racadm serveraction powercycle")
+				elif index == 1:
+					s.send("serveraction powercycle")
+				
+			s.send("exit")
+
+		except pexpect.EOF:
+			raise ExceptionPrompt("EOF before expected Prompt")
+		except pexpect.TIMEOUT:
+			print s
+			raise ExceptionPrompt("Timeout before expected Prompt")
+
+		s.close()
 
 		return 0
 
@@ -1080,7 +1130,7 @@ class ePowerSwitchOld(PCUControl):
 		return 0
 		
 class ManualPCU(PCUControl):
-	supported_ports = [22,23,80,443,9100,16992]
+	supported_ports = [22,23,80,443]
 
 	def run(self, node_port, dryrun):
 		if not dryrun:
@@ -1291,7 +1341,7 @@ def racadm_reboot(host, username, password, port, dryrun):
 		logger.debug("runcmd raised exception %s" % err)
 		if verbose:
 			logger.debug(err)
-		return -1
+		return err
 
 def pcu_name(pcu):
 	if pcu['hostname'] is not None and pcu['hostname'] is not "":
@@ -1372,6 +1422,8 @@ class Unknown(PCUControl):
 	supported_ports = [22,23,80,443,5869,9100,16992]
 
 def model_to_object(modelname):
+	if modelname is None:
+		return ManualPCU 
 	if "AMT" in modelname:
 		return IntelAMT
 	elif "BayTech" in modelname:

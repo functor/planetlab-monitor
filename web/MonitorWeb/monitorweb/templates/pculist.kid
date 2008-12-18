@@ -29,8 +29,7 @@ from links import *
 					<th mochi:format="int"></th>
 					<th mochi:format="str">Site</th>
 					<th>PCU Name</th>
-					<th>Missing Fields</th>
-					<th>DNS Status</th>
+					<th>Config</th>
 					<th nowrap='true' >Port Status</th>
 					<th nowrap='true' width="80%">Test Results</th>
 					<th>Model</th>
@@ -40,7 +39,13 @@ from links import *
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="${link('siteview', loginbase=node.loginbase)}">${node.loginbase}</a></td>
+					<td nowrap='true'>
+						<div class='oneline'>
+						<a class='left' href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
+						<a class='right' href="${plc_site_uri(node.loginbase)}">
+							<img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
+						</div>
+					</td>
 					<td nowrap='true'>
 						<div class='oneline'>
 						<a class='left' href="${link('pcuview', pcuid=node.plc_pcuid)}">${pcu_name(node.plc_pcu_stats)}</a>
@@ -48,9 +53,8 @@ from links import *
 							<img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 						</div>
 					</td>
-					<td py:content="node.entry_complete"></td>
-					<td id="dns-${node.dns_status}" py:content="node.dns_status"></td>
-					<td>
+					<td py:content="node.entry_complete_str"></td>
+					<td nowrap='true'>
 						<span py:for="port,state in node.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
@@ -58,7 +62,7 @@ from links import *
 						<div id="links">
 						<a class="info" py:if="'error' in node.status" 
 							href="${link('pcuview', pcuid=node.plc_pcuid)}">
-							Error Message<span><pre>${node.reboot_trial_status}</pre></span></a>
+							Error<span><pre>${node.reboot_trial_status}</pre></span></a>
 						<a py:if="'error' not in node.status" 
 							href="${link('pcuview', pcuid=node.plc_pcuid)}"
 							py:content="node.status">Reboot Status</a>
