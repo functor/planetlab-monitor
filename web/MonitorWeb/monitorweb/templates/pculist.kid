@@ -29,7 +29,6 @@ from links import *
 					<th mochi:format="int"></th>
 					<th mochi:format="str">Site</th>
 					<th>PCU Name</th>
-					<th>Config</th>
 					<th nowrap='true' >Port Status</th>
 					<th nowrap='true' width="80%">Test Results</th>
 					<th>Model</th>
@@ -53,7 +52,6 @@ from links import *
 							<img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 						</div>
 					</td>
-					<td py:content="node.entry_complete_str"></td>
 					<td nowrap='true'>
 						<span py:for="port,state in node.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>

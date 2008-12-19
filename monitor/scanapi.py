@@ -342,7 +342,7 @@ class ScanNodeInternal(ScanInterface):
 			values['plc_node_stats'] = d_node
 
 			##### NMAP  ###################
-			(n, v) = collectNMAP(nodename, None)
+			(n, v) = self.collectNMAP(nodename, None)
 			values.update(v)
 
 			### GET PLC PCU ######################
@@ -375,7 +375,6 @@ class ScanNodeInternal(ScanInterface):
 			print traceback.print_exc()
 
 		return (nodename, values)
-
 
 def internalprobe(hostname):
 	fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 

@@ -19,7 +19,7 @@ from monitor.wrapper.plccache import plcdb_lb2hn as site_lb2hn
 
 from monitorweb.templates.links import *
 
-import findbad
+from monitor import scanapi
 
 
 def query_to_dict(query):
@@ -251,10 +251,10 @@ class Root(controllers.RootController):
 			flash("Reboot appeared to work.  All at most 5 minutes.  Run ExternalScan to check current status.")
 
 		elif action == "ExternalScan":
-			findbad.externalprobe(str(hostname))
+			scanapi.externalprobe(str(hostname))
 			flash("External Scan Successful!")
 		elif action == "InternalScan":
-			findbad.probe(str(hostname))
+			scanapi.internalprobe(str(hostname))
 			flash("Internal Scan Successful!")
 		else:
 			# unknown action
