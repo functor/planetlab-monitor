@@ -77,9 +77,9 @@ ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 echo "Performing uptime changes for sites, nodes, and pcus"
 ########################
 # 3. record last-changed for sites, nodes and pcus.
-${MONITOR_SCRIPT_ROOT}/sitebad.py --increment || :
-${MONITOR_SCRIPT_ROOT}/nodebad.py --increment || :
-${MONITOR_SCRIPT_ROOT}/pcubad.py --increment || :
+${MONITOR_SCRIPT_ROOT}/sitebad.py || :
+${MONITOR_SCRIPT_ROOT}/nodebad.py || :
+${MONITOR_SCRIPT_ROOT}/pcubad.py || :
 
 echo "Archiving pkl files"
 #########################

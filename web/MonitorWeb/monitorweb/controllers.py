@@ -135,8 +135,8 @@ def prep_node_for_display(node):
 
 	node.history = HistoryNodeRecord.by_hostname(node.hostname)
 
-	if node.port_status:
-		node.ports = format_ports(node.port_status)
+	node.ports = format_ports(node.port_status)
+
 	try:
 		exists = node.plc_node_stats['last_contact']
 	except:
@@ -408,7 +408,7 @@ class Root(controllers.RootController):
 		session.bind = metadata.bind
 		filtercount = {'active' : 0, 'acknowledged': 0, 'all' : 0}
 		# With Acknowledgement
-		sql_ack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,a.message '+ \
+		sql_ack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,a.message,e.eventid '+ \
               ' FROM triggers t,hosts h,items i,functions f, hosts_groups hg,escalations e,acknowledges a ' + \
               ' WHERE f.itemid=i.itemid ' + \
                   ' AND h.hostid=i.hostid ' + \

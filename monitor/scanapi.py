@@ -20,7 +20,6 @@ from monitor.database.info.model import *
 from monitor.sources import comon
 from monitor.wrapper import plc, plccache
 
-from nodequery import verify,query_to_dict,node_select
 import traceback
 from nodecommon import nmap_port_status
 

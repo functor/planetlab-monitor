@@ -36,6 +36,7 @@ def zabbix_event_ack_link(eventid):
 					<th>Issue (severity)</th>
 					<th>Last change</th>
 					<th>Notes (acknowledged)</th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -55,6 +56,7 @@ def zabbix_event_ack_link(eventid):
 					<!-- NOTE: only one of the next two columns will be displayed. -->
 					<td py:if="val"><a href="${zabbix_event_ack_link(node[5])}">Provide Ack</a></td>
 					<td py:if="not val" py:content="node[5]">Message from user</td>
+					<td py:if="not val"><a href="${zabbix_event_ack_link(node[6])}">Add</a></td>
 				</tr>
 			</tbody>
 		</table>
