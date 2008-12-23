@@ -1,0 +1,50 @@
+--- /home/soltesz/zabbix-1.6.1/frontends/php/index.php	2008-12-05 17:27:03.000000000 -0500
++++ index.php	2008-12-22 16:26:28.000000000 -0500
+@@ -69,9 +69,12 @@
+ 			access_deny();
+ 		}
+ 	}
+-	$_REQUEST['name'] = 'Admin'
++
++	$_REQUEST['enter'] = 'Enter';
++	$_REQUEST['name'] = 'Admin';
+ 	$_REQUEST['password'] = 'zabbix';
+ 
++
+ 	if(isset($_REQUEST['enter'])&&($_REQUEST['enter']=='Enter')){
+ 		
+ 		$name = get_request('name','');
+@@ -154,6 +157,10 @@
+ 				$row["url"] = get_profile('web.menu.view.last','index.php');
+ 				unset($USER_DETAILS);
+ 			}
++			if ( array_key_exists('url', $_GET) )
++			{
++				$row['url'] = urldecode($_GET['url']);
++			}
+ 			redirect($row["url"]);
+ 			die();
+ //			return;
+--- /home/soltesz/zabbix-1.6.1/frontends/php/include/perm.inc.php	2008-11-04 16:45:02.000000000 -0500
++++ include/perm.inc.php	2008-12-22 16:09:48.000000000 -0500
+@@ -69,6 +69,13 @@
+ 			
+ 			DBexecute('UPDATE users SET attempt_failed=0 WHERE userid='.$login['userid']);
+ 		}
++	} else {
++		if ( ! $_GET['redirect'] ) {
++			$_GET['redirect'] = true;
++			$_GET['url'] = $_SERVER['REQUEST_URI'];
++			$url = http_build_query($_GET);
++			header("Location: index.php?$url");
++		}
+ 	}
+ 
+ 	if(!$USER_DETAILS){
+@@ -738,4 +745,4 @@
+ 
+ return $result;
+ }
+-?>
+\ No newline at end of file
++?>
