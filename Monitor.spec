@@ -5,7 +5,7 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version 1.1
+%define version 2.0
 %define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
@@ -169,6 +169,9 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Mon Jan 05 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-0
+- new changes are significantly different, that I'm upping the number for clarity.
+
 * Wed Sep 24 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-8
 - These are all changes in the latest Monitor code.  I will branch this version
 - next, before making additional large changes.
