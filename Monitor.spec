@@ -33,6 +33,8 @@ system, syncing the PLC db with the monitoring database, notifying users,
 interacting with PCU hardware, applying penalties to sites that violate
 acceptable use.
 
+######################################## CLIENT
+
 %package client
 Summary: Monitor hooks for a PLC node
 Group: Applications/System
@@ -45,6 +47,7 @@ include configuration setup for the monitoring agent running on the node.  It
 will also include any cron or init scripts needed to perform this kind of
 maintenance.
 
+######################################## Server
 %package server
 Summary: Monitor hooks for the PLC server.
 Group: Applications/System
@@ -70,6 +73,18 @@ Requires: zabbix-server
 The server side include all python modules and scripts needed to fully
 operation, track, and interact with any third-party monitoring software, such
 as Zabbix DB.
+
+######################################## PCU Control
+
+%package pcucontrol
+Summary: PCU Controls for Monitor and PLCAPI
+Group: Applications/System
+Requires: python
+
+%description pcucontrol
+Both Monitor and the PLCAPI use a set of common commands to reboot machines
+using their external or internal PCUs.  This package is a library of several
+supported models.
 
 %prep
 %setup -q
@@ -129,6 +144,7 @@ chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+
 %files server
 %defattr(-,root,root)
 #%config /usr/share/%{name}/monitorconfig.py
@@ -141,13 +157,15 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
-%{python_sitearch}/pcucontrol
 %{_sysconfdir}/plc.d/monitor
 
 %files client
 %defattr(-,root,root)
 %{_initrddir}/monitor
 %{_sysconfdir}/cron.d/monitor
+
+%files pcucontrol
+%{python_sitearch}/pcucontrol
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
@@ -160,6 +178,9 @@ rm -rf $RPM_BUILD_ROOT
 
 # NOTE: generate the python defines from zabbix include files.
 php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
+
+# apply patches to zabbix
+patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix/zabbix-auto-login.diff
 
 #chkconfig --add monitor-server
 #chkconfig monitor-server on
