@@ -421,6 +421,19 @@ case "$1" in
 		result "$MESSAGE"
 	;;
 
+	delete)
+		MESSAGE=$"Deleting databases..."
+		dialog "$MESSAGE"
+
+		dropdb -U postgres $ZABBIX_DB_NAME
+		dropuser -U postgres $ZABBIX_DB_USER
+
+		dropdb -U postgres $MONITOR_DB_NAME
+		dropuser -U postgres $MONITOR_DB_USER
+
+		result "$MESSAGE"
+	;;
+
 	stop)
 		MESSAGE=$"Stopping Monitor"
 		dialog "$MESSAGE"

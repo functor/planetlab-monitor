@@ -27,7 +27,6 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")
 import pcucontrol.transports.pyssh as pyssh
 from monitor import config
 
-from monitor.database.info.model import FindbadPCURecord
 
 # Event class ID from pcu events
 #NODE_POWER_CONTROL = 3
@@ -336,6 +335,7 @@ def pcu_name(pcu):
 		return None
 
 def get_pcu_values(pcu_id):
+	from monitor.database.info.model import FindbadPCURecord
 	print "pcuid: %s" % pcu_id
 	try:
 		pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=pcu_id).first()
