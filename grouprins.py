@@ -24,7 +24,7 @@ api = plc.getAuthAPI()
 import traceback
 from optparse import OptionParser
 
-from nodecommon import *
+from monitor.common import *
 from nodequery import verify,query_to_dict,node_select
 from monitor.model import *
 import os

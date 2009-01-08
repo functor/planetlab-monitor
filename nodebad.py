@@ -8,7 +8,7 @@ from datetime import datetime,timedelta
 
 from nodequery import verify,query_to_dict,node_select
 
-from nodecommon import *
+from monitor.common import *
 
 from monitor import config
 from monitor.wrapper import plc,plccache

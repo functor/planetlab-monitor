@@ -3,7 +3,7 @@
 
 import sys
 from monitor import database
-from nodecommon import *
+from monitor.common import *
 from monitor.model import Record
 import glob
 import os

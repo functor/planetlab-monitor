@@ -20,7 +20,7 @@ from monitor import database
 from monitor import util 
 from monitor.wrapper import plc, plccache
 from nodequery import pcu_select
-from nodecommon import nmap_port_status
+from monitor.common import nmap_port_status
 from monitor.scanapi import *
 
 plc_lock = threading.Lock()

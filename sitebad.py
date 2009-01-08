@@ -14,7 +14,7 @@ from monitor.database.info.model import HistorySiteRecord, FindbadNodeRecord, se
 from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
-from nodecommon import *
+from monitor.common import *
 from nodequery import verify,query_to_dict,node_select
 from monitor.model import *
 

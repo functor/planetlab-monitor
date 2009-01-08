@@ -22,7 +22,7 @@ from monitor import parser as parsermodule
 api = plc.getAuthAPI()
 
 from nodequery import verify,query_to_dict,node_select
-from nodecommon import *
+from monitor.common import *
 from sets import Set
 
 def main():

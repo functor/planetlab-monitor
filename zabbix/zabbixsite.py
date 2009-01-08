@@ -146,9 +146,6 @@ def merge_iplist(iplist):
 
 def setup_site(loginbase, techemail, piemail, iplist):
 
-	# TODO: send a message when host is discovered.
-
-	# TODO: update 'discovered' hosts with dns name.
 	# TODO: remove old nodes that are no longer in the plcdb.
 	# TODO: remove old users that are no longer in the plcdb.
 	# TODO: consider creating two user groups for Tech & PI emails
@@ -162,11 +159,14 @@ def setup_site(loginbase, techemail, piemail, iplist):
 		raise Exception("iplist length is too long!")
 
 	BI_WEEKLY_ESC_PERIOD = int(60*60*24)
-	#BI_WEEKLY_ESC_PERIOD = int(60) # testing...
+	DISCOVERY_DELAY = 3600
+	BI_WEEKLY_ESC_PERIOD = int(240) # testing...
+	DISCOVERY_DELAY = 120 # testing
 
 	# User Group
 	site_user_group = UsrGrp.find_or_create(name=USERGROUP_NAME % loginbase)
-	for user in set(techemail + piemail + [config.cc_email]):
+	#for user in set(techemail + piemail + [config.cc_email]):
+	for user in set([config.cc_email]):
 		if not user: continue
 		# USER
 		u = User.find_or_create(alias=user, type=1,
@@ -193,7 +193,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 
 	# DISCOVERY RULE & CHECK
 	dr = DiscoveryRule.find_or_create(name=discovery_rule_name,
-			  delay=3600,
+			  delay=DISCOVERY_DELAY,
 			  proxy_hostid=0,
 			  set_if_new = {'iprange':iplist},
 			  exec_if_new=lambda obj: \
@@ -234,6 +234,15 @@ def setup_site(loginbase, techemail, piemail, iplist):
 				]
 				# THEN
 		a.actionoperation_list=[
+					# Send Email
+					ActionOperation(
+						operationtype=defines.OPERATION_TYPE_MESSAGE,
+						shortdata=mailtxt.node_discovered_subject,
+						longdata=mailtxt.node_discovered,
+						object=defines.OPERATION_OBJECT_GROUP, 
+						objectid=site_user_group.usrgrpid, 
+						esc_period=0, esc_step_to=1, esc_step_from=1, 
+					),
 					# Add Host
 					ActionOperation(
 						operationtype=defines.OPERATION_TYPE_HOST_ADD,
@@ -249,7 +258,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 						operationtype=defines.OPERATION_TYPE_GROUP_ADD,
 						object=0, objectid=site_host_group.groupid,
 						esc_period=0, esc_step_from=1, esc_step_to=1),
-					# Link to Template 'Template_Linux_Minimal'
+					# Link to Template 'Template_Linux_PLC_Host'
 					ActionOperation(
 						operationtype=defines.OPERATION_TYPE_TEMPLATE_ADD,
 						object=0, objectid=plctemplate.hostid,
@@ -258,7 +267,10 @@ def setup_site(loginbase, techemail, piemail, iplist):
 	else:
 		# TODO: verify iplist is up-to-date
 		# NOTE: len(a.actioncondition_list) > 0
-		ip_condition  = a.actioncondition_list[0]
+		#ip_condition  = a.actioncondition_list[0]
+		ip_condition = filter(lambda x: x.conditiontype == defines.CONDITION_TYPE_DHOST_IP, a.actioncondition_list)[0]
+		print ip_condition.conditiontype
+		print defines.CONDITION_TYPE_DHOST_IP
 		assert ip_condition.conditiontype == defines.CONDITION_TYPE_DHOST_IP
 		if ip_condition.value != iplist:
 			ip_condition.value = iplist

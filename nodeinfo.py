@@ -12,7 +12,7 @@ from pcucontrol  import reboot
 
 import time
 from monitor.model import *
-from nodecommon import *
+from monitor.common import *
 #from monitor.model import node_end_record, PersistFlags
 
 parser = parsermodule.getParser()

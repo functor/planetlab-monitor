@@ -122,6 +122,18 @@ You can acknowledge this notice by visiting the link below or by letting us know
 Thank you for your help,
     -- PlanetLab Central (%(support_email)s)
 """
+	node_discovered_subject = """Discovered {HOSTNAME} and online"""
+	node_discovered = """
+Thank you for registering and installing this machine:
+
+    {HOSTNAME}
+
+Our monitoring infrastructure has detected it, and in the future it will alert you in the event of unexpected downtime.
+
+	{TRIGGER.NAME}: {STATUS}
+Thank you for your help,
+    -- PlanetLab Central (%(support_email)s)
+"""
 	thankyou_nodeup = """
 While monitoring your site, we noticed that the following nodes *improved* their states:
 

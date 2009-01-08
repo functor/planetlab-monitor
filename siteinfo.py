@@ -7,7 +7,7 @@ from monitor import database
 from pcucontrol  import reboot
 
 import time
-from nodecommon import *
+from monitor.common import *
 
 from monitor import util
 from monitor import parser as parsermodule

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import database
 import comon
-from nodecommon import color_pcu_state, datetime_fromstr
+from monitor.common import color_pcu_state, datetime_fromstr
 from nodehistory import get_filefromglob
 import time
 import traceback

@@ -20,9 +20,10 @@ def get_site_iplist(loginbase):
 	# TODO: if it is, then we need to break up the discovery rule.
 	ip_list = ""
 	for node in node_list:
-		ip = netid2ip[node['nodenetwork_ids'][0]]
-		if len(ip_list) > 0: ip_list += ","
-		ip_list += ip
+		if len(node['nodenetwork_ids']) > 0:
+			ip = netid2ip[node['nodenetwork_ids'][0]]
+			if len(ip_list) > 0: ip_list += ","
+			ip_list += ip
 
 	return ip_list
 	
@@ -59,7 +60,7 @@ if __name__=="__main__":
 			query.update({'login_base' : opts.site})
 
 		sites = api.GetSites(query, ['login_base'])
-		for site in sites:
+		for site in sites[:10]:
 			add_loginbase(site['login_base'])
 			session.flush()
 

@@ -7,7 +7,7 @@ api = plc.getAuthAPI()
 from monitor import parser as parsermodule
 from sets import Set
 
-from nodecommon import *
+from monitor.common import *
 from monitor import database
 from monitor.database import FindbadNodeRecord
 

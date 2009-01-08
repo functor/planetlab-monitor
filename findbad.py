@@ -20,7 +20,7 @@ from monitor.scanapi import *
 
 from nodequery import verify,query_to_dict,node_select
 import traceback
-from nodecommon import nmap_port_status
+from monitor.common import nmap_port_status
 
 #print "starting sqlfindbad.py"
 # QUERY all nodes.

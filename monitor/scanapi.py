@@ -21,7 +21,7 @@ from monitor.sources import comon
 from monitor.wrapper import plc, plccache
 
 import traceback
-from nodecommon import nmap_port_status
+from monitor.common import nmap_port_status
 
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
 			"table=table_nodeview&" + \

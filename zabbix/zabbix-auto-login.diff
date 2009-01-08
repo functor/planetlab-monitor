@@ -14,13 +14,16 @@
  	if(isset($_REQUEST['enter'])&&($_REQUEST['enter']=='Enter')){
  		
  		$name = get_request('name','');
-@@ -154,6 +157,10 @@
+@@ -154,6 +157,13 @@
  				$row["url"] = get_profile('web.menu.view.last','index.php');
  				unset($USER_DETAILS);
  			}
 +			if ( array_key_exists('url', $_GET) )
 +			{
 +				$row['url'] = urldecode($_GET['url']);
++			}
++			if ( $row['url'] == 'index.php' ) {
++				$row['url'] = 'dashboard.php';
 +			}
  			redirect($row["url"]);
  			die();
