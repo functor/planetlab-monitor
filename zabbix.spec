@@ -155,6 +155,9 @@ TMP_FILE=`mktemp $TMPDIR/zbxtmpXXXXXX`
 
 # TODO: setup Server=, Hostname=,
 SERVER=`grep PLC_MONITOR_HOST /etc/planetlab/plc_config | tr "'" ' ' | awk '{print $2}'`
+if [ -z "$SERVER" ] ; then
+	SERVER=128.112.139.116
+fi
 HOST=`hostname`
 sed	-e "s#Hostname=.*#Hostname=$HOST#g" \
 	-e "s#Server=.*#Server=$SERVER#g" \
@@ -180,6 +183,7 @@ rm -f $TMP_FILE
 
 chkconfig --add zabbix_agentd 
 chkconfig zabbix_agentd on
+service zabbix_agentd start
 
 %post server
 

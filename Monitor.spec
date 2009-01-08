@@ -180,7 +180,7 @@ rm -rf $RPM_BUILD_ROOT
 php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
 
 # apply patches to zabbix
-patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix/zabbix-auto-login.diff
+patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix-auto-login.diff
 
 #chkconfig --add monitor-server
 #chkconfig monitor-server on
