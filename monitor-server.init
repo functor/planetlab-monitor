@@ -77,7 +77,7 @@ function check_user_and_db()
     fi
 
     # Create/update the unprivileged database user and password
-    if [ -z "$PLC_MONITOR_DBPASSWORD" || "$PLC_MONITOR_DBPASSWORD" = "None" ] ; then
+    if [[ -z "$PLC_MONITOR_DBPASSWORD" || "$PLC_MONITOR_DBPASSWORD" = "None" ]] ; then
         # Zabbix doesn't like plain uuidgen passwords
         PLC_MONITOR_DBPASSWORD=$( uuidgen | md5sum - | awk '{print $1}' )
         plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
@@ -219,6 +219,7 @@ cachetime=60
 # Evaluated as true or false
 [commandline]
 cachecalls=True
+embedded=False
 
 echo=False
 debug=False
@@ -412,7 +413,8 @@ case "$1" in
 		# turn off zabbix server, etc. before writing to the db.
 		service plc stop monitor 
 
-		$MONITORPATH/zabbix/zabbixsync.py --setupglobal &> /var/log/monitor-server
+		$MONITORPATH/zabbix/zabbixsync.py --setupids &> /var/log/monitor-server
+		$MONITORPATH/zabbix/zabbixsync.py --setupglobal 2>&1 >> /var/log/monitor-server
 		# import any templates
 		check_zabbix_templates_and_import
 

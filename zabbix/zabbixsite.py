@@ -97,8 +97,9 @@ def setup_global():
 	if zabbixserver:
 		# TODO: verify that this works.  it has failed once on fresh
 		# install... not sure why.
-		print "Removing default Zabbix server entry"
-		zabbixserver.delete()
+#		print "Removing default Zabbix server entry"
+#		zabbixserver.delete()
+		zabbixserver.host="unused default server"
 
 		# NOTE: creating a host and assigning a template cannot work 
 		#       due to the crazy item, trigger, action
@@ -181,7 +182,9 @@ def setup_site(loginbase, techemail, piemail, iplist):
 
 	# HOST GROUP
 	plc_host_group = HostGroup.find_or_create(name="MyPLC Hosts")
+	print "myplc groupid: ", plc_host_group.groupid
 	site_host_group = HostGroup.find_or_create(name=HOSTGROUP_NAME % loginbase)
+	print "site groupid: ", site_host_group.groupid
 	plctemplate = Host.get_by(host="Template_Linux_PLC_Host")
 	escalation_action_name = ESCALATION_ACTION_NAME % loginbase
 	discovery_action_name = DISCOVERY_ACTION_NAME % loginbase

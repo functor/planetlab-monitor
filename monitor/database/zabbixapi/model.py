@@ -235,6 +235,7 @@ class ZabbixEntity(ZabbixSerialize):
 		fieldname = self._descriptor.auto_primarykey
 		index = IDs.get_by(table_name=tablename, field_name=fieldname)
 		if not index:
+			print "NEW IDs index INSIDE INIT"
 			index = IDs(table_name=tablename, field_name=fieldname, nodeid=0, nextid=10)
 			index.flush()
 		index.nextid = index.nextid + 1
@@ -736,7 +737,6 @@ class User(ZabbixEntity): # parent of media
 		ug_row = UsersGroups.get_by(usrgrpid=group.usrgrpid, userid=self.userid)
 		if ug_row is not None:
 			ug_row.delete()
-			#ug_row.flush()
 		return
 		
 class UsrGrp(ZabbixEntity):
@@ -790,10 +790,42 @@ class UsrGrp(ZabbixEntity):
 		ug_row = UsersGroups.get_by(userid=user.userid, usrgrpid=self.usrgrpid)
 		if ug_row is not None:
 			ug_row.delete()
-			#ug_row.flush()
 		return
 
+def confirm_ids():
+	fields = {
+		'scripts' : 'scriptid',
+		'usrgrp' : 'usrgrpid',
+		'users' : 'userid',
+		'media' : 'mediaid',
+		'users_groups' : 'id',
+		'groups' : 'groupid',
+		'rights' : 'rightid',
+		'drules' : 'druleid',
+		'dchecks' : 'dcheckid',
+		'actions' : 'actionid',
+		'conditions' : 'conditionid',
+		'operations' : 'operationid',
+		'opconditions' : 'opconditionid',
+	}
+	need_to_flush = False
+
+	for tablename in fields.keys():
+		fieldname = fields[tablename]
+	
+		index = IDs.get_by(table_name=tablename, field_name=fieldname)
+		if not index:
+			print "NEW IDs index INSIDE confirm_ids"
+			index = IDs(table_name=tablename, field_name=fieldname, nodeid=0, nextid=10)
+			index.flush()
+			need_to_flush=True
+
+	if need_to_flush:
+		zab_session.flush()
+	
+
 setup_all()
+confirm_ids()
 
 def get_zabbix_class_from_name(name):
 	em = get_zabbix_entitymap()
@@ -820,7 +852,3 @@ class OperationConditionNotAck(object):
 				operator=defines.CONDITION_OPERATOR_EQUAL, 
 				value=0 ) # NOT_ACK
 		return  o
-
-#import md5
-#u = User(alias="stephen.soltesz@gmail.com", name="stephen.soltesz@gmail.com", surname="", passwd=md5.md5("test").hexdigest(), url="", autologin=0, autologout=900, lang="en_gb", refresh=30, type=1, theme="default.css")
-#u.flush()
