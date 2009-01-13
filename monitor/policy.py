@@ -1,15 +1,15 @@
 import config
 import database 
 import time
-import mailer
 import sys
-import emailTxt
 import string
+from monitor.wrapper import mailer
+from monitor.wrapper import emailTxt
 from monitor.wrapper import plccache
 from datetime import datetime
 
-from rt import is_host_in_rt_tickets
-import plc
+from monitor.wrapper.rt import is_host_in_rt_tickets
+from monitor.wrapper import plc
 
 # Time to enforce policy
 POLSLEEP = 7200

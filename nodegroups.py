@@ -14,7 +14,7 @@
 #  * 
 
 from monitor import database
-from monitor.database import FindbadNodeRecord
+from monitor.database.info.model import FindbadNodeRecord
 from monitor import util
 from monitor.wrapper import plc
 from monitor import parser as parsermodule

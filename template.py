@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-import emailTxt
+from monitor.wrapper import emailTxt
 class Type:
 	def __init__(self, value):
 		self.value = value

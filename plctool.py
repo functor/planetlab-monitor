@@ -8,7 +8,7 @@
 # $Id: plctool.py,v 1.2 2007/04/19 20:43:00 mef Exp $
 #
 
-from emailTxt import *
+from monitor.wrapper.emailTxt import *
 import xml, xmlrpclib
 import logging
 import time

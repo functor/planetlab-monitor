@@ -6,15 +6,14 @@
 #
 # $Id: monitor.py,v 1.7 2007/07/03 19:59:02 soltesz Exp $
 
-import database
-
-import rt
 import sys
 
-import plc
-api = plc.getAuthAPI()
-
+from monitor import database
+from monitor.wrapper import rt
+from monitor.wrapper import plc
 from monitor.policy import *
+
+api = plc.getAuthAPI()
 
 def reboot(hostname):
 	print "CALLING: mailmonitor.reboot(%s)" % hostname

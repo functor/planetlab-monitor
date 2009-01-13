@@ -78,7 +78,7 @@ if __name__=="__main__":
 		# ADD SITES
 		sites = api.GetSites(query, ['login_base'])
 		site_api_list = [ site['login_base'] for site in sites ]
-		for site in sites[:20]:
+		for site in sites: # [:20]:
 			add_loginbase(site['login_base'])
 			session.flush()
 

@@ -7,9 +7,10 @@ import logging
 import Queue
 import time 
 import re
-import database
 from threading import *
-import config
+
+from monitor import config
+from monitor import database
 
 # TODO: merge the RT mailer from mailer.py into this file.
 

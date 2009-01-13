@@ -33,7 +33,7 @@ import time
 
 import bootman 		# debug nodes
 import mailmonitor 	# down nodes without pcu
-from emailTxt import mailtxt
+from monitor.wrapper.emailTxt import mailtxt
 import sys
 
 class Reboot(object):

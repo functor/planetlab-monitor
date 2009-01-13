@@ -8,8 +8,7 @@ from monitor import parser as parsermodule
 from sets import Set
 
 from monitor.common import *
-from monitor import database
-from monitor.database import FindbadNodeRecord
+from monitor.database.info.model import FindbadNodeRecord
 
 def network_config_to_str(net):
 
