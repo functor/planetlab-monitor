@@ -1,4 +1,5 @@
 from pcucontrol.reboot import *
+import time
 
 class DRAC(PCUControl):
 	supported_ports = [22,443,5869]
@@ -23,18 +24,29 @@ class DRAC(PCUControl):
 			# NOTE: be careful to escape any characters used by 're.compile'
 			index = s.expect(["\$", "\[%s\]#" % self.username ])
 			print "INDEX:", index
+			print s
 			if dryrun:
 				if index == 0:
-					s.send("racadm getsysinfo")
+					s.sendline("racadm getsysinfo")
 				elif index == 1:
-					s.send("getsysinfo")
+					s.sendline("getsysinfo")
 			else:
+				print "serveraction powercycle"
 				if index == 0:
-					s.send("racadm serveraction powercycle")
+					s.sendline("racadm serveraction powercycle")
 				elif index == 1:
-					s.send("serveraction powercycle")
+					s.sendline("serveraction powercycle")
 				
-			s.send("exit")
+			# TODO:  this is really lousy.  Without the sleep, the sendlines
+			# don't completely get through.  Even the added, expect line
+			# returns right away without waiting for the commands above to
+			# complete...  Therefore, this delay is guaranteed to fail in some
+			# other context...
+			time.sleep(5)
+			index = s.expect(["\$", "\[%s\]#" % self.username ])
+			print s
+			print "INDEX 2:", index
+			s.sendline("exit")
 
 		except pexpect.EOF:
 			raise ExceptionPrompt("EOF before expected Prompt")
@@ -44,26 +56,6 @@ class DRAC(PCUControl):
 
 		s.close()
 
-		return 0
-
-class DRACDefault(PCUControl):
-	supported_ports = [22,443,5869]
-	def run_ssh(self, node_port, dryrun):
-		self.transport.open(self.host, self.username)
-		self.transport.sendPassword(self.password)
-
-		print "logging in..."
-		self.transport.write("\r\n")
-		# Testing Reboot ?
-		if dryrun:
-			self.transport.ifThenSend("[%s]#" % self.username, "getsysinfo")
-		else:
-			# Reset this machine
-			self.transport.ifThenSend("[%s]#" % self.username, "serveraction powercycle")
-
-		self.transport.ifThenSend("[%s]#" % self.username, "exit")
-
-		self.transport.close()
 		return 0
 
 ### rebooting Dell systems via RAC card
