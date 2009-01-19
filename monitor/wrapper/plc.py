@@ -22,14 +22,17 @@ except:
 logger = logging.getLogger("monitor")
 	
 class Auth:
-	def __init__(self, username=None, password=None):
-		if username==None and password==None:
-			self.auth = {'AuthMethod': "anonymous"}
+	def __init__(self, username=None, password=None, **kwargs):
+		if 'session' in kwargs:
+			self.auth= { 'AuthMethod' : 'session',
+					'session' : kwargs['session'] }
 		else:
-			self.auth = {'Username' : username,
-	             		'AuthMethod' : 'password',
-				 		'AuthString' : password}
-			
+			if username==None and password==None:
+				self.auth = {'AuthMethod': "anonymous"}
+			else:
+				self.auth = {'Username' : username,
+							'AuthMethod' : 'password',
+							'AuthString' : password}
 
 # NOTE: this host is used by default when there are no auth files.
 XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
@@ -118,6 +121,10 @@ class CachedPLC(PLC):
 
 def getAPI(url):
 	return xmlrpclib.Server(url, verbose=False, allow_none=True)
+
+def getNodeAPI(session):
+	nodeauth = Auth(session=session)
+	return PLC(nodeauth.auth, auth.server)
 
 def getAuthAPI():
 	return PLC(auth.auth, auth.server)
