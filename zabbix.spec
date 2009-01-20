@@ -4,7 +4,7 @@
 
 Name:		zabbix
 Version:	1.6
-Release:	1
+Release:	2
 Group:		System Environment/Daemons
 License:	GPL
 Summary:	ZABBIX network monitor server
