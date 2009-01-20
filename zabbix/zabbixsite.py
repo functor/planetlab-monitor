@@ -161,8 +161,8 @@ def setup_site(loginbase, techemail, piemail, iplist):
 
 	BI_WEEKLY_ESC_PERIOD = int(60*60*24)
 	DISCOVERY_DELAY = 3600
-	BI_WEEKLY_ESC_PERIOD = int(240) # testing...
-	DISCOVERY_DELAY = 120 # testing
+	BI_WEEKLY_ESC_PERIOD = int(45*60) # testing...
+	DISCOVERY_DELAY = 240 # testing
 
 	# User Group
 	site_user_group = UsrGrp.find_or_create(name=USERGROUP_NAME % loginbase)

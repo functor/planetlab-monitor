@@ -34,11 +34,12 @@ If you have a BootCD older than 3.0, you will need to create a new BootImage on 
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
-There is no need to respond to this message unless there are any console messages relating to the node failure.  In this case, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you have taken.
+There is no need to respond to this message unless there are console messages relating to the node failure.  In this case, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.   Including this message in your reply will help us coordinate our records with the actions you have taken.
 
-Finally, you can track the current status of your machines using this Google Gadget:
+If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting the links below and describing the problem:
 
-    http://fusion.google.com/add?source=atgs&moduleurl=http://%(hostname)s/monitor/sitemonitor.xml
+    http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
+    http://%(hostname)s/zabbix/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}
 
 Thank you for your help,
   -- PlanetLab Central (%(support_email)s)
@@ -63,7 +64,7 @@ If you have a BootCD older than 3.0, you will need to create a new BootImage on 
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
-If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting, and letting us know what the problem is at mailto:%(support_email)s 
+If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting the links below and describing the problem:
 
     http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
     http://%(hostname)s/zabbix/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}
@@ -96,7 +97,7 @@ If you have a BootCD older than 3.0, you will need to create a new BootImage on 
 
     https://www.planet-lab.org/doc/guides/bootcdsetup
 
-If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting, and letting us know what the problem is at mailto:%(support_email)s
+If after following these directions, you are still experiencing problems, then you can acknowledge this notice by visiting the links below and describing the problem:
 
     http://%(hostname)s/zabbix/acknow.php?eventid={EVENT.ID}
     http://%(hostname)s/zabbix/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}
