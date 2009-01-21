@@ -3,8 +3,8 @@
 %define _prefix		/usr/local/zabbix
 
 Name:		zabbix
-Version:	1.6
-Release:	2
+Version:	1.6.2
+Release:	1
 Group:		System Environment/Daemons
 License:	GPL
 Summary:	ZABBIX network monitor server
