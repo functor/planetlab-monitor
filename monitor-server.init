@@ -277,6 +277,7 @@ EOF
 
 function start_tg_server ()
 {
+	stop_tg_server
 	pushd ${MONITORPATH}/web/MonitorWeb/
 	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log &
 	popd
