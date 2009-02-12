@@ -1,4 +1,5 @@
 from pcucontrol.reboot import *
+from distutils.sysconfig import get_python_lib; 
 
 class IntelAMT(PCUControl):
 	supported_ports = [16992]
@@ -7,7 +8,7 @@ class IntelAMT(PCUControl):
 
 		cmd = command.CMD()
 		# TODO: need to make this path universal; not relative to pwd.
-		cmd_str = config.MONITOR_SCRIPT_ROOT + "/pcucontrol/models/intelamt/remoteControl"
+		cmd_str = get_python_lib(1) + "/pcucontrol/models/intelamt/remoteControl"
 
 		if dryrun:
 			# NOTE: -p checks the power state of the host.
