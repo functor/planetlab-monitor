@@ -19,14 +19,19 @@ from nodequery import verify,query_to_dict,node_select
 from monitor.model import *
 
 api = plc.getAuthAPI()
+def main():
+	main2(config)
 
-def main(config):
+def main2(config):
 
 	l_nodes = plccache.l_nodes
 	l_plcsites = plccache.l_sites
 
 	if config.site:
 		l_sites = [config.site]
+	elif config.sitelist:
+		site_list = config.sitelist.split(',')
+		l_sites = site_list
 	else:
 		l_sites = [site['login_base'] for site in l_plcsites]
 	
@@ -108,13 +113,13 @@ if __name__ == '__main__':
 
 	parser.add_option("", "--site", dest="site", metavar="login_base", 
 						help="Provide a single site to operate on")
-	parser.add_option("", "--sitelist", dest="sitelist", metavar="file.list", 
-						help="Provide a list of files to operate on")
+	parser.add_option("", "--sitelist", dest="sitelist", 
+						help="Provide a list of sites separated by ','")
 
 	config = parsermodule.parse_args(parser)
 
 	try:
-		main(config)
+		main2(config)
 	except Exception, err:
 		import traceback
 		print traceback.print_exc()

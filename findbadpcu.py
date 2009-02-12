@@ -91,9 +91,9 @@ def main():
 											if_new_set={'round' : global_round})
 
 	global_round = fbsync.round
+	api = plc.getAuthAPI()
 
 	if config.site is not None:
-		api = plc.getAuthAPI()
 		site = api.GetSites(config.site)
 		l_nodes = api.GetNodes(site[0]['node_ids'], ['pcu_ids'])
 		pcus = []
@@ -101,6 +101,21 @@ def main():
 			pcus += node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
+	elif config.sitelist:
+		site_list = config.sitelist.split(',')
+
+		sites = api.GetSites(site_list)
+		node_ids = []
+		for s in sites:
+			node_ids += s['node_ids']
+
+		l_nodes = api.GetNodes(node_ids, ['pcu_ids'])
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
 	elif config.pcuselect is not None:
 		n, pcus = pcu_select(config.pcuselect)
 		print pcus

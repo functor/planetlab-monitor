@@ -203,26 +203,32 @@ class Root(controllers.RootController):
 	
 	def nodeaction_handler(self, tg_exceptions=None):
 		"""Handle any kind of error."""
-		refurl = request.headers.get("Referer",link("pcu"))
-		print refurl
 
-		# TODO: do this more intelligently...
-		uri_fields = urllib.splitquery(refurl)
-		if uri_fields[1] is not None:
-			val = query_to_dict(uri_fields[1])
-			if 'pcuid' in val:
-				pcuid = val['pcuid']
-			elif 'hostname' in val:
-				pcuid = FindbadNodeRecord.get_latest_by(hostname=val['hostname']).first().plc_pcuid
+		if 'pcuid' in request.params:
+			pcuid = request.params['pcuid']
 		else:
-			pcuid=None
+			refurl = request.headers.get("Referer",link("pcu"))
+			print refurl
+
+			# TODO: do this more intelligently...
+			uri_fields = urllib.splitquery(refurl)
+			if uri_fields[1] is not None:
+				val = query_to_dict(uri_fields[1])
+				if 'pcuid' in val:
+					pcuid = val['pcuid']
+				elif 'hostname' in val:
+					pcuid = FindbadNodeRecord.get_latest_by(hostname=val['hostname']).first().plc_pcuid
+				else:
+					pcuid=None
+			else:
+				pcuid=None
 
 		cherry_trail = cherrypy._cputil.get_object_trail()
 		for i in cherry_trail:
 			print "trail: ", i
 
 		print pcuid
-		return self.pcuview(pcuid, **dict(exceptions=tg_exceptions))
+		return self.pcuview(None, pcuid, **dict(exceptions=tg_exceptions))
 
 	def nodeaction(self, **data):
 		for item in data.keys():
@@ -247,7 +253,7 @@ class Root(controllers.RootController):
 			print "REBOOT: %s" % hostname
 			ret = reboot.reboot_str(str(hostname))
 			print ret
-			if ret: raise RuntimeError("Error using PCU: " + ret)
+			if ret: raise RuntimeError("Error using PCU: " + str(ret))
 			flash("Reboot appeared to work.  All at most 5 minutes.  Run ExternalScan to check current status.")
 
 		elif action == "ExternalScan":

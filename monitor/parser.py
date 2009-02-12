@@ -86,11 +86,13 @@ def parseSetNodeSets(parser=None):
 	if parser == None:
 		parser = OptionParser()
 	
-	parser.set_defaults(node=None, site=None, nodelist=None, nodeselect=None, nodegroup=None)
+	parser.set_defaults(node=None, site=None, sitelist=None, nodelist=None, nodeselect=None, nodegroup=None)
 	parser.add_option("", "--node", dest="node", metavar="hostname", 
 						help="Provide a single node to operate on")
 	parser.add_option("", "--site", dest="site", metavar="site name",
 						help="Specify a single site to operate on")
+	parser.add_option("", "--sitelist", dest="sitelist", metavar="site name",
+						help="Specify a list of sites, separated by ','")
 	parser.add_option("", "--nodegroup", dest="nodegroup", metavar="GroupName", 
 						help="Provide the nodegroup for the list of nodes.")
 	parser.add_option("", "--nodelist", dest="nodelist", metavar="FILE", 

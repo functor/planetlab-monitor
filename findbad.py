@@ -122,6 +122,13 @@ def main():
 	elif config.site:
 		site = api.GetSites(config.site)
 		l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
+	elif config.sitelist:
+		site_list = config.sitelist.split(',')
+		sites = api.GetSites(site_list)
+		node_ids = []
+		for s in sites:
+			node_ids += s['node_ids']
+		l_nodes = api.GetNodes(node_ids, ['hostname'])
 		
 	l_nodes = [node['hostname'] for node in l_nodes]
 
@@ -172,5 +179,3 @@ if __name__ == '__main__':
 		print "Saving data... exitting."
 		sys.exit(0)
 	print "sleeping"
-	#print "final commit"
-	#time.sleep(10)

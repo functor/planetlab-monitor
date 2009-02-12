@@ -6,7 +6,7 @@ import os
 from glob import glob
 
 import vxargs
-import parser as parsermodule
+from monitor import parser as parsermodule
 from automate import *
 
 def build_vx_args(shell_cmd):

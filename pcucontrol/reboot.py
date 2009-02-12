@@ -471,6 +471,8 @@ def reboot_test_new(nodename, values, verbose, dryrun):
 		# TODO: how to handle the weird, georgetown pcus, the drac faults, and ilo faults
 	except ExceptionPort, err:
 		rb_ret = str(err)
+	except NameError, err:
+		rb_ret = str(err)
 
 	return rb_ret
 
@@ -503,3 +505,6 @@ def main():
 if __name__ == '__main__':
 	logger = logging.getLogger("monitor")
 	main()
+	f = open("/tmp/rebootlog", 'a')
+	f.write("reboot %s\n" % sys.argv)
+	f.close()
