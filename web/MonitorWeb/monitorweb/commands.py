@@ -45,10 +45,10 @@ def start():
         except pkg_resources.DistributionNotFound:
             raise ConfigurationError("Could not find default configuration.")
 
-	if "prod" in configfile:
-		f = open("/var/run/monitorweb.pid", 'w')
-		f.write(str(getpid()))
-		f.close()
+    if "prod" in configfile:
+        f = open("/var/run/monitorweb.pid", 'w')
+        f.write(str(getpid()))
+        f.close()
 
     turbogears.update_config(configfile=configfile,
         modulename="monitorweb.config")
