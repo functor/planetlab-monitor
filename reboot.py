@@ -1211,14 +1211,14 @@ def reboot_policy(nodename, continue_probe, dryrun):
 
 	pcu = plc.getpcu(nodename)
 	if not pcu:
-		logger.debug("no pcu for %s" % hostname)
-		print "no pcu for %s" % hostname
+		logger.debug("no pcu for %s" % nodename)
+		print "no pcu for %s" % nodename
 		return False # "%s has no pcu" % nodename
 
 	values = get_pcu_values(pcu['pcu_id'])
 	if values == None:
-		logger.debug("No values for pcu probe %s" % hostname)
-		print "No values for pcu probe %s" % hostname
+		logger.debug("No values for pcu probe %s" % nodename)
+		print "No values for pcu probe %s" % nodename
 		return False #"no info for pcu_id %s" % pcu['pcu_id']
 	
 	# Try the PCU first
@@ -1314,8 +1314,12 @@ def reboot_test(nodename, values, continue_probe, verbose, dryrun):
 			# TODO: I don't think DRACRacAdm will throw an exception for the
 			# default method to catch...
 			try:
-				drac = DRACRacAdm(values, verbose, ['443', '5869'])
-				rb_ret = drac.reboot(0, dryrun)
+				if values['pcu_id'] in [1402]:
+					drac = DRAC(values, verbose, ['22'])
+					rb_ret = drac.reboot(0, dryrun)
+				else:
+					drac = DRACRacAdm(values, verbose, ['443', '5869'])
+					rb_ret = drac.reboot(0, dryrun)
 			except:
 				drac = DRAC(values, verbose, ['22'])
 				rb_ret = drac.reboot(0, dryrun)
