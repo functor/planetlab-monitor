@@ -620,6 +620,7 @@ def reboot(hostname, config=None, forced_action=None):
 			 "bminit-cfg-auth-implementerror-bootcheckfail-update-implementerror-bootupdatefail-done",
 			 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
 			 "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
+			 "bminit-cfg-auth-getplc-update-installinit-validate-implementerror-update-debug-done",
 			 ]:
 		sequences.update({n: "restart_node_boot"})
 
