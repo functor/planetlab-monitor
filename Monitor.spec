@@ -185,6 +185,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files runlevelagent
 /usr/bin/RunlevelAgent.py
+/usr/bin/RunlevelAgent.pyo
+/usr/bin/RunlevelAgent.pyc
 /%{_initrddir}/monitor-runlevelagent
 
 %post server
