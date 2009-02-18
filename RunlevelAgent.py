@@ -13,7 +13,7 @@ SESSION_FILE="/etc/planetlab/session"
 
 def read_config_file(filename):
     ## NOTE: text copied from BootManager.py 
-	# TODO: unify this code to make it common. i.e. use ConfigParser module
+    # TODO: unify this code to make it common. i.e. use ConfigParser module
     vars = {}
     vars_file= file(filename,'r')
     validConfFile = True
@@ -49,32 +49,32 @@ except:
 
 
 class Auth:
-	def __init__(self, username=None, password=None, **kwargs):
-		if 'session' in kwargs:
-			self.auth= { 'AuthMethod' : 'session',
-					'session' : kwargs['session'] }
-		else:
-			if username==None and password==None:
-				self.auth = {'AuthMethod': "anonymous"}
-			else:
-				self.auth = {'Username' : username,
-							'AuthMethod' : 'password',
-							'AuthString' : password}
+    def __init__(self, username=None, password=None, **kwargs):
+        if 'session' in kwargs:
+            self.auth= { 'AuthMethod' : 'session',
+                    'session' : kwargs['session'] }
+        else:
+            if username==None and password==None:
+                self.auth = {'AuthMethod': "anonymous"}
+            else:
+                self.auth = {'Username' : username,
+                            'AuthMethod' : 'password',
+                            'AuthString' : password}
 class PLC:
-	def __init__(self, auth, url):
-		self.auth = auth
-		self.url = url
-		self.api = xmlrpclib.Server(self.url, verbose=False, allow_none=True)
+    def __init__(self, auth, url):
+        self.auth = auth
+        self.url = url
+        self.api = xmlrpclib.Server(self.url, verbose=False, allow_none=True)
 
-	def __getattr__(self, name):
-		method = getattr(self.api, name)
-		if method is None:
-			raise AssertionError("method does not exist")
+    def __getattr__(self, name):
+        method = getattr(self.api, name)
+        if method is None:
+            raise AssertionError("method does not exist")
 
-		return lambda *params : method(self.auth.auth, *params)
+        return lambda *params : method(self.auth.auth, *params)
 
-	def __repr__(self):
-		return self.api.__repr__()
+    def __repr__(self):
+        return self.api.__repr__()
 
 def main():
 
@@ -83,6 +83,14 @@ def main():
     api = PLC(Auth(session=session_str), api_server_url)
     # NOTE: should we rely on bootmanager for this functionality?
     api.AuthCheck()
+
+    try:
+        env = 'production'
+        if len(sys.argv) > 1:
+            env = sys.argv[1]
+    except:
+        traceback.print_exc()
+        pass
 
     while True:
         # TODO: remove from output
@@ -100,11 +108,22 @@ def main():
             #       still running, we're likely in failboot now.
             #     length of runtime increases the certainty of inferred state.
             #     
-            api.ReportRunlevel({'run_level' : 'safeboot'})
+            if env == "bootmanager":
+                # if bm not running, and plc bootstate = boot, then
+                api.ReportRunlevel({'run_level' : 'failboot'})
+                api.ReportRunlevel({'run_level' : 'reinstall'})
+                # if bm not running, and plc bootstate = safeboot, then
+                api.ReportRunlevel({'run_level' : 'safeboot'})
+            elif env == "production":
+                api.ReportRunlevel({'run_level' : 'boot'})
+            else:
+                api.ReportRunlevel({'run_level' : 'failboot'})
+                
         except:
             traceback.print_exc()
 
-		# TODO: change to a configurable value
+        # TODO: change to a configurable value
+        sys.stdout.flush()
         time.sleep(60)
 
 if __name__ == "__main__":
