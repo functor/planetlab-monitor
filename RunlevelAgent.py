@@ -110,8 +110,8 @@ def main():
             #     
             if env == "bootmanager":
                 # if bm not running, and plc bootstate = boot, then
-                api.ReportRunlevel({'run_level' : 'failboot'})
-                api.ReportRunlevel({'run_level' : 'reinstall'})
+                #api.ReportRunlevel({'run_level' : 'failboot'})
+                #api.ReportRunlevel({'run_level' : 'reinstall'})
                 # if bm not running, and plc bootstate = safeboot, then
                 api.ReportRunlevel({'run_level' : 'safeboot'})
             elif env == "production":
