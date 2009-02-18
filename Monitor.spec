@@ -77,14 +77,25 @@ as Zabbix DB.
 ######################################## PCU Control
 
 %package pcucontrol
-Summary: PCU Controls for Monitor and PLCAPI
-Group: Applications/System
-Requires: python
+summary: pcu controls for monitor and plcapi
+group: applications/system
+requires: python
 
 %description pcucontrol
-Both Monitor and the PLCAPI use a set of common commands to reboot machines
-using their external or internal PCUs.  This package is a library of several
+both monitor and the plcapi use a set of common commands to reboot machines
+using their external or internal pcus.  this package is a library of several
 supported models.
+
+####################################### RunlevelAgent
+%package runlevelagent
+summary: the RunlevelAgent that reports node runlevels
+group: applications/system
+requires: python
+
+%description runlevelagent
+The RunlevelAgent starts as early as possible during boot-up and production
+mode to actively report the observed runlevel to PLC and update the
+'last_contact' field.
 
 %prep
 %setup -q
@@ -141,6 +152,11 @@ chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 #install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 #cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
+#################### RunlevelAgent
+install -D -m 755 RunlevelAgent.py $RPM_BUILD_ROOT/usr/bin/RunlevelAgent.py
+install -D -m 755 monitor-runlevelagent.init $RPM_BUILD_ROOT/%{_initrddir}/monitor-runlevelagent
+
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -167,6 +183,10 @@ rm -rf $RPM_BUILD_ROOT
 %files pcucontrol
 %{python_sitearch}/pcucontrol
 
+%files runlevelagent
+/usr/bin/RunlevelAgent.py
+/%{_initrddir}/monitor-runlevelagent
+
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
 # 		an API server or so on.
@@ -188,6 +208,10 @@ patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix-auto-login
 %post client
 chkconfig --add monitor
 chkconfig monitor on
+
+%post runlevelagent
+chkconfig --add monitor-runlevelagent
+chkconfig monitor-runlevelagent on
 
 %changelog
 * Mon Jan 05 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-0
