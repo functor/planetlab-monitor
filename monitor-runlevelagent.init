@@ -13,6 +13,20 @@
 # $Id$
 #
 
+function start_rla ()
+{
+	ret=$( pgrep -f -l RunlevelAgent )
+	if [[ -z $ret ]] ; then
+	    echo "Starting RunlevelAgent"
+		if [[ -f RunlevelAgent.py ]] ; then 
+			RLA="/usr/bin/python ./RunlevelAgent.py"
+		else
+			RLA=/usr/bin/RunlevelAgent.py
+		fi
+		$RLA &> /var/log/rla.log &
+	fi
+}
+
 case "$1" in
     start|restart|reload)
 
@@ -20,16 +34,12 @@ case "$1" in
 
 	;;
     stop|status)
-	exit 0
+		pkill -f RunlevelAgent
+		exit 0
 	;;
     *)
-	echo $"Usage: $0 {start|stop|restart|status}"
+		echo $"Usage: $0 {start|stop|restart|status}"
 	exit 1
 	;;
 esac
 
-function start_rla ()
-{
-	RLA=/usr/bin/RunlevelAgent.py
-	$RLA &> /var/log/rla.log &
-}
