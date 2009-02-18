@@ -85,6 +85,7 @@ def main():
     api.AuthCheck()
 
     while True:
+        # TODO: remove from output
         print "reporting status: ", os.popen("uptime").read().strip()
         try:
             # NOTE: alternately, check other stuff in the environment to infer
@@ -102,7 +103,9 @@ def main():
             api.ReportRunlevel({'run_level' : 'safeboot'})
         except:
             traceback.print_exc()
-        time.sleep(30)
+
+		# TODO: change to a configurable value
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
