@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 13
+%define taglevel 14
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,11 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Fri Feb 20 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-14
+- updated printbadnodes.py to include diff_time()
+- changed eamils to use literal addresses not tech-* and pi-* aliases
+- updates to automation script to prevent false errors.
+
 * Tue Nov 04 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-13
 - Fixed for email change in unified_model.py tweaks in others.
 
