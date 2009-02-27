@@ -5,8 +5,8 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version 2.0
-%define taglevel 1
+%define version 3.0
+%define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -253,4 +253,4 @@ chkconfig monitor-runlevelagent on
 * Mon Apr 07 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-1.0-0
 - initial addition.
 
-%define module_current_branch 1.0
+%define module_current_branch 2.0
