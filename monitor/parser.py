@@ -117,7 +117,7 @@ def getParser(parsesets=[], parser=None):
 		p = parseSetDefaults(p)
 
 	return p
-	
+
 def parse_args(parser):
 	class obj: pass
 	(options, args) = parser.parse_args()
@@ -133,7 +133,7 @@ def print_values(parser):
 	for key in parser.__dict__.keys():
 		if key not in exclude:
 			print "%20s == %s" % (key, parser.__dict__[key])
-	
+
 def usage(parser):
 	print_values(parser)
 	parser.print_help()

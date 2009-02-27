@@ -119,7 +119,7 @@ class SPickle:
 		Otherwise, it's normal mode, if the file doesn't exist, raise error
 		Load the file
 		"""
-		print "loading %s" % name
+		#print "loading %s" % name
 
 		if config.debug:
 			if self.exists("debug.%s" % name, type):

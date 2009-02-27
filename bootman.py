@@ -811,7 +811,7 @@ def reboot(hostname, config=None, forced_action=None):
 # MAIN -------------------------------------------------------------------
 
 def main():
-	import parser as parsermodule
+	from monitor import parser as parsermodule
 	parser = parsermodule.getParser()
 
 	parser.set_defaults(child=False, collect=False, nosetup=False, verbose=False, 

@@ -146,5 +146,5 @@ def create_plcdb():
 if __name__ == '__main__':
 	create_plcdb()
 else:
-	print "calling plccache init()"
+	#print "calling plccache init()"
 	init()

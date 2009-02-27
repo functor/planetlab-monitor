@@ -161,7 +161,7 @@ def setup_site(loginbase, techemail, piemail, iplist):
 
 	BI_WEEKLY_ESC_PERIOD = int(60*60*24)
 	DISCOVERY_DELAY = 3600
-	BI_WEEKLY_ESC_PERIOD = int(45*60) # testing...
+	BI_WEEKLY_ESC_PERIOD = int(300)
 	DISCOVERY_DELAY = 240 # testing
 
 	# User Group
@@ -312,13 +312,13 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					objectid=site_user_group.usrgrpid, 
 					esc_period=0, esc_step_to=3, esc_step_from=3, 
 					operationcondition_list=[ OperationConditionNotAck() ] ),
-				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE,
-					shortdata=mailtxt.nodedown_one_subject,
-					longdata=mailtxt.nodedown_one,
-					object=defines.OPERATION_OBJECT_GROUP, 
-					objectid=site_user_group.usrgrpid, 
-					esc_period=0, esc_step_to=7, esc_step_from=7, 
-					operationcondition_list=[ OperationConditionNotAck() ] ),
+				#ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE,
+				#	shortdata=mailtxt.nodedown_one_subject,
+				#	longdata=mailtxt.nodedown_one,
+				#	object=defines.OPERATION_OBJECT_GROUP, 
+				#	objectid=site_user_group.usrgrpid, 
+				#	esc_period=0, esc_step_to=7, esc_step_from=7, 
+				#	operationcondition_list=[ OperationConditionNotAck() ] ),
 				# STAGE 2
 				ActionOperation(operationtype=defines.OPERATION_TYPE_COMMAND, 
 					esc_step_from=10, esc_step_to=10, 
@@ -334,14 +334,14 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					object=defines.OPERATION_OBJECT_GROUP, 
 					objectid=site_user_group.usrgrpid, 
 					operationcondition_list=[ OperationConditionNotAck() ] ), 
-				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
-					shortdata=mailtxt.nodedown_two_subject,
-					longdata=mailtxt.nodedown_two,
-					esc_step_from=14, esc_step_to=14, 
-					esc_period=0, 
-					object=defines.OPERATION_OBJECT_GROUP, 
-					objectid=site_user_group.usrgrpid, 
-					operationcondition_list=[ OperationConditionNotAck() ] ), 
+				#ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
+				#	shortdata=mailtxt.nodedown_two_subject,
+				#	longdata=mailtxt.nodedown_two,
+				#	esc_step_from=14, esc_step_to=14, 
+				#	esc_period=0, 
+				#	object=defines.OPERATION_OBJECT_GROUP, 
+				#	objectid=site_user_group.usrgrpid, 
+				#	operationcondition_list=[ OperationConditionNotAck() ] ), 
 
 				# STAGE 3
 				ActionOperation(operationtype=defines.OPERATION_TYPE_COMMAND, 

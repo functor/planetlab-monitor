@@ -8,7 +8,7 @@ from datetime import datetime,timedelta
 import threadpool
 import threading
 
-from monitor import util
+from monitor.util import file
 from monitor.util import command
 from monitor import config
 
@@ -111,7 +111,7 @@ def main():
 	#cohash = cotop.coget(cotop_url)
 	l_nodes = plccache.l_nodes
 	if config.nodelist:
-		f_nodes = util.file.getListFromFile(config.nodelist)
+		f_nodes = file.getListFromFile(config.nodelist)
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.node:
 		f_nodes = [config.node]
