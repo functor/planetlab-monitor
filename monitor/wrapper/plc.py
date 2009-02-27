@@ -162,7 +162,7 @@ def getSliceUserEmails(loginbase):
 	"""
 		For the given site, return all user email addresses that have the 'tech' role.
 	"""
-	#api = getAuthAPI()
+	api = getAuthAPI()
 	# get site details.
 	s = api.GetSites(loginbase)[0]
 	# get people at site

@@ -580,7 +580,7 @@ class Record(object):
 			contacts += plc.getTechEmails(self.loginbase)
 		if PI & roles:
 			#contacts += [PIEMAIL % self.loginbase]
-			contacts += plc.getSliceUserEmails(self.loginbase)
+			contacts += plc.getPIEmails(self.loginbase)
 		if USER & roles:
 			contacts += plc.getSliceUserEmails(self.loginbase)
 			slices = plc.slices(self.loginbase)
