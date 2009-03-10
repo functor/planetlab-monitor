@@ -290,6 +290,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue Mar 10 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-3
+- add email exceptions
+- other bug fixes.
+
 * Tue Mar 10 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-2
 - getting the pcucontrol and findall.py scripts to work in an integrated
 - fashion.
