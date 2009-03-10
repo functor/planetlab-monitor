@@ -175,6 +175,8 @@ if __name__ == '__main__':
 		main()
 	except Exception, err:
 		print traceback.print_exc()
+		from monitor.common import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		sys.exit(0)

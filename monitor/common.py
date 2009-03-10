@@ -212,10 +212,13 @@ def get_nodeset(config):
 
 	return l_nodes
 
-def email_exception():
-	from monitor import config
-	import traceback
-	msg=traceback.format_exc()
-	m=Message("exception running monitor", msg, False)
-	m.send([config.cc_email])
-	return
+def email_exception(content=None):
+    import config
+    from unified_model import Message
+    import traceback
+    msg=traceback.format_exc()
+    if content:
+        msg = content + "\n" + msg
+    m=Message("exception running monitor", msg, False)
+    m.send([config.cc_email])
+    return

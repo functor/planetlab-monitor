@@ -331,6 +331,8 @@ def reboot(hostname, config=None, forced_action=None):
 	try:
 		k = SSHKnownHosts(); k.update(node); k.write(); del k
 	except:
+		from monitor.common import email_exception
+		email_exception()
 		print traceback.print_exc()
 		return False
 
@@ -340,8 +342,11 @@ def reboot(hostname, config=None, forced_action=None):
 		else:
 			session = PlanetLabSession(node, config.nosetup, config.verbose)
 	except Exception, e:
-		print "ERROR setting up session for %s" % hostname
+		msg = "ERROR setting up session for %s" % hostname
+		print msg
 		print traceback.print_exc()
+		from monitor.common import email_exception
+		email_exception(msg)
 		print e
 		return False
 
@@ -355,6 +360,8 @@ def reboot(hostname, config=None, forced_action=None):
 			conn = session.get_connection(config)
 		except:
 			print traceback.print_exc()
+			from monitor.common import email_exception
+			email_exception()
 			return False
 
 	if forced_action == "reboot":
@@ -793,6 +800,8 @@ def reboot(hostname, config=None, forced_action=None):
 				node = api.GetNodes(hostname)[0]
 				net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
 			except:
+				from monitor.common import email_exception
+				email_exception()
 				print traceback.print_exc()
 				# TODO: api error. skip email, b/c all info is not available,
 				# flag_set will not be recorded.

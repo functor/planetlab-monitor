@@ -330,6 +330,10 @@ class PCUControl(PCUModel,PCURecord):
 			import traceback
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
+		except Exception, err:
+			from monitor.common import email_exception
+			email_exception(self.host)
+			raise Exception(err)
 
 from pcucontrol.models import *
 
@@ -555,6 +559,8 @@ def main():
 				print "failed"
 	except Exception, err:
 		import traceback; traceback.print_exc()
+		from monitor.common import email_exception
+		email_exception(node)
 		print err
 
 if __name__ == '__main__':
