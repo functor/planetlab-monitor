@@ -16,7 +16,7 @@ class DRAC(PCUControl):
 						original_prompts="Dell", login_timeout=Transport.TELNET_TIMEOUT):
 			raise ExceptionPassword("Invalid Password")
 
-		print "logging in..."
+		print "logging in... %s" % self.host
 		s.send("\r\n\r\n")
 		try:
 			# Testing Reboot ?
@@ -155,4 +155,4 @@ def racadm_reboot(host, username, password, port, dryrun):
 		logger.debug("runcmd raised exception %s" % err)
 		if verbose:
 			logger.debug(err)
-		return err
+		return str(err)

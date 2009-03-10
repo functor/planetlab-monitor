@@ -135,7 +135,7 @@ class Transport:
 			transport.set_debuglevel(self.verbose)
 			if username is not None:
 				self.transport = transport
-				self.transport.ifThenSend(prompt, username, ExceptionUsername)
+				self.ifThenSend(prompt, username, ExceptionUsername)
 
 		elif self.type == self.SSH:
 			if username is not None:
@@ -255,17 +255,25 @@ class PCUControl(PCUModel,PCURecord):
 	def reboot(self, node_port, dryrun):
 
 		port_list = []
+		# There are two sources of potential ports.  Those that are open and
+		# those that are part of the PCU's supported_ports.  
+		#  I think we should start with supported_ports and then filter that
+		#  by the open ports.
+
+		port_list = self.supported_ports
+
 		if hasattr(self, 'port_status') and self.port_status:
+			# get out the open ports
 			port_list = filter(lambda x: self.port_status[x] == "open" , self.port_status.keys())
 			port_list = [ int(x) for x in port_list ]
+			# take only the open ports that are supported_ports
+			port_list = filter(lambda x: x in self.supported_ports, port_list)
 			if port_list == []:
-				raise ExceptionPort("Unsupported Port: No transport from open ports")
-		else:
-			port_list = self.supported_ports
+				raise ExceptionPort("No Open Port: No transport from open ports")
 
 		print port_list
 
-		ret = "could not run"
+		ret = "No implementation for open ports on selected PCU model"
 		for port in port_list:
 			if port not in Transport.porttypemap:
 				continue
@@ -273,7 +281,9 @@ class PCUControl(PCUModel,PCURecord):
 			type = Transport.porttypemap[port]
 			self.transport = Transport(type, verbose)
 
+			print "checking for run_%s" % type
 			if hasattr(self, "run_%s" % type):
+				print "found run_%s" % type
 				fxn = getattr(self, "run_%s" % type)
 				ret = self.catcherror(fxn, node_port, dryrun)
 				if ret == 0: # NOTE: success!, so stop
@@ -316,9 +326,6 @@ class PCUControl(PCUModel,PCURecord):
 		except urllib2.URLError, err:
 			return "URLError: " + str(err)
 		except EOFError, err:
-			if self.verbose:
-				logger.debug("reboot: EOF")
-				logger.debug(err)
 			self.transport.close()
 			import traceback
 			traceback.print_exc()
@@ -456,15 +463,63 @@ def reboot_api(node, pcu): #, verbose, dryrun):
 
 	return rb_ret
 
+def convert_oldmodelname_to_newmodelname(oldmodelname, pcu_id):
+	newmodelname = None
+	update = {	'AP79xx' : 'APCControl13p13',
+				'Masterswitch' : 'APCControl13p13',
+				'DS4-RPC' : 'BayTech',
+				'IP-41x_IP-81x' : 'IPAL',
+				'DRAC3' : 'DRAC',
+				'DRAC4' : 'DRAC',
+				'ePowerSwitch' : 'ePowerSwitchOld',
+				'ilo2' : 'HPiLO',
+				'ilo1' : 'HPiLO',
+				'PM211-MIP' : 'PM211MIP',
+				'AMT2.5' : 'IntelAMT',
+				'AMT3.0' : 'IntelAMT',
+				'WTI_IPS-4' : 'WTIIPS4',
+				'unknown'  : 'ManualPCU',
+				'DRAC5'	: 'DRAC',
+				'ipmi'	: 'OpenIPMI',
+				'bbsemaverick' : 'BlackBoxPSMaverick',
+				'manualadmin'  : 'ManualPCU',
+	}
+
+	if oldmodelname in update:
+		newmodelname = update[oldmodelname]
+	else:
+		newmodelname = oldmodelname
+
+	if pcu_id in [1102,1163,1055,1111,1231,1113,1127,1128,1148]:
+		newmodelname = 'APCControl12p3'
+	elif pcu_id in [1110,86]:
+		newmodelname = 'APCControl1p4'
+	elif pcu_id in [1221,1225,1220,1192]:
+		newmodelname = 'APCControl121p3'
+	elif pcu_id in [1173,1240,47,1363,1405,1401,1372,1371]:
+		newmodelname = 'APCControl121p1'
+	elif pcu_id in [1056,1237,1052,1209,1002,1008,1013,1022]:
+		newmodelname = 'BayTechCtrlC'
+	elif pcu_id in [93]:
+		newmodelname = 'BayTechRPC3NC'
+	elif pcu_id in [1057]:
+		newmodelname = 'BayTechCtrlCUnibe'
+	elif pcu_id in [1012]:
+		newmodelname = 'BayTechRPC16'
+	elif pcu_id in [1089, 1071, 1046, 1035, 1118]:
+		newmodelname = 'ePowerSwitchNew'
+
+	return newmodelname
+
 def reboot_test_new(nodename, values, verbose, dryrun):
 	rb_ret = ""
 	if 'plc_pcu_stats' in values:
 		values.update(values['plc_pcu_stats'])
 
 	try:
-		modelname = values['model']
+		modelname = convert_oldmodelname_to_newmodelname(values['model'], values['pcu_id'])
 		if modelname:
-			object = eval('%s(values, verbose, ["22", "23", "80", "443", "9100", "16992", "5869"])' % modelname)
+			object = eval('%s(values, verbose)' % modelname)
 			rb_ret = object.reboot(values[nodename], dryrun)
 		else:
 			rb_ret =  "Not_Run"

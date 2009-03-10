@@ -494,7 +494,7 @@ class ScanPCU(ScanInterface):
 
 
 			######  DRY RUN  ############################
-			if 'node_ids' in values['plc_pcu_stats'] and \
+			if continue_probe and 'node_ids' in values['plc_pcu_stats'] and \
 				len(values['plc_pcu_stats']['node_ids']) > 0:
 				rb_ret = reboot.reboot_test_new(values['plc_pcu_stats']['nodenames'][0], 
 												values, 1, True)
@@ -510,7 +510,8 @@ class ScanPCU(ScanInterface):
 			print "____________________________________"
 			errors['traceback'] = traceback.format_exc()
 			print errors['traceback']
-			values['reboot_trial_status'] = errors['traceback']
+			values['reboot_trial_status'] = str(errors['traceback'])
+			print values
 
 		values['entry_complete']=" ".join(values['entry_complete'])
 

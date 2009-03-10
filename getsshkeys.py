@@ -18,7 +18,7 @@ except:
 args = {}
 args['known_hosts'] =  os.environ['HOME'] + os.sep + ".ssh" + os.sep + "known_hosts"
 try:
-	import config
+	from monitor import config
 	args['XMLRPC_SERVER'] = config.API_SERVER
 except:
 	args['XMLRPC_SERVER'] = 'https://boot.planet-lab.org/PLCAPI/'

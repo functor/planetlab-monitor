@@ -527,6 +527,8 @@ class Record(object):
 		else:
 			print "takeAction: increasing penalty for %s"%self.hostname
 			pp.increase()
+
+		print "takeAction: applying penalty to %s as index %s"% (self.hostname, index)
 		pp.index = index
 		pp.apply(self.hostname)
 		pp.save()

@@ -270,6 +270,8 @@ def pcu_select(str_query, nodelist=None):
 		fbquery = FindbadNodeRecord.get_all_latest()
 		fb_nodelist = [ n.hostname for n in fbquery ]
 	if True:
+		# NOTE: this doesn't work when there are only a few records current.
+		# pcu_select should apply to all pcus globally, not just the most recent records.
 		fbpcuquery = FindbadPCURecord.get_all_latest()
 		fbpcu_list = [ p.plc_pcuid for p in fbpcuquery ]
 

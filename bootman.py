@@ -731,7 +731,7 @@ def reboot(hostname, config=None, forced_action=None):
 			args = {}
 			args['hostname'] = hostname
 			args['bmlog'] = conn.get_bootmanager_log().read()
-			m = PersistMessage(hostname,  mailtxt.plnode_network[0] % args,  mailtxt.plnode_cfg[1] % args, 
+			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
 								True, db='nodenet_persistmessages')
 			loginbase = plc.siteId(hostname)
 			emails = plc.getTechEmails(loginbase)

@@ -164,6 +164,7 @@ if __name__ == '__main__':
 						pcuid=None,
 						pcuselect=None,
 						site=None,
+						sitelist=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
 						cachecalls=True,
@@ -172,6 +173,8 @@ if __name__ == '__main__':
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
 						help="Provide the input file for the node list")
 	parser.add_option("", "--site", dest="site", metavar="FILE", 
+						help="Get all pcus associated with the given site's nodes")
+	parser.add_option("", "--sitelist", dest="sitelist", metavar="FILE", 
 						help="Get all pcus associated with the given site's nodes")
 	parser.add_option("", "--pcuselect", dest="pcuselect", metavar="FILE", 
 						help="Query string to apply to the findbad pcus")

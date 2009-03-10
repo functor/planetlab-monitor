@@ -8,7 +8,7 @@ from monitor import database
 from monitor.wrapper import plc, plccache
 
 from datetime import datetime 
-from monitor.model import PersistFlags
+from monitor.model import PersistFlags, Message
 
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"
@@ -211,4 +211,11 @@ def get_nodeset(config):
 		l_nodes = node_select(config.nodeselect, node_list, None)
 
 	return l_nodes
-	
+
+def email_exception():
+	from monitor import config
+	import traceback
+	msg=traceback.format_exc()
+	m=Message("exception running monitor", msg, False)
+	m.send([config.cc_email])
+	return
