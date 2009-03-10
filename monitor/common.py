@@ -214,7 +214,7 @@ def get_nodeset(config):
 
 def email_exception(content=None):
     import config
-    from unified_model import Message
+    from monitor.model import Message
     import traceback
     msg=traceback.format_exc()
     if content:

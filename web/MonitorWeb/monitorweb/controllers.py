@@ -132,6 +132,10 @@ def prep_node_for_display(node):
 
 	if node.loginbase:
 		node.site = HistorySiteRecord.by_loginbase(node.loginbase)
+		if node.site is None:
+			# TODO: need a cleaner fix for this...
+			node.site = HistorySiteRecord.by_loginbase("pl")
+			
 
 	node.history = HistoryNodeRecord.by_hostname(node.hostname)
 
@@ -168,13 +172,14 @@ class Root(controllers.RootController):
 		import time
 		fbquery = FindbadNodeRecord.get_all_latest()
 		query = []
-		filtercount = {'DOWN' : 0, 'BOOT': 0, 'DEBUG' : 0, 'neverboot' : 0, 'pending' : 0, 'all' : 0}
+		filtercount = {'DOWN' : 0, 'BOOT': 0, 'DEBUG' : 0, 'neverboot' : 0, 'pending' : 0, 'all' : 0, None : 0}
 		for node in fbquery:
 			# NOTE: reformat some fields.
 			prep_node_for_display(node)
 
 			# NOTE: count filters
 			if node.observed_status != 'DOWN':
+				print node.hostname, node.observed_status
 				filtercount[node.observed_status] += 1
 			else:
 				if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:

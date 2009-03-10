@@ -11,7 +11,7 @@ if __name__ == '__main__':
 	parser = parsermodule.getParser(['nodesets'])
 
 	parser.set_defaults( increment=False, dbname="findbad", cachenodes=False, 
-						force=False,)
+						force=False, pcuselect=None, pcuid=None)
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
