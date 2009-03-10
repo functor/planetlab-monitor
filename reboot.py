@@ -275,6 +275,10 @@ class PCUControl(Transport,PCUModel,PCURecord):
 			import traceback
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
+		except:
+			from nodecommon import email_exception
+			email_exception()
+			raise Exception('unknown')
 		
 class IPAL(PCUControl):
 	""" 
@@ -666,6 +670,13 @@ class BayTechAU(PCUControl):
 
 class BayTechGeorgeTown(PCUControl):
 	def run(self, node_port, dryrun):
+		# this initial open/close is to prevent things from raising an
+		# exception.  the pcu always is weird during the first connection, and
+		# even if it's not, what does it matter to open a second connection
+		# right away?
+		self.open(self.host, self.username, None, "Enter user name:")
+		self.close()
+		time.sleep(1)
 		self.open(self.host, self.username, None, "Enter user name:")
 		self.sendPassword(self.password, "Enter Password:")
 
@@ -919,6 +930,8 @@ class ePowerSwitchGood(PCUControl):
 				if self.verbose: print f.read()
 			except:
 				import traceback; traceback.print_exc()
+				from nodecommon import email_exception
+				email_exception()
 
 				# fetch url one more time on cmd.html, econtrol.html or whatever.
 				# pass
@@ -1397,6 +1410,8 @@ def main():
 				print "failed"
 	except Exception, err:
 		import traceback; traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print err
 
 if __name__ == '__main__':

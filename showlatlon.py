@@ -12,7 +12,6 @@ import comon
 from nodecommon import color_pcu_state, datetime_fromstr
 from nodehistory import get_filefromglob
 import time
-import traceback
 
 # region
 # total
@@ -150,7 +149,6 @@ def main():
 						'hardware' : gethardwarequality(hostname, fb),
 						'pcuok' : color_pcu_state(fb['nodes'][hostname]['values']) }
 					#except:
-					#	print traceback.print_exc()
 					#	print args
 					#	print fb['nodes'][hostname]['values']
 					results.append("%(cc)7s %(status)8s %(hardware)8s %(pcuok)8s %(site)15s %(host)42s " % args)

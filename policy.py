@@ -295,6 +295,8 @@ class Diagnose(Thread):
 			print "----------------"
 			import traceback
 			print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			print err
 			#if config.policysavedb:
 			sys.exit(1)

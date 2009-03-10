@@ -110,8 +110,6 @@ class SPickle:
 				raise Exception, "No such file %s" % name
 				
 
-		#import traceback
-		#print traceback.print_stack()
 		#print "loading %s" % self.__file(name, type)
 		#sys.stderr.write("-----------------------------\n")
 		f = open(self.__file(name, type), 'r')

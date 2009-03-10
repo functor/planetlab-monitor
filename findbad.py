@@ -81,6 +81,8 @@ EOF			""")
 								'princeton_comon_procs' : '', 'sshport' : None})
 	except:
 		print traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		sys.exit(1)
 
 	### RUN SSH ######################
@@ -203,6 +205,8 @@ EOF			""")
 	except:
 		b_except = True
 		traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 
 	plc_lock.release()
 	if b_except: return (None, None)
@@ -240,6 +244,8 @@ EOF			""")
 	except:
 		b_except = True
 		traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 
 	plc_lock.release()
 	if b_except: return (None, None)
@@ -397,6 +403,8 @@ if __name__ == '__main__':
 		main()
 	except Exception, err:
 		print traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		database.dbDump(config.dbname, externalState)

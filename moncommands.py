@@ -35,6 +35,9 @@ class CMD:
 		except ExceptionTimeout:
 			import traceback; print traceback.print_exc()
 			return ("", "SCRIPTTIMEOUT")
+		except:
+			from nodecommon import email_exception
+			email_exception()
 			
 	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):
 		(o,e) = self.run(cmd, timeout)

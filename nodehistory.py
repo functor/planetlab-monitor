@@ -35,7 +35,8 @@ def get_filefromglob(d, str):
 def fb_print_nodeinfo(fbnode, verbose, date=None):
 	if verbose: print "              state |  ssh  |  pcu  | bootcd | category | kernel"
 	if 'checked' in fbnode:
-		print "%11.11s " % diff_time(fbnode['checked']),
+		if date: print date,
+		#print "%11.11s " % diff_time(fbnode['checked']),
 	else:
 		if date: print date,
 		else: print "Unknown",
@@ -124,7 +125,6 @@ def main():
 		except KeyboardInterrupt:
 			sys.exit(1)
 		except:
-			#import traceback; print traceback.print_exc()
 			print d.strftime("%Y-%m-%d"), "No record"
 
 		d = d + tdelta

@@ -40,7 +40,7 @@ def cmpCategoryVal(v1, v2):
 	if v1 == 'ALPHA': v1 = "PROD"
 	if v2 == 'ALPHA': v2 = "PROD"
 	#map = array_to_priority_map([ None, 'PROD', 'ALPHA', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
-	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
+	map = array_to_priority_map([ None, 'ALPHA', 'PROD', 'OLDPROD', 'OLDBOOTCD', 'UNKNOWN', 'FORCED', 'ERROR', ])
 	return cmpValMap(v1,v2,map)
 
 
@@ -355,7 +355,7 @@ class PersistSitePenalty(SitePenalty):
 
 		#print pm
 		if id in pm:
-			print "Using existing object"
+			print "PersistSitePenalty Using existing object"
 			obj = pm[id]
 		else:
 			print "creating new object"
@@ -428,7 +428,11 @@ class Record(object):
 	def severity(self):
 		category = self.data['category']
 		prev_category = self.data['prev_category']
-		#print "SEVERITY: ", category, prev_category
+		print "SEVERITY: ", category, prev_category
+		try:
+			print "SEVERITY state: ", self.data['state'], self.data['prev_state']
+		except:
+			print "SEVERITY state: unknown unknown"
 		val = cmpCategoryVal(category, prev_category)
 		return val 
 
@@ -514,6 +518,7 @@ class Record(object):
 		else:
 			print "takeAction: increasing penalty for %s"%self.hostname
 			pp.increase()
+		print "takeAction: applying penalty to %s as index %s"% (self.hostname, index)
 		pp.index = index
 		pp.apply(self.hostname)
 		pp.save()

@@ -281,6 +281,8 @@ class Diagnose:
 			print "----------------"
 			import traceback
 			print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			print err
 			#if config.policysavedb:
 			sys.exit(1)
@@ -884,6 +886,8 @@ class Action:
 			print "----------------"
 			import traceback
 			print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			print err
 			if config.policysavedb:
 				print "Saving Databases... act_all"
@@ -970,6 +974,8 @@ class Action:
 			print "exception on message:"
 			import traceback
 			print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			print message
 
 		return ticket_id

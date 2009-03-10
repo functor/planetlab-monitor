@@ -184,6 +184,8 @@ class CMD:
 			return CMD.run(self,cmd,timeout)
 		except ExceptionTimeout:
 			import traceback; print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			return ("", "SCRIPTTIMEOUT")
 			
 	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):

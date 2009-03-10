@@ -75,6 +75,7 @@ class Reboot(object):
 					return ret
 
 				except Exception,e:
+					email_exception()
 					print traceback.print_exc(); print e
 
 					# NOTE: this failure could be an implementation issue on
@@ -97,6 +98,7 @@ class Reboot(object):
 					return ret
 
 				except Exception,e:
+					email_exception()
 					print traceback.print_exc(); print e
 
 					# NOTE: this failure could be an implementation issue on
@@ -140,6 +142,7 @@ class Reboot(object):
 		try:
 			return mailmonitor.reboot(host)
 		except Exception, e:
+			email_exception(host)
 			print traceback.print_exc(); print e
 			return False
 
@@ -262,6 +265,7 @@ for host in hostnames:
 		try:
 			node = api.GetNodes(host)[0]
 		except:
+			email_exception()
 			print traceback.print_exc(); 
 			print "FAILED GETNODES for host: %s" % host
 			continue
@@ -286,6 +290,7 @@ for host in hostnames:
 					# todo: send thank you, etc.
 					mailmonitor.reboot(host)
 				except Exception, e:
+					email_exception()
 					print traceback.print_exc(); print e
 
 				continue
@@ -356,6 +361,7 @@ for host in hostnames:
 		print "Killed by interrupt"
 		sys.exit(0)
 	except:
+		email_exception()
 		print traceback.print_exc();
 		print "Continuing..."
 

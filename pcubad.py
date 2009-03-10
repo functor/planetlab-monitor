@@ -155,6 +155,8 @@ if __name__ == '__main__':
 	except Exception, err:
 		import traceback
 		print traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		database.dbDump(config.dbname, externalState)

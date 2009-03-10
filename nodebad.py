@@ -33,6 +33,7 @@ def main(config):
 	l_plcnodes = database.dbLoad("l_plcnodes")
 
 	l_nodes = get_nodeset(config)
+	print len(l_nodes)
 	#if config.node:
 	#	l_nodes = [config.node]
 	##else:
@@ -57,6 +58,9 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 			externalState['nodes'][nodename]['values'] = values
 			externalState['nodes'][nodename]['round'] = global_round
 		else:
+			pf = PersistFlags(nodename, 1, db='node_persistflags')
+			print "%d %35s %s since %s" % (count, nodename, pf.status, pf.last_changed)
+			del pf
 			count += 1
 
 		if count % 20 == 0:
@@ -150,6 +154,8 @@ if __name__ == '__main__':
 	except Exception, err:
 		import traceback
 		print traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		database.dbDump(config.dbname, externalState)

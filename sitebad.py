@@ -55,6 +55,9 @@ def checkAndRecordState(l_sites, l_plcsites):
 			externalState['sites'][sitename]['values'] = values
 			externalState['sites'][sitename]['round'] = global_round
 		else:
+			pf = PersistFlags(sitename, 1, db=config.dbpfname )
+			print "%d noinc %15s slices(%2s) nodes(%2s) up(%2s) %s" % (count, sitename, pf.slices_used, 
+										pf.nodes_total, pf.nodes_up, pf.status)
 			count += 1
 
 		if count % 20 == 0:
@@ -88,7 +91,7 @@ def collectStatusAndState(sitename, l_plcsites):
 		return None
 
 	if sitename in lb2hn:
-		pf = PersistFlags(sitename, 1, db='site_persistflags')
+		pf = PersistFlags(sitename, 1, db=config.dbpfname )
 
 		if not pf.checkattr('last_changed'):
 			pf.last_changed = time.time()
@@ -123,7 +126,7 @@ if __name__ == '__main__':
 
 	parser = parsermodule.getParser()
 	parser.set_defaults(filename=None, node=None, site=None, nodeselect=False, nodegroup=None, 
-						increment=False, dbname="sitebad", cachenodes=False)
+						increment=False, dbname="sitebad", dbpfname="site_persistflags", cachenodes=False)
 	parser.add_option("", "--site", dest="site", metavar="login_base", 
 						help="Provide a single site to operate on")
 	parser.add_option("", "--sitelist", dest="sitelist", metavar="file.list", 
@@ -131,6 +134,8 @@ if __name__ == '__main__':
 
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
 						help="Specify the name of the database to which the information is saved")
+	parser.add_option("", "--dbpfname", dest="dbpfname", metavar="FILE", 
+						help="Specify the persistflags db name")
 	parser.add_option("-i", "--increment", action="store_true", dest="increment", 
 						help="Increment round number to force refresh or retry")
 	config = parsermodule.parse_args(parser)
@@ -140,6 +145,8 @@ if __name__ == '__main__':
 	except Exception, err:
 		import traceback
 		print traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		database.dbDump(config.dbname, externalState)

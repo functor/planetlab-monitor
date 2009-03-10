@@ -85,6 +85,8 @@ def get_pcu(pcuname):
 					l_pcu = i
 		except:
 			traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			l_pcu = None
 
 	plc_lock.release()
@@ -103,6 +105,8 @@ def get_nodes(node_ids):
 					l_node.append(n)
 		except:
 			traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			l_node = None
 
 	plc_lock.release()
@@ -160,6 +164,8 @@ def get_plc_site_values(site_id):
 					break
 		except:
 			traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			values = None
 
 	plc_lock.release()
@@ -198,6 +204,8 @@ def collectPingAndSSH(pcuname, cohash):
 		except:
 			b_except = True
 			traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			continue_probe = False
 
 		if b_except or not continue_probe: return (None, None, None)
@@ -461,6 +469,8 @@ if __name__ == '__main__':
 		time.sleep(1)
 	except Exception, err:
 		traceback.print_exc()
+		from nodecommon import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		database.dbDump(config.dbname, externalState)

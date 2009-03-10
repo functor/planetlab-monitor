@@ -58,6 +58,8 @@ def main():
 		except:
 			print "Error with %s" % node
 			import traceback; print traceback.print_exc()
+			from nodecommon import email_exception
+			email_exception()
 			pass
 
 	# commands:

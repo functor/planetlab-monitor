@@ -92,8 +92,10 @@ class MonitorMergeDiagnoseSendEscellate:
 			actnode.update(fbnode)
 			actnode['ticket_id'] = ""
 			actnode['prev_category'] = "ERROR" 
+			actnode['prev_state'] = "DOWN" 
 		else:
 			actnode['prev_category']= actnode['category']
+			actnode['prev_state']   = actnode['state']
 			actnode['comonstats']	= fbnode['comonstats']
 			actnode['category']		= fbnode['category']
 			actnode['state'] 		= fbnode['state']
@@ -115,6 +117,10 @@ class MonitorMergeDiagnoseSendEscellate:
 		actnode= self.getActionRecord()
 		actrec = self.mergeRecord(fbnode, actnode)
 		record = Record(self.hostname, actrec)
+		#print record
+		#print actrec
+		#print record.data['time']
+		#print time.time() - record.data['time']
 		diag   = self.diagnose(record)
 		if self.act and diag is not None:
 			self.action(record,diag)
@@ -208,11 +214,12 @@ class MonitorMergeDiagnoseSendEscellate:
 					record.data['ticket_id'] = message.rt.ticket_id
 
 			if ( record.data['takeaction'] and diag.getFlag('Squeeze') ): 
-				print "action: taking action"
+				print "action: taking squeeze action"
 				record.takeAction(record.data['action-level'])
 				diag.resetFlag('Squeeze')
 				diag.save()
 			if diag.getFlag('BackOff'):
+				print "action: taking backoff action"
 				record.takeAction(0)
 				diag.resetFlag('BackOff')
 				diag.save()
