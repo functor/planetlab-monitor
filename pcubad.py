@@ -7,7 +7,7 @@ import time
 from datetime import datetime,timedelta
 
 from monitor import database
-from pcucontrol  import reboot
+from monitor import reboot
 from monitor import parser as parsermodule
 from monitor import config
 from monitor.database.info.model import HistoryPCURecord, FindbadPCURecord

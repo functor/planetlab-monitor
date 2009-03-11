@@ -13,7 +13,6 @@ import time
 import re
 import string
 
-from pcucontrol  import reboot
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
@@ -382,8 +381,6 @@ def main():
 	else:
 		#fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
 		fb = None
-
-	#reboot.fb = fbpcu
 
 	if config.nodelist:
 		nodelist = util.file.getListFromFile(config.nodelist)

@@ -13,7 +13,6 @@ import threadpool
 import threading
 
 import monitor
-from pcucontrol  import reboot
 from monitor import config
 from monitor.database.info.model import FindbadPCURecordSync, FindbadPCURecord, session
 from monitor import database

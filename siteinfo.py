@@ -4,7 +4,6 @@ from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 from monitor import database
-from pcucontrol  import reboot
 
 import time
 from monitor.common import *
