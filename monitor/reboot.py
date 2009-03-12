@@ -24,9 +24,9 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")
 import pcucontrol.transports.pyssh as pyssh
 
 from monitor import config
-from monitor.util import command
 from monitor.wrapper import plc
 
+from pcucontrol.util import command
 from pcucontrol.reboot import pcu_name, model_to_object, reboot_api, convert_oldmodelname_to_newmodelname, reboot_test_new
 
 

@@ -148,11 +148,9 @@ def racadm_reboot(host, username, password, port, dryrun):
 
 		print "RUNCMD: %s" % output
 		if verbose:
-			logger.debug(output)
+			print output
 		return 0
 
 	except Exception, err:
-		logger.debug("runcmd raised exception %s" % err)
-		if verbose:
-			logger.debug(err)
+		print "runcmd raised exception %s" % err
 		return str(err)

@@ -11,8 +11,7 @@ import threading
 import socket
 from pcucontrol import reboot
 
-from monitor import util
-from monitor.util import command
+from pcucontrol.util import command
 from monitor import config
 
 from monitor.database.info.model import *
@@ -167,7 +166,7 @@ class ScanNodeInternal(ScanInterface):
 	def collectNMAP(self, nodename, cohash):
 		#### RUN NMAP ###############################
 		values = {}
-		nmap = util.command.CMD()
+		nmap = command.CMD()
 		print "nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename
 		(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
 		# NOTE: an empty / error value for oval, will still work.
@@ -432,7 +431,7 @@ class ScanPCU(ScanInterface):
 
 			#### RUN NMAP ###############################
 			if continue_probe:
-				nmap = util.command.CMD()
+				nmap = command.CMD()
 				print "nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
 				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
 				# NOTE: an empty / error value for oval, will still work.

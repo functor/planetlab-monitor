@@ -14,7 +14,7 @@ from getsshkeys import SSHKnownHosts
 
 import subprocess
 import time
-from monitor.util import command as moncommands
+from pcucontrol.util import command as moncommands
 from sets import Set
 
 from pcucontrol.transports.ssh import pxssh as pxssh

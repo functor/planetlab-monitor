@@ -1,4 +1,5 @@
 from pcucontrol.reboot import *
+from distutils.sysconfig import get_python_lib; 
 
 class HPiLO(PCUControl):
 	supported_ports = [22,443]
@@ -34,7 +35,7 @@ class HPiLO(PCUControl):
 
 		locfg = command.CMD()
 
-		cmd_str = config.MONITOR_SCRIPT_ROOT + "/pcucontrol/models/hpilo/"
+		cmd_str = get_python_lib(1) + "/pcucontrol/models/hpilo/"
 		
 		cmd = cmd_str + "locfg.pl -s %s -f %s -u %s -p '%s' | grep 'MESSAGE' | grep -v 'No error'" % (
 					self.host, cmd_str+"iloxml/Get_Network.xml", 

@@ -331,6 +331,7 @@ class PCUControl(PCUModel,PCURecord):
 			email_exception(self.host)
 			raise Exception(err)
 
+from pcucontrol.util import command
 from pcucontrol.models import *
 
 def pcu_name(pcu):

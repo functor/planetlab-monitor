@@ -9,7 +9,7 @@ import threadpool
 import threading
 
 from monitor.util import file
-from monitor.util import command
+from pcucontrol.util import command
 from monitor import config
 
 from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, session
