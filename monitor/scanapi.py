@@ -208,7 +208,7 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 						echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
 						echo "}"
-	EOF				""")
+EOF				""")
 					
 					values['ssh_error'] = errval
 					if len(oval) > 0:

@@ -73,6 +73,9 @@ class CMD:
 		except ExceptionReadTimeout:
 			print traceback.print_exc()
 			return ("", "RunningScriptTimeout")
+		except KeyboardInterrupt:
+			print "Interrupted, exiting..."
+			sys.exit(1)
 		except Exception, err:
 			from monitor.common import email_exception
 			email_exception()
