@@ -12,10 +12,13 @@ class DRAC(PCUControl):
 		            "-o PasswordAuthentication=yes "+\
 					"-o PubkeyAuthentication=no"
 		s = pxssh.pxssh()
-		if not s.login(self.host, self.username, self.password, ssh_options,
+		try:
+			if not s.login(self.host, self.username, self.password, ssh_options,
 						original_prompts="Dell", login_timeout=Transport.TELNET_TIMEOUT):
-			raise ExceptionPassword("Invalid Password")
-
+				raise ExceptionPassword("Invalid Password")
+		except pexpect.EOF:
+			raise ExceptionPrompt("Disconnect before login prompt")
+			
 		print "logging in... %s" % self.host
 		s.send("\r\n\r\n")
 		try:
