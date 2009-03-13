@@ -143,6 +143,9 @@ class MonitorMergeDiagnoseSendEscellate:
 			if 'resolved' in ticket['Status']:
 				diag.setFlag('RTEndRecord')
 
+		# NOTE: try to give a default value to catch the errors for
+		# planetlab1.ias.csusb.edu which seems to have an out-of-date node config
+		record.data['message_series'] = emailTxt.mailtxt.newdown
 		# NOTE: take category, and prepare action
 		category = record.getCategory()
 		if category == "error":

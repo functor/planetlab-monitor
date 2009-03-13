@@ -67,12 +67,20 @@ class Reboot(object):
 			#pflags.resetRecentFlag('pcutried')
 			if not pflags.getRecentFlag('pcutried'):
 				try:
-					print "CALLING REBOOT!!!"
-					ret = reboot.reboot(host)
+					node_pf = PersistFlags(host, 1, db='node_persistflags')
+					if  node_pf.checkattr('last_change') and \
+						node_pf.last_change < time.time() - 60*60*24 and \
+						node_pf.checkattr('status') and \
+						node_pf.status != "good":
 
-					pflags.setRecentFlag('pcutried')
-					pflags.save()
-					return ret
+						print "CALLING REBOOT!!!"
+						ret = reboot.reboot(host)
+
+						pflags.setRecentFlag('pcutried')
+						pflags.save()
+						return ret
+					else:
+						return True
 
 				except Exception,e:
 					email_exception()
@@ -88,14 +96,26 @@ class Reboot(object):
 
 			elif not pflags.getRecentFlag('pcu_rins_tried'):
 				try:
-					# set node to 'rins' boot state.
-					print "CALLING REBOOT +++ RINS"
-					plc.nodeBootState(host, 'rins')
-					ret = reboot.reboot(host)
+					# NOTE: check that the node has been down for at least a
+					# day before rebooting it.  this avoids false-reboots/rins
+					# from failed node detections. circa 03-12-09
+					node_pf = PersistFlags(host, 1, db='node_persistflags')
+					if  node_pf.checkattr('last_change') and \
+						node_pf.last_change < time.time() - 60*60*24 and \
+						node_pf.checkattr('status') and \
+						node_pf.status != "good":
 
-					pflags.setRecentFlag('pcu_rins_tried')
-					pflags.save()
-					return ret
+						# set node to 'rins' boot state.
+						print "CALLING REBOOT +++ RINS"
+						plc.nodeBootState(host, 'rins')
+						ret = reboot.reboot(host)
+
+						pflags.setRecentFlag('pcu_rins_tried')
+						pflags.save()
+						return ret
+
+					else:
+						return True
 
 				except Exception,e:
 					email_exception()

@@ -1,5 +1,6 @@
 import os
 import fcntl
+import traceback
 
 DEBUG= 0
 
@@ -69,6 +70,7 @@ class CMD:
 			import traceback; print traceback.print_exc()
 			return ("", "ScriptTimeout")
 		except ExceptionReadTimeout:
+			import traceback
 			print traceback.print_exc()
 			return ("", "RunningScriptTimeout")
 		except Exception, err:
