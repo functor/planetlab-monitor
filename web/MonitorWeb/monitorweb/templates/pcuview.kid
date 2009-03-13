@@ -202,12 +202,15 @@ from links import *
 					<span class="code" py:if="port == 22 and state == 'open'">
 						ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no 
 						${pcu.plc_pcu_stats['username']}@${pcu_name(pcu.plc_pcu_stats)}
+						<br/>
 					</span>
 					<span class="code" py:if="port == 23 and state == 'open'">
 						telnet ${pcu_name(pcu.plc_pcu_stats)}
+						<br/>
 					</span>
 					<span class="code" py:if="port == 80 and state == 'open'">
 						<a href="http://${pcu_name(pcu.plc_pcu_stats)}">http://${pcu_name(pcu.plc_pcu_stats)}</a>
+						<br/>
 					</span>
 					<span class="code" py:if="port == 443 and state == 'open'">
 						<br/>

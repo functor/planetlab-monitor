@@ -393,7 +393,8 @@ def reboot_api(node, pcu):
 			rb_ret =  "No modelname in PCU record."
 		# TODO: how to handle the weird, georgetown pcus, the drac faults, and ilo faults
 	except Exception, err:
-		rb_ret = str(err)
+		rb_ret = "Exception Model(%s): " % modelname 
+		rb_ret += str(err)
 
 	return rb_ret
 
