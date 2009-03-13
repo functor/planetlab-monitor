@@ -290,6 +290,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri Mar 13 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-4
+- splits reboot.py across pcucontrol and monitor modules
+- moves command.py from monitor/util to pcucontrol/util
+
 * Tue Mar 10 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-3
 - add email exceptions
 - other bug fixes.
