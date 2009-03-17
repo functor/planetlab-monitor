@@ -100,6 +100,8 @@ class IPAL(PCUControl):
 			elif status == '0':
 				# down
 				power_on = False
+			elif status == '6':
+				raise ExceptionPort("IPAL reported 'Cable Error' on %s socket %s : %s" % (self.host, node_port, ret))
 			else:
 				raise Exception("Unknown status for PCU %s socket %s : %s" % (self.host, node_port, ret))
 		else:
@@ -128,6 +130,8 @@ class IPAL(PCUControl):
 				elif status == '0':
 					# down
 					power_on = False
+				elif status == '6':
+					raise ExceptionPort("IPAL reported 'Cable Error' on %s socket %s : %s" % (self.host, node_port, ret))
 				else:
 					raise Exception("Unknown status for PCU %s socket %s : %s" % (self.host, node_port, ret))
 			else:
