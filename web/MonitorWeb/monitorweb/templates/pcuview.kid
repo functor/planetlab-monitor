@@ -30,7 +30,7 @@ from links import *
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>
-					<td>n/a</td>
+					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td>${site.slices_used}/${site.slices_total}</td>
 					<td>${site.nodes_up} / ${site.nodes_total}</td>
 					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>

@@ -102,8 +102,15 @@ a.right { float: right; }
 #status-error  { background-color: indianred; }
 #status-none   { background-color: white; }
 
+#site-new { background-color: gold; }
 #site-good { background-color : darkseagreen; }
+#site-online { background-color : lightgreen; }
+#site-offline { background-color: red; }
 #site-down { background-color: indianred; }
+
+#site-0 { background-color : white; }
+#site-1 { background-color: gold; }
+#site-2 { background-color: indianred; }
 
 #node-BOOT { background-color: darkseagreen; }
 #node-DOWN { background-color: indianred; }

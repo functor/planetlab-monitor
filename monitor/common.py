@@ -1,13 +1,12 @@
 
 import time
 import struct
-from pcucontrol import reboot
-
+from monitor import reboot
 from monitor import util
 from monitor import database
 from monitor.wrapper import plc, plccache
 
-from datetime import datetime 
+from datetime import datetime, timedelta
 from monitor.model import PersistFlags, Message
 
 esc = struct.pack('i', 27)
@@ -222,3 +221,20 @@ def email_exception(content=None):
     m=Message("exception running monitor", msg, False)
     m.send([config.cc_email])
     return
+
+def changed_lessthan(last_changed, days):
+	if datetime.now() - last_changed <= timedelta(days):
+		print "last changed less than %s" % timedelta(days)
+		return True
+	else:
+		print "last changed more than %s" % timedelta(days)
+		return False
+
+def changed_greaterthan(last_changed, days):
+	if datetime.now() - last_changed > timedelta(days):
+		print "last changed more than %s" % timedelta(days)
+		return True
+	else:
+		print "last changed less than %s" % timedelta(days)
+		return False
+	

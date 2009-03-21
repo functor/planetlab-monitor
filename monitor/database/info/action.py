@@ -47,8 +47,27 @@ class ActionRecord(Entity):
 
 # ACCOUNTING
 	date_created = Field(DateTime,default=datetime.now)
+	loginbase = Field(String,default=None)
 	hostname = Field(String,default=None)
-	loginbase = Field(String)
+	# NOTE:
+	#	the expected kinds of actions are:
+	#		* reboot node
+	#		* open ticket, send notice 
+	#		* close ticket
+	#		* apply penalty to site
+	#		* backoff penalty to site
+	action = Field(String)
+
+	# NOTE: describes the kind of action.  i.e. online-notice, offline-notice,
+	# reboot-first-try, reboot-second-try, penalty-pause, penalty-warning, penalty-no-create,
+	# penalty-disable-slices, 
+	action_type = Field(String, default=None)
+
+	message_id = Field(Integer, default=0)
+	penalty_level = Field(Integer, default=0)
+
+	# NOTE: in case an exception is thrown while trying to perform an action.
+	error_string = Field(String, default=None)
 
 	#issue = ManyToOne('IssueRecord')
 	# NOTE: this is the parent relation to fb records.  first create the
@@ -61,15 +80,15 @@ class ActionRecord(Entity):
 	#  OR
 	#    - find fbnode records
 	#    - create action record with fbnodes as argument
-	findbad_records = OneToMany('FindbadNodeRecord', order_by='-date_checked')
+	# findbad_records = OneToMany('FindbadNodeRecord', order_by='-date_checked')
 
 	# NOTE: can I move 'message_index, escellation_level, and penalty_level'
 	#    into the same value?  Maybe not penalty level, since there are only two;
 	#    and, there may be additional message and escellation levels.
-	send_email_to = Field(PickleType, default=None)
-	action_description = Field(PickleType, default=None)
-	message_arguments = Field(PickleType, default=None)
+	#send_email_to = Field(PickleType, default=None)
+	#action_description = Field(PickleType, default=None)
+	#message_arguments = Field(PickleType, default=None)
 
 	# NOTE: not sure this needs to be in the db.
-	escellation_level = Field(Integer, default=0)
-	stage = Field(String, default=None)
+	#escellation_level = Field(Integer, default=0)
+	#stage = Field(String, default=None)

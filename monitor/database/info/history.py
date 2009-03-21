@@ -50,6 +50,13 @@ class HistorySiteRecord(Entity):
 
 	status = Field(String,default="unknown")
 
+	message_id = Field(Int, default=0)
+	message_status = Field(String, default=None)
+	message_queue = Field(String, default=None) 
+	message_created = Field(DateTime, default=None)
+
+	penalty_level = Field(Int, default=0)
+
 	@classmethod
 	def by_loginbase(cls, loginbase):
 		return cls.query.filter_by(loginbase=loginbase).first()

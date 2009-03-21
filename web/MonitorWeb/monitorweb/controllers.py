@@ -389,7 +389,7 @@ class Root(controllers.RootController):
 
 	@expose(template="monitorweb.templates.sitelist")
 	def site(self, filter='all'):
-		filtercount = {'good' : 0, 'down': 0, 'new' : 0, 'pending' : 0, 'all' : 0}
+		filtercount = {'good' : 0, 'down': 0, 'online':0, 'offline' : 0, 'new' : 0, 'pending' : 0, 'all' : 0}
 		fbquery = HistorySiteRecord.query.all()
 		query = []
 		for site in fbquery:

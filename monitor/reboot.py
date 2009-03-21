@@ -67,13 +67,13 @@ def reboot_str(nodename):
 	if not pcu:
 		logger.debug("no pcu for %s" % nodename)
 		print "no pcu for %s" % nodename
-		return False # "%s has no pcu" % nodename
+		return "%s has no pcu" % nodename
 
 	values = get_pcu_values(pcu['pcu_id'])
 	if values == None:
 		logger.debug("No values for pcu probe %s" % nodename)
 		print "No values for pcu probe %s" % nodename
-		return False #"no info for pcu_id %s" % pcu['pcu_id']
+		return "no info for pcu_id %s" % pcu['pcu_id']
 	
 	# Try the PCU first
 	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))

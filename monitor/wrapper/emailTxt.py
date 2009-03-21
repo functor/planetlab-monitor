@@ -207,6 +207,65 @@ ERROR- 	   This is an error state, where there is absolutely no contact
            with PlanetLab.
 	""")
 
+	pcufailed_notice =("""Could not use PCU to reboot %(hostname)s""",
+
+"""As part of PlanetLab node monitoring and maintenance, we tried to use the PCU
+registered for %(hostname)s, but could not for some reason.
+
+Please help.
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	online_notice=("""Host %(hostname)s is online""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+is online and operational.  Thank you very much for your help!
+	""")
+	test_notice=("""Host %(hostname)s is testing""",
+	"""
+This notice is simply to test whether notices work.
+    %(hostname)s
+
+Thank you very much for your help!
+	""")
+	offline_notice=("""Host %(hostname)s is offline""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+is offline and or non-operational.  Please investigate, thank you very much for your help!
+	""")
+
+	clear_penalty=("""All penalties have been cleared from site %(loginbase)s""",
+	"""
+This notice is to let you know that any penalties previously applied to your site have 
+been removed: %(penalty_level)s.
+
+All privileges have been restored.  If your slices were disabled, please allow
+up to 30 minutes for them to return to enabled.
+
+Legend:
+
+  0  - no penalties applied
+  1  - site is disabled.  no new slices can be created.
+  2+ - all existing slices will be disabled.
+	""")
+
+	increase_penalty=("""Penalty increased for site %(loginbase)s""",
+	"""
+This notice is to let you know that the penalty applied to your site has
+increased: %(penalty_level)s.
+
+legend:
+
+  0  - no penalty applied
+  1  - site is disabled.  no new slices can be created.
+  2+ - all existing slices will be disabled.
+	""")
+
 	nmreset =("""NM Reset at %(loginbase)s""",
 	"""
 Monitor restarted NM on the following machines:

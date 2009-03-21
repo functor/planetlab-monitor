@@ -80,7 +80,7 @@ class FindbadNodeRecord(Entity):
 	observed_status = Field(String,default=None)
 
 	# NOTE: this is the child relation
-	action = ManyToOne('ActionRecord', required=False)
+	#action = ManyToOne('ActionRecord', required=False)
 
 class FindbadPCURecord(Entity):
 	@classmethod
