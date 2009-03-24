@@ -141,7 +141,7 @@ from links import *
 					<th mochi:format="int"></th>
 					<th>Hostname</th>
 					<th>last_contact</th>
-					<th>Last_checked</th>
+					<th>last_checked</th>
 					<th nowrap='true'>Port Status</th>
 					<th></th>
 					<th></th>
@@ -193,11 +193,47 @@ from links import *
 		</div>
 		<div id="status_block" class="flash"
             py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
-	<h4 py:if="len(pcuquery) > 0">Convenience Calls</h4>
-		<?python 
-			if len(pcuquery) == 0: pcu = None
-		?>
-		<div py:if="pcu is not None" class="code">
+
+	<h4>Recent Actions</h4>
+		<p py:if="actions and len(actions) == 0">
+			There are no recent actions taken for this site.
+		</p>
+		<table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
+			<thead>
+				<tr>
+					<th mochi:format="int"></th>
+					<th>Date</th>
+					<th>Action taken on</th>
+					<th>Action Type</th>
+					<th>Message ID</th>
+					<th>Errors</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
+					<td></td>
+					<td py:content="act.date_created"></td>
+					<td py:if="act.hostname is not None" nowrap="true" >
+						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
+							<span class="icon">${act.hostname}</span></a>
+					</td>
+					<td py:if="act.hostname is None" nowrap="true">
+						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
+							<span class="icon">${act.loginbase}</span></a>
+					</td>
+					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
+					<td py:content="act.action_type"></td>
+					<td py:content="act.message_id"></td>
+					<td py:content="act.error_string"></td>
+				</tr>
+			</tbody>
+		</table>
+
+	<!-- TODO: figure out how to make this conditional by model rather than port;
+				it is convenient to have links to ilo, drac, amt, etc.
+				regardless of whether the last PCU scan was successful.  -->
+	<h4 py:if="len(pcuquery) != 0">Convenience Calls</h4>
+		<div py:if="len(pcuquery) != 0" class="code"> <!-- pcu is not None" class="code"-->
 			<span	py:for="port,state in pcu.ports">
 					<span class="code" py:if="port == 22 and state == 'open'">
 						ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no 

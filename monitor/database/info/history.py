@@ -55,7 +55,8 @@ class HistorySiteRecord(Entity):
 	message_queue = Field(String, default=None) 
 	message_created = Field(DateTime, default=None)
 
-	penalty_level = Field(Int, default=0)
+	penalty_level   = Field(Int, default=0)
+	penalty_applied = Field(Boolean, default=False)
 
 	@classmethod
 	def by_loginbase(cls, loginbase):

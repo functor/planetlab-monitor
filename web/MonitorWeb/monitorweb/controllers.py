@@ -279,6 +279,7 @@ class Root(controllers.RootController):
 		sitequery=[]
 		pcuquery=[]
 		nodequery=[]
+		actions=[]
 		exceptions = None
 
 		for key in data:
@@ -291,6 +292,8 @@ class Root(controllers.RootController):
 			exceptions = data['exceptions']
 
 		if loginbase:
+			actions = ActionRecord.query.filter_by(loginbase=loginbase).order_by(ActionRecord.date_created.desc())
+			actions = [ a for a in actions ]
 			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
 			pcus = {}
 			for plcnode in site_lb2hn[loginbase]:
@@ -338,7 +341,7 @@ class Root(controllers.RootController):
 					prep_pcu_for_display(pcu)
 					pcuquery += [pcu]
 			
-		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, exceptions=exceptions)
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, exceptions=exceptions)
 
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):
