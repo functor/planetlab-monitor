@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 2.0
-%define taglevel 5
+%define taglevel 6
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -216,6 +216,10 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Tue Mar 24 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-6
+- added action view to gui
+- added penalty_applied bit to db model.
+
 * Fri Mar 20 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-5
 - tag for updates to 2.0 db model
 
