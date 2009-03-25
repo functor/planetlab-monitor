@@ -292,12 +292,14 @@ class Root(controllers.RootController):
 			exceptions = data['exceptions']
 
 		if loginbase:
-			actions = ActionRecord.query.filter_by(loginbase=loginbase).order_by(ActionRecord.date_created.desc())
+			actions = ActionRecord.query.filter_by(loginbase=loginbase
+							).filter(ActionRecord.date_created >= datetime.now() - timedelta(7)
+							).order_by(ActionRecord.date_created.desc())
 			actions = [ a for a in actions ]
 			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
 			pcus = {}
 			for plcnode in site_lb2hn[loginbase]:
-				for node in FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname']):
+					node = FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname'])
 					# NOTE: reformat some fields.
 					prep_node_for_display(node)
 					nodequery += [node]
@@ -311,18 +313,17 @@ class Root(controllers.RootController):
 
 		if pcuid and hostname is None:
 			print "pcuid: %s" % pcuid
-			for pcu in FindbadPCURecord.get_latest_by(plc_pcuid=pcuid):
-				# NOTE: count filter
-				prep_pcu_for_display(pcu)
-				pcuquery += [pcu]
+			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
+			# NOTE: count filter
+			prep_pcu_for_display(pcu)
+			pcuquery += [pcu]
 			if 'site_id' in pcu.plc_pcu_stats:
 				sitequery = [HistorySiteRecord.by_loginbase(pcu.loginbase)]
 				
 			if 'nodenames' in pcu.plc_pcu_stats:
 				for nodename in pcu.plc_pcu_stats['nodenames']: 
 					print "query for %s" % nodename
-					q = FindbadNodeRecord.get_latest_by(hostname=nodename)
-					node = q.first()
+					node = FindbadNodeRecord.get_latest_by(hostname=nodename)
 					print "%s" % node.port_status
 					print "%s" % node.to_dict()
 					print "%s" % len(q.all())
@@ -331,13 +332,13 @@ class Root(controllers.RootController):
 						nodequery += [node]
 
 		if hostname and pcuid is None:
-			for node in FindbadNodeRecord.get_latest_by(hostname=hostname):
+				node = FindbadNodeRecord.get_latest_by(hostname=hostname)
 				# NOTE: reformat some fields.
 				prep_node_for_display(node)
 				sitequery = [node.site]
 				nodequery += [node]
 				if node.plc_pcuid: 	# not None
-					pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+					pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
 					prep_pcu_for_display(pcu)
 					pcuquery += [pcu]
 			

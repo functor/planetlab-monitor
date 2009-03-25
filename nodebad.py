@@ -44,35 +44,49 @@ def check_node_state(rec, node):
 		boot_state = "unknown"
 		last_contact = None
 
-	if node_state == 'DOWN' and ( node.status == 'online' or node.status == 'good' ):
+	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
+	# 			'translations' into the node.status state
+	#		'BOOT' is a permanent state, but we want it to have a bit of
+	#			hysteresis (less than 0.5 days)
+
+	#################################################################3
+	# "Translate" the findbad states into nodebad status.
+
+	if node_state == 'DOWN' and ( node.status != 'offline' and node.status != 'down' ) and boot_state != 'disable' :
 		print "changed status from %s to offline" % node.status
 		node.status = 'offline'
 		node.last_changed = datetime.now()
 
-	if node_state == 'BOOT' and changed_lessthan(node.last_changed, 0.5) and node.status != 'online':
+	if node_state == 'DEBUG' and node.status != 'monitordebug':
+		print "changed status from %s to monitordebug" % (node.status)
+		node.status = "monitordebug"
+		node.last_changed = datetime.now()
+
+	if node_state == 'BOOT' and node.status != 'online' and node.status != 'good':
 		print "changed status from %s to online" % node.status
 		node.status = 'online'
 		node.last_changed = datetime.now()
 
+	#################################################################3
+	# Switch temporary hystersis states into their 'firm' states.
+
 	if node.status == 'online' and changed_greaterthan(node.last_changed, 0.5):
-		#send thank you notice, or on-line notice.
 		print "changed status from %s to good" % node.status
 		node.status = 'good'
 		# NOTE: do not reset last_changed, or you lose how long it's been up.
 
-	#if node.status == 'offline' and changed_greaterthan(node.last_changed, 1): #  and pcu.status == 'good' 
-	#	# attempt reboots
-	#	pass
-	#if node.status == 'offline' and changed_greaterthan(node.last_changed, 1.5): # and node.has_pcu
-	#	# send PCU failure message
-	#	pass
-
 	if node.status == 'offline' and changed_greaterthan(node.last_changed, 2):
 		print "changed status from %s to down" % node.status
-		# send down node notice
 		node.status = 'down'
-		node.last_changed = datetime.now()
+		# NOTE: do not reset last_changed, or you lose how long it's been down.
 
+	if node.status == 'monitordebug' and changed_greaterthan(node.last_changed, 14):
+		print "changed status from %s to down" % node.status
+		node.status = 'down'
+		# NOTE: do not reset last_changed, or you lose how long it's been down.
+		#node.last_changed = datetime.now()
+
+	# extreme cases of offline nodes
 	if ( boot_state == 'disabled' or last_contact == None ) and \
 			changed_greaterthan(node.last_changed, 2*30) and \
 			node.status != 'down':
@@ -92,7 +106,7 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 
 		try:
 			# Find the most recent record
-			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==nodename).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			noderec = FindbadNodeRecord.get_latest_by(hostname=nodename)
 		except:
 			print "COULD NOT FIND %s" % nodename
 			import traceback

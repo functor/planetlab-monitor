@@ -7,7 +7,7 @@ from monitor import *
 from monitor import util
 from monitor import parser as parsermodule
 
-from monitor import database
+from monitor.database.info.model import *
 from monitor import reboot
 
 import time

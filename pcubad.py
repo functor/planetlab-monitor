@@ -104,7 +104,7 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 
 		try:
 			# Find the most recent record
-			pcurec = FindbadPCURecord.query.filter(FindbadPCURecord.plc_pcuid==pcuname).order_by(FindbadPCURecord.date_checked.desc()).first()
+			pcurec = FindbadPCURecord.query.filter(FindbadPCURecord.plc_pcuid==pcuname).first()
 		except:
 			print "COULD NOT FIND FB record for %s" % reboot.pcu_name(d_pcu)
 			import traceback

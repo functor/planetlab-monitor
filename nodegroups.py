@@ -121,7 +121,7 @@ def main():
 		i = 1
 		for node in nodelist:
 			print "%-2d" % i, 
-			fbrec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fbrec = FindbadNodeRecord.get_latest_by(hostname=node['hostname'])
 			fbdata = fbrec.to_dict()
 			print nodegroup_display(node, fbdata, config)
 			i += 1

@@ -231,12 +231,20 @@ This notice is simply to test whether notices work.
 
 Thank you very much for your help!
 	""")
-	offline_notice=("""Host %(hostname)s is offline""",
+	retry_bootman=("""Running BootManager on %(hostname)s""",
 	"""
 This notice is simply to let you know that:
     %(hostname)s
 
-is offline and or non-operational.  Please investigate, thank you very much for your help!
+appears stuck in a debug mode.  To try to correct this, we're trying to rerun BootManager.py.  
+If any action is needed from you, you will recieve additional notices.  Thank you!
+	""")
+	down_notice=("""Host %(hostname)s is down""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+is down, disconnected from the network and/or non-operational.  Please investigate, thank you very much for your help!
 	""")
 
 	clear_penalty=("""All penalties have been cleared from site %(loginbase)s""",

@@ -224,17 +224,17 @@ def email_exception(content=None):
 
 def changed_lessthan(last_changed, days):
 	if datetime.now() - last_changed <= timedelta(days):
-		print "last changed less than %s" % timedelta(days)
+		#print "last changed less than %s" % timedelta(days)
 		return True
 	else:
-		print "last changed more than %s" % timedelta(days)
+		#print "last changed more than %s" % timedelta(days)
 		return False
 
 def changed_greaterthan(last_changed, days):
 	if datetime.now() - last_changed > timedelta(days):
-		print "last changed more than %s" % timedelta(days)
+		#print "last changed more than %s" % timedelta(days)
 		return True
 	else:
-		print "last changed less than %s" % timedelta(days)
+		#print "last changed less than %s" % timedelta(days)
 		return False
 	

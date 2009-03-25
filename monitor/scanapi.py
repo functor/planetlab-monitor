@@ -112,7 +112,7 @@ class ScanInterface(object):
 	syncclass = None
 	primarykey = 'hostname'
 
-	def __init__(self, round):
+	def __init__(self, round=1):
 		self.round = round
 		self.count = 1
 
@@ -133,22 +133,24 @@ class ScanInterface(object):
 		try:
 			if values is None:
 				return
-
-			fbnodesync = self.syncclass.findby_or_create(
-												if_new_set={'round' : self.round},
+			
+			if self.syncclass:
+				fbnodesync = self.syncclass.findby_or_create(
+												#if_new_set={'round' : self.round},
 												**{ self.primarykey : nodename})
 			# NOTE: This code will either add a new record for the new self.round, 
 			# 	OR it will find the previous value, and update it with new information.
 			#	The data that is 'lost' is not that important, b/c older
 			#	history still exists.  
 			fbrec = self.recordclass.findby_or_create(
-						**{'round':self.round, self.primarykey:nodename})
+						**{ self.primarykey:nodename})
 
 			fbrec.set( **values ) 
 
 			fbrec.flush()
-			fbnodesync.round = self.round
-			fbnodesync.flush()
+			if self.syncclass:
+				fbnodesync.round = self.round
+				fbnodesync.flush()
 
 			print "%d %s %s" % (self.count, nodename, values)
 			self.count += 1
@@ -160,7 +162,8 @@ class ScanInterface(object):
 
 class ScanNodeInternal(ScanInterface):
 	recordclass = FindbadNodeRecord
-	syncclass = FindbadNodeRecordSync
+	#syncclass = FindbadNodeRecordSync
+	syncclass = None
 	primarykey = 'hostname'
 
 	def collectNMAP(self, nodename, cohash):
@@ -375,9 +378,9 @@ EOF				""")
 		return (nodename, values)
 
 def internalprobe(hostname):
-	fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
-													if_new_set={'round' : 1})
-	scannode = ScanNodeInternal(fbsync.round)
+	#fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
+	#												if_new_set={'round' : 1})
+	scannode = ScanNodeInternal() # fbsync.round)
 	try:
 		(nodename, values) = scannode.collectInternal(hostname, {})
 		scannode.record(None, (nodename, values))
@@ -388,9 +391,9 @@ def internalprobe(hostname):
 		return False
 
 def externalprobe(hostname):
-	fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
-													if_new_set={'round' : 1})
-	scannode = ScanNodeInternal(fbsync.round)
+	#fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
+	#												if_new_set={'round' : 1})
+	scannode = ScanNodeInternal() # fbsync.round)
 	try:
 		(nodename, values) = scannode.collectNMAP(hostname, {})
 		scannode.record(None, (nodename, values))
@@ -402,7 +405,7 @@ def externalprobe(hostname):
 
 class ScanPCU(ScanInterface):
 	recordclass = FindbadPCURecord
-	syncclass = FindbadPCURecordSync
+	syncclass = None
 	primarykey = 'plc_pcuid'
 
 	def collectInternal(self, pcuname, cohash):

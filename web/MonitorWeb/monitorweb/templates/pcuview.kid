@@ -194,7 +194,7 @@ from links import *
 		<div id="status_block" class="flash"
             py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
 
-	<h4>Recent Actions</h4>
+	<h4>Actions Over the Last Week</h4>
 		<p py:if="actions and len(actions) == 0">
 			There are no recent actions taken for this site.
 		</p>
@@ -223,8 +223,9 @@ from links import *
 					</td>
 					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
 					<td py:content="act.action_type"></td>
-					<td py:content="act.message_id"></td>
-					<td py:content="act.error_string"></td>
+					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
+							<span class="icon">${act.message_id}</span></a></td>
+					<td><pre py:content="act.error_string"></pre></td>
 				</tr>
 			</tbody>
 		</table>

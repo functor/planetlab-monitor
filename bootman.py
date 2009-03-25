@@ -82,11 +82,11 @@ class NodeConnection:
 			print "   ERROR:", x
 			print "   Possibly, unable to find valid configuration file"
 
-		if bm_continue and self.config and not self.config.quiet:
+		if bm_continue:
 			for key in bm.VARS.keys():
 				print key, " == ", bm.VARS[key]
 		else:
-			if self.config and not self.config.quiet: print "   Unable to read Node Configuration"
+			print "   Unable to read Node Configuration"
 		
 
 	def compare_and_repair_nodekeys(self):
@@ -308,7 +308,8 @@ def reboot(hostname, config=None, forced_action=None):
 	# NOTE: Nothing works if the bootcd is REALLY old.
 	#       So, this is the first step.
 	fbnode = FindbadNodeRecord.get_latest_by(hostname=hostname).to_dict()
-	if fbnode['category'] == "OLDBOOTCD":
+	print fbnode.keys()
+	if fbnode['observed_category'] == "OLDBOOTCD":
 		print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
 		args = {}
 		args['hostname_list'] = "    %s" % hostname
@@ -594,6 +595,7 @@ def reboot(hostname, config=None, forced_action=None):
 			# actual solution appears to involve removing the bad files, and
 			# continually trying to boot the node.
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-update-debug-done",
+			"bminit-cfg-auth-getplc-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
 			]:
 		sequences.update({n : "restart_bootmanager_rins"})
 

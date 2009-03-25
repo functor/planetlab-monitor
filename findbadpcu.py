@@ -14,7 +14,7 @@ import threading
 
 import monitor
 from monitor import config
-from monitor.database.info.model import FindbadPCURecordSync, FindbadPCURecord, session
+from monitor.database.info.model import FindbadPCURecord, session
 from monitor import database
 from monitor import util 
 from monitor.wrapper import plc, plccache
@@ -43,10 +43,11 @@ def checkPCUs(l_pcus, cohash):
 	# CREATE all the work requests
 	for pcuname in l_pcus:
 		pcu_id = int(pcuname)
-		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
-		fbnodesync.flush()
+		#fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
+		#fbnodesync.flush()
 
-		node_round   = fbnodesync.round
+		#node_round   = fbnodesync.round
+		node_round   = global_round - 1
 		if node_round < global_round or config.force:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
@@ -75,7 +76,7 @@ def checkPCUs(l_pcus, cohash):
 			print "All results collected."
 			break
 
-	print FindbadPCURecordSync.query.count()
+	#print FindbadPCURecordSync.query.count()
 	print FindbadPCURecord.query.count()
 	session.flush()
 
@@ -86,10 +87,10 @@ def main():
 	l_pcus = plccache.l_pcus
 	cohash = {}
 
-	fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
-											if_new_set={'round' : global_round})
+	#fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
+											#if_new_set={'round' : global_round})
 
-	global_round = fbsync.round
+	#global_round = fbsync.round
 	api = plc.getAuthAPI()
 
 	if config.site is not None:
@@ -139,8 +140,8 @@ def main():
 
 	if config.increment:
 		# update global round number to force refreshes across all nodes
-		fbsync.round = global_round
-		fbsync.flush()
+		#fbsync.round = global_round
+		#fbsync.flush()
 		session.flush()
 
 	return 0

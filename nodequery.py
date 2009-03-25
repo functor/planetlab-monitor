@@ -16,7 +16,7 @@ import string
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
-from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, FindbadPCURecord, session
+from monitor.database.info.model import FindbadNodeRecord, FindbadPCURecord, session
 from monitor import util
 from monitor import config
 
@@ -412,7 +412,7 @@ def main():
 
 		try:
 			# Find the most recent record
-			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
 		except:
 			print traceback.print_exc()
 			pass
