@@ -197,6 +197,7 @@ class SSH(CMD):
 	def run_noexcept2(self, cmd, timeout=COMMAND_TIMEOUT*2):
 		cmd = "exec ssh -p %s %s %s@%s %s" % (self.port, self.__options_to_str(), 
 									self.user, self.host, cmd)
+		#print cmd
 		r = CMD.run_noexcept(self, cmd, timeout)
 		self.ret = -1
 

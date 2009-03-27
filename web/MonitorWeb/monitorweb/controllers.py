@@ -12,14 +12,15 @@ from monitor.database.zabbixapi.model import *
 from monitor.database.dborm import zab_session as session
 from monitor.database.dborm import zab_metadata as metadata
 
-from pcucontrol import reboot
+from monitor import reboot
+from monitor import scanapi
+
 from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
 from monitor.wrapper.plccache import plcdb_lb2hn as site_lb2hn
 
 from monitorweb.templates.links import *
 
-from monitor import scanapi
 
 
 def query_to_dict(query):
@@ -103,7 +104,7 @@ class NodeWidget(widgets.Widget):
 
 def prep_node_for_display(node):
 	if node.plc_pcuid:
-		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
 		if pcu:
 			node.pcu_status = pcu.reboot_trial_status
 			node.pcu_short_status = format_pcu_shortstatus(pcu)
@@ -168,40 +169,72 @@ class Root(controllers.RootController):
 		return self.pcuview(None, hostname) # dict(nodequery=nodequery)
 
 	@expose(template="monitorweb.templates.nodelist")
-	def node(self, filter='BOOT'):
+	def node(self, filter='boot'):
 		import time
 		fbquery = FindbadNodeRecord.get_all_latest()
 		query = []
-		filtercount = {'DOWN' : 0, 'BOOT': 0, 'DEBUG' : 0, 'neverboot' : 0, 'pending' : 0, 'all' : 0, None : 0}
+		filtercount = {'down' : 0, 'boot': 0, 'debug' : 0, 'diagnose' : 0, 'disabled': 0, 
+						'neverboot' : 0, 'pending' : 0, 'all' : 0, None : 0}
 		for node in fbquery:
 			# NOTE: reformat some fields.
 			prep_node_for_display(node)
 
-			# NOTE: count filters
-			if node.observed_status != 'DOWN':
-				print node.hostname, node.observed_status
-				filtercount[node.observed_status] += 1
-			else:
+			node.history.status
+
+			if node.history.status in ['down', 'offline']:
 				if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:
-					filtercount[node.observed_status] += 1
+					filtercount['down'] += 1
 				else:
 					filtercount['neverboot'] += 1
+			elif node.history.status in ['good', 'online']:
+				filtercount['boot'] += 1
+			elif node.history.status in ['debug', 'monitordebug']:
+				filtercount['debug'] += 1
+			else:
+				filtercount[node.history.status] += 1
+				
+			## NOTE: count filters
+			#if node.observed_status != 'DOWN':
+			#	print node.hostname, node.observed_status
+			#	if node.observed_status == 'DEBUG':
+			#		if node.plc_node_stats['boot_state'] in ['debug', 'diagnose', 'disabled']:
+			#			filtercount[node.plc_node_stats['boot_state']] += 1
+			#		else:
+			#			filtercount['debug'] += 1
+			#			
+			#	else:
+			#		filtercount[node.observed_status] += 1
+			#else:
+			#	if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:
+			#		filtercount[node.observed_status] += 1
+			#	else:
+			#		filtercount['neverboot'] += 1
 
 			# NOTE: apply filter
-			if filter == node.observed_status:
-				if filter == "DOWN":
-					if node.plc_node_stats['last_contact'] != None:
-						query.append(node)
-				else:
-					query.append(node)
-			elif filter == "neverboot":
+			if filter == "neverboot":
 				if not node.plc_node_stats or node.plc_node_stats['last_contact'] == None:
 					query.append(node)
-			elif filter == "pending":
-				# TODO: look in message logs...
-				pass
 			elif filter == "all":
 				query.append(node)
+			elif filter == node.history.status:
+				query.append(node)
+
+			#if filter == node.observed_status:
+			#	if filter == "DOWN":
+			#		if node.plc_node_stats['last_contact'] != None:
+			#			query.append(node)
+			#	else:
+			#		query.append(node)
+			#elif filter == "neverboot":
+			#	if not node.plc_node_stats or node.plc_node_stats['last_contact'] == None:
+			#		query.append(node)
+			#elif filter == "pending":
+			#	# TODO: look in message logs...
+			#	pass
+			#elif filter == node.plc_node_stats['boot_state']:
+			#	query.append(node)
+			#elif filter == "all":
+			#	query.append(node)
 				
 		widget = NodeWidget(template='monitorweb.templates.node_template')
 		return dict(now=time.ctime(), query=query, fc=filtercount, nodewidget=widget)
@@ -222,7 +255,7 @@ class Root(controllers.RootController):
 				if 'pcuid' in val:
 					pcuid = val['pcuid']
 				elif 'hostname' in val:
-					pcuid = FindbadNodeRecord.get_latest_by(hostname=val['hostname']).first().plc_pcuid
+					pcuid = FindbadNodeRecord.get_latest_by(hostname=val['hostname']).plc_pcuid
 				else:
 					pcuid=None
 			else:
@@ -304,7 +337,7 @@ class Root(controllers.RootController):
 					prep_node_for_display(node)
 					nodequery += [node]
 					if node.plc_pcuid: 	# not None
-						pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid).first()
+						pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
 						prep_pcu_for_display(pcu)
 						pcus[node.plc_pcuid] = pcu
 
@@ -326,7 +359,6 @@ class Root(controllers.RootController):
 					node = FindbadNodeRecord.get_latest_by(hostname=nodename)
 					print "%s" % node.port_status
 					print "%s" % node.to_dict()
-					print "%s" % len(q.all())
 					if node:
 						prep_node_for_display(node)
 						nodequery += [node]

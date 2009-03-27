@@ -274,6 +274,17 @@ legend:
   2+ - all existing slices will be disabled.
 	""")
 
+	newbootcd_notice=(""" Host %(hostname)s needs a new BootImage""", """
+As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+
+    %(hostname)s  
+
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
 	nmreset =("""NM Reset at %(loginbase)s""",
 	"""
 Monitor restarted NM on the following machines:
@@ -361,10 +372,10 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	newalphacd_one=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", 
-"""As part of PlanetLab node monitoring, we noticed that your machines needs a new BootCD to fully support your hardware: 
+	newalphacd_notice=(""" New Boot Images for %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed that your machine needs a new BootCD to fully support your hardware: 
 
-%(hostname_list)s  
+%(hostname)s  
 
 To make this process as simple as possible, we have created All-in-One boot images that include the node configuration file.  
 
@@ -385,14 +396,14 @@ Thank you for your help,
 	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
-	newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
+	#newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
 	newthankyou=[thankyou,thankyou,thankyou]
 	pcuthankyou=[pcuthankyou_one,pcuthankyou_one,pcuthankyou_one]
 	NMReset=[nmreset,nmreset,nmreset]
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
-	unknownsequence = ("""Unrecognized Error on PlanetLab host %(hostname)s""", 
+	unknownsequence_notice = ("""Unrecognized Error on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -478,7 +489,7 @@ Thank you for your help,
 	donation_down = [ donation_down_one, donation_down_one, donation_down_one ]
 
 
-	minimalhardware = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
+	minimalhardware_notice = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -498,7 +509,7 @@ BootManager.log output follows:
 %(bmlog)s
 """	  )
 
-	baddisk = ("""Bad Disk on PlanetLab node %(hostname)s""", 
+	baddisk_notice = ("""Bad Disk on PlanetLab node %(hostname)s""", 
 			   """As part of PlanetLab node monitoring, we noticed %(hostname)s has a number of disk or media related I/O errors, that prevent it from either booting or reliably running as a PlanetLab node.
 
 Please verify the integrity of the disk, and order a replacement if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
@@ -564,7 +575,7 @@ BootManager.log output follows:
 %(bmlog)s
 """)
 
-	plnode_cfg=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
+	nodeconfig_notice=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
 	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
@@ -604,7 +615,7 @@ Thanks.
 """)
 
 
-	baddns=("""Planetlab node down: broken DNS configuration for %(hostname)s""", 
+	baddns_notice=("""Planetlab node down: broken DNS configuration for %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed the DNS servers used by the following machine(s) are not responding to queries.
 
     %(hostname)s 

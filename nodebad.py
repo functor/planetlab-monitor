@@ -44,31 +44,47 @@ def check_node_state(rec, node):
 		boot_state = "unknown"
 		last_contact = None
 
+	if boot_state == 'disable': boot_state = 'disabled'
+	if boot_state == 'diag': 	boot_state = 'diagnose'
+
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state
 	#		'BOOT' is a permanent state, but we want it to have a bit of
 	#			hysteresis (less than 0.5 days)
 
-	#################################################################3
-	# "Translate" the findbad states into nodebad status.
+	#################################################################
+	# "Initialize" the findbad states into nodebad status if they are not already set
 
-	if node_state == 'DOWN' and ( node.status != 'offline' and node.status != 'down' ) and boot_state != 'disable' :
+	if node_state == 'DOWN' and ( node.status != 'offline' and node.status != 'down' ) and boot_state != 'disabled' :
 		print "changed status from %s to offline" % node.status
 		node.status = 'offline'
 		node.last_changed = datetime.now()
 
-	if node_state == 'DEBUG' and node.status != 'monitordebug':
-		print "changed status from %s to monitordebug" % (node.status)
-		node.status = "monitordebug"
-		node.last_changed = datetime.now()
+	if node_state == 'DEBUG' and node.status != 'monitordebug' and \
+								 node.status != 'disabled' and \
+								 node.status != 'diagnose':
+		if boot_state != 'disabled' and boot_state != 'diagnose':
+
+			print "changed status from %s to monitordebug" % (node.status)
+			node.status = "monitordebug"
+			node.last_changed = datetime.now()
+		else:
+			print "changed status from %s to %s" % (node.status, boot_state)
+			node.status = boot_state
+			node.last_changed = datetime.now()
 
 	if node_state == 'BOOT' and node.status != 'online' and node.status != 'good':
 		print "changed status from %s to online" % node.status
 		node.status = 'online'
 		node.last_changed = datetime.now()
 
-	#################################################################3
+	#################################################################
 	# Switch temporary hystersis states into their 'firm' states.
+	#	  online -> good		after half a day
+	#	  offline -> down		after two days
+	#	  monitordebug -> down  after 30 days
+	#	  diagnose -> monitordebug after 60 days
+	#	  disabled -> down		after 60 days
 
 	if node.status == 'online' and changed_greaterthan(node.last_changed, 0.5):
 		print "changed status from %s to good" % node.status
@@ -80,11 +96,16 @@ def check_node_state(rec, node):
 		node.status = 'down'
 		# NOTE: do not reset last_changed, or you lose how long it's been down.
 
-	if node.status == 'monitordebug' and changed_greaterthan(node.last_changed, 14):
+	if node.status == 'monitordebug' and changed_greaterthan(node.last_changed, 30):
 		print "changed status from %s to down" % node.status
 		node.status = 'down'
 		# NOTE: do not reset last_changed, or you lose how long it's been down.
-		#node.last_changed = datetime.now()
+
+	if node.status == 'diagnose' and changed_greaterthan(node.last_changed, 60):
+		print "changed status from %s to down" % node.status
+		# NOTE: change an admin mode back into monitordebug after two months.
+		node.status = 'monitordebug'
+		node.last_changed = datetime.now()
 
 	# extreme cases of offline nodes
 	if ( boot_state == 'disabled' or last_contact == None ) and \

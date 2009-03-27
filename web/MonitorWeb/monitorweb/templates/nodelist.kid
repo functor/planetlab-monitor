@@ -13,17 +13,19 @@ from links import *
   	<table width="100%">
 		<thead>
 			<tr>
-				<th><a href="${link('node', filter='BOOT')}">Production(${fc['BOOT']})</a></th>
-				<th><a href="${link('node', filter='DEBUG')}">Debug(${fc['DEBUG']})</a></th>
-				<th><a href="${link('node', filter='DOWN')}">Down(${fc['DOWN']})</a></th>
+				<th><a href="${link('node', filter='boot')}">Prod(${fc['boot']})</a></th>
+				<th><a href="${link('node', filter='down')}">Down(${fc['down']})</a></th>
+				<th><a href="${link('node', filter='monitordebug')}">Errors(${fc['debug']})</a></th>
+				<th><a href="${link('node', filter='diagnose')}">Diagnose (${fc['diagnose']})</a></th>
+				<th><a href="${link('node', filter='disabled')}">Disabled (${fc['disabled']})</a></th>
 				<th><a href="${link('node', filter='neverboot')}">Never Booted(${fc['neverboot']})</a></th>
-				<th><a href="${link('node', filter='pending')}">Pending Reply(${fc['pending']})</a></th>
+				<!--th><a href="${link('node', filter='pending')}">Pending Reply(${fc['pending']})</a></th-->
 				<th><a href="${link('node', filter='all')}">All</a></th>
 			</tr>
 		</thead>
 		<tbody>
 		<tr>
-		<td colspan="5">
+		<td colspan="7">
 		<table id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>

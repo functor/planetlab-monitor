@@ -94,7 +94,7 @@ class FindbadPCURecord(Entity):
 
 	@classmethod
 	def get_latest_by(cls, **kwargs):
-		return cls.query.filter_by(**kwargs)
+		return cls.query.filter_by(**kwargs).first()
 
 # ACCOUNTING
 	date_checked = Field(DateTime)

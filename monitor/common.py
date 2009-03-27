@@ -238,3 +238,14 @@ def changed_greaterthan(last_changed, days):
 		#print "last changed less than %s" % timedelta(days)
 		return False
 	
+def found_within(recent_actions, action_type, within):
+	for action in recent_actions:
+		if action_type == action.action_type and \
+				datetime.now() - action.date_created < timedelta(within):
+			# recent action of given type.
+			#print "%s found_within %s in recent_actions from %s" % (action_type, timedelta(within), action.date_created)
+			return True
+
+	print "%s NOT found_within %s in recent_actions" % (action_type, timedelta(within) )
+	return False
+	
