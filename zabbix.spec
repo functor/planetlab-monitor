@@ -290,6 +290,12 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri Mar 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-7
+- improved db model
+- updated files that use db model
+- updated web view based on node, site, and pcu states.
+- added local mirror to zabbix Make file.
+
 * Tue Mar 24 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-6
 - added action view to gui
 - added penalty_applied bit to db model.
