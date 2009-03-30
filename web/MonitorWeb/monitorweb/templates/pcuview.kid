@@ -224,7 +224,7 @@ from links import *
 					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
 					<td py:content="act.action_type"></td>
 					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
-							<span class="icon">${act.message_id}</span></a></td>
+							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
 					<td><pre py:content="act.error_string"></pre></td>
 				</tr>
 			</tbody>

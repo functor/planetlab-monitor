@@ -218,6 +218,8 @@ class Root(controllers.RootController):
 				query.append(node)
 			elif filter == node.history.status:
 				query.append(node)
+			elif filter == 'boot':
+				query.append(node)
 
 			#if filter == node.observed_status:
 			#	if filter == "DOWN":

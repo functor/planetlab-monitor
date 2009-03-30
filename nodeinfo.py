@@ -44,7 +44,7 @@ def plc_print_nodeinfo(plcnode):
 		 diff_time(plcnode['last_contact']), plcnode['key'])
 
 def fb_print_nodeinfo(fbnode):
-	pf = PersistFlags(fbnode['hostname'], 1, db='node_persistflags')
+	pf = HistoryNodeRecord.get_by(hostname= fbnode['hostname'])
 	try:
 		fbnode['last_change'] = diff_time(pf.last_changed)
 	except:

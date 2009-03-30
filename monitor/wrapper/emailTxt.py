@@ -373,9 +373,9 @@ Thank you very much for your help,
 """)
 
 	newalphacd_notice=(""" New Boot Images for %(hostname)s""", 
-"""As part of PlanetLab node monitoring, we noticed that your machine needs a new BootCD to fully support your hardware: 
+"""As part of PlanetLab node monitoring, we noticed that we were not able to recognize all the hardware in your machine.  This means that it is so new that it needs a new BootCD, or that it is so old that it is no longer supported.
 
-%(hostname)s  
+    %(hostname)s  
 
 To make this process as simple as possible, we have created All-in-One boot images that include the node configuration file.  
 

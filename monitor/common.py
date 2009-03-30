@@ -7,7 +7,8 @@ from monitor import database
 from monitor.wrapper import plc, plccache
 
 from datetime import datetime, timedelta
-from monitor.model import PersistFlags, Message
+from monitor.model import Message
+from monitor.database.info import HistoryNodeRecord
 
 esc = struct.pack('i', 27)
 RED  	= esc + "[1;31m"
@@ -85,6 +86,8 @@ def diff_time(timestamp, abstime=True):
 	now = time.time()
 	if timestamp == None:
 		return "unknown"
+	if type(timestamp) == type(datetime.now()):
+		timestamp = time.mktime(timestamp.timetuple())
 	if abstime:
 		diff = now - timestamp
 	else:
@@ -153,7 +156,7 @@ def nodegroup_display(node, fbdata, conf=None):
 		node['pcu'] = "PCU"
 	node['lastupdate'] = diff_time(node['last_contact'])
 
-	pf = PersistFlags(node['hostname'], 1, db='node_persistflags')
+	pf = HistoryNodeRecord.get_by(hostname=node['hostname'])
 	try:
 		node['lc'] = diff_time(pf.last_changed)
 	except:
@@ -237,11 +240,23 @@ def changed_greaterthan(last_changed, days):
 	else:
 		#print "last changed less than %s" % timedelta(days)
 		return False
+
+def found_between(recent_actions, action_type, lower, upper):
+	return found_before(recent_actions, action_type, upper) and found_within(recent_actions, action_type, lower)
+
+def found_before(recent_actions, action_type, within):
+	for action in recent_actions:
+		if action_type == action.action_type and \
+				action.date_created < (datetime.now() - timedelta(within)):
+			return True
+	return False
 	
 def found_within(recent_actions, action_type, within):
 	for action in recent_actions:
+		#print "%s - %s %s > %s - %s (%s) ==> %s" % (action.loginbase, action.action_type, action.date_created, datetime.now(), timedelta(within), datetime.now()-timedelta(within), action.date_created > (datetime.now() - timedelta(within)) )
 		if action_type == action.action_type and \
-				datetime.now() - action.date_created < timedelta(within):
+				action.date_created > (datetime.now() - timedelta(within)):
+				#datetime.now() - action.date_created < timedelta(within):
 			# recent action of given type.
 			#print "%s found_within %s in recent_actions from %s" % (action_type, timedelta(within), action.date_created)
 			return True

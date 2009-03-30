@@ -41,7 +41,7 @@ def getnodesup(nodelist):
 	for node in nodelist:
 		try:
 			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
-			if nodehist is not None and nodehist.status == "good":
+			if nodehist is not None and nodehist.status != 'down':
 				up = up + 1
 		except:
 			import traceback

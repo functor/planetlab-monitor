@@ -2,39 +2,43 @@
 
 # Attempt to reboot a node in debug state.
 
-from monitor import const
-from monitor.database.info.model import *
-from monitor.wrapper import plc
-api = plc.getAuthAPI()
 
-import sys
+
 import os
+import sys
+import time
+import random
+import signal
+import traceback
+import subprocess
+from sets import Set
 
 from getsshkeys import SSHKnownHosts
 
-import subprocess
-import time
-from pcucontrol.util import command as moncommands
-from sets import Set
+from Rpyc import SocketConnection, Async
+from Rpyc.Utils import *
 
+import getconf
+from monitor import config
+from monitor import const
+from monitor.model import *
+from monitor.common import email_exception, found_within
+from monitor.database.info.model import *
+from monitor.wrapper import plc
+from monitor.wrapper.emailTxt import mailtxt
+
+from pcucontrol.util import command as moncommands
+from pcucontrol.util.command import Sopen
 from pcucontrol.transports.ssh import pxssh as pxssh
 from pcucontrol.transports.ssh import fdpexpect as fdpexpect
 from pcucontrol.transports.ssh import pexpect as pexpect
-from monitor.model import *
-from monitor.wrapper.emailTxt import mailtxt
+
 from nodeconfig import network_config_to_str
-import traceback
-from monitor import config
 
-import signal
-class Sopen(subprocess.Popen):
-	def kill(self, signal = signal.SIGTERM):
-		os.kill(self.pid, signal)
 
-#from Rpyc import SocketConnection, Async
-from Rpyc import SocketConnection, Async
-from Rpyc.Utils import *
+api = plc.getAuthAPI()
 fb = None
+
 
 class NodeConnection:
 	def __init__(self, connection, node, config):
@@ -43,12 +47,20 @@ class NodeConnection:
 		self.config = config
 
 	def get_boot_state(self):
-		if self.c.modules.os.path.exists('/tmp/source'):
-			return "dbg"
-		elif self.c.modules.os.path.exists('/vservers'): 
-			return "boot"
-		else:
-			return "unknown"
+		try:
+			if self.c.modules.os.path.exists('/tmp/source'):
+				return "debug"
+			elif self.c.modules.os.path.exists('/vservers'): 
+				return "boot"
+			else:
+				return "unknown"
+		except EOFError:
+			traceback.print_exc()
+			print self.c.modules.sys.path
+		except:
+			traceback.print_exc()
+
+		return "unknown"
 
 	def get_dmesg(self):
 		self.c.modules.os.system("dmesg > /var/log/dmesg.bm.log")
@@ -177,7 +189,6 @@ class NodeConnection:
 		return 
 
 
-import random
 class PlanetLabSession:
 	globalport = 22000 + int(random.random()*1000)
 
@@ -190,7 +201,14 @@ class PlanetLabSession:
 		self.setup_host()
 
 	def get_connection(self, config):
-		return NodeConnection(SocketConnection("localhost", self.port), self.node, config)
+		conn = NodeConnection(SocketConnection("localhost", self.port), self.node, config)
+		#i = 0
+		#while i < 3: 
+		#	print i, conn.c.modules.sys.path
+		#	print conn.c.modules.os.path.exists('/tmp/source')
+		#	i+=1
+		#	time.sleep(1)
+		return conn
 	
 	def setup_host(self):
 		self.port = PlanetLabSession.globalport
@@ -210,6 +228,7 @@ class PlanetLabSession:
 		# COPY Rpyc files to host
 		cmd = "rsync -qv -az -e ssh %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
 		if self.verbose: print cmd
+		print cmd
 		# TODO: Add timeout
 		timeout = 120
 		localos = moncommands.CMD()
@@ -253,6 +272,7 @@ EOF""")
 		#cmd = cmd % args
 		#if self.verbose: print cmd
 		#print localos.system(cmd,timeout)
+		print "setup rpyc server over ssh"
 		print ssh.ret
 
 		# TODO: Add timeout
@@ -265,6 +285,7 @@ EOF""")
 			  """%(user)s@%(hostname)s"""
 		cmd = cmd % args
 		if self.verbose: print cmd
+		print cmd
 		self.command = Sopen(cmd, shell=True, stdout=subprocess.PIPE)
 		# TODO: the read() here may block indefinitely.  Need a better
 		# approach therefore, that includes a timeout.
@@ -288,14 +309,12 @@ EOF""")
 	def __del__(self):
 		if self.command:
 			if self.verbose: print "Killing SSH session %s" % self.port
+			print "Killing SSH session %s" % self.port
 			self.command.kill()
 
-
-def steps_to_list(steps):
-	ret_list = []
-	for (id,label) in steps:
-		ret_list.append(label)
-	return ret_list
+	
+def steps_to_list(steps, index=1):
+	return map(lambda x: x[index], steps)
 
 def index_to_id(steps,index):
 	if index < len(steps):
@@ -303,101 +322,176 @@ def index_to_id(steps,index):
 	else:
 		return "done"
 
-def reboot(hostname, config=None, forced_action=None):
+class DebugInterface:
+	def __init__(self, hostname):
+		self.hostname = hostname
+		self.session = None
 
-	# NOTE: Nothing works if the bootcd is REALLY old.
-	#       So, this is the first step.
-	fbnode = FindbadNodeRecord.get_latest_by(hostname=hostname).to_dict()
-	print fbnode.keys()
-	if fbnode['observed_category'] == "OLDBOOTCD":
-		print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
-		args = {}
-		args['hostname_list'] = "    %s" % hostname
-
-		m = PersistMessage(hostname, "Please Update Boot Image for %s" % hostname,
-							mailtxt.newbootcd_one[1] % args, True, db='bootcd_persistmessages')
-
-		loginbase = plc.siteId(hostname)
-		emails = plc.getTechEmails(loginbase)
-		m.send(emails) 
-
-		print "\tDisabling %s due to out-of-date BOOTCD" % hostname
-		api.UpdateNode(hostname, {'boot_state' : 'disable'})
-		return True
-
-	node = hostname
-	print "Creating session for %s" % node
-	# update known_hosts file (in case the node has rebooted since last run)
-	if config and not config.quiet: print "...updating known_hosts ssh-rsa key for %s" % node
-	try:
-		k = SSHKnownHosts(); k.update(node); k.write(); del k
-	except:
-		from monitor.common import email_exception
-		email_exception()
-		print traceback.print_exc()
-		return False
-
-	try:
-		if config == None:
-			session = PlanetLabSession(node, False, True)
-		else:
-			session = PlanetLabSession(node, config.nosetup, config.verbose)
-	except Exception, e:
-		msg = "ERROR setting up session for %s" % hostname
-		print msg
-		print traceback.print_exc()
-		from monitor.common import email_exception
-		email_exception(msg)
-		print e
-		return False
-
-	try:
-		conn = session.get_connection(config)
-	except EOFError:
-		# NOTE: sometimes the wait in setup_host() is not long enough.  
-		# So, here we try to wait a little longer before giving up entirely.
+	def getConnection(self):
+		print "Creating session for %s" % self.hostname
+		# update known_hosts file (in case the node has rebooted since last run)
 		try:
-			time.sleep(session.timeout*4)
-			conn = session.get_connection(config)
+			k = SSHKnownHosts(); k.update(self.hostname); k.write(); del k
 		except:
-			print traceback.print_exc()
-			from monitor.common import email_exception
 			email_exception()
+			print traceback.print_exc()
 			return False
 
-	if forced_action == "reboot":
-		conn.restart_node('rins')
-		return True
+		try:
+			if config == None:
+				self.session = PlanetLabSession(self.hostname, False, True)
+			else:
+				self.session = PlanetLabSession(self.hostname, config.nosetup, config.verbose)
+		except Exception, e:
+			msg = "ERROR setting up session for %s" % self.hostname
+			print msg
+			traceback.print_exc()
+			email_exception(msg)
+			return False
 
-	boot_state = conn.get_boot_state()
-	if boot_state == "boot":
-		print "...Boot state of %s already completed : skipping..." % node
-		return True
-	elif boot_state == "unknown":
-		print "...Unknown bootstate for %s : skipping..."% node
-		return False
-	else:
-		pass
+		try:
+			conn = self.session.get_connection(config)
+		except EOFError:
+			# NOTE: sometimes the wait in setup_host() is not long enough.  
+			# So, here we try to wait a little longer before giving up entirely.
+			try:
+				time.sleep(self.session.timeout*5)
+				conn = self.session.get_connection(config)
+			except:
+				traceback.print_exc()
+				email_exception(self.hostname)
+				return False
+		#print "trying to use conn before returning it."
+		#print conn.c.modules.sys.path
+		#print conn.c.modules.os.path.exists('/tmp/source')
+		#time.sleep(1)
 
-	if conn.bootmanager_running():
-		print "...BootManager is currently running.  Skipping host %s" % node
-		return True
+		#print "conn: %s" % conn
+		return conn
 
-	#if config != None:
-	#	if config.force:
-	#		conn.restart_bootmanager(config.force)
-	#		return True
+	def getSequences(self):
 
-	# Read persistent flags, tagged on one week intervals.
-	pflags = PersistFlags(hostname, 3*60*60*24, db='debug_persistflags')
+		# TODO: This can be replaced with a DB definition at a future time.
+		# 		This would make it possible for an admin to introduce new
+		# 		patterns without touching code.
 		
+		sequences = {}
+		# restart_bootmanager_boot
+		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-bootupdatefail-update-debug-done",
 
-	if config and not config.quiet: print "...downloading dmesg from %s" % node
-	dmesg = conn.get_dmesg()
-	child = fdpexpect.fdspawn(dmesg)
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-exception-protoerror-update-protoerror-debug-done",
 
-	sequence = []
-	while True:
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-debug-done",
+				"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
+				"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
+				"bminit-cfg-auth-protoerror-exception-update-bootupdatefail-authfail-debug-done",
+				"bminit-cfg-auth-protoerror-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-exception-protoerror-update-debug-done",
+				"bminit-cfg-auth-getplc-implementerror-update-debug-done",
+				]:
+			sequences.update({n : "restart_bootmanager_boot"})
+
+		#	conn.restart_bootmanager('rins')
+		for n in [ "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-exception-mkfsfail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-exception-noinstall-update-debug-done",
+				# actual solution appears to involve removing the bad files, and
+				# continually trying to boot the node.
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
+				]:
+			sequences.update({n : "restart_bootmanager_rins"})
+
+		# repair_node_keys
+		sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
+
+		#   conn.restart_node('rins')
+		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-writeerror-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-implementerror-bootupdatefail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-readonlyfs-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-nospace-exception-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
+				]:
+			sequences.update({n : "restart_node_rins"})
+
+		#	restart_node_boot
+		for n in ["bminit-cfg-auth-getplc-implementerror-bootupdatefail-update-debug-done",
+				 "bminit-cfg-auth-implementerror-bootcheckfail-update-debug-done",
+				 "bminit-cfg-auth-implementerror-bootcheckfail-update-implementerror-bootupdatefail-done",
+				 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
+				 "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
+				 "bminit-cfg-auth-getplc-update-installinit-validate-implementerror-update-debug-done",
+				 ]:
+			sequences.update({n: "restart_node_boot"})
+
+		# update_node_config_email
+		for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
+				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
+				  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
+				]:
+			sequences.update({n : "update_node_config_email"})
+
+		for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
+				   "bminit-cfg-update-exception-nodehostname-update-debug-done", 
+				]:
+			sequences.update({n : "nodenetwork_email"})
+
+		# update_bootcd_email
+		for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-exception-hardwarerequirefail-update-debug-done",
+				]:
+			sequences.update({n : "update_bootcd_email"})
+
+		for n in [ "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
+				]:
+			sequences.update({n: "suspect_error_email"})
+
+		# update_hardware_email
+		sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
+		sequences.update({"bminit-cfg-auth-getplc-hardware-disktoosmall-exception-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
+
+		# broken_hardware_email
+		sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
+
+		# bad_dns_email
+		for n in [ 
+		 "bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
+			"bminit-cfg-auth-implementerror-bootcheckfail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
+			]:
+			sequences.update( { n : "bad_dns_email"})
+
+		return sequences
+
+	def getDiskSteps(self):
 		steps = [
 			('scsierror'  , 'SCSI error : <\d+ \d+ \d+ \d+> return code = 0x\d+'),
 			('ioerror'    , 'end_request: I/O error, dev sd\w+, sector \d+'),
@@ -433,51 +527,19 @@ def reboot(hostname, config=None, forced_action=None):
 			# SCSI error : <0 2 0 0> return code = 0x40001
 			# end_request: I/O error, dev sda, sector 572489600
 		]
-		id = index_to_id(steps, child.expect( steps_to_list(steps) + [ pexpect.EOF ]))
-		sequence.append(id)
+		return steps
 
-		if id == "done":
-			break
+	def getDiskSequence(self, steps, child):
+		sequence = []
+		while True:
+			id = index_to_id(steps, child.expect( steps_to_list(steps) + [ pexpect.EOF ]))
+			sequence.append(id)
 
-	s = Set(sequence)
-	if config and not config.quiet: print "\tSET: ", s
+			if id == "done":
+				break
+		return sequence
 
-	if len(s) > 1:
-		print "...Potential drive errors on %s" % node
-		if len(s) == 2 and 'floppyerror' in s:
-			print "...Should investigate.  Continuing with node."
-		else:
-			print "...Should investigate.  Skipping node."
-			# TODO: send message related to these errors.
-			args = {}
-			args['hostname'] = hostname
-			args['log'] = conn.get_dmesg().read()
-
-			m = PersistMessage(hostname, mailtxt.baddisk[0] % args,
-										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
-
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.set_nodestate('disable')
-			return False
-
-	print "...Downloading bm.log from %s" % node
-	log = conn.get_bootmanager_log()
-	child = fdpexpect.fdspawn(log)
-
-	try:
-		if config.collect: return True
-	except:
-		pass
-
-	time.sleep(1)
-
-	if config and not config.quiet: print "...Scanning bm.log for errors"
-	action_id = "dbg"
-	sequence = []
-	while True:
-
+	def getBootManagerStepPatterns(self):
 		steps = [
 			('bminit' 		, 'Initializing the BootManager.'),
 			('cfg'			, 'Reading node configuration file.'),
@@ -528,16 +590,107 @@ def reboot(hostname, config=None, forced_action=None):
 			('bootcheckfail'     , 'BootCheckAuthentication'),
 			('bootupdatefail'   , 'BootUpdateNode'),
 		]
-		list = steps_to_list(steps)
-		index = child.expect( list + [ pexpect.EOF ])
-		id = index_to_id(steps,index)
-		sequence.append(id)
+		return steps
 
-		if id == "exception":
-			if config and not config.quiet: print "...Found An Exception!!!"
-		elif index == len(list):
-			#print "Reached EOF"
-			break
+	def getBootManagerSequenceFromLog(self, steps, child):
+		sequence = []
+		while True:
+			
+			index = child.expect( steps_to_list(steps) + [ pexpect.EOF ])
+			id = index_to_id(steps,index)
+			sequence.append(id)
+
+			if id == "exception":
+				print "...Found An Exception!!!"
+			elif id == "done": #index == len(steps_to_list(steps)):
+				#print "Reached EOF"
+				break
+
+		return sequence
+		
+
+def restore(sitehist, hostname, config=None, forced_action=None):
+
+	# NOTE: Nothing works if the bootcd is REALLY old.
+	#       So, this is the first step.
+
+	fbnode = FindbadNodeRecord.get_latest_by(hostname=hostname).to_dict()
+	recent_actions = sitehist.getRecentActions(hostname=hostname)
+
+	if fbnode['observed_category'] == "OLDBOOTCD":
+		print "\t...Notify owner to update BootImage!!!"
+
+		if not found_within(recent_actions, 'newbootcd_notice', 3):
+			sitehist.sendMessage('newbootcd_notice', hostname=hostname)
+
+			print "\tDisabling %s due to out-of-date BootImage" % hostname
+			api.UpdateNode(hostname, {'boot_state' : 'disable'})
+
+		# NOTE: nothing else is possible.
+		return True
+
+	debugnode = DebugInterface(hostname)
+	conn = debugnode.getConnection()
+	#print "conn: %s" % conn
+	#print "trying to use conn after returning it."
+	#print conn.c.modules.sys.path
+	#print conn.c.modules.os.path.exists('/tmp/source')
+	if type(conn) == type(False): return False
+
+	#if forced_action == "reboot":
+	#	conn.restart_node('rins')
+	#	return True
+
+	boot_state = conn.get_boot_state()
+	if boot_state != "debug":
+		print "... %s in %s state: skipping..." % (hostname , boot_state)
+		return boot_state == "boot"
+
+	if conn.bootmanager_running():
+		print "...BootManager is currently running.  Skipping host %s" %hostname 
+		return True
+
+	# Read persistent flags, tagged on one week intervals.
+	#pflags = PersistFlags(hostname, 3*60*60*24, db='debug_persistflags')
+
+	if config and not config.quiet: print "...downloading dmesg from %s" %hostname 
+	dmesg = conn.get_dmesg()
+	child = fdpexpect.fdspawn(dmesg)
+
+	steps = debugnode.getDiskSteps()
+	sequence = debugnode.getDiskSequence(steps, child)
+
+	s = Set(sequence)
+	if config and not config.quiet: print "\tSET: ", s
+
+	if len(s) > 1:
+		print "...Potential drive errors on %s" % hostname 
+		if len(s) == 2 and 'floppyerror' in s:
+			print "...Should investigate.  Continuing with node."
+		else:
+			print "...Should investigate.  Skipping node."
+			# TODO: send message related to these errors.
+
+			if not found_within(recent_actions, 'newbootcd_notice', 3):
+
+				log=conn.get_dmesg().read()
+				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
+				conn.set_nodestate('disable')
+
+			return False
+
+	print "...Downloading bm.log from %s" %hostname 
+	log = conn.get_bootmanager_log()
+	child = fdpexpect.fdspawn(log)
+
+	if hasattr(config, 'collect') and config.collect: return True
+
+	if config and not config.quiet: print "...Scanning bm.log for errors"
+
+	time.sleep(1)
+
+	steps = debugnode.getBootManagerStepPatterns()
+	sequence = debugnode.getBootManagerSequenceFromLog(steps, child)
 		
 	s = "-".join(sequence)
 	print "   FOUND SEQUENCE: ", s
@@ -546,129 +699,9 @@ def reboot(hostname, config=None, forced_action=None):
 	#  By using the sequence identifier, we guarantee that there will be no
 	#  frequent loops.  I'm guessing there is a better way to track loops,
 	#  though.
-	#if not config.force and pflags.getRecentFlag(s):
-	#	pflags.setRecentFlag(s)
-	#	pflags.save() 
-	#	print "... flag is set or it has already run recently. Skipping %s" % node
-	#	return True
 
-	sequences = {}
-
-
-	# restart_bootmanager_boot
-	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-protoerror-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-bootupdatefail-update-debug-done",
-
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-exception-protoerror-update-protoerror-debug-done",
-
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-debug-done",
-			"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
-			"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
-			"bminit-cfg-auth-protoerror-exception-update-bootupdatefail-authfail-debug-done",
-			"bminit-cfg-auth-protoerror-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-exception-protoerror-update-debug-done",
-			"bminit-cfg-auth-getplc-implementerror-update-debug-done",
-			]:
-		sequences.update({n : "restart_bootmanager_boot"})
-
-	#	conn.restart_bootmanager('rins')
-	for n in [ "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-bziperror-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-exception-mkfsfail-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-installstop-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-kernelcopyfail-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-exception-noinstall-update-debug-done",
-			# actual solution appears to involve removing the bad files, and
-			# continually trying to boot the node.
-			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
-			]:
-		sequences.update({n : "restart_bootmanager_rins"})
-
-	# repair_node_keys
-	sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
-
-	#   conn.restart_node('rins')
-	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-writeerror-exception-chrootfail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-installinit-exception-bmexceptrmfail-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-implementerror-bootupdatefail-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-readonlyfs-update-debug-done",
-			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-nospace-exception-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
-			"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
-			]:
-		sequences.update({n : "restart_node_rins"})
-
-	#	restart_node_boot
-	for n in ["bminit-cfg-auth-getplc-implementerror-bootupdatefail-update-debug-done",
-			 "bminit-cfg-auth-implementerror-bootcheckfail-update-debug-done",
-			 "bminit-cfg-auth-implementerror-bootcheckfail-update-implementerror-bootupdatefail-done",
-			 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
-			 "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
-			 "bminit-cfg-auth-getplc-update-installinit-validate-implementerror-update-debug-done",
-			 ]:
-		sequences.update({n: "restart_node_boot"})
-
-	# update_node_config_email
-	for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
-			  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
-			  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
-			]:
-		sequences.update({n : "update_node_config_email"})
-
-	for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
-			   "bminit-cfg-update-exception-nodehostname-update-debug-done", 
-			]:
-		sequences.update({n : "nodenetwork_email"})
-
-	# update_bootcd_email
-	for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
-			"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
-			"bminit-cfg-auth-getplc-hardware-exception-hardwarerequirefail-update-debug-done",
-			]:
-		sequences.update({n : "update_bootcd_email"})
-
-	for n in [ "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
-			]:
-		sequences.update({n: "suspect_error_email"})
-
-	# update_hardware_email
-	sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
-	sequences.update({"bminit-cfg-auth-getplc-hardware-disktoosmall-exception-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
-
-	# broken_hardware_email
-	sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
-
-	# bad_dns_email
-	for n in [ 
-	 "bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
-		"bminit-cfg-auth-implementerror-bootcheckfail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
-		]:
-		sequences.update( { n : "bad_dns_email"})
-
+	sequences = debugnode.getSequences()
 	flag_set = True
-
 	
 	if s not in sequences:
 		print "   HOST %s" % hostname
@@ -678,10 +711,9 @@ def reboot(hostname, config=None, forced_action=None):
 		args['hostname'] = hostname
 		args['sequence'] = s
 		args['bmlog'] = conn.get_bootmanager_log().read()
-		m = PersistMessage(hostname, mailtxt.unknownsequence[0] % args,
-									 mailtxt.unknownsequence[1] % args, False, db='unknown_persistmessages')
-		m.reset()
-		m.send([config.cc_email]) 
+		args['viart'] = False
+
+		sitehist.sendMessage('unknownsequence_notice', **args)
 
 		conn.restart_bootmanager('boot')
 
@@ -692,10 +724,10 @@ def reboot(hostname, config=None, forced_action=None):
 	else:
 
 		if   sequences[s] == "restart_bootmanager_boot":
-			if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
+			print "...Restarting BootManager.py on %s "%hostname 
 			conn.restart_bootmanager('boot')
 		elif sequences[s] == "restart_bootmanager_rins":
-			if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
+			print "...Restarting BootManager.py on %s "%hostname 
 			conn.restart_bootmanager('rins')
 		elif sequences[s] == "restart_node_rins":
 			conn.restart_node('rins')
@@ -709,121 +741,89 @@ def reboot(hostname, config=None, forced_action=None):
 				pass
 			else:
 				# there was some failure to synchronize the keys.
-				print "...Unable to repair node keys on %s" % node
+				print "...Unable to repair node keys on %s" %hostname 
 
 		elif sequences[s] == "suspect_error_email":
 			args = {}
 			args['hostname'] = hostname
 			args['sequence'] = s
 			args['bmlog'] = conn.get_bootmanager_log().read()
-			m = PersistMessage(hostname, "Suspicous error from BootManager on %s" % args,
-										 mailtxt.unknownsequence[1] % args, False, db='suspect_persistmessages')
-			m.reset()
-			m.send([config.cc_email]) 
+			args['viart'] = False
 
+			sitehist.sendMessage('unknownsequence_notice', **args)
 			conn.restart_bootmanager('boot')
 
+		# TODO: differentiate this and the 'nodenetwork_email' actions.
 		elif sequences[s] == "update_node_config_email":
-			print "...Sending message to UPDATE NODE CONFIG"
-			args = {}
-			args['hostname'] = hostname
-			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
-								True, db='nodeid_persistmessages')
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.dump_plconf_file()
-			conn.set_nodestate('disable')
+
+			if not found_within(recent_actions, 'nodeconfig_notice', 3):
+				args = {}
+				args['hostname'] = hostname
+				sitehist.sendMessage('nodeconfig_notice', **args)
+				conn.dump_plconf_file()
 
 		elif sequences[s] == "nodenetwork_email":
-			print "...Sending message to LOOK AT NODE NETWORK"
-			args = {}
-			args['hostname'] = hostname
-			args['bmlog'] = conn.get_bootmanager_log().read()
-			m = PersistMessage(hostname,  mailtxt.plnode_cfg[0] % args,  mailtxt.plnode_cfg[1] % args, 
-								True, db='nodenet_persistmessages')
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.dump_plconf_file()
-			conn.set_nodestate('disable')
+
+			if not found_within(recent_actions, 'nodeconfig_notice', 3):
+				args = {}
+				args['hostname'] = hostname
+				args['bmlog'] = conn.get_bootmanager_log().read()
+				sitehist.sendMessage('nodeconfig_notice', **args)
+				conn.dump_plconf_file()
 
 		elif sequences[s] == "update_bootcd_email":
-			print "...NOTIFY OWNER TO UPDATE BOOTCD!!!"
-			import getconf
-			args = {}
-			args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
-			args['hostname_list'] = "%s" % hostname
 
-			m = PersistMessage(hostname, "Please Update Boot Image for %s" % hostname,
-								mailtxt.newalphacd_one[1] % args, True, db='bootcd_persistmessages')
+			if not found_within(recent_actions, 'newalphacd_notice', 3):
+				args = {}
+				args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
+				args['hostname'] = hostname
+			
+				sitehist.sendMessage('newalphacd_notice', **args)
 
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-
-			print "\tDisabling %s due to out-of-date BOOTCD" % hostname
-			conn.set_nodestate('disable')
+				print "\tDisabling %s due to out-of-date BOOTCD" % hostname
 
 		elif sequences[s] == "broken_hardware_email":
 			# MAKE An ACTION record that this host has failed hardware.  May
 			# require either an exception "/minhw" or other manual intervention.
 			# Definitely need to send out some more EMAIL.
-			print "...NOTIFYING OWNERS OF BROKEN HARDWARE on %s!!!" % hostname
 			# TODO: email notice of broken hardware
-			args = {}
-			args['hostname'] = hostname
-			args['log'] = conn.get_dmesg().read()
-			m = PersistMessage(hostname, mailtxt.baddisk[0] % args,
-										 mailtxt.baddisk[1] % args, True, db='hardware_persistmessages')
+			if not found_within(recent_actions, 'baddisk_notice', 1):
+				print "...NOTIFYING OWNERS OF BROKEN HARDWARE on %s!!!" % hostname
+				args = {}
+				args['hostname'] = hostname
+				args['log'] = conn.get_dmesg().read()
 
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.set_nodestate('disable')
+				sitehist.sendMessage('baddisk_notice', **args)
+				conn.set_nodestate('disable')
 
 		elif sequences[s] == "update_hardware_email":
-			print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
-			args = {}
-			args['hostname'] = hostname
-			args['bmlog'] = conn.get_bootmanager_log().read()
-			m = PersistMessage(hostname, mailtxt.minimalhardware[0] % args,
-										 mailtxt.minimalhardware[1] % args, True, db='minhardware_persistmessages')
-
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.set_nodestate('disable')
+			if not found_within(recent_actions, 'minimalhardware_notice', 1):
+				print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
+				args = {}
+				args['hostname'] = hostname
+				args['bmlog'] = conn.get_bootmanager_log().read()
+				sitehist.sendMessage('minimalhardware_notice', **args)
 
 		elif sequences[s] == "bad_dns_email":
-			print "...NOTIFYING OWNERS OF DNS FAILURE on %s!!!" % hostname
-			args = {}
-			try:
-				node = api.GetNodes(hostname)[0]
-				net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
-			except:
-				from monitor.common import email_exception
-				email_exception()
-				print traceback.print_exc()
-				# TODO: api error. skip email, b/c all info is not available,
-				# flag_set will not be recorded.
-				return False
-			nodenet_str = network_config_to_str(net)
+			if not found_within(recent_actions, 'baddns_notice', 1):
+				print "...NOTIFYING OWNERS OF DNS FAILURE on %s!!!" % hostname
+				args = {}
+				try:
+					node = api.GetNodes(hostname)[0]
+					net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
+				except:
+					email_exception()
+					print traceback.print_exc()
+					# TODO: api error. skip email, b/c all info is not available,
+					# flag_set will not be recorded.
+					return False
+				nodenet_str = network_config_to_str(net)
 
-			args['hostname'] = hostname
-			args['network_config'] = nodenet_str
-			args['nodenetwork_id'] = net['nodenetwork_id']
-			m = PersistMessage(hostname, mailtxt.baddns[0] % args,
-										 mailtxt.baddns[1] % args, True, db='baddns_persistmessages')
+				args['hostname'] = hostname
+				args['network_config'] = nodenet_str
+				args['nodenetwork_id'] = net['nodenetwork_id']
 
-			loginbase = plc.siteId(hostname)
-			emails = plc.getTechEmails(loginbase)
-			m.send(emails) 
-			conn.set_nodestate('disable')
-
-	if flag_set:
-		pflags.setRecentFlag(s)
-		pflags.save() 
+				sitehist.sendMessage('baddns_notice', **args)
 
 	return True
 	

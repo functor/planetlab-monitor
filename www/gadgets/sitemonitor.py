@@ -108,7 +108,8 @@ def main():
 
 	fb = database.dbLoad("findbad")
 	lb2hn = database.dbLoad("plcdb_lb2hn")
-	pf = database.dbLoad("node_persistflags")
+	# todo: pull from HistoryNodeRecord table instead
+	#pf = database.dbLoad("node_persistflags")
 
 	# SETUP header
 	t = TABLE(border="0", cellspacing="0", cellpadding="0")
@@ -135,7 +136,8 @@ def main():
 			url = 'http://www.planet-lab.org/db/nodes/index.php?nodepattern=%s' % host
 			td = TD(A(host, target='_blank', href=url), bgcolor=color)
 			r.append(td)
-			lc = pf[host].last_changed
+			#lc = pf[host].last_changed
+			lc=-1
 			td = TD(diff_time(lc))
 			r.append(td)
 			t.append(r)
