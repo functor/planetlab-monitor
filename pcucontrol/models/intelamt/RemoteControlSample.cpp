@@ -29,7 +29,7 @@ void DisplaySystemFirmwareCapabilities(uint32 systemFirmwareCapabilities);
 void DisplayOemDefinedCapabilities(uint32 OemDefinedCapabilities);
 bool ExecuteGetSystemPowerstate(Soap *server, bool verbose = true);
 bool ExecuteGetRemoteControlCapabilities(Soap *server, bool verbose = true);
-bool ExecuteRemoteControl(Soap *server, bool default_val = false);
+bool ExecuteRemoteControl(Soap *server, bool default_val = false, uint8 icommand=Reset);
 bool MainFlow(Soap *server,int option,bool verbose);
 bool ValidateOption(char *option, int *parameter);
 
@@ -173,7 +173,13 @@ bool MainFlow(Soap *server, int option, bool verbose)
 			{
 				return status;
 			}	
-			if ((status = ExecuteRemoteControl(server,true)) == false)
+			/* Ensure that the machine is powered up before trying to
+			 * 'reset' it, since a reset on a down node will fail. */
+			if ((status = ExecuteRemoteControl(server,true,PowerUp)) == false)
+			{
+				return status;
+			}
+			if ((status = ExecuteRemoteControl(server,true,Reset)) == false)
 			{
 				return status;
 			}
@@ -344,7 +350,7 @@ bool ExecuteGetRemoteControlCapabilities(Soap* server, bool verbose)
  *  true  - on success
  *  false - on failure
  */
-bool ExecuteRemoteControl(Soap* server,bool def_values)
+bool ExecuteRemoteControl(Soap* server,bool def_values, uint8 icommand)
 {
 	int res;
 	bool status = true;
@@ -357,7 +363,7 @@ bool ExecuteRemoteControl(Soap* server,bool def_values)
 	_rci__RemoteControlResponse response;
 
 	// example values
-	uint8 *command = new uint8(Reset);
+	uint8 *command = new uint8(icommand);
 	uint32 *ianaOemNumber = new uint32(IntelIanaNumber);
 	uint8 *specialCommand = NULL; //none
 	uint16 *oemParameter = NULL; //none
