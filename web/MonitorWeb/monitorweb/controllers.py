@@ -311,6 +311,7 @@ class Root(controllers.RootController):
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
 	def pcuview(self, loginbase=None, pcuid=None, hostname=None, **data):
+		session.clear()
 		sitequery=[]
 		pcuquery=[]
 		nodequery=[]

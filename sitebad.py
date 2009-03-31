@@ -9,7 +9,7 @@ from datetime import datetime,timedelta
 from monitor import database
 from monitor import parser as parsermodule
 from monitor import config
-from monitor.database.info.model import HistorySiteRecord, HistoryNodeRecord, session
+from monitor.database.info.model import HistorySiteRecord, HistoryNodeRecord, session, BlacklistRecord
 from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
@@ -28,6 +28,8 @@ def main2(config):
 
 	if config.site:
 		l_sites = [config.site]
+	elif config.node:
+		l_sites = [plccache.plcdb_hn2lb[config.node]]
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
 		l_sites = site_list
@@ -45,7 +47,7 @@ def getnodesup(nodelist):
 			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
 			nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
 			if (nodehist is not None and nodehist.status != 'down') or \
-				(nodebl is not None and not nodebl.expired():
+				(nodebl is not None and not nodebl.expired()):
 				up = up + 1
 		except:
 			import traceback
@@ -122,7 +124,7 @@ def checkAndRecordState(l_sites, l_plcsites):
 			check_site_state(d_site, sitehist)
 
 			count += 1
-			print "%d %15s slices(%2s) nodes(%2s) up(%2s) %s" % (count, sitename, sitehist.slices_used, 
+			print "%d %15s slices(%2s) nodes(%2s) notdown(%2s) %s" % (count, sitename, sitehist.slices_used, 
 											sitehist.nodes_total, sitehist.nodes_up, sitehist.status)
 			sitehist.flush()
 

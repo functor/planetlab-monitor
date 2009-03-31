@@ -101,6 +101,15 @@ def main():
 			pcus += node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.node is not None:
+		l_nodes = api.GetNodes(config.node, ['pcu_ids'])
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
 
@@ -164,6 +173,7 @@ if __name__ == '__main__':
 						pcuid=None,
 						pcuselect=None,
 						site=None,
+						node=None,
 						sitelist=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
@@ -172,6 +182,8 @@ if __name__ == '__main__':
 						)
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
 						help="Provide the input file for the node list")
+	parser.add_option("", "--node", dest="node", metavar="FILE", 
+						help="Get all pcus associated with the given node")
 	parser.add_option("", "--site", dest="site", metavar="FILE", 
 						help="Get all pcus associated with the given site's nodes")
 	parser.add_option("", "--sitelist", dest="sitelist", metavar="FILE", 

@@ -38,6 +38,15 @@ def main2(config):
 			pcus += node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.node:
+		l_nodes = api.GetNodes(config.node, ['pcu_ids'])
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
 	elif config.pcu:
 		for pcu in l_plcpcus:
 			if ( pcu['hostname'] is not None and config.pcu in pcu['hostname'] ) or \
@@ -131,11 +140,13 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 
 if __name__ == '__main__':
 	parser = parsermodule.getParser()
-	parser.set_defaults(filename=None, pcu=None, site=None, pcuselect=False, pcugroup=None, cachepcus=False)
+	parser.set_defaults(filename=None, pcu=None, node=None, site=None, pcuselect=False, pcugroup=None, cachepcus=False)
 	parser.add_option("", "--pcu", dest="pcu", metavar="hostname", 
 						help="Provide a single pcu to operate on")
 	parser.add_option("", "--site", dest="site", metavar="sitename", 
 						help="Provide a single sitename to operate on")
+	parser.add_option("", "--node", dest="node", metavar="nodename", 
+						help="Provide a single node to operate on")
 	parser.add_option("", "--pculist", dest="pculist", metavar="file.list", 
 						help="Provide a list of files to operate on")
 
@@ -145,6 +156,6 @@ if __name__ == '__main__':
 		main2(config)
 	except Exception, err:
 		import traceback
-		print traceback.print_exc()
+		traceback.print_exc()
 		print "Exception: %s" % err
 		sys.exit(0)
