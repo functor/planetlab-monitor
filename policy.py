@@ -228,7 +228,6 @@ def logic():
 
 
 def main(hostnames, sitenames):
-	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
 	# commands:
 	i = 1
 	node_count = 1
@@ -239,6 +238,12 @@ def main(hostnames, sitenames):
 			lb = plccache.plcdb_hn2lb[host]
 		except:
 			print "unknown host in plcdb_hn2lb %s" % host
+			continue
+
+		nodeblack = BlacklistRecord.get_by(hostname=host)
+
+		if nodeblack and not nodeblack.expired():
+			print "skipping %s due to blacklist.  will expire %s" % (host, nodeblack.willExpire() )
 			continue
 
 		sitehist = SiteInterface.get_or_make(loginbase=lb)
@@ -393,16 +398,6 @@ if __name__ == "__main__":
 #		nodelist = api.GetNodes(ng[0]['node_ids'])
 #		hostnames = [ n['hostname'] for n in nodelist ]
 
-#	if config.node or config.nodelist:
-#		if config.node: hostnames = [ config.node ] 
-#		else: hostnames = util.file.getListFromFile(config.nodelist)
-#
-#	fbquery = FindbadNodeRecord.get_all_latest()
-#	fb_nodelist = [ n.hostname for n in fbquery ]
-
-#	if config.nodeselect:
-#		hostnames = node_select(config.nodeselect, fb_nodelist)
-
 	fbquery = HistoryNodeRecord.query.all()
 	hostnames = [ n.hostname for n in fbquery ]
 	
@@ -410,6 +405,8 @@ if __name__ == "__main__":
 	sitenames = [ s.loginbase for s in fbquery ]
 
 	if config.site:
+		# TODO: replace with calls to local db.  the api fails so often that
+		# 		these calls should be regarded as unreliable.
 		site = api.GetSites(config.site)
 		l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
 		filter_hostnames = [ n['hostname'] for n in l_nodes ]

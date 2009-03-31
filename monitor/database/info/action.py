@@ -1,6 +1,7 @@
 from elixir import Entity, Field, OneToMany, ManyToOne, ManyToMany
 from elixir import options_defaults, using_options, setup_all, has_one
 from elixir import String, Integer, DateTime, PickleType, Boolean
+from elixir.ext.versioned import *
 from datetime import datetime,timedelta
 import elixir
 import traceback
@@ -38,6 +39,32 @@ __session__  = mon_session
 #	issue_type = ManyToMany('IssueType')
 #	actions = OneToMany('ActionRecord', order_by='-date_created')
 
+class BlacklistRecord(Entity):
+	date_created = Field(DateTime,default=datetime.now)
+	hostname = Field(String,default=None, primary_key=True)
+	expires = Field(Integer,default=0)	# seconds plus 
+	acts_as_versioned(['hostname'])
+
+	def neverExpires(self):
+		if self.expires == 0:
+			return True
+		else:
+			return False
+
+	def expired(self):
+		if self.neverExpires():
+			return False
+		else:
+			if self.date_created + timedelta(0,self.expires) > datetime.now():
+				return True
+			else:
+				return False
+
+	def willExpire(self):
+		if self.neverExpires():
+			return "never"
+		else:
+			return self.date_created + timedelta(0, self.expires)
 
 class ActionRecord(Entity):
 	@classmethod

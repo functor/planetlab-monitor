@@ -4,8 +4,8 @@ import os
 import sys
 import string
 import time
-import database
-import plc
+from monitor import database
+from monitor.database.info.model import *
 import getopt
 
 def usage():
@@ -20,31 +20,36 @@ def main():
 		print "Error: " + err.msg
 		sys.exit(1)
 
-	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
+	blacklist = BlacklistRecord.query.all()
+	hostnames = [ h.hostname for h in blacklist ]
 
 	for (opt, optval) in opts:
 		if opt in ["-d", "--delete"]:
-			i = int(optval)
-			del l_blacklist[i]
+			i = optval
+			bl = BlacklistRecord.get_by(hostname=i)
+			bl.delete()
 		else:
 			usage()
 			sys.exit(0)
 
 	i_cnt = 0
-	for i in l_blacklist:
-		print i_cnt, " ", i
+	for i in blacklist:
+		print i.hostname
 		i_cnt += 1
+
 
 	while 1:
 		line = sys.stdin.readline()
 		if not line:
 			break
 		line = line.strip()
-		if not line in l_blacklist:
-			l_blacklist.append(line)
+		if line not in hostnames:
+			bl = BlacklistRecord(hostname=line)
+			bl.flush()
+			i_cnt += 1
 
-	print "Total %d nodes in blacklist" % (len(l_blacklist))
-	database.dbDump("l_blacklist")
+	session.flush()
+	print "Total %d nodes in blacklist" % (i_cnt)
 	
 if __name__ == '__main__':
 	import os

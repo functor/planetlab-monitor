@@ -37,11 +37,15 @@ def main2(config):
 	checkAndRecordState(l_sites, l_plcsites)
 
 def getnodesup(nodelist):
+	# NOTE : assume that a blacklisted node is fine, since we're told not to
+	# 		ignore it, no policy actions should be taken for it.
 	up = 0
 	for node in nodelist:
 		try:
 			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
-			if nodehist is not None and nodehist.status != 'down':
+			nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
+			if (nodehist is not None and nodehist.status != 'down') or \
+				(nodebl is not None and not nodebl.expired():
 				up = up + 1
 		except:
 			import traceback

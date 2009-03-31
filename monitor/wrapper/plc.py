@@ -56,6 +56,8 @@ except:
 
 api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 
+global_error_count = 0
+
 class PLC:
 	def __init__(self, auth, url):
 		self.auth = auth
@@ -67,7 +69,17 @@ class PLC:
 		if method is None:
 			raise AssertionError("method does not exist")
 
-		return lambda *params : method(self.auth, *params)
+		try:
+			return lambda *params : method(self.auth, *params)
+		except ProtocolError:
+			traceback.print_exc()
+			global_error_count += 1
+			if global_error_count >= 10:
+				print "maximum error count exceeded; exiting..."
+				sys.exit(1)
+			else:
+				print "%s errors have occurred" % global_error_count
+			raise Exception("ProtocolError continuing")
 
 	def __repr__(self):
 		return self.api.__repr__()
