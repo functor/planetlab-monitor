@@ -290,6 +290,13 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed Apr 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-8
+- removed old pkl database references.
+- added blacklist to db model
+- added fix to IntelAMT remoteControl to start an power-down node
+- added policy.py
+- added global error count before bailing entirely.
+
 * Fri Mar 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-7
 - improved db model
 - updated files that use db model

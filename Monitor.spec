@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 2.0
-%define taglevel 7
+%define taglevel 8
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -216,6 +216,13 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Wed Apr 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-8
+- removed old pkl database references.
+- added blacklist to db model
+- added fix to IntelAMT remoteControl to start an power-down node
+- added policy.py
+- added global error count before bailing entirely.
+
 * Fri Mar 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-7
 - improved db model
 - updated files that use db model
