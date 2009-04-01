@@ -651,7 +651,6 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 		return True
 
 	# Read persistent flags, tagged on one week intervals.
-	#pflags = PersistFlags(hostname, 3*60*60*24, db='debug_persistflags')
 
 	if config and not config.quiet: print "...downloading dmesg from %s" %hostname 
 	dmesg = conn.get_dmesg()

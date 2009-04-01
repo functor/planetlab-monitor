@@ -18,6 +18,7 @@ from monitor import const
 from monitor import database
 from monitor import parser as parsermodule
 from monitor import reboot
+from monitor.database.info.model import *
 from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
@@ -251,7 +252,8 @@ if config.findbad:
 	os.system("./findbad.py --cachenodes --increment --nodelist %s" % file)
 	# TODO: shouldn't we reload the node list now?
 
-l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
+q_blacklist = BlacklistRecord.query.all()
+l_blacklist = [ n.hostname for n in q_blacklist ]
 # commands:
 i = 1
 count = 1

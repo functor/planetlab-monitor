@@ -69,6 +69,8 @@ ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
+${MONITOR_SCRIPT_ROOT}/policy.py $DATE
+
 echo "Archiving pkl files"
 #########################
 # Archive pkl files.
