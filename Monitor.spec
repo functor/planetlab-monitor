@@ -79,7 +79,12 @@ as Zabbix DB.
 %package pcucontrol
 summary: pcu controls for monitor and plcapi
 group: applications/system
-requires: python
+Requires: python
+Requires: OpenIPMI-tools
+Requires: openssh-clients
+Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
+Requires: curl
 
 %description pcucontrol
 both monitor and the plcapi use a set of common commands to reboot machines

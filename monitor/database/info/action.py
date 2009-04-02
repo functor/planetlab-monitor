@@ -41,9 +41,20 @@ __session__  = mon_session
 
 class BlacklistRecord(Entity):
 	date_created = Field(DateTime,default=datetime.now)
-	hostname = Field(String,default=None, primary_key=True)
+	hostname = Field(String,default=None)
+	loginbase = Field(String,default=None)
 	expires = Field(Integer,default=0)	# seconds plus 
 	acts_as_versioned(['hostname'])
+
+	@classmethod
+	def getLoginbaseBlacklist(cls):
+		# TODO: need to sort on 'round' since actions will not be globally sync'd.
+		return cls.query.filter(cls.loginbase!=None).order_by(cls.loginbase.desc())
+
+	@classmethod
+	def getHostnameBlacklist(cls):
+		# TODO: need to sort on 'round' since actions will not be globally sync'd.
+		return cls.query.filter(cls.hostname!=None).order_by(cls.hostname.desc())
 
 	def neverExpires(self):
 		if self.expires == 0:

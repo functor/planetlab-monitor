@@ -210,14 +210,21 @@ class SiteInterface(HistorySiteRecord):
 
 	def attemptReboot(self, hostname):
 		print "attempting PCU reboot of %s" % hostname
-		ret = reboot.reboot_str(hostname)
+		err = ""
+		try:
+			ret = reboot.reboot_str(hostname)
+		except Exception, e:
+			err = traceback.format_exc()
+			ret = str(e)
+
 		if ret == 0 or ret == "0":
 			ret = ""
+
 		act = ActionRecord(loginbase=self.db.loginbase,
 							hostname=hostname,
 							action='reboot',
 							action_type='first_try_reboot',
-							error_string=ret)
+							error_string=err)
 
 def logic():
 
@@ -301,10 +308,11 @@ def main(hostnames, sitenames):
 				# send down node notice
 
 				sitehist.sendMessage('down_notice', hostname=host)
-				print "send message for host %s offline" % host
+				print "send message for host %s down" % host
 				pass
 
 		node_count = node_count + 1
+		session.flush()
 
 	for site in sitenames:
 		sitehist = SiteInterface.get_or_make(loginbase=site)
@@ -351,8 +359,9 @@ def main(hostnames, sitenames):
 
 		site_count = site_count + 1
 
-	session.flush()
+		session.flush()
 
+	session.flush()
 	return
 
 
@@ -422,8 +431,9 @@ if __name__ == "__main__":
 		main(hostnames, sitenames)
 	except KeyboardInterrupt:
 		print "Killed by interrupt"
+		session.flush()
 		sys.exit(0)
 	except:
 		#email_exception()
 		print traceback.print_exc();
-		print "Continuing..."
+		print "fail all..."

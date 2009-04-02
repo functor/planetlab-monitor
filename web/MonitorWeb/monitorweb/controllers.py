@@ -166,7 +166,7 @@ class Root(controllers.RootController):
 				prep_node_for_display(node)
 				nodequery += [node]
 
-		return self.pcuview(None, hostname) # dict(nodequery=nodequery)
+		return self.pcuview(None, None, hostname) # dict(nodequery=nodequery)
 
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='boot'):
@@ -243,6 +243,7 @@ class Root(controllers.RootController):
 	
 	def nodeaction_handler(self, tg_exceptions=None):
 		"""Handle any kind of error."""
+		print "NODEACTION_HANDLER------------------"
 
 		if 'pcuid' in request.params:
 			pcuid = request.params['pcuid']
@@ -271,6 +272,7 @@ class Root(controllers.RootController):
 		return self.pcuview(None, pcuid, **dict(exceptions=tg_exceptions))
 
 	def nodeaction(self, **data):
+		print "NODEACTION------------------"
 		for item in data.keys():
 			print "%s %s" % ( item, data[item] )
 
@@ -294,7 +296,7 @@ class Root(controllers.RootController):
 			ret = reboot.reboot_str(str(hostname))
 			print ret
 			if ret: raise RuntimeError("Error using PCU: " + str(ret))
-			flash("Reboot appeared to work.  All at most 5 minutes.  Run ExternalScan to check current status.")
+			flash("Reboot appeared to work.  Allow at most 5 minutes.  Then run ExternalScan to check current status.")
 
 		elif action == "ExternalScan":
 			scanapi.externalprobe(str(hostname))
@@ -311,6 +313,7 @@ class Root(controllers.RootController):
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
 	def pcuview(self, loginbase=None, pcuid=None, hostname=None, **data):
+		print "PCUVIEW------------------"
 		session.clear()
 		sitequery=[]
 		pcuquery=[]

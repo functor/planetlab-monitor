@@ -17,10 +17,10 @@ tr.even td {background-color:#fff;}
 
 #header {
   height: 40px;
-  width: 780px;
+  /*width: 780px;*/
   /*background: blue URL('../images/header_inner.png') no-repeat;*/
-  border-left: 1px solid #aaa;
-  border-right: 1px solid #aaa;
+  /*border-left: 1px solid #aaa;*/
+  /*border-right: 1px solid #aaa;*/
   margin: 0 auto 0 auto;
   text-align: center;
   font-size: 180%;
@@ -189,7 +189,7 @@ h2 {
 }
 
 #footer {
-  border: 1px solid #aaa;
+  /*border: 1px solid #aaa;*/
   border-top: 0px none;
   color: #999;
   background-color: white;

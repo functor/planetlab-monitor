@@ -56,37 +56,36 @@ def getnodesup(nodelist):
 
 def check_site_state(rec, sitehist):
 
-	if sitehist.new and sitehist.status != 'new':
+	if sitehist.new and sitehist.status not in ['new', 'online', 'good']:
 		sitehist.status = 'new'
+		sitehist.penalty_applied = True		# because new sites are disabled by default, i.e. have a penalty.
 		sitehist.last_changed = datetime.now()
 
+	if sitehist.nodes_up >= MINUP:
+
+		if sitehist.status != 'online' and sitehist.status != 'good':
+			sitehist.last_changed = datetime.now()
+
+		if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'online':
+			print "changed status from %s to online" % sitehist.status
+			sitehist.status = 'online'
+
+		if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'good':
+			print "changed status from %s to good" % sitehist.status
+			sitehist.status = 'good'
+
 	if not sitehist.new:
-
-		if sitehist.nodes_up >= MINUP:
-
-			if sitehist.status != 'online' and sitehist.status != 'good':
-				sitehist.last_changed = datetime.now()
-
-			if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'online':
-				print "changed status from %s to online" % sitehist.status
-				sitehist.status = 'online'
-
-			if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'good':
-				print "changed status from %s to good" % sitehist.status
-				sitehist.status = 'good'
 	
-		else: # sitehist.nodes_up < MINUP:
+		if sitehist.status != 'offline' and sitehist.status != 'down':
+			sitehist.last_changed = datetime.now()
 
-			if sitehist.status != 'offline' and sitehist.status != 'down':
-				sitehist.last_changed = datetime.now()
+		if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'offline':
+			print "changed status from %s to offline" % sitehist.status
+			sitehist.status = 'offline'
 
-			if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'offline':
-				print "changed status from %s to offline" % sitehist.status
-				sitehist.status = 'offline'
-
-			if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'down':
-				print "changed status from %s to down" % sitehist.status
-				sitehist.status = 'down'
+		if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'down':
+			print "changed status from %s to down" % sitehist.status
+			sitehist.status = 'down'
 
 def checkAndRecordState(l_sites, l_plcsites):
 	count = 0
