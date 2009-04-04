@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 2.0
-%define taglevel 8
+%define taglevel 9
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -221,6 +221,11 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Fri Apr 03 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-9
+- added new models to db.
+- major updates throughout.
+- better unification. needs an install test.
+
 * Wed Apr 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-8
 - removed old pkl database references.
 - added blacklist to db model
