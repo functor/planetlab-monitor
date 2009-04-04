@@ -94,8 +94,8 @@ def main():
 	api = plc.getAuthAPI()
 
 	if config.site is not None:
-		site = api.GetSites(config.site)
-		l_nodes = api.GetNodes(site[0]['node_ids'], ['pcu_ids'])
+		site = plccache.GetSitesByName([config.site])
+		l_nodes = plccache.GetNodesByIds(site[0]['node_ids'])
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
@@ -103,7 +103,7 @@ def main():
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.node is not None:
-		l_nodes = api.GetNodes(config.node, ['pcu_ids'])
+		l_nodes = plcacche.GetNodeByName(config.node)
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
@@ -113,12 +113,12 @@ def main():
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
 
-		sites = api.GetSites(site_list)
+		sites = plccache.GetSitesByName(site_list)
 		node_ids = []
 		for s in sites:
 			node_ids += s['node_ids']
 
-		l_nodes = api.GetNodes(node_ids, ['pcu_ids'])
+		l_nodes = plccache.GetNodeByIds(node_ids)
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']

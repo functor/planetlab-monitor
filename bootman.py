@@ -25,6 +25,7 @@ from monitor.model import *
 from monitor.common import email_exception, found_within
 from monitor.database.info.model import *
 from monitor.wrapper import plc
+from monitor.wrapper import plccache
 from monitor.wrapper.emailTxt import mailtxt
 
 from pcucontrol.util import command as moncommands
@@ -114,7 +115,7 @@ class NodeConnection:
 		ReadNodeConfiguration = c.modules.BootManager.ReadNodeConfiguration
 		bm_continue = True
 
-		plcnode = api.GetNodes({'hostname': self.node}, None)[0]
+		plcnode = plccache.GetNodeByName(self.node)
 
 		InitializeBootManager.Run(bm.VARS, bm.LOG)
 		try: ReadNodeConfiguration.Run(bm.VARS, bm.LOG)
@@ -808,7 +809,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 				print "...NOTIFYING OWNERS OF DNS FAILURE on %s!!!" % hostname
 				args = {}
 				try:
-					node = api.GetNodes(hostname)[0]
+					node = plccache.GetNodeByName(hostname)
 					net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
 				except:
 					email_exception()

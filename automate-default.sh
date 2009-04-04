@@ -82,10 +82,5 @@ for f in act_all l_plcnodes site_persistflags node_persistflags pcu_persistflags
 	fi
 done
 
-############################
-# 5. Check if there are any nodes in dbg state.  Clean up afterward.
-#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DOWN&&boot_state=(boot|rins|dbg|diag)' --stopselect "state=BOOT" || :
-#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DEBUG&&boot_state=(rins|dbg|boot)' --stopselect 'state=BOOT' || :
-
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log
 rm -f $MONITOR_PID

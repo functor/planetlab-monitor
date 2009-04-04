@@ -6,6 +6,7 @@ from findbadpcu import main as findbadpcu_main
 from sitebad import main as sitebad_main
 from nodebad import main as nodebad_main
 from pcubad import main as pcubad_main
+from monitor.wrapper import plccache
 import sys
 
 if __name__ == '__main__':
@@ -28,6 +29,8 @@ if __name__ == '__main__':
 	cfg = parsermodule.parse_args(parser)
 
 	try:
+		print "sync with plc"
+		plccache.sync()
 		print "findbad"
 		findbad_main()
 		print "findbadpcu"

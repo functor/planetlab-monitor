@@ -11,6 +11,7 @@ from monitor.database.info.model import *
 from monitor.database.zabbixapi.model import *
 from monitor.database.dborm import zab_session as session
 from monitor.database.dborm import zab_metadata as metadata
+from monitor_xmlrpc import MonitorXmlrpcServer
 
 from monitor import reboot
 from monitor import scanapi
@@ -149,7 +150,7 @@ def prep_node_for_display(node):
 
 
 
-class Root(controllers.RootController):
+class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.welcome")
 	def index(self):
 		import time
@@ -382,6 +383,32 @@ class Root(controllers.RootController):
 			
 		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, exceptions=exceptions)
 
+	@expose(template="monitorweb.templates.nodehistory")
+	def nodehistory(self, hostname=None):
+		query = []
+		if hostname:
+			fbnode = FindbadNodeRecord.get_by(hostname=hostname)
+			# TODO: add links for earlier history if desired.
+			l = fbnode.versions[-100:]
+			l.reverse()
+			for node in l:
+				prep_node_for_display(node)
+				query.append(node)
+		return dict(query=query, hostname=hostname)
+
+	@expose(template="monitorweb.templates.sitehistory")
+	def sitehistory(self, loginbase=None):
+		query = []
+		if loginbase:
+			fbsite = HistorySiteRecord.get_by(loginbase=loginbase)
+			# TODO: add links for earlier history if desired.
+			l = fbsite.versions[-100:]
+			l.reverse()
+			for site in l:
+				query.append(site)
+		return dict(query=query, loginbase=loginbase)
+
+
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):
 		import time
@@ -441,8 +468,10 @@ class Root(controllers.RootController):
 				filtercount['new'] += 1
 			elif not site.enabled:
 				filtercount['pending'] += 1
-			else:
-				filtercount[site.status] += 1
+			elif site.status in ['good', 'online']:
+				filtercount['good'] += 1
+			elif site.status in ['down', 'offline']:
+				filtercount['down'] += 1
 
 			# apply filter
 			if filter == "all":
@@ -451,7 +480,9 @@ class Root(controllers.RootController):
 				query.append(site)
 			elif filter == "pending" and not site.enabled:
 				query.append(site)
-			elif filter == site.status:
+			elif filter == 'good' and site.status in ['good', 'online']:
+				query.append(site)
+			elif filter == 'down' and site.status in ['down', 'offline']:
 				query.append(site)
 				
 		return dict(query=query, fc=filtercount)

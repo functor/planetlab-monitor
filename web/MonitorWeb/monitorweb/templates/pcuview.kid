@@ -16,6 +16,7 @@ from links import *
 		<table py:if="len(sitequery) > 0" id="sub-table" border="1" width="100%">
 			<thead>
 				<tr>
+					<th>History</th>
 					<th>Site name</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
@@ -26,6 +27,7 @@ from links import *
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
+					<td><a href="sitehistory?loginbase=${site.loginbase}">history</a></td>
 					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
@@ -131,7 +133,7 @@ from links import *
 		</table>
 				</span> </a>
 	</div>
-	<h3>Nodes</h3>
+	<h3>Nodes</h3> 
 		<p py:if="len(nodequery) == 0">
 			There are no registered nodes for this site.
 		</p>
@@ -139,6 +141,7 @@ from links import *
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
+					<th>History</th>
 					<th>Hostname</th>
 					<th>last_contact</th>
 					<th>last_checked</th>
@@ -151,6 +154,7 @@ from links import *
 			<tbody>
 				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
+					<td><a href="nodehistory?hostname=${node.hostname}">history</a></td>
 					<td id="node-${node.observed_status}" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
 							<span class="icon">${node.hostname}</span></a>

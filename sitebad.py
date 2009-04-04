@@ -74,7 +74,7 @@ def check_site_state(rec, sitehist):
 			print "changed status from %s to good" % sitehist.status
 			sitehist.status = 'good'
 
-	if not sitehist.new:
+	elif not sitehist.new:
 	
 		if sitehist.status != 'offline' and sitehist.status != 'down':
 			sitehist.last_changed = datetime.now()

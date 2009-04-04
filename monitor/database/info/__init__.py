@@ -44,4 +44,5 @@ Entity.findby_or_create = classmethod(findby_or_create)
 from monitor.database.info.action import *
 from monitor.database.info.findbad import *
 from monitor.database.info.history import *
+from monitor.database.info.plc import *
 setup_all()

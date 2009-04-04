@@ -31,8 +31,8 @@ def main2(config):
 
 	l_pcus = None
 	if config.site is not None:
-		site = api.GetSites(config.site)
-		l_nodes = api.GetNodes(site[0]['node_ids'], ['pcu_ids'])
+		site = plccache.GetSitesByName([config.site])
+		l_nodes = plccache.GetNodesByIds(site[0]['node_ids'])
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
@@ -40,7 +40,7 @@ def main2(config):
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.node:
-		l_nodes = api.GetNodes(config.node, ['pcu_ids'])
+		l_nodes = plccache.GetNodeByName(config.node)
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
@@ -72,7 +72,7 @@ def check_pcu_state(rec, pcu):
 		pcu.status = 'offline'
 		pcu.last_changed = datetime.now()
 
-	if ( pcu_state == 0 or pcu_state == "0" ) and changed_lessthan(pcu.last_changed, 0.5) and pcu.status != 'online':
+	if ( pcu_state == 0 or pcu_state == "0" ) and pcu.status not in [ 'online', 'good' ]:
 		print "changed status from %s to online" % pcu.status
 		pcu.status = 'online'
 		pcu.last_changed = datetime.now()

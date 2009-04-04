@@ -119,24 +119,24 @@ def main():
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.nodegroup:
 		ng = api.GetNodeGroups({'name' : config.nodegroup})
-		l_nodes = api.GetNodes(ng[0]['node_ids'])
+		l_nodes = plccache.GetNodesByIds(ng[0]['node_ids'])
 	elif config.site:
-		site = api.GetSites(config.site)
-		l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
+		site = plccache.GetSitesByName([config.site])
+		l_nodes = plccache.GetNodesByIds(site[0]['node_ids'])
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
-		sites = api.GetSites(site_list)
+		sites = plccache.GetSitesByName(site_list)
 		node_ids = []
 		for s in sites:
 			node_ids += s['node_ids']
-		l_nodes = api.GetNodes(node_ids, ['hostname'])
+		l_nodes = plccache.GetNodesByIds(node_ids)
 		
 	l_nodes = [node['hostname'] for node in l_nodes]
 
 	# perform this query after the above options, so that the filter above
 	# does not break.
 	if config.nodeselect:
-		plcnodes = api.GetNodes({'peer_id' : None}, ['hostname'])
+		plcnodes = plccache.l_nodes
 		plcnodes = [ node['hostname'] for node in plcnodes ]
 		l_nodes = node_select(config.nodeselect, plcnodes, None)
 

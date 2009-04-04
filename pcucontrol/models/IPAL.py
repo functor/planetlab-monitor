@@ -78,7 +78,9 @@ class IPAL(PCUControl):
 			s.close()
 			if e[0] == errno.ECONNREFUSED:
 				# cannot connect to remote host
-				raise Exception(e[1])
+				raise ExceptionNotFound(e[1])
+			elif e[0] == errno.ETIMEDOUT:
+				raise ExceptionTimeout(e[1])
 			else:
 				# TODO: what other conditions are there?
 				raise Exception(e)

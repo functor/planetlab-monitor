@@ -17,8 +17,12 @@ from monitor import database
 try:
 	from monitor import config
 	debug = config.debug
+	XMLRPC_SERVER=config.API_SERVER
 except:
 	debug = False
+	# NOTE: this host is used by default when there are no auth files.
+	XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
+
 logger = logging.getLogger("monitor")
 	
 class Auth:
@@ -34,8 +38,6 @@ class Auth:
 							'AuthMethod' : 'password',
 							'AuthString' : password}
 
-# NOTE: this host is used by default when there are no auth files.
-XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 
 # NOTE: by default, use anonymous access, but if auth files are 
 #       configured, use them, with their auth definitions.
@@ -53,8 +55,6 @@ except:
 	except:
 		auth = Auth()
 		auth.server = XMLRPC_SERVER
-
-api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 
 global_error_count = 0
 
@@ -83,6 +83,8 @@ class PLC:
 
 	def __repr__(self):
 		return self.api.__repr__()
+
+api = PLC(auth.auth, auth.server)
 
 class CachedPLC(PLC):
 

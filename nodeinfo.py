@@ -140,7 +140,7 @@ if config.findbad:
 for node in config.args:
 	config.node = node
 
-	plc_nodeinfo = api.GetNodes({'hostname': config.node}, None)[0]
+	plc_nodeinfo = plccache.GetNodeByName(config.node)
 	fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
 	fb_nodeinfo = fb_noderec.to_dict()
 	plc_print_nodeinfo(plc_nodeinfo)
