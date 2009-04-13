@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 1.0
-%define taglevel 15
+%define taglevel 16
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -55,6 +55,10 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %changelog
+* Mon Apr 13 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-16
+- add email exceptions.
+- add better timeouts for commands even once ssh has opened a connection
+
 * Thu Feb 26 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-1.0-15
 - fixed bug that prevented penalties from escalating and PIs from getting
 - emails.
