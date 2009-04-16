@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Apr 16 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-10
+- sync
+- cache
+- better policy
+
 * Fri Apr 03 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-9
 - added new models to db.
 - major updates throughout.
