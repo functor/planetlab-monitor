@@ -3,6 +3,7 @@
 import sys
 from monitor.wrapper import plc
 from monitor.database.info.model import *
+import profile
 
 def dsites_from_lsites(l_sites):
 	d_sites = {}
@@ -67,17 +68,22 @@ def init():
 	global plcdb_hn2lb
 	global plcdb_lb2hn
 	global plcdb_id2lb
+	print "initing plccache"
 
 	dbsites = PlcSite.query.all()
 	l_sites = [ s.plc_site_stats for s in dbsites ]
 
+	print "plcnode"
 	dbnodes = PlcNode.query.all()
 	l_nodes = [ s.plc_node_stats for s in dbnodes ]
 
+	print "plcpcu"
 	dbpcus = PlcPCU.query.all()
 	l_pcus = [ s.plc_pcu_stats for s in dbpcus ]
 
+	print "dsites_from_lsites"
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
+	print "dsn_from_dsln"
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
 
 	plcdb_hn2lb = hn2lb
@@ -108,14 +114,31 @@ def GetSitesByName(sitelist):
 		ret.append(site.plc_site_stats)
 	return ret
 
+def GetSitesById(idlist):
+	ret = []
+	for site_id in idlist:
+		site = PlcSite.get_by(site_id=site_id)
+		ret.append(site.plc_site_stats)
+	return ret
+
+def deleteExtra(l_plc, objectClass=PlcSite, dbKey='loginbase', plcKey='login_base'):
+	dbobjs = objectClass.query.all()
+	dbobj_key = [ getattr(s, dbKey) for s in dbobjs ]
+	plcobj_key = [ s[plcKey] for s in l_plc ]
+	extra_key = set(dbobj_key) - set(plcobj_key)
+	for obj in extra_key:
+		print "deleting %s" % obj
+		dbobj = objectClass.get_by(**{dbKey : obj})
+		dbobj.delete()
+
 def sync():
 	l_sites = plc.api.GetSites({'peer_id':None}, 
 						['login_base', 'site_id', 'abbreviated_name', 'latitude', 
 						'longitude', 'max_slices', 'slice_ids', 'node_ids', 
 						'enabled', 'date_created' ])
 	l_nodes = plc.api.GetNodes({'peer_id':None}, 
-						['hostname', 'node_id', 'ports', 'site_id', 
-						 'version', 'last_updated', 'date_created', 
+						['hostname', 'node_id', 'ports', 'site_id', 'boot_state',
+						 'version', 'last_updated', 'date_created', 'key',
 						 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
 	l_pcus = plc.api.GetPCUs()
 
@@ -125,8 +148,17 @@ def sync():
 		dbsite.loginbase = site['login_base']
 		dbsite.date_checked = datetime.now()
 		dbsite.plc_site_stats = site
-		#dbsite.flush()
-	# TODO: delete old records.
+	deleteExtra(l_sites, PlcSite, 'loginbase', 'login_base')
+	deleteExtra(l_sites, HistorySiteRecord, 'loginbase', 'login_base')
+	session.flush()
+
+	print "sync pcus"
+	for pcu in l_pcus:
+		dbpcu = PlcPCU.findby_or_create(pcu_id=pcu['pcu_id'])
+		dbpcu.date_checked = datetime.now()
+		dbpcu.plc_pcu_stats = pcu
+	deleteExtra(l_pcus, PlcPCU, 'pcu_id', 'pcu_id')
+	deleteExtra(l_pcus, HistoryPCURecord, 'plc_pcuid', 'pcu_id')
 	session.flush()
 
 	print "sync nodes"
@@ -135,17 +167,8 @@ def sync():
 		dbnode.hostname = node['hostname']
 		dbnode.date_checked = datetime.now()
 		dbnode.plc_node_stats = node
-		#dbnode.flush()
-	# TODO: delete old records.
-	session.flush()
-
-	print "sync pcus"
-	for pcu in l_pcus:
-		dbpcu = PlcPCU.findby_or_create(pcu_id=pcu['pcu_id'])
-		dbpcu.date_checked = datetime.now()
-		dbpcu.plc_pcu_stats = pcu
-		#dbpcu.flush()
-	# TODO: delete old records.
+	deleteExtra(l_nodes, PlcNode, 'hostname', 'hostname')
+	deleteExtra(l_nodes, HistoryNodeRecord, 'hostname', 'hostname')
 	session.flush()
 
 	init()
@@ -153,6 +176,6 @@ def sync():
 	return
 
 if __name__ == '__main__':
-	sync()
+	profile.run('sync()')
 else:
 	init()

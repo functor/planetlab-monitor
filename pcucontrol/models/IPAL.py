@@ -17,7 +17,7 @@ class IPAL(PCUControl):
 
 		try:
 			# TODO: make sleep backoff, before stopping.
-			time.sleep(4)
+			time.sleep(8)
 			ret = s.recv(count, socket.MSG_DONTWAIT)
 		except socket.error, e:
 			if e[0] == errno.EAGAIN:

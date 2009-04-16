@@ -103,10 +103,9 @@ def main():
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.node is not None:
-		l_nodes = plcacche.GetNodeByName(config.node)
-		pcus = []
-		for node in l_nodes:
-			pcus += node['pcu_ids']
+		node = plccache.GetNodeByName(config.node)
+		print node
+		pcus = node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 

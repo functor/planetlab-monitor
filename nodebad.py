@@ -38,6 +38,7 @@ def check_node_state(rec, node):
 
 	node_state = rec.observed_status
 	if rec.plc_node_stats:
+		print rec.plc_node_stats
 		boot_state = rec.plc_node_stats['boot_state']
 		last_contact = rec.plc_node_stats['last_contact']
 	else:
@@ -46,6 +47,11 @@ def check_node_state(rec, node):
 
 	if boot_state == 'disable': boot_state = 'disabled'
 	if boot_state == 'diag': 	boot_state = 'diagnose'
+
+	if len(rec.plc_node_stats['pcu_ids']) > 0:
+		node.haspcu = True
+	else:
+		node.haspcu = False
 
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state
@@ -131,6 +137,7 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 		except:
 			print "COULD NOT FIND %s" % nodename
 			import traceback
+			email_exception()
 			print traceback.print_exc()
 			continue
 
@@ -143,11 +150,8 @@ def checkAndRecordState(l_nodes, l_plcnodes):
 		count += 1
 		print "%d %35s %s since(%s)" % (count, nodename, nodehist.status, diff_time(time.mktime(nodehist.last_changed.timetuple())))
 
-	# NOTE: this commits all pending operations to the DB.  Do not remove, or
-	# replace with another operations that also commits all pending ops, such
-	# as session.commit() or flush() or something
+	# NOTE: this commits all pending operations to the DB.  Do not remove. 
 	session.flush()
-	print HistoryNodeRecord.query.count()
 
 	return True
 

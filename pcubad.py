@@ -40,10 +40,8 @@ def main2(config):
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
 	elif config.node:
-		l_nodes = plccache.GetNodeByName(config.node)
-		pcus = []
-		for node in l_nodes:
-			pcus += node['pcu_ids']
+		node = plccache.GetNodeByName(config.node)
+		pcus = node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
 
@@ -117,6 +115,7 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 		except:
 			print "COULD NOT FIND FB record for %s" % reboot.pcu_name(d_pcu)
 			import traceback
+			email_exception()
 			print traceback.print_exc()
 			# don't have the info to create a new entry right now, so continue.
 			continue 

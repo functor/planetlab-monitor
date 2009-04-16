@@ -20,7 +20,7 @@ from monitor.sources import comon
 from monitor.wrapper import plc, plccache
 
 import traceback
-from monitor.common import nmap_port_status
+from monitor.common import nmap_port_status, email_exception
 
 COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
 			"table=table_nodeview&" + \
@@ -157,6 +157,7 @@ class ScanInterface(object):
 
 		except:
 			print "ERROR:"
+			email_exception(nodename)
 			print traceback.print_exc()
 			pass
 
@@ -334,9 +335,10 @@ EOF				""")
 			plc_lock.acquire()
 			d_node = None
 			try:
-				d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 
-										'date_created', 'last_updated', 
-										'last_contact', 'boot_state', 'nodegroup_ids'])[0]
+				d_node = plccache.GetNodeByName(nodename)
+				#d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 
+				#						'date_created', 'last_updated', 
+				#						'last_contact', 'boot_state', 'nodegroup_ids'])[0]
 			except:
 				traceback.print_exc()
 			plc_lock.release()
@@ -363,8 +365,9 @@ EOF				""")
 			d_site = None
 			values['loginbase'] = ""
 			try:
-				d_site = plc.getSites({'site_id': site_id}, 
-									['max_slices', 'slice_ids', 'node_ids', 'login_base'])[0]
+				d_site = plccache.GetSitesById([ site_id ])[0]
+				#d_site = plc.getSites({'site_id': site_id}, 
+				#					['max_slices', 'slice_ids', 'node_ids', 'login_base'])[0]
 				values['loginbase'] = d_site['login_base']
 			except:
 				traceback.print_exc()

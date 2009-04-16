@@ -315,7 +315,9 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
 	def pcuview(self, loginbase=None, pcuid=None, hostname=None, **data):
 		print "PCUVIEW------------------"
-		session.clear()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		sitequery=[]
 		pcuquery=[]
 		nodequery=[]
@@ -333,7 +335,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 		if loginbase:
 			actions = ActionRecord.query.filter_by(loginbase=loginbase
-							).filter(ActionRecord.date_created >= datetime.now() - timedelta(7)
+							).filter(ActionRecord.date_created >= datetime.now() - timedelta(14)
 							).order_by(ActionRecord.date_created.desc())
 			actions = [ a for a in actions ]
 			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
@@ -387,13 +389,21 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	def nodehistory(self, hostname=None):
 		query = []
 		if hostname:
-			fbnode = FindbadNodeRecord.get_by(hostname=hostname)
-			# TODO: add links for earlier history if desired.
+			#fbnode = FindbadNodeRecord.get_by(hostname=hostname)
+			## TODO: add links for earlier history if desired.
+			#l = fbnode.versions[-100:]
+			#l.reverse()
+			#for node in l:
+			#	prep_node_for_display(node)
+			#	query.append(node)
+
+			fbnode = HistoryNodeRecord.get_by(hostname=hostname)
 			l = fbnode.versions[-100:]
 			l.reverse()
 			for node in l:
-				prep_node_for_display(node)
+				#prep_node_for_display(node)
 				query.append(node)
+
 		return dict(query=query, hostname=hostname)
 
 	@expose(template="monitorweb.templates.sitehistory")

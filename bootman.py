@@ -24,6 +24,7 @@ from monitor import const
 from monitor.model import *
 from monitor.common import email_exception, found_within
 from monitor.database.info.model import *
+from monitor.database.info.interface import *
 from monitor.wrapper import plc
 from monitor.wrapper import plccache
 from monitor.wrapper.emailTxt import mailtxt
@@ -59,6 +60,7 @@ class NodeConnection:
 			traceback.print_exc()
 			print self.c.modules.sys.path
 		except:
+			email_exception()
 			traceback.print_exc()
 
 		return "unknown"
@@ -71,7 +73,8 @@ class NodeConnection:
 
 	def get_bootmanager_log(self):
 		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
-		os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
+		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
+		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
 		log = open("log/bm.%s.log" % self.node, 'r')
 		return log
 
@@ -863,7 +866,11 @@ def main():
 		sys.exit(1)
 
 	for node in nodes:
-		reboot(node, config)
+		# get sitehist
+		lb = plccache.plcdb_hn2lb[node]
+		sitehist = SiteInterface.get_or_make(loginbase=lb)
+		#reboot(node, config)
+		restore(sitehist, node, config=None, forced_action=None)
 
 if __name__ == "__main__":
 	main()

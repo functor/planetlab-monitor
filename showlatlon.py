@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import database
 import comon
-from monitor.common import color_pcu_state, datetime_fromstr
+from monitor.common import color_pcu_state, datetime_fromstr, email_exception
 from nodehistory import get_filefromglob
 import time
 import traceback
@@ -211,3 +211,5 @@ if __name__ == "__main__":
 		main()
 	except IOError:
 		pass
+	except:
+		email_exception()

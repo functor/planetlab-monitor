@@ -44,10 +44,14 @@ from links import *
 								py:content="node.pcu_short_status">Reboot Status</span>
 						</div>
 					</td-->
-					<td id="node-${node.observed_status}" nowrap="true">
+					<!--td id="node-${node.observed_status}" nowrap="true">
+						<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td-->
+					<!--td nowrap="true" py:content="node.kernel"></td-->
+					<!--td py:content="node.date_checked"></td-->
+					<td py:content="node.last_checked"></td>
+					<td nowrap="true">
 						<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
-					<td nowrap="true" py:content="node.kernel"></td>
-					<td py:content="node.date_checked"></td>
+					<td py:content="node.status"></td>
 				</tr>
 			</tbody>
 		</table>
