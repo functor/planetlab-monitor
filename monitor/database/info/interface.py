@@ -193,6 +193,6 @@ class SiteInterface(HistorySiteRecord):
 		act = ActionRecord(loginbase=self.db.loginbase,
 							hostname=hostname,
 							action='reboot',
-							action_type='first_try_reboot',
+							action_type='try_reboot',
 							error_string=err)
 

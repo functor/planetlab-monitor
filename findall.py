@@ -7,6 +7,8 @@ from sitebad import main as sitebad_main
 from nodebad import main as nodebad_main
 from pcubad import main as pcubad_main
 from monitor.wrapper import plccache
+from monitor.database.info.model import  *
+from monitor.common import  *
 import sys
 
 if __name__ == '__main__':
@@ -29,20 +31,34 @@ if __name__ == '__main__':
 	cfg = parsermodule.parse_args(parser)
 
 	try:
-		print "sync with plc"
-		plccache.sync()
 		print "findbad"
 		findbad_main()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		print "findbadpcu"
 		findbadpcu_main()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		print "nodebad"
 		nodebad_main()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		print "pcubad"
 		pcubad_main()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		print "sitebad"
 		sitebad_main()
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 	except Exception, err:
 		import traceback
+		email_exception()
 		print traceback.print_exc()
 		print "Exception: %s" % err
 		print "Saving data... exitting."

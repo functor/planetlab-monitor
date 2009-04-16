@@ -53,8 +53,8 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
-Requires: python-sqlalchemy
-Requires: python-elixir
+#Requires: python-sqlalchemy
+#Requires: python-elixir
 
 Requires: openssh-clients
 Requires: perl-libwww-perl
@@ -65,9 +65,9 @@ Requires: nmap
 Requires: PLCWWW >= 4.2
 Requires: bootcd-planetlab-i386 >= 4.2
 
-Requires: zabbix-client
-Requires: zabbix-gui
-Requires: zabbix-server
+#Requires: zabbix-client
+#Requires: zabbix-gui
+#Requires: zabbix-server
 
 %description server
 The server side include all python modules and scripts needed to fully
@@ -202,7 +202,7 @@ rm -rf $RPM_BUILD_ROOT
 php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
 
 # apply patches to zabbix
-patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix-auto-login.diff
+#patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix-auto-login.diff
 
 #chkconfig --add monitor-server
 #chkconfig monitor-server on

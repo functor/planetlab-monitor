@@ -44,6 +44,8 @@ def getnodesup(nodelist):
 	up = 0
 	for node in nodelist:
 		try:
+			# NOTE: adding a condition for nodehist.haspcu would include pcus
+			# 		in the calculation
 			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
 			nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
 			if (nodehist is not None and nodehist.status != 'down') or \
@@ -51,6 +53,7 @@ def getnodesup(nodelist):
 				up = up + 1
 		except:
 			import traceback
+			email_exception(node['hostname'])
 			print traceback.print_exc()
 	return up
 

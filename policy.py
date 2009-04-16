@@ -47,6 +47,7 @@ def main(hostnames, sitenames):
 			lb = plccache.plcdb_hn2lb[host]
 		except:
 			print "unknown host in plcdb_hn2lb %s" % host
+			email_exception(host)
 			continue
 
 		nodeblack = BlacklistRecord.get_by(hostname=host)
@@ -64,35 +65,46 @@ def main(hostnames, sitenames):
 		print "%s %s %s" % (i, nodehist.hostname, nodehist.status)
 		if nodehist.status == 'good' and \
 			changed_lessthan(nodehist.last_changed, 1.0) and \
+			found_within(recent_actions, 'down_notice', 7.0) and \
 			not found_within(recent_actions, 'online_notice', 0.5):
+			    # NOTE: searching for down_notice proves that the node has
+				# 		gone through a 'down' state first, rather than just
+				# 		flapping through: good, offline, online, ...
+				# 	
 				# NOTE: there is a narrow window in which this command must be
-				# evaluated, otherwise the notice will not go out.  this is not ideal.
+				# 		evaluated, otherwise the notice will not go out.  
+				#		this is not ideal.
 				sitehist.sendMessage('online_notice', hostname=host, viart=False)
 				print "send message for host %s online" % host
 
-				pass
 
-		if ( nodehist.status == 'offline' or nodehist.status == 'down' ) and \
+		# if a node is offline and doesn't have a PCU, remind the user that they should have one.
+		if not nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
 			changed_greaterthan(nodehist.last_changed,1.0) and \
-			not found_between(recent_actions, 'first_try_reboot', 3.5, 1):
+			not found_within(recent_actions, 'pcumissing_notice', 7.0):
+
+				sitehist.sendMessage('pcumissing_notice', hostname=host)
+				print "send message for host %s pcumissing_notice" % host
+
+		# if it is offline and HAS a PCU, then try to use it.
+		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
+			changed_greaterthan(nodehist.last_changed,1.0) and \
+			not found_between(recent_actions, 'try_reboot', 3.5, 1):
 
 				sitehist.attemptReboot(host)
-				print "send message for host %s first_try_reboot" % host
-				pass
+				print "send message for host %s try_reboot" % host
 
-		# NOTE: non-intuitive is that found_between(first_try_reboot, 3.5, 1)
+		# NOTE: non-intuitive is that found_between(try_reboot, 3.5, 1)
 		# 		will be false for a day after the above condition is satisfied
-		if ( nodehist.status == 'offline' or nodehist.status == 'down' ) and \
+		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
 			changed_greaterthan(nodehist.last_changed,1.5) and \
-			found_between(recent_actions, 'first_try_reboot', 3.5, 1) and \
+			found_between(recent_actions, 'try_reboot', 3.5, 1) and \
 			not found_within(recent_actions, 'pcufailed_notice', 3.5):
-			# found_within(recent_actions, 'first_try_reboot', 3.5) and \
 				
 				# send pcu failure message
 				#act = ActionRecord(**kwargs)
 				sitehist.sendMessage('pcufailed_notice', hostname=host)
 				print "send message for host %s PCU Failure" % host
-				pass
 
 		if nodehist.status == 'monitordebug' and \
 			changed_greaterthan(nodehist.last_changed, 1) and \
@@ -111,9 +123,10 @@ def main(hostnames, sitenames):
 
 				sitehist.sendMessage('down_notice', hostname=host)
 				print "send message for host %s down" % host
-				pass
 
 		node_count = node_count + 1
+		print "time: ", time.strftime('%Y-%m-%d %H:%M:%S')
+		sys.stdout.flush()
 		session.flush()
 
 	for i,site in enumerate(sitenames):
@@ -158,13 +171,16 @@ def main(hostnames, sitenames):
 		# find all ticket ids for site ( could be on the site record? )
 		# determine if there are penalties within the last 30 days?
 		# if so, add a 'pause_penalty' action.
-		if sitehist.db.message_id != 0 and sitehist.db.message_status == 'open' and sitehist.db.penalty_level > 0:
+		if sitehist.db.message_id != 0 and sitehist.db.message_status == 'open' and \
+			sitehist.db.penalty_level > 0 and not found_within(recent_actions, 'pause_penalty', 30):
 			#	pause escalation
 			print "Pausing penalties for %s" % site
 			sitehist.pausePenalty()
 
 		site_count = site_count + 1
 
+		print "time: ", time.strftime('%Y-%m-%d %H:%M:%S')
+		sys.stdout.flush()
 		session.flush()
 
 	session.flush()
@@ -227,6 +243,7 @@ if __name__ == "__main__":
 
 	try:
 		main(hostnames, sitenames)
+		session.flush()
 	except KeyboardInterrupt:
 		print "Killed by interrupt"
 		session.flush()

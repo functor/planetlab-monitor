@@ -56,6 +56,7 @@ def main():
 			#	print k, "==" , net[k]
 		except:
 			print "Error with %s" % node
+			email_exception()
 			import traceback; print traceback.print_exc()
 			pass
 

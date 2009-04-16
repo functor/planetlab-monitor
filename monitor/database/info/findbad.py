@@ -11,46 +11,18 @@ __metadata__ = mon_metadata
 __session__  = mon_session
 
 
-#class FindbadNodeRecordSync(Entity):
-#	hostname = Field(String(250),primary_key=True) #,alternateMethodName='by_hostname')
-#	round    = Field(Int,default=0)
-	
-#class FindbadPCURecordSync(Entity):
-#	plc_pcuid = Field(Int,primary_key=True) #,alternateMethodName='by_pcuid')
-#	round     = Field(Int,default=0)
-
 class FindbadNodeRecord(Entity):
 	@classmethod
 	def get_all_latest(cls):
 		return cls.query.all()
-		#fbsync = FindbadNodeRecordSync.get_by(hostname="global")
-		#if fbsync:
-		#	return cls.query.filter_by(round=fbsync.round)
-		#else:
-		#	return []
 
 	@classmethod
 	def get_latest_by(cls, **kwargs):
 		return cls.query.filter_by(**kwargs).first()
-		#fbsync = FindbadNodeRecordSync.get_by(hostname="global")
-		#if fbsync:
-		#	kwargs['round'] = fbsync.round
-		#	return cls.query.filter_by(**kwargs).order_by(FindbadNodeRecord.date_checked.desc())
-		#else:
-		#	return []
 
 	@classmethod
 	def get_latest_n_by(cls, n=3, **kwargs):
 		return cls.query.filter_by(**kwargs)
-		#fbsync = FindbadNodeRecordSync.get_by(hostname="global")
-		#kwargs['round'] = fbsync.round
-		#ret = []
-		#for i in range(0,n):
-		#	kwargs['round'] = kwargs['round'] - i
-		#	f = cls.query.filter_by(**kwargs).first()
-		#	if f:
-		#		ret.append(f)
-		#return ret
 
 # ACCOUNTING
 	date_checked = Field(DateTime,default=datetime.now)
@@ -99,7 +71,7 @@ class FindbadPCURecord(Entity):
 # ACCOUNTING
 	date_checked = Field(DateTime)
 	round = Field(Int,default=0)
-	plc_pcuid = Field(Int) #alternateID=True,alternateMethodName='by_pcuid')
+	plc_pcuid = Field(Int)
 
 # EXTERNAL
 	plc_pcu_stats = Field(PickleType,default=None)

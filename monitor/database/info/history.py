@@ -15,6 +15,7 @@ class HistoryNodeRecord(Entity):
 	last_checked = Field(DateTime,default=datetime.now)
 	last_changed = Field(DateTime,default=datetime.now)
 	status = Field(String,default="unknown")
+	haspcu = Field(Boolean,default=False)
 	acts_as_versioned(ignore=['last_changed', 'last_checked'])
 
 	@classmethod

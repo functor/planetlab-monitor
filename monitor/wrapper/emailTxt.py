@@ -207,6 +207,18 @@ ERROR- 	   This is an error state, where there is absolutely no contact
            with PlanetLab.
 	""")
 
+	pcumissing_notice =("""MONTEST: No PCU available to reboot %(hostname)s""",
+"""As part of PlanetLab node monitoring and maintenance, we noticed that there is no PCU
+associated with %(hostname)s, so we could not reboot it ourselves.
+
+To save you time in the future, please take a moment to register the PCU functionality for
+your machines here:
+
+    http://www.planet-lab.org/db/sites/pcu.php
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
 	pcufailed_notice =("""MONTEST: Could not use PCU to reboot %(hostname)s""",
 
 """As part of PlanetLab node monitoring and maintenance, we tried to use the PCU
@@ -244,7 +256,11 @@ If any action is needed from you, you will recieve additional notices.  Thank yo
 This notice is simply to let you know that:
     %(hostname)s
 
-is down, disconnected from the network and/or non-operational.  Please investigate, thank you very much for your help!
+is down, disconnected from the network and/or non-operational.  
+
+Please investigate, thank you very much for your help!
+
+	http://monitor.planet-lab.org:8082/pcuview?loginbase=%(loginbase)s
 	""")
 
 	clear_penalty=("""MONTEST: All penalties have been cleared from site %(loginbase)s""",
