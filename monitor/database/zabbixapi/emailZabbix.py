@@ -123,7 +123,7 @@ You can acknowledge this notice by visiting the link below or by letting us know
 Thank you for your help,
     -- PlanetLab Central (%(support_email)s)
 """
-	node_discovered_subject = """Discovered host {HOSTNAME} w/ ip {IPADDRESS} and online"""
+	node_discovered_subject = """Discovered a new host!"""
 	node_discovered = """
 Thank you for registering and installing this machine:
 
