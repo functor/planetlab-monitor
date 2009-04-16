@@ -7,8 +7,8 @@ from monitor import *
 from monitor import util
 from monitor import parser as parsermodule
 
-from monitor import database
-from pcucontrol  import reboot
+from monitor.database.info.model import *
+from monitor import reboot
 
 import time
 from monitor.model import *
@@ -44,7 +44,7 @@ def plc_print_nodeinfo(plcnode):
 		 diff_time(plcnode['last_contact']), plcnode['key'])
 
 def fb_print_nodeinfo(fbnode):
-	pf = PersistFlags(fbnode['hostname'], 1, db='node_persistflags')
+	pf = HistoryNodeRecord.get_by(hostname= fbnode['hostname'])
 	try:
 		fbnode['last_change'] = diff_time(pf.last_changed)
 	except:
@@ -140,7 +140,7 @@ if config.findbad:
 for node in config.args:
 	config.node = node
 
-	plc_nodeinfo = api.GetNodes({'hostname': config.node}, None)[0]
+	plc_nodeinfo = plccache.GetNodeByName(config.node)
 	fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
 	fb_nodeinfo = fb_noderec.to_dict()
 	plc_print_nodeinfo(plc_nodeinfo)

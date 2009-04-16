@@ -16,5 +16,5 @@ try:
 		network = api.GetNodeNetworks(node['nodenetwork_ids'])
 	print "ok"
 except:
-	sys.stderr.write(traceback.print_exc())
+	sys.stderr.write(traceback.format_exc())
 	print "fail"

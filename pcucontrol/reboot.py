@@ -11,13 +11,12 @@ import urllib2
 import urllib
 import threading, popen2
 import array, struct
-from monitor.wrapper import plc
 import base64
 from subprocess import PIPE, Popen
 import pcucontrol.transports.ssh.pxssh as pxssh
 import pcucontrol.transports.ssh.pexpect as pexpect
 import socket
-from monitor.util import command
+
 
 
 # Use our versions of telnetlib and pyssh
@@ -25,8 +24,6 @@ sys.path.insert(0, os.path.dirname(sys.argv[0]))
 import pcucontrol.transports.telnetlib as telnetlib
 sys.path.insert(0, os.path.dirname(sys.argv[0]) + "/pyssh")    
 import pcucontrol.transports.pyssh as pyssh
-from monitor import config
-
 
 # Event class ID from pcu events
 #NODE_POWER_CONTROL = 3
@@ -35,7 +32,6 @@ from monitor import config
 #MONITOR_USER_ID = 11142
 
 import logging
-logger = logging.getLogger("monitor")
 verbose = 1
 #dryrun = 0;
 
@@ -135,7 +131,7 @@ class Transport:
 			transport.set_debuglevel(self.verbose)
 			if username is not None:
 				self.transport = transport
-				self.transport.ifThenSend(prompt, username, ExceptionUsername)
+				self.ifThenSend(prompt, username, ExceptionUsername)
 
 		elif self.type == self.SSH:
 			if username is not None:
@@ -206,7 +202,7 @@ class Transport:
 				print r
 
 		except urllib2.URLError,err:
-			logger.info('Could not open http connection', err)
+			print 'Could not open http connection', err
 			return "http transport error"
 
 		return 0
@@ -255,17 +251,25 @@ class PCUControl(PCUModel,PCURecord):
 	def reboot(self, node_port, dryrun):
 
 		port_list = []
+		# There are two sources of potential ports.  Those that are open and
+		# those that are part of the PCU's supported_ports.  
+		#  I think we should start with supported_ports and then filter that
+		#  by the open ports.
+
+		port_list = self.supported_ports
+
 		if hasattr(self, 'port_status') and self.port_status:
+			# get out the open ports
 			port_list = filter(lambda x: self.port_status[x] == "open" , self.port_status.keys())
 			port_list = [ int(x) for x in port_list ]
+			# take only the open ports that are supported_ports
+			port_list = filter(lambda x: x in self.supported_ports, port_list)
 			if port_list == []:
-				raise ExceptionPort("Unsupported Port: No transport from open ports")
-		else:
-			port_list = self.supported_ports
+				raise ExceptionPort("No Open Port: No transport from open ports")
 
 		print port_list
 
-		ret = "could not run"
+		ret = "No implementation for open ports on selected PCU model"
 		for port in port_list:
 			if port not in Transport.porttypemap:
 				continue
@@ -273,7 +277,9 @@ class PCUControl(PCUModel,PCURecord):
 			type = Transport.porttypemap[port]
 			self.transport = Transport(type, verbose)
 
+			print "checking for run_%s" % type
 			if hasattr(self, "run_%s" % type):
+				print "found run_%s" % type
 				fxn = getattr(self, "run_%s" % type)
 				ret = self.catcherror(fxn, node_port, dryrun)
 				if ret == 0: # NOTE: success!, so stop
@@ -316,14 +322,16 @@ class PCUControl(PCUModel,PCURecord):
 		except urllib2.URLError, err:
 			return "URLError: " + str(err)
 		except EOFError, err:
-			if self.verbose:
-				logger.debug("reboot: EOF")
-				logger.debug(err)
 			self.transport.close()
 			import traceback
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
+		except Exception, err:
+			from monitor.common import email_exception
+			email_exception(self.host)
+			raise Exception(err)
 
+from pcucontrol.util import command
 from pcucontrol.models import *
 
 def pcu_name(pcu):
@@ -333,73 +341,6 @@ def pcu_name(pcu):
 		return pcu['ip']
 	else:
 		return None
-
-def get_pcu_values(pcu_id):
-	from monitor.database.info.model import FindbadPCURecord
-	print "pcuid: %s" % pcu_id
-	try:
-		pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=pcu_id).first()
-		if pcurec:
-			values = pcurec.to_dict()
-		else:
-			values = None
-	except:
-		values = None
-
-	return values
-
-def reboot(nodename):
-	return reboot_policy(nodename, True, False)
-
-def reboot_str(nodename):
-	global verbose
-	continue_probe = True
-	dryrun=False
-
-	pcu = plc.getpcu(nodename)
-	if not pcu:
-		logger.debug("no pcu for %s" % nodename)
-		print "no pcu for %s" % nodename
-		return False # "%s has no pcu" % nodename
-
-	values = get_pcu_values(pcu['pcu_id'])
-	if values == None:
-		logger.debug("No values for pcu probe %s" % nodename)
-		print "No values for pcu probe %s" % nodename
-		return False #"no info for pcu_id %s" % pcu['pcu_id']
-	
-	# Try the PCU first
-	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
-
-	ret = reboot_test_new(nodename, values, verbose, dryrun)
-	return ret
-	
-def reboot_policy(nodename, continue_probe, dryrun):
-	global verbose
-
-	pcu = plc.getpcu(nodename)
-	if not pcu:
-		logger.debug("no pcu for %s" % nodename)
-		print "no pcu for %s" % nodename
-		return False # "%s has no pcu" % nodename
-
-	values = get_pcu_values(pcu['pcu_id'])
-	if values == None:
-		logger.debug("No values for pcu probe %s" % nodename)
-		print "No values for pcu probe %s" % nodename
-		return False #"no info for pcu_id %s" % pcu['pcu_id']
-	
-	# Try the PCU first
-	logger.debug("Trying PCU %s %s" % (pcu['hostname'], pcu['model']))
-
-	ret = reboot_test_new(nodename, values, verbose, dryrun)
-
-	if ret != 0:
-		print ret
-		return False
-	else:
-		print "return true"
-		return True
 
 class Unknown(PCUControl):
 	supported_ports = [22,23,80,443,5869,9100,16992]
@@ -435,7 +376,7 @@ def model_to_object(modelname):
 		print "UNKNOWN model %s"%modelname
 		return Unknown
 
-def reboot_api(node, pcu): #, verbose, dryrun):
+def reboot_api(node, pcu):
 	rb_ret = ""
 
 	try:
@@ -452,9 +393,58 @@ def reboot_api(node, pcu): #, verbose, dryrun):
 			rb_ret =  "No modelname in PCU record."
 		# TODO: how to handle the weird, georgetown pcus, the drac faults, and ilo faults
 	except Exception, err:
-		rb_ret = str(err)
+		rb_ret = "Exception Model(%s): " % modelname 
+		rb_ret += str(err)
 
 	return rb_ret
+
+def convert_oldmodelname_to_newmodelname(oldmodelname, pcu_id):
+	newmodelname = None
+	update = {	'AP79xx' : 'APCControl13p13',
+				'Masterswitch' : 'APCControl13p13',
+				'DS4-RPC' : 'BayTech',
+				'IP-41x_IP-81x' : 'IPAL',
+				'DRAC3' : 'DRAC',
+				'DRAC4' : 'DRAC',
+				'ePowerSwitch' : 'ePowerSwitchOld',
+				'ilo2' : 'HPiLO',
+				'ilo1' : 'HPiLO',
+				'PM211-MIP' : 'PM211MIP',
+				'AMT2.5' : 'IntelAMT',
+				'AMT3.0' : 'IntelAMT',
+				'WTI_IPS-4' : 'WTIIPS4',
+				'unknown'  : 'ManualPCU',
+				'DRAC5'	: 'DRAC',
+				'ipmi'	: 'OpenIPMI',
+				'bbsemaverick' : 'BlackBoxPSMaverick',
+				'manualadmin'  : 'ManualPCU',
+	}
+
+	if oldmodelname in update:
+		newmodelname = update[oldmodelname]
+	else:
+		newmodelname = oldmodelname
+
+	if pcu_id in [1102,1163,1055,1111,1231,1113,1127,1128,1148]:
+		newmodelname = 'APCControl12p3'
+	elif pcu_id in [1110,86]:
+		newmodelname = 'APCControl1p4'
+	elif pcu_id in [1221,1225,1220,1192]:
+		newmodelname = 'APCControl121p3'
+	elif pcu_id in [1173,1240,47,1363,1405,1401,1372,1371]:
+		newmodelname = 'APCControl121p1'
+	elif pcu_id in [1056,1237,1052,1209,1002,1008,1013,1022]:
+		newmodelname = 'BayTechCtrlC'
+	elif pcu_id in [93]:
+		newmodelname = 'BayTechRPC3NC'
+	elif pcu_id in [1057]:
+		newmodelname = 'BayTechCtrlCUnibe'
+	elif pcu_id in [1012]:
+		newmodelname = 'BayTechRPC16'
+	elif pcu_id in [1089, 1071, 1046, 1035, 1118]:
+		newmodelname = 'ePowerSwitchNew'
+
+	return newmodelname
 
 def reboot_test_new(nodename, values, verbose, dryrun):
 	rb_ret = ""
@@ -462,9 +452,9 @@ def reboot_test_new(nodename, values, verbose, dryrun):
 		values.update(values['plc_pcu_stats'])
 
 	try:
-		modelname = values['model']
+		modelname = convert_oldmodelname_to_newmodelname(values['model'], values['pcu_id'])
 		if modelname:
-			object = eval('%s(values, verbose, ["22", "23", "80", "443", "9100", "16992", "5869"])' % modelname)
+			object = eval('%s(values, verbose)' % modelname)
 			rb_ret = object.reboot(values[nodename], dryrun)
 		else:
 			rb_ret =  "Not_Run"
@@ -477,34 +467,7 @@ def reboot_test_new(nodename, values, verbose, dryrun):
 	return rb_ret
 
 def main():
-	logger.setLevel(logging.DEBUG)
-	ch = logging.StreamHandler()
-	ch.setLevel(logging.DEBUG)
-	formatter = logging.Formatter('LOGGER - %(message)s')
-	ch.setFormatter(formatter)
-	logger.addHandler(ch)
-
-	try:
-		if "test" in sys.argv:
-			dryrun = True
-		else:
-			dryrun = False
-
-		for node in sys.argv[1:]:
-			if node == "test": continue
-
-			print "Rebooting %s" % node
-			if reboot_policy(node, True, dryrun):
-				print "success"
-			else:
-				print "failed"
-	except Exception, err:
-		import traceback; traceback.print_exc()
-		print err
+	print "this does not work."
 
 if __name__ == '__main__':
-	logger = logging.getLogger("monitor")
 	main()
-	f = open("/tmp/rebootlog", 'a')
-	f.write("reboot %s\n" % sys.argv)
-	f.close()

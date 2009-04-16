@@ -7,10 +7,9 @@ import time
 from datetime import datetime,timedelta
 
 from monitor import database
-from pcucontrol  import reboot
 from monitor import parser as parsermodule
 from monitor import config
-from monitor.database.info.model import HistorySiteRecord, FindbadNodeRecord, session
+from monitor.database.info.model import HistorySiteRecord, HistoryNodeRecord, session, BlacklistRecord
 from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
@@ -29,6 +28,8 @@ def main2(config):
 
 	if config.site:
 		l_sites = [config.site]
+	elif config.node:
+		l_sites = [plccache.plcdb_hn2lb[config.node]]
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
 		l_sites = site_list
@@ -37,32 +38,54 @@ def main2(config):
 	
 	checkAndRecordState(l_sites, l_plcsites)
 
-def getnewsite(nodelist):
-	new = True
-	for node in nodelist:
-		try:
-			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
-			if noderec is not None and \
-				noderec.plc_node_stats['last_contact'] != None:
-				new = False
-		except:
-			import traceback
-			print traceback.print_exc()
-	return new
-
 def getnodesup(nodelist):
+	# NOTE : assume that a blacklisted node is fine, since we're told not to
+	# 		ignore it, no policy actions should be taken for it.
 	up = 0
 	for node in nodelist:
 		try:
-			noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
-			#noderec = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname==node['hostname'], 
-			#								   orderBy='date_checked').reversed()[0]
-			if noderec is not None and noderec.observed_status == "BOOT":
+			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
+			nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
+			if (nodehist is not None and nodehist.status != 'down') or \
+				(nodebl is not None and not nodebl.expired()):
 				up = up + 1
 		except:
 			import traceback
 			print traceback.print_exc()
 	return up
+
+def check_site_state(rec, sitehist):
+
+	if sitehist.new and sitehist.status not in ['new', 'online', 'good']:
+		sitehist.status = 'new'
+		sitehist.penalty_applied = True		# because new sites are disabled by default, i.e. have a penalty.
+		sitehist.last_changed = datetime.now()
+
+	if sitehist.nodes_up >= MINUP:
+
+		if sitehist.status != 'online' and sitehist.status != 'good':
+			sitehist.last_changed = datetime.now()
+
+		if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'online':
+			print "changed status from %s to online" % sitehist.status
+			sitehist.status = 'online'
+
+		if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'good':
+			print "changed status from %s to good" % sitehist.status
+			sitehist.status = 'good'
+
+	elif not sitehist.new:
+	
+		if sitehist.status != 'offline' and sitehist.status != 'down':
+			sitehist.last_changed = datetime.now()
+
+		if changed_lessthan(sitehist.last_changed, 0.5) and sitehist.status != 'offline':
+			print "changed status from %s to offline" % sitehist.status
+			sitehist.status = 'offline'
+
+		if changed_greaterthan(sitehist.last_changed, 0.5) and sitehist.status != 'down':
+			print "changed status from %s to down" % sitehist.status
+			sitehist.status = 'down'
 
 def checkAndRecordState(l_sites, l_plcsites):
 	count = 0
@@ -77,27 +100,32 @@ def checkAndRecordState(l_sites, l_plcsites):
 			continue
 
 		if sitename in lb2hn:
-			pf = HistorySiteRecord.findby_or_create(loginbase=sitename)
+			sitehist = HistorySiteRecord.findby_or_create(loginbase=sitename,
+												if_new_set={'status' : 'unknown', 
+															'last_changed' : datetime.now(),
+															'message_id': 0,
+															'penalty_level' : 0})
+			sitehist.last_checked = datetime.now()
 
-			pf.last_checked = datetime.now()
-			pf.slices_total = d_site['max_slices']
-			pf.slices_used = len(d_site['slice_ids'])
-			pf.nodes_total = len(lb2hn[sitename])
-			pf.nodes_up = getnodesup(lb2hn[sitename])
-			pf.new = getnewsite(lb2hn[sitename])
-			pf.enabled = d_site['enabled']
+			sitehist.slices_total = d_site['max_slices']
+			sitehist.slices_used = len(d_site['slice_ids'])
+			sitehist.nodes_total = len(lb2hn[sitename])
+			if sitehist.message_id != 0:
+				rtstatus = mailer.getTicketStatus(sitehist.message_id)
+				sitehist.message_status = rtstatus['Status']
+				sitehist.message_queue = rtstatus['Queue']
+				sitehist.message_created = datetime.fromtimestamp(rtstatus['Created'])
 
-			if pf.nodes_up >= MINUP:
-				if pf.status != "good": pf.last_changed = datetime.now()
-				pf.status = "good"
-			else:
-				if pf.status != "down": pf.last_changed = datetime.now()
-				pf.status = "down"
+			sitehist.nodes_up = getnodesup(lb2hn[sitename])
+			sitehist.new = changed_lessthan(datetime.fromtimestamp(d_site['date_created']), 30) # created < 30 days ago
+			sitehist.enabled = d_site['enabled']
+
+			check_site_state(d_site, sitehist)
 
 			count += 1
-			print "%d %15s slices(%2s) nodes(%2s) up(%2s) %s" % (count, sitename, pf.slices_used, 
-											pf.nodes_total, pf.nodes_up, pf.status)
-			pf.flush()
+			print "%d %15s slices(%2s) nodes(%2s) notdown(%2s) %s" % (count, sitename, sitehist.slices_used, 
+											sitehist.nodes_total, sitehist.nodes_up, sitehist.status)
+			sitehist.flush()
 
 	print HistorySiteRecord.query.count()
 	session.flush()

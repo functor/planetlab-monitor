@@ -17,10 +17,10 @@ tr.even td {background-color:#fff;}
 
 #header {
   height: 40px;
-  width: 780px;
+  /*width: 780px;*/
   /*background: blue URL('../images/header_inner.png') no-repeat;*/
-  border-left: 1px solid #aaa;
-  border-right: 1px solid #aaa;
+  /*border-left: 1px solid #aaa;*/
+  /*border-right: 1px solid #aaa;*/
   margin: 0 auto 0 auto;
   text-align: center;
   font-size: 180%;
@@ -102,8 +102,15 @@ a.right { float: right; }
 #status-error  { background-color: indianred; }
 #status-none   { background-color: white; }
 
+#site-new { background-color: gold; }
 #site-good { background-color : darkseagreen; }
+#site-online { background-color : lightgreen; }
+#site-offline { background-color: red; }
 #site-down { background-color: indianred; }
+
+/*#site-0 { background-color : white; }*/
+#site-1 { background-color: gold; }
+#site-2 { background-color: indianred; }
 
 #node-BOOT { background-color: darkseagreen; }
 #node-DOWN { background-color: indianred; }
@@ -182,7 +189,7 @@ h2 {
 }
 
 #footer {
-  border: 1px solid #aaa;
+  /*border: 1px solid #aaa;*/
   border-top: 0px none;
   color: #999;
   background-color: white;

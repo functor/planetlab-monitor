@@ -16,6 +16,7 @@ from links import *
 		<table py:if="len(sitequery) > 0" id="sub-table" border="1" width="100%">
 			<thead>
 				<tr>
+					<th>History</th>
 					<th>Site name</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
@@ -26,11 +27,12 @@ from links import *
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
+					<td><a href="sitehistory?loginbase=${site.loginbase}">history</a></td>
 					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>
-					<td>n/a</td>
+					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td>${site.slices_used}/${site.slices_total}</td>
 					<td>${site.nodes_up} / ${site.nodes_total}</td>
 					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
@@ -131,7 +133,7 @@ from links import *
 		</table>
 				</span> </a>
 	</div>
-	<h3>Nodes</h3>
+	<h3>Nodes</h3> 
 		<p py:if="len(nodequery) == 0">
 			There are no registered nodes for this site.
 		</p>
@@ -139,9 +141,10 @@ from links import *
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
+					<th>History</th>
 					<th>Hostname</th>
 					<th>last_contact</th>
-					<th>Last_checked</th>
+					<th>last_checked</th>
 					<th nowrap='true'>Port Status</th>
 					<th></th>
 					<th></th>
@@ -151,6 +154,7 @@ from links import *
 			<tbody>
 				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
+					<td><a href="nodehistory?hostname=${node.hostname}">history</a></td>
 					<td id="node-${node.observed_status}" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
 							<span class="icon">${node.hostname}</span></a>
@@ -193,21 +197,61 @@ from links import *
 		</div>
 		<div id="status_block" class="flash"
             py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
-	<h4 py:if="len(pcuquery) > 0">Convenience Calls</h4>
-		<?python 
-			if len(pcuquery) == 0: pcu = None
-		?>
-		<div py:if="pcu is not None" class="code">
+
+	<h4>Actions Over the Last Week</h4>
+		<p py:if="actions and len(actions) == 0">
+			There are no recent actions taken for this site.
+		</p>
+		<table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
+			<thead>
+				<tr>
+					<th mochi:format="int"></th>
+					<th>Date</th>
+					<th>Action taken on</th>
+					<th>Action Type</th>
+					<th>Message ID</th>
+					<th>Errors</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
+					<td></td>
+					<td py:content="act.date_created"></td>
+					<td py:if="act.hostname is not None" nowrap="true" >
+						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
+							<span class="icon">${act.hostname}</span></a>
+					</td>
+					<td py:if="act.hostname is None" nowrap="true">
+						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
+							<span class="icon">${act.loginbase}</span></a>
+					</td>
+					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
+					<td py:content="act.action_type"></td>
+					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
+							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
+					<td><pre py:content="act.error_string"></pre></td>
+				</tr>
+			</tbody>
+		</table>
+
+	<!-- TODO: figure out how to make this conditional by model rather than port;
+				it is convenient to have links to ilo, drac, amt, etc.
+				regardless of whether the last PCU scan was successful.  -->
+	<h4 py:if="len(pcuquery) != 0">Convenience Calls</h4>
+		<div py:if="len(pcuquery) != 0" class="code"> <!-- pcu is not None" class="code"-->
 			<span	py:for="port,state in pcu.ports">
 					<span class="code" py:if="port == 22 and state == 'open'">
 						ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no 
 						${pcu.plc_pcu_stats['username']}@${pcu_name(pcu.plc_pcu_stats)}
+						<br/>
 					</span>
 					<span class="code" py:if="port == 23 and state == 'open'">
 						telnet ${pcu_name(pcu.plc_pcu_stats)}
+						<br/>
 					</span>
 					<span class="code" py:if="port == 80 and state == 'open'">
 						<a href="http://${pcu_name(pcu.plc_pcu_stats)}">http://${pcu_name(pcu.plc_pcu_stats)}</a>
+						<br/>
 					</span>
 					<span class="code" py:if="port == 443 and state == 'open'">
 						<br/>

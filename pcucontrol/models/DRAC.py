@@ -12,11 +12,14 @@ class DRAC(PCUControl):
 		            "-o PasswordAuthentication=yes "+\
 					"-o PubkeyAuthentication=no"
 		s = pxssh.pxssh()
-		if not s.login(self.host, self.username, self.password, ssh_options,
+		try:
+			if not s.login(self.host, self.username, self.password, ssh_options,
 						original_prompts="Dell", login_timeout=Transport.TELNET_TIMEOUT):
-			raise ExceptionPassword("Invalid Password")
-
-		print "logging in..."
+				raise ExceptionPassword("Invalid Password")
+		except pexpect.EOF:
+			raise ExceptionPrompt("Disconnect before login prompt")
+			
+		print "logging in... %s" % self.host
 		s.send("\r\n\r\n")
 		try:
 			# Testing Reboot ?
@@ -148,11 +151,9 @@ def racadm_reboot(host, username, password, port, dryrun):
 
 		print "RUNCMD: %s" % output
 		if verbose:
-			logger.debug(output)
+			print output
 		return 0
 
 	except Exception, err:
-		logger.debug("runcmd raised exception %s" % err)
-		if verbose:
-			logger.debug(err)
-		return err
+		print "runcmd raised exception %s" % err
+		return str(err)

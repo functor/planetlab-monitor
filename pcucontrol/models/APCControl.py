@@ -6,7 +6,7 @@ class APCControl(PCUControl):
 
 	def run(self, node_port, dryrun):
 		print "RUNNING!!!!!!!!!!!!"
-		if self.type == Transport.HTTPS or self.type == Transport.HTTP:
+		if self.transport.type == Transport.HTTPS or self.type == Transport.HTTP:
 			print "APC via http...."
 			return self.run_http_or_https(node_port, dryrun)
 		else:
@@ -58,9 +58,9 @@ class APCControl(PCUControl):
 
 		else:
 			# TODO: also send message for https, since that doesn't work this way...
-			if self.type == Transport.HTTPS:
+			if self.transport.type == Transport.HTTPS:
 				cmd = self.get_https_cmd()
-			elif self.type == Transport.HTTP:
+			elif self.transport.type == Transport.HTTP:
 				cmd = self.get_http_cmd()
 			else:
 				raise ExceptionNoTransport("Unsupported transport for http command")
@@ -118,12 +118,12 @@ class APCControl(PCUControl):
 		# NOTE: we may need to return software version, no model version to
 		# 		know which file to request on the server.
 
-		if self.type == Transport.HTTP:
+		if self.transport.type == Transport.HTTP:
 			cmd = """curl -s --anyauth --user '%s:%s' http://%s/about.htm """ + \
 				  """ | sed -e "s/<[^>]*>//g" -e "s/&nbsp;//g" -e "/^$/d" """ + \
 				  """ | grep -E "AP[[:digit:]]+" """
 				  #""" | grep -E "v[[:digit:]].*" """
-		elif self.type == Transport.HTTPS:
+		elif self.transport.type == Transport.HTTPS:
 			cmd = """curl -s --insecure --user '%s:%s' https://%s/about.htm """ + \
 				  """ | sed -e "s/<[^>]*>//g" -e "s/&nbsp;//g" -e "/^$/d" """ + \
 				  """ | grep -E "AP[[:digit:]]+" """
@@ -138,10 +138,10 @@ class APCControl(PCUControl):
 
 	def logout(self):
 		# NOTE: log out again, to allow other uses to access the machine.
-		if self.type == Transport.HTTP:
+		if self.transport.type == Transport.HTTP:
 			cmd = """curl -s --anyauth --user '%s:%s' http://%s/logout.htm """ + \
 				  """ | grep -E '^[^<]+' """
-		elif self.type == Transport.HTTPS:
+		elif self.transport.type == Transport.HTTPS:
 			cmd = """curl -s --insecure --user '%s:%s' http://%s/logout.htm """ + \
 				  """ | grep -E '^[^<]+' """
 		else:

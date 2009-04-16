@@ -13,9 +13,8 @@ import threadpool
 import threading
 
 import monitor
-from pcucontrol  import reboot
 from monitor import config
-from monitor.database.info.model import FindbadPCURecordSync, FindbadPCURecord, session
+from monitor.database.info.model import FindbadPCURecord, session
 from monitor import database
 from monitor import util 
 from monitor.wrapper import plc, plccache
@@ -44,10 +43,11 @@ def checkPCUs(l_pcus, cohash):
 	# CREATE all the work requests
 	for pcuname in l_pcus:
 		pcu_id = int(pcuname)
-		fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
-		fbnodesync.flush()
+		#fbnodesync = FindbadPCURecordSync.findby_or_create(plc_pcuid=pcu_id, if_new_set={'round' : 0})
+		#fbnodesync.flush()
 
-		node_round   = fbnodesync.round
+		#node_round   = fbnodesync.round
+		node_round   = global_round - 1
 		if node_round < global_round or config.force:
 			# recreate node stats when refreshed
 			#print "%s" % nodename
@@ -76,7 +76,7 @@ def checkPCUs(l_pcus, cohash):
 			print "All results collected."
 			break
 
-	print FindbadPCURecordSync.query.count()
+	#print FindbadPCURecordSync.query.count()
 	print FindbadPCURecord.query.count()
 	session.flush()
 
@@ -87,29 +87,38 @@ def main():
 	l_pcus = plccache.l_pcus
 	cohash = {}
 
-	fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
-											if_new_set={'round' : global_round})
+	#fbsync = FindbadPCURecordSync.findby_or_create(plc_pcuid=0, 
+											#if_new_set={'round' : global_round})
 
-	global_round = fbsync.round
+	#global_round = fbsync.round
 	api = plc.getAuthAPI()
 
 	if config.site is not None:
-		site = api.GetSites(config.site)
-		l_nodes = api.GetNodes(site[0]['node_ids'], ['pcu_ids'])
+		site = plccache.GetSitesByName([config.site])
+		l_nodes = plccache.GetNodesByIds(site[0]['node_ids'])
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
 		# clear out dups.
 		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.node is not None:
+		l_nodes = plcacche.GetNodeByName(config.node)
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
 	elif config.sitelist:
 		site_list = config.sitelist.split(',')
 
-		sites = api.GetSites(site_list)
+		sites = plccache.GetSitesByName(site_list)
 		node_ids = []
 		for s in sites:
 			node_ids += s['node_ids']
 
-		l_nodes = api.GetNodes(node_ids, ['pcu_ids'])
+		l_nodes = plccache.GetNodeByIds(node_ids)
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']
@@ -140,8 +149,8 @@ def main():
 
 	if config.increment:
 		# update global round number to force refreshes across all nodes
-		fbsync.round = global_round
-		fbsync.flush()
+		#fbsync.round = global_round
+		#fbsync.flush()
 		session.flush()
 
 	return 0
@@ -164,6 +173,8 @@ if __name__ == '__main__':
 						pcuid=None,
 						pcuselect=None,
 						site=None,
+						node=None,
+						sitelist=None,
 						dbname="findbadpcus", 
 						cachenodes=False,
 						cachecalls=True,
@@ -171,7 +182,11 @@ if __name__ == '__main__':
 						)
 	parser.add_option("-f", "--nodelist", dest="nodelist", metavar="FILE", 
 						help="Provide the input file for the node list")
+	parser.add_option("", "--node", dest="node", metavar="FILE", 
+						help="Get all pcus associated with the given node")
 	parser.add_option("", "--site", dest="site", metavar="FILE", 
+						help="Get all pcus associated with the given site's nodes")
+	parser.add_option("", "--sitelist", dest="sitelist", metavar="FILE", 
 						help="Get all pcus associated with the given site's nodes")
 	parser.add_option("", "--pcuselect", dest="pcuselect", metavar="FILE", 
 						help="Query string to apply to the findbad pcus")
@@ -203,6 +218,8 @@ if __name__ == '__main__':
 		time.sleep(1)
 	except Exception, err:
 		traceback.print_exc()
+		from monitor.common import email_exception
+		email_exception()
 		print "Exception: %s" % err
 		print "Saving data... exitting."
 		sys.exit(0)

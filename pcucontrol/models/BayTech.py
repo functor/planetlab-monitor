@@ -1,6 +1,7 @@
 from pcucontrol.reboot import *
 
 class BayTechRPC3NC(PCUControl):
+	supported_ports = [22,23]
 	def run_telnet(self, node_port, dryrun):
 		return self.run_ssh(node_port, dryrun)
 
@@ -22,6 +23,7 @@ class BayTechRPC3NC(PCUControl):
 		return 0
 
 class BayTechRPC16(PCUControl):
+	supported_ports = [22,23]
 	def run_telnet(self, node_port, dryrun):
 		return self.run_ssh(node_port, dryrun)
 	def run_ssh(self, node_port, dryrun):
@@ -48,6 +50,7 @@ class BayTechCtrlCUnibe(PCUControl):
 		indefinitely, unless you send a Ctrl-C after the password.  No idea
 		why.
 	"""
+	supported_ports = [22]
 	def run_ssh(self, node_port, dryrun):
 		print "BayTechCtrlC %s" % self.host
 
@@ -69,9 +72,11 @@ class BayTechCtrlCUnibe(PCUControl):
 			if index == 0:
 				print "3"
 				s.send("3\r\n")
+				time.sleep(5)
 				index = s.expect(["DS-RPC>", "Enter user name:"])
 				if index == 1:
 					s.send(self.username + "\r\n")
+					time.sleep(5)
 					index = s.expect(["DS-RPC>"])
 
 				if index == 0:
@@ -112,6 +117,7 @@ class BayTechCtrlC(PCUControl):
 		indefinitely, unless you send a Ctrl-C after the password.  No idea
 		why.
 	"""
+	supported_ports = [22]
 	def run_ssh(self, node_port, dryrun):
 		print "BayTechCtrlC %s" % self.host
 

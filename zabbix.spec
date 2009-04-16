@@ -290,6 +290,43 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri Apr 03 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-9
+- added new models to db.
+- major updates throughout.
+- better unification. needs an install test.
+
+* Wed Apr 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-8
+- removed old pkl database references.
+- added blacklist to db model
+- added fix to IntelAMT remoteControl to start an power-down node
+- added policy.py
+- added global error count before bailing entirely.
+
+* Fri Mar 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-7
+- improved db model
+- updated files that use db model
+- updated web view based on node, site, and pcu states.
+- added local mirror to zabbix Make file.
+
+* Tue Mar 24 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-6
+- added action view to gui
+- added penalty_applied bit to db model.
+
+* Fri Mar 20 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-5
+- tag for updates to 2.0 db model
+
+* Fri Mar 13 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-4
+- splits reboot.py across pcucontrol and monitor modules
+- moves command.py from monitor/util to pcucontrol/util
+
+* Tue Mar 10 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-3
+- add email exceptions
+- other bug fixes.
+
+* Tue Mar 10 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-2
+- getting the pcucontrol and findall.py scripts to work in an integrated
+- fashion.
+
 * Fri Feb 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-1
 - preparing to make a 2.0 branch for monitor.
 

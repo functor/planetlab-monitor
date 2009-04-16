@@ -6,9 +6,11 @@ SHA1SUM	= sha1sum
 SPECFILE = zabbix.spec
 
 #main.URL	:= http://voxel.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.1.tar.gz 
-#main.SHA1SUM:= 6e66efdbbdf23dc3de01379b30ded7b005fb49d9
-main.URL	:= http://superb-east.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.2.tar.gz
-main.SHA1SUM:= 575c443adec1703c2c242dbf353de9dc3bb4cafb
+#main.SHA1SUM	:= 6e66efdbbdf23dc3de01379b30ded7b005fb49d9
+#main.URL	:= http://superb-east.dl.sourceforge.net/sourceforge/zabbix/zabbix-1.6.2.tar.gz
+#main.SHA1SUM	:= 575c443adec1703c2c242dbf353de9dc3bb4cafb
+main.URL	:= http://build.planet-lab.org/third-party/zabbix-1.6.2.tar.gz
+main.SHA1SUM	:= 575c443adec1703c2c242dbf353de9dc3bb4cafb
 main.FILE	:= $(notdir $(main.URL))
 
 # Thierry - when called from within the build, PWD is /build

@@ -50,14 +50,14 @@ class ePowerSwitchNew(PCUControl):
 				req.add_header("Authorization", authheader)
 				# add data to handler,
 				f = urllib2.urlopen(req, data)
-				if self.verbose: print f.read()
+				if self.transport.verbose: print f.read()
 			except:
 				import traceback; traceback.print_exc()
 
 				# fetch url one more time on cmd.html, econtrol.html or whatever.
 				# pass
 		else:
-			if self.verbose: print f.read()
+			if self.transport.verbose: print f.read()
 
 		return 0
 
@@ -74,12 +74,12 @@ class ePowerSwitchOld(PCUControl):
 		# NOTE: it doesn't seem to matter whether this authinfo is here or not.
 		transport = urllib2.build_opener(authinfo)
 		f = transport.open(self.url)
-		if self.verbose: print f.read()
+		if self.transport.verbose: print f.read()
 
 		if not dryrun:
 			transport = urllib2.build_opener(authhandler)
 			f = transport.open(self.url + "cmd.html", "P%d=r" % node_port)
-			if self.verbose: print f.read()
+			if self.transport.verbose: print f.read()
 
 		self.transport.close()
 		return 0
@@ -103,12 +103,12 @@ class ePowerSwitchOld(PCUControl):
 		# NOTE: it doesn't seem to matter whether this authinfo is here or not.
 		transport = urllib2.build_opener()
 		f = transport.open(self.url + "elogin.html", "pwd=%s" % self.password)
-		if self.verbose: print f.read()
+		if self.transport.verbose: print f.read()
 
 		if not dryrun:
 			transport = urllib2.build_opener(authhandler)
 			f = transport.open(self.url + "econtrol.html", "P%d=r" % node_port)
-			if self.verbose: print f.read()
+			if self.transport.verbose: print f.read()
 
 		#	data= "P%d=r" % node_port
 		#self.open(self.host, self.username, self.password)

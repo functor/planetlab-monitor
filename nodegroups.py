@@ -59,16 +59,15 @@ def main():
 		# given to GetNodes
 		nodelist = []
 		for h in hostlist:
-			nodelist += api.GetNodes(h)
+			nodelist.append( plccache.GetNodeByName(h) )
 
-		#nodelist = api.GetNodes(hostlist)
 		group_str = "Given"
 
 	elif config.site:
-		site = api.GetSites(config.site)
+		site = plccache.GetSitesByName([config.site])
 		if len (site) > 0:
 			site = site[0]
-			nodelist = api.GetNodes(site['node_ids'])
+			nodelist = plccache.GetNodesByIds(site['node_ids'])
 		else:
 			nodelist = []
 
@@ -76,13 +75,13 @@ def main():
 
 	elif config.nodeselect:
 		hostlist = node_select(config.nodeselect)
-		nodelist = api.GetNodes(hostlist)
+		nodelist = [ plccache.GetNodeByName(h) for h in hostlist ]
 
 		group_str = "selection"
 		
 	else:
 		ng = api.GetNodeGroups({'name' : config.nodegroup})
-		nodelist = api.GetNodes(ng[0]['node_ids'])
+		nodelist = plccache.GetNodesByIds(ng[0]['node_ids'])
 
 		group_str = config.nodegroup
 
@@ -91,7 +90,7 @@ def main():
 		ng_nodes = nodelist
 
 		# Get all nodes
-		all_nodes = api.GetNodes({'peer_id': None})
+		all_nodes = plccache.l_nodes
 		
 		# remove ngnodes from all node list
 		ng_list = [ x['hostname'] for x in ng_nodes ]
@@ -121,7 +120,7 @@ def main():
 		i = 1
 		for node in nodelist:
 			print "%-2d" % i, 
-			fbrec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node['hostname']).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fbrec = FindbadNodeRecord.get_latest_by(hostname=node['hostname'])
 			fbdata = fbrec.to_dict()
 			print nodegroup_display(node, fbdata, config)
 			i += 1

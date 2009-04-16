@@ -1,6 +1,8 @@
 from elixir import Entity, Field, OneToMany, ManyToOne, ManyToMany
 from elixir import options_defaults, using_options, setup_all
 from elixir import String, Integer as Int, DateTime, Boolean
+from elixir.ext.versioned import *
+
 from datetime import datetime,timedelta
 
 from monitor.database.dborm import mon_metadata, mon_session
@@ -13,6 +15,7 @@ class HistoryNodeRecord(Entity):
 	last_checked = Field(DateTime,default=datetime.now)
 	last_changed = Field(DateTime,default=datetime.now)
 	status = Field(String,default="unknown")
+	acts_as_versioned(ignore=['last_changed', 'last_checked'])
 
 	@classmethod
 	def by_hostname(cls, hostname):
@@ -28,9 +31,12 @@ class HistoryPCURecord(Entity):
 	last_valid = Field(DateTime,default=None)
 	valid  = Field(String,default="unknown")
 
+	acts_as_versioned(ignore=['last_changed', 'last_checked'])
+
 	@classmethod
 	def by_pcuid(cls, pcuid):
 		return cls.query.filter_by(pcuid=pcuid).first()
+
 
 class HistorySiteRecord(Entity):
 	loginbase = Field(String(250),primary_key=True)
@@ -49,6 +55,15 @@ class HistorySiteRecord(Entity):
 	enabled = Field(Boolean,default=False)
 
 	status = Field(String,default="unknown")
+
+	message_id = Field(Int, default=0)
+	message_status = Field(String, default=None)
+	message_queue = Field(String, default=None) 
+	message_created = Field(DateTime, default=None)
+
+	penalty_level   = Field(Int, default=0)
+	penalty_applied = Field(Boolean, default=False)
+	acts_as_versioned(ignore=['last_changed', 'last_checked'])
 
 	@classmethod
 	def by_loginbase(cls, loginbase):

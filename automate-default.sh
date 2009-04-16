@@ -61,42 +61,26 @@ fi
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
 
-echo "Performing Findbad Nodes"
+echo "Performing FindAll Nodes"
 #########################
 # 1. FINDBAD NODES 
-${MONITOR_SCRIPT_ROOT}/findbad.py --increment $DATE || :
+${MONITOR_SCRIPT_ROOT}/findall.py --increment $DATE || :
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
-
-echo "Performing Findbad PCUs"
-#########################
-# 2. FINDBAD PCUS
-${MONITOR_SCRIPT_ROOT}/findbadpcu.py --increment $DATE || :
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
-echo "Performing uptime changes for sites, nodes, and pcus"
-########################
-# 3. record last-changed for sites, nodes and pcus.
-${MONITOR_SCRIPT_ROOT}/sitebad.py || :
-${MONITOR_SCRIPT_ROOT}/nodebad.py || :
-${MONITOR_SCRIPT_ROOT}/pcubad.py || :
+${MONITOR_SCRIPT_ROOT}/policy.py $DATE
 
 echo "Archiving pkl files"
 #########################
 # Archive pkl files.
-for f in findbad act_all findbadpcus l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do
+for f in act_all l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do
 	if [ -f ${MONITOR_DATA_ROOT}/production.$f.pkl ] ; then
 		cp ${MONITOR_DATA_ROOT}/production.$f.pkl ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.production.$f.pkl
 	else
 		echo "Warning: It failed to archive ${MONITOR_DATA_ROOT}/production.$f.pkl"
 	fi
 done
-
-#echo "Running grouprins on all dbg nodes"
-############################
-# 5. Check if there are any nodes in dbg state.  Clean up afterward.
-#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DOWN&&boot_state=(boot|rins|dbg|diag)' --stopselect "state=BOOT" || :
-#${MONITOR_SCRIPT_ROOT}/grouprins.py --mail=1 --reboot --nodeselect 'state=DEBUG&&boot_state=(rins|dbg|boot)' --stopselect 'state=BOOT' || :
 
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log
 rm -f $MONITOR_PID

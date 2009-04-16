@@ -12,6 +12,7 @@ from monitor import database
 from monitor.wrapper import rt
 from monitor.wrapper import plc
 from monitor.policy import *
+from monitor.database.info.model import *
 
 api = plc.getAuthAPI()
 
@@ -22,9 +23,9 @@ def reboot(hostname):
 	if len(l_nodes) == 0:
 		raise Exception("No such host: %s" % hostname)
 	
-	l_blacklist = database.if_cached_else(1, "l_blacklist", lambda : [])
-	l_ticket_blacklist = database.if_cached_else(1,"l_ticket_blacklist",lambda : [])
+	q_blacklist = BlacklistRecord.query.all()
 
+	l_blacklist = [ n.hostname for n in q_blacklist ]
 	l_nodes  = filter(lambda x : not x['hostname'] in l_blacklist, l_nodes)
 	if len(l_nodes) == 0:
 		raise Exception("Host removed via blacklist: %s" % hostname)

@@ -207,6 +207,84 @@ ERROR- 	   This is an error state, where there is absolutely no contact
            with PlanetLab.
 	""")
 
+	pcufailed_notice =("""MONTEST: Could not use PCU to reboot %(hostname)s""",
+
+"""As part of PlanetLab node monitoring and maintenance, we tried to use the PCU
+registered for %(hostname)s, but could not for some reason.
+
+Please help.
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+	online_notice=("""MONTEST: Host %(hostname)s is online""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+is online and operational.  Thank you very much for your help!
+	""")
+	test_notice=("""MONTEST: Host %(hostname)s is testing""",
+	"""
+This notice is simply to test whether notices work.
+    %(hostname)s
+
+Thank you very much for your help!
+	""")
+	retry_bootman=("""MONTEST: Running BootManager on %(hostname)s""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+appears stuck in a debug mode.  To try to correct this, we're trying to rerun BootManager.py.  
+If any action is needed from you, you will recieve additional notices.  Thank you!
+	""")
+	down_notice=("""MONTEST: Host %(hostname)s is down""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+is down, disconnected from the network and/or non-operational.  Please investigate, thank you very much for your help!
+	""")
+
+	clear_penalty=("""MONTEST: All penalties have been cleared from site %(loginbase)s""",
+	"""
+This notice is to let you know that any penalties previously applied to your site have 
+been removed: %(penalty_level)s.
+
+All privileges have been restored.  If your slices were disabled, please allow
+up to 30 minutes for them to return to enabled.
+
+Legend:
+
+  0  - no penalties applied
+  1  - site is disabled.  no new slices can be created.
+  2+ - all existing slices will be disabled.
+	""")
+
+	increase_penalty=("""MONTEST: Penalty increased for site %(loginbase)s""",
+	"""
+This notice is to let you know that the penalty applied to your site has
+increased: %(penalty_level)s.
+
+legend:
+
+  0  - no penalty applied
+  1  - site is disabled.  no new slices can be created.
+  2+ - all existing slices will be disabled.
+	""")
+
+	newbootcd_notice=("""MONTEST: Host %(hostname)s needs a new BootImage""", """
+As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+
+    %(hostname)s  
+
+This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
+
+Thank you for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+""")
+
 	nmreset =("""NM Reset at %(loginbase)s""",
 	"""
 Monitor restarted NM on the following machines:
@@ -294,10 +372,10 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	newalphacd_one=(""" Planetlab nodes need a new BootCD: %(loginbase)s""", 
-"""As part of PlanetLab node monitoring, we noticed that your machines needs a new BootCD to fully support your hardware: 
+	newalphacd_notice=("""MONTEST: New Boot Images for %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed that we were not able to recognize all the hardware in your machine.  This means that it is so new that it needs a new BootCD, or that it is so old that it is no longer supported.
 
-%(hostname_list)s  
+    %(hostname)s  
 
 To make this process as simple as possible, we have created All-in-One boot images that include the node configuration file.  
 
@@ -318,14 +396,14 @@ Thank you for your help,
 	# TODO: need reminder versions for repeats...
 	newdown=[newdown_one, newdown_two, newdown_three]
 	newbootcd=[newbootcd_one, newbootcd_two, newbootcd_three]
-	newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
+	#newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
 	newthankyou=[thankyou,thankyou,thankyou]
 	pcuthankyou=[pcuthankyou_one,pcuthankyou_one,pcuthankyou_one]
 	NMReset=[nmreset,nmreset,nmreset]
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
-	unknownsequence = ("""Unrecognized Error on PlanetLab host %(hostname)s""", 
+	unknownsequence_notice = ("""MONTEST: Unrecognized Error on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -411,7 +489,7 @@ Thank you for your help,
 	donation_down = [ donation_down_one, donation_down_one, donation_down_one ]
 
 
-	minimalhardware = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
+	minimalhardware_notice = ("""MONTEST: Hardware requirements not met on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -431,7 +509,7 @@ BootManager.log output follows:
 %(bmlog)s
 """	  )
 
-	baddisk = ("""Bad Disk on PlanetLab node %(hostname)s""", 
+	baddisk_notice = ("""MONTEST: Bad Disk on PlanetLab node %(hostname)s""", 
 			   """As part of PlanetLab node monitoring, we noticed %(hostname)s has a number of disk or media related I/O errors, that prevent it from either booting or reliably running as a PlanetLab node.
 
 Please verify the integrity of the disk, and order a replacement if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
@@ -497,7 +575,7 @@ BootManager.log output follows:
 %(bmlog)s
 """)
 
-	plnode_cfg=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
+	nodeconfig_notice=("""MONTEST:  Please Update Configuration file for PlanetLab node %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
 	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
@@ -537,7 +615,7 @@ Thanks.
 """)
 
 
-	baddns=("""Planetlab node down: broken DNS configuration for %(hostname)s""", 
+	baddns_notice=("""MONTEST: Planetlab node down: broken DNS configuration for %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed the DNS servers used by the following machine(s) are not responding to queries.
 
     %(hostname)s 

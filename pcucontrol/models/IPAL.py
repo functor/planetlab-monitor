@@ -78,7 +78,9 @@ class IPAL(PCUControl):
 			s.close()
 			if e[0] == errno.ECONNREFUSED:
 				# cannot connect to remote host
-				raise Exception(e[1])
+				raise ExceptionNotFound(e[1])
+			elif e[0] == errno.ETIMEDOUT:
+				raise ExceptionTimeout(e[1])
 			else:
 				# TODO: what other conditions are there?
 				raise Exception(e)
@@ -90,7 +92,7 @@ class IPAL(PCUControl):
 		print "Current status is '%s'" % ret
 
 		if ret == '':
-			raise Exception("Status returned 'another session already open' %s : %s" % (node_port, ret))
+			raise Exception("Status returned 'another session already open' on %s %s : %s" % (self.host, node_port, ret))
 				
 		if node_port < len(ret):
 			status = ret[node_port]
@@ -100,10 +102,12 @@ class IPAL(PCUControl):
 			elif status == '0':
 				# down
 				power_on = False
+			elif status == '6':
+				raise ExceptionPort("IPAL reported 'Cable Error' on %s socket %s : %s" % (self.host, node_port, ret))
 			else:
-				raise Exception("Unknown status for PCU socket %s : %s" % (node_port, ret))
+				raise Exception("Unknown status for PCU %s socket %s : %s" % (self.host, node_port, ret))
 		else:
-			raise Exception("Mismatch between configured port and PCU status: %s %s" % (node_port, ret))
+			raise Exception("Mismatch between configured port and PCU %s status: %s %s" % (self.host, node_port, ret))
 			
 
 		if not dryrun:
@@ -128,10 +132,12 @@ class IPAL(PCUControl):
 				elif status == '0':
 					# down
 					power_on = False
+				elif status == '6':
+					raise ExceptionPort("IPAL reported 'Cable Error' on %s socket %s : %s" % (self.host, node_port, ret))
 				else:
-					raise Exception("Unknown status for PCU socket %s : %s" % (node_port, ret))
+					raise Exception("Unknown status for PCU %s socket %s : %s" % (self.host, node_port, ret))
 			else:
-				raise Exception("Mismatch between configured port and PCU status: %s %s" % (node_port, ret))
+				raise Exception("Mismatch between configured port and PCU %s status: %s %s" % (self.host, node_port, ret))
 
 			if power_on:
 				return 0

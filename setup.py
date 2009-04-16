@@ -2,13 +2,17 @@
 
 from distutils.core import setup
 
-packages=['monitor', 'monitor.database', 'monitor.database.zabbixapi', 
-		'monitor.database.info', 'monitor.sources', 
-		'monitor.util', 'monitor.wrapper' ]
+packages=[	'monitor', 
+			'monitor.database', 
+			'monitor.database.zabbixapi', 
+			'monitor.database.info', 
+			'monitor.sources', 
+			'monitor.util', 
+			'monitor.wrapper' ]
 
 print packages
 setup(name='MonitorModule',
-      version='1.1',
+      version='2.0',
       description='Monitor Utility Module',
       author='Stephen Soltesz',
       author_email='soltesz@cs.princeton.edu',
@@ -17,6 +21,7 @@ setup(name='MonitorModule',
 )
 
 packages=['pcucontrol', 
+		'pcucontrol.util',
 		'pcucontrol.transports',
 		'pcucontrol.transports.ssh',
 		'pcucontrol.transports.pyssh',
@@ -31,7 +36,7 @@ packages=['pcucontrol',
 # TODO: add data dir for intelamt and hpilo stuff
 print packages
 setup(name='PCUControlModule',
-      version='1.1',
+      version='2.0',
       description='PCU Control Module',
       author='Stephen Soltesz',
       author_email='soltesz@cs.princeton.edu',

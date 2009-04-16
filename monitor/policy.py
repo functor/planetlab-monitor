@@ -171,10 +171,11 @@ class MonitorMergeDiagnoseSendEscellate:
 
 			#### APPLY PENALTY
 			if ( record.data['take_action'] and diag['Squeeze'] ): 
-				print "action: taking action"
+				print "action: taking squeeze action"
 				record.takeAction(record.data['penalty_level'])
 				del diag['Squeeze']
 			if diag.getFlag('BackOff'):
+				print "action: taking backoff action"
 				record.takeAction(0)
 				del diag['BackOff']
 

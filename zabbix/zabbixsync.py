@@ -44,7 +44,7 @@ if __name__=="__main__":
 
 	from monitor import parser as parsermodule
 	parser = parsermodule.getParser(['cacheset'])
-	parser.set_defaults( setupglobal=False, syncsite=True, site=None, setupids=False)
+	parser.set_defaults( setupglobal=False, syncsite=True, site=None, sitelist=None, setupids=False)
 	parser.add_option("", "--setupids", action="store_true", dest="setupids",
 						help="Setup global IDs.")
 	parser.add_option("", "--setupglobal", action="store_true", dest="setupglobal",
@@ -53,6 +53,8 @@ if __name__=="__main__":
 						help="Do not sync sites.")
 	parser.add_option("", "--site", dest="site",
 						help="Sync only given site name.")
+	parser.add_option("", "--sitelist", dest="sitelist",
+						help="Sync only given site names in the list.")
 	opts = parsermodule.parse_args(parser)
 
 	os.system("""echo '' > /usr/share/monitor/nodelist.txt""")

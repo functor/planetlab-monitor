@@ -11,8 +11,7 @@ import threading
 import socket
 from pcucontrol import reboot
 
-from monitor import util
-from monitor.util import command
+from pcucontrol.util import command
 from monitor import config
 
 from monitor.database.info.model import *
@@ -113,7 +112,7 @@ class ScanInterface(object):
 	syncclass = None
 	primarykey = 'hostname'
 
-	def __init__(self, round):
+	def __init__(self, round=1):
 		self.round = round
 		self.count = 1
 
@@ -134,22 +133,24 @@ class ScanInterface(object):
 		try:
 			if values is None:
 				return
-
-			fbnodesync = self.syncclass.findby_or_create(
-												if_new_set={'round' : self.round},
+			
+			if self.syncclass:
+				fbnodesync = self.syncclass.findby_or_create(
+												#if_new_set={'round' : self.round},
 												**{ self.primarykey : nodename})
 			# NOTE: This code will either add a new record for the new self.round, 
 			# 	OR it will find the previous value, and update it with new information.
 			#	The data that is 'lost' is not that important, b/c older
 			#	history still exists.  
 			fbrec = self.recordclass.findby_or_create(
-						**{'round':self.round, self.primarykey:nodename})
+						**{ self.primarykey:nodename})
 
 			fbrec.set( **values ) 
 
 			fbrec.flush()
-			fbnodesync.round = self.round
-			fbnodesync.flush()
+			if self.syncclass:
+				fbnodesync.round = self.round
+				fbnodesync.flush()
 
 			print "%d %s %s" % (self.count, nodename, values)
 			self.count += 1
@@ -161,13 +162,14 @@ class ScanInterface(object):
 
 class ScanNodeInternal(ScanInterface):
 	recordclass = FindbadNodeRecord
-	syncclass = FindbadNodeRecordSync
+	#syncclass = FindbadNodeRecordSync
+	syncclass = None
 	primarykey = 'hostname'
 
 	def collectNMAP(self, nodename, cohash):
 		#### RUN NMAP ###############################
 		values = {}
-		nmap = util.command.CMD()
+		nmap = command.CMD()
 		print "nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename
 		(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
 		# NOTE: an empty / error value for oval, will still work.
@@ -209,7 +211,7 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 						echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
 						echo "}"
-	EOF				""")
+EOF				""")
 					
 					values['ssh_error'] = errval
 					if len(oval) > 0:
@@ -376,9 +378,9 @@ class ScanNodeInternal(ScanInterface):
 		return (nodename, values)
 
 def internalprobe(hostname):
-	fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
-													if_new_set={'round' : 1})
-	scannode = ScanNodeInternal(fbsync.round)
+	#fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
+	#												if_new_set={'round' : 1})
+	scannode = ScanNodeInternal() # fbsync.round)
 	try:
 		(nodename, values) = scannode.collectInternal(hostname, {})
 		scannode.record(None, (nodename, values))
@@ -389,9 +391,9 @@ def internalprobe(hostname):
 		return False
 
 def externalprobe(hostname):
-	fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
-													if_new_set={'round' : 1})
-	scannode = ScanNodeInternal(fbsync.round)
+	#fbsync = FindbadNodeRecordSync.findby_or_create(hostname="global", 
+	#												if_new_set={'round' : 1})
+	scannode = ScanNodeInternal() # fbsync.round)
 	try:
 		(nodename, values) = scannode.collectNMAP(hostname, {})
 		scannode.record(None, (nodename, values))
@@ -403,7 +405,7 @@ def externalprobe(hostname):
 
 class ScanPCU(ScanInterface):
 	recordclass = FindbadPCURecord
-	syncclass = FindbadPCURecordSync
+	syncclass = None
 	primarykey = 'plc_pcuid'
 
 	def collectInternal(self, pcuname, cohash):
@@ -432,7 +434,7 @@ class ScanPCU(ScanInterface):
 
 			#### RUN NMAP ###############################
 			if continue_probe:
-				nmap = util.command.CMD()
+				nmap = command.CMD()
 				print "nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
 				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
 				# NOTE: an empty / error value for oval, will still work.
@@ -494,7 +496,7 @@ class ScanPCU(ScanInterface):
 
 
 			######  DRY RUN  ############################
-			if 'node_ids' in values['plc_pcu_stats'] and \
+			if continue_probe and 'node_ids' in values['plc_pcu_stats'] and \
 				len(values['plc_pcu_stats']['node_ids']) > 0:
 				rb_ret = reboot.reboot_test_new(values['plc_pcu_stats']['nodenames'][0], 
 												values, 1, True)
@@ -510,7 +512,8 @@ class ScanPCU(ScanInterface):
 			print "____________________________________"
 			errors['traceback'] = traceback.format_exc()
 			print errors['traceback']
-			values['reboot_trial_status'] = errors['traceback']
+			values['reboot_trial_status'] = str(errors['traceback'])
+			print values
 
 		values['entry_complete']=" ".join(values['entry_complete'])
 

@@ -4,10 +4,11 @@ import os
 import sys
 import string
 import time
+import sets
 from datetime import datetime,timedelta
 
 from monitor import database
-from pcucontrol  import reboot
+from monitor import reboot
 from monitor import parser as parsermodule
 from monitor import config
 from monitor.database.info.model import HistoryPCURecord, FindbadPCURecord
@@ -21,12 +22,32 @@ from monitor.model import *
 
 api = plc.getAuthAPI()
 
-def main(config):
+def main():
+	main2(config)
+
+def main2(config):
 
 	l_plcpcus = plccache.l_pcus 
 
 	l_pcus = None
-	if config.pcu:
+	if config.site is not None:
+		site = plccache.GetSitesByName([config.site])
+		l_nodes = plccache.GetNodesByIds(site[0]['node_ids'])
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.node:
+		l_nodes = plccache.GetNodeByName(config.node)
+		pcus = []
+		for node in l_nodes:
+			pcus += node['pcu_ids']
+		# clear out dups.
+		l_pcus = [pcu for pcu in sets.Set(pcus)]
+
+	elif config.pcu:
 		for pcu in l_plcpcus:
 			if ( pcu['hostname'] is not None and config.pcu in pcu['hostname'] ) or \
 			   ( pcu['ip'] is not None and config.pcu in pcu['ip'] ):
@@ -41,6 +62,38 @@ def main(config):
 
 hn2lb = plccache.plcdb_hn2lb
 
+def check_pcu_state(rec, pcu):
+
+	pcu_state = rec.reboot_trial_status
+
+	if ( pcu_state == 'NetDown' or pcu_state == 'Not_Run' or not ( pcu_state == 0 or pcu_state == "0" ) ) and \
+			( pcu.status == 'online' or pcu.status == 'good' ):
+		print "changed status from %s to offline" % pcu.status
+		pcu.status = 'offline'
+		pcu.last_changed = datetime.now()
+
+	if ( pcu_state == 0 or pcu_state == "0" ) and pcu.status not in [ 'online', 'good' ]:
+		print "changed status from %s to online" % pcu.status
+		pcu.status = 'online'
+		pcu.last_changed = datetime.now()
+
+	if pcu.status == 'online' and changed_greaterthan(pcu.last_changed, 0.5):
+		#send thank you notice, or on-line notice.
+		print "changed status from %s to good" % pcu.status
+		pcu.status = 'good'
+		# NOTE: do not reset last_changed, or you lose how long it's been up.
+
+	if pcu.status == 'offline' and changed_greaterthan(pcu.last_changed, 2):
+		# send down pcu notice
+		print "changed status from %s to down" % pcu.status
+		pcu.status = 'down'
+		pcu.last_changed = datetime.now()
+
+	if ( pcu.status == 'offline' or pcu.status == 'down' ) and changed_greaterthan(pcu.last_changed, 2*30):
+		print "changed status from %s to down" % pcu.status
+		pcu.status = 'down'
+		pcu.last_changed = datetime.now()
+
 def checkAndRecordState(l_pcus, l_plcpcus):
 	count = 0
 	for pcuname in l_pcus:
@@ -53,65 +106,56 @@ def checkAndRecordState(l_pcus, l_plcpcus):
 		if not d_pcu:
 			continue
 
-		pf = HistoryPCURecord.findby_or_create(plc_pcuid=d_pcu['pcu_id'])
-		pf.last_checked = datetime.now()
+		pcuhist = HistoryPCURecord.findby_or_create(plc_pcuid=d_pcu['pcu_id'], 
+									if_new_set={'status' : 'offline', 
+												'last_changed' : datetime.now()})
+		pcuhist.last_checked = datetime.now()
 
 		try:
 			# Find the most recent record
-			pcurec = FindbadPCURecord.query.filter(FindbadPCURecord.plc_pcuid==pcuname).order_by(FindbadPCURecord.date_checked.desc()).first()
-			print "NODEREC: ", pcurec.date_checked
+			pcurec = FindbadPCURecord.query.filter(FindbadPCURecord.plc_pcuid==pcuname).first()
 		except:
-			print "COULD NOT FIND FB record for %s" % reboot.pcu_name(pcu)
+			print "COULD NOT FIND FB record for %s" % reboot.pcu_name(d_pcu)
 			import traceback
 			print traceback.print_exc()
 			# don't have the info to create a new entry right now, so continue.
 			continue 
 
-		pcu_state      = pcurec.reboot_trial_status
-		current_state = pcu_state
+		if not pcurec:
+			print "none object for pcu %s"% reboot.pcu_name(d_pcu)
+			continue
 
-		if current_state == 0 or current_state == "0":
-			if pf.status != "good": 
-				pf.last_changed = datetime.now() 
-				pf.status = "good"
-		elif current_state == 'NetDown':
-			if pf.status != "netdown": 
-				pf.last_changed = datetime.now()
-				pf.status = "netdown"
-		elif current_state == 'Not_Run':
-			if pf.status != "badconfig": 
-				pf.last_changed = datetime.now()
-				pf.status = "badconfig"
-		else:
-			if pf.status != "error": 
-				pf.last_changed = datetime.now()
-				pf.status = "error"
+		check_pcu_state(pcurec, pcuhist)
 
 		count += 1
-		print "%d %35s %s since(%s)" % (count, reboot.pcu_name(d_pcu), pf.status, diff_time(time.mktime(pf.last_changed.timetuple())))
+		print "%d %35s %s since(%s)" % (count, reboot.pcu_name(d_pcu), pcuhist.status, diff_time(time.mktime(pcuhist.last_changed.timetuple())))
 
 	# NOTE: this commits all pending operations to the DB.  Do not remove, or
 	# replace with another operations that also commits all pending ops, such
 	# as session.commit() or flush() or something
-	print HistoryPCURecord.query.count()
 	session.flush()
+	print HistoryPCURecord.query.count()
 
 	return True
 
 if __name__ == '__main__':
 	parser = parsermodule.getParser()
-	parser.set_defaults(filename=None, pcu=None, pcuselect=False, pcugroup=None, cachepcus=False)
+	parser.set_defaults(filename=None, pcu=None, node=None, site=None, pcuselect=False, pcugroup=None, cachepcus=False)
 	parser.add_option("", "--pcu", dest="pcu", metavar="hostname", 
 						help="Provide a single pcu to operate on")
+	parser.add_option("", "--site", dest="site", metavar="sitename", 
+						help="Provide a single sitename to operate on")
+	parser.add_option("", "--node", dest="node", metavar="nodename", 
+						help="Provide a single node to operate on")
 	parser.add_option("", "--pculist", dest="pculist", metavar="file.list", 
 						help="Provide a list of files to operate on")
 
 	config = parsermodule.parse_args(parser)
 
 	try:
-		main(config)
+		main2(config)
 	except Exception, err:
 		import traceback
-		print traceback.print_exc()
+		traceback.print_exc()
 		print "Exception: %s" % err
 		sys.exit(0)

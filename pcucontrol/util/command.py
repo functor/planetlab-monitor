@@ -4,10 +4,12 @@ import subprocess
 import signal
 import time
 import traceback
+import fcntl
 
 DEBUG= 0
 
 class ExceptionTimeout(Exception): pass
+class ExceptionReadTimeout(Exception): pass
 COMMAND_TIMEOUT = 60
 ssh_options = { 'StrictHostKeyChecking':'no', 
 				'BatchMode':'yes', 
@@ -15,15 +17,47 @@ ssh_options = { 'StrictHostKeyChecking':'no',
 				'ConnectTimeout':'%s' % COMMAND_TIMEOUT}
 
 class Sopen(subprocess.Popen):
-	def kill(self, signal = signal.SIGTERM):
-		os.kill(self.pid, signal)
+	def kill(self, sig = signal.SIGTERM):
+		try:
+			# NOTE: this also kills parent... so doesn't work like I want.
+			# NOTE: adding 'exec' before the cmd removes the extra sh, and
+			# 		partially addresses this problem.
+			#os.killpg(os.getpgid(self.pid), signal.SIGKILL)
+			os.kill(self.pid, sig)
+		except OSError:
+			# no such process, due to it already exiting...
+			pass
 
-def read_t(stream, count, timeout=COMMAND_TIMEOUT*2):
-	lin, lout, lerr = select([stream], [], [], timeout)
-	if len(lin) == 0:
-		raise ExceptionTimeout("TIMEOUT Running: %s" % cmd)
 
-	return stream.read(count)
+def read_t(stream, count=1, timeout=COMMAND_TIMEOUT*2):
+	if count == 1:
+		retstr = ""
+
+		while True:
+			lin, lout, lerr = select([stream], [], [], timeout)
+			if len(lin) == 0:
+				print "timeout!"
+				raise ExceptionReadTimeout("TIMEOUT reading from command")
+
+			try:
+				outbytes = stream.read(count)
+			except IOError, err:
+				print 'no content yet.'
+				# due to no content.
+				# the select timeout should catch this.
+				continue
+
+			if not outbytes:
+				break
+			retstr += outbytes
+
+		return retstr
+	else:
+		lin, lout, lerr = select([stream], [], [], timeout)
+		if len(lin) == 0:
+			raise ExceptionReadTimeout("TIMEOUT reading from command")
+
+		return stream.read(count)
 
 class CMD:
 	def __init__(self):
@@ -31,12 +65,21 @@ class CMD:
 
 	def run_noexcept(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
-		#print "CMD.run_noexcept(%s)" % cmd
 		try:
 			return CMD.run(self,cmd,timeout)
 		except ExceptionTimeout:
 			print traceback.print_exc()
-			return ("", "SCRIPTTIMEOUT")
+			return ("", "ScriptTimeout")
+		except ExceptionReadTimeout:
+			print traceback.print_exc()
+			return ("", "RunningScriptTimeout")
+		except KeyboardInterrupt:
+			print "Interrupted, exiting..."
+			sys.exit(1)
+		except Exception, err:
+			from monitor.common import email_exception
+			email_exception()
+			return ("", str(err))
 			
 	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):
 		(o,e) = self.run(cmd, timeout)
@@ -48,16 +91,13 @@ class CMD:
 
 	def run(self, cmd, timeout=COMMAND_TIMEOUT*2):
 
-		#print "CMD.run(%s)" % cmd
 		s = Sopen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 		self.s = s
 		(f_in, f_out, f_err) = (s.stdin, s.stdout, s.stderr)
-		#print "calling select(%s)" % timeout
 		lout, lin, lerr = select([f_out], [], [f_err], timeout)
-		#print "TIMEOUT!!!!!!!!!!!!!!!!!!!"
 		if len(lin) == 0 and len(lout) == 0 and len(lerr) == 0:
 			# Reached a timeout!  Nuke process so it does not hang.
-			#print "KILLING"
+			print "TIMEOUT!!!!!!!!!!!!!!!!!!!"
 			s.kill(signal.SIGKILL)
 			raise ExceptionTimeout("TIMEOUT Running: %s" % cmd)
 		else:
@@ -68,28 +108,26 @@ class CMD:
 		o_value = ""
 		e_value = ""
 
-		o_value = f_out.read()
+		#o_value = f_out.read()
+		flags = fcntl.fcntl(f_out, fcntl.F_GETFL)
+		fcntl.fcntl(f_out, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+		try:
+			o_value = read_t(f_out,1,30)
+		except ExceptionReadTimeout:
+			s.kill(signal.SIGKILL)
+			raise ExceptionReadTimeout("TIMEOUT: failed to read from cmd: %s" % cmd)
+			
 		e_value = f_err.read()
 
-		#print "striping output"
 		o_value = o_value.strip()
 		e_value = e_value.strip()
 
-		#print "OUTPUT -%s-%s-" % (o_value, e_value)
-
-		#print "closing files"
 		f_out.close()
 		f_in.close()
 		f_err.close()
-		try:
-			#print "s.kill()"
-			s.kill()
-			#print "after s.kill()"
-		except OSError:
-			# no such process, due to it already exiting...
-			pass
+		s.kill(signal.SIGKILL)
 
-		#print o_value, e_value
 		return (o_value, e_value)
 
 	def runargs(self, args, timeout=COMMAND_TIMEOUT*2):
@@ -114,11 +152,7 @@ class CMD:
 		f_out.close()
 		f_in.close()
 		f_err.close()
-		try:
-			s.kill()
-		except OSError:
-			# no such process, due to it already exiting...
-			pass
+		s.kill(signal.SIGKILL)
 
 		return (o_value, e_value)
 
@@ -161,17 +195,10 @@ class SSH(CMD):
 		return CMD.run_noexcept(self, cmd)
 
 	def run_noexcept2(self, cmd, timeout=COMMAND_TIMEOUT*2):
-		cmd = "ssh -p %s %s %s@%s %s" % (self.port, self.__options_to_str(), 
+		cmd = "exec ssh -p %s %s %s@%s %s" % (self.port, self.__options_to_str(), 
 									self.user, self.host, cmd)
-		#print "SSH.run_noexcept2(%s)" % cmd
+		#print cmd
 		r = CMD.run_noexcept(self, cmd, timeout)
-
-		# XXX: this may be resulting in deadlocks... not sure.
-		#if self.s.returncode is None:
-		#	#self.s.kill()
-		#	self.s.kill(signal.SIGKILL)
-		#	self.s.wait()
-		#	self.ret = self.s.returncode
 		self.ret = -1
 
 		return r

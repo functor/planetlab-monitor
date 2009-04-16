@@ -13,11 +13,10 @@ import time
 import re
 import string
 
-from pcucontrol  import reboot
 from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
-from monitor.database.info.model import FindbadNodeRecordSync, FindbadNodeRecord, FindbadPCURecord, session
+from monitor.database.info.model import FindbadNodeRecord, FindbadPCURecord, session
 from monitor import util
 from monitor import config
 
@@ -270,6 +269,8 @@ def pcu_select(str_query, nodelist=None):
 		fbquery = FindbadNodeRecord.get_all_latest()
 		fb_nodelist = [ n.hostname for n in fbquery ]
 	if True:
+		# NOTE: this doesn't work when there are only a few records current.
+		# pcu_select should apply to all pcus globally, not just the most recent records.
 		fbpcuquery = FindbadPCURecord.get_all_latest()
 		fbpcu_list = [ p.plc_pcuid for p in fbpcuquery ]
 
@@ -381,8 +382,6 @@ def main():
 		#fbnodes = FindbadNodeRecord.select(FindbadNodeRecord.q.hostname, orderBy='date_checked',distinct=True).reversed()
 		fb = None
 
-	#reboot.fb = fbpcu
-
 	if config.nodelist:
 		nodelist = util.file.getListFromFile(config.nodelist)
 	else:
@@ -413,7 +412,7 @@ def main():
 
 		try:
 			# Find the most recent record
-			fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
+			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
 		except:
 			print traceback.print_exc()
 			pass

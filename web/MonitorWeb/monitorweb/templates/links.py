@@ -2,6 +2,8 @@ from monitor import config
 import turbogears as tg
 import urllib
 
+def plc_mail_uri(ticketid):
+	return config.RT_WEB_SERVER + "/Ticket/Display.html?id=" + str(ticketid)
 def plc_node_uri(hostname):
 	return "https://" + config.PLC_WWW_HOSTNAME + "/db/nodes/index.php?nodepattern=" + str(hostname)
 def plc_site_uri(loginbase):

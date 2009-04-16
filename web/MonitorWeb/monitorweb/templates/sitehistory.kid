@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Site List"
+layout_params['page_title'] = "Monitor Site History List"
 from monitor.util import diff_time
 from time import mktime
 from links import *
@@ -10,29 +10,21 @@ from links import *
 	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
+  	<h3>Site History : ${loginbase}</h3>
   	<table width="100%">
-		<thead>
-			<tr>
-				<th><a href="${link('site', filter='good')}">Compliant(${fc['good']})</a></th>
-				<th><a href="${link('site', filter='down')}">Down(${fc['down']})</a></th>
-				<th><a href="${link('site', filter='new')}">New Sites(${fc['new']})</a></th>
-				<th><a href="${link('site', filter='pending')}">Disabled(${fc['pending']})</a></th>
-				<th><a href="${link('site', filter='all')}">All(${fc['all']})</a></th>
-			</tr>
-		</thead>
 		<tbody>
 		<tr>
-		<td colspan="5">
+		<td>
 		<table id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th></th>
+					<th mochi:format="int"></th>
 					<th>Site name</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
 					<th mochi:format="int">Slices/Max</th>
 					<th mochi:format="int">Nodes/Total</th>
-					<th>Last Change</th>
+					<th>Date Checked</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -50,6 +42,7 @@ from links import *
 					<td>${site.slices_used}/${site.slices_total}</td>
 					<td>${site.nodes_up} / ${site.nodes_total}</td>
 					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+					<td py:content="site.timestamp"></td>
 				</tr>
 			</tbody>
 		</table>

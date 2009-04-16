@@ -4,7 +4,6 @@ from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
 from monitor import database
-from pcucontrol  import reboot
 
 import time
 from monitor.common import *
@@ -63,7 +62,7 @@ def plc_print_siteinfo(plcsite):
 			 diff_time(plcsite['last_updated']))
 
 	print ""
-	nodes = api.GetNodes(plcsite['node_ids'])
+	nodes = plccache.GetNodesByIds(plcsite['node_ids'])
 	print "   Checked: %s" % time.ctime()
 	print "\t                               host     | state | obs   |   created   |   updated   | last_contact "
 	for plcnode in nodes:
@@ -80,7 +79,7 @@ act_all = database.dbLoad("act_all")
 for site in config.args:
 	config.site = site
 
-	plc_siteinfo = api.GetSites({'login_base': config.site})[0]
+	plc_siteinfo = plccache.GetSitesByName([config.site])
 	url = "https://www.planet-lab.org/db/sites/index.php?site_pattern="
 	plc_siteinfo['url'] = url + plc_siteinfo['login_base']
 
@@ -88,7 +87,7 @@ for site in config.args:
 		# rerun findbad with the nodes in the given nodes.
 		import os
 		file = "findbad.txt"
-		nodes = api.GetNodes(plc_siteinfo['node_ids'], ['hostname'])
+		nodes = plccache.GetNodesByIds(plc_siteinfo['node_ids'])
 		nodes = [ n['hostname'] for n in nodes ]
 		util.file.setFileFromList(file, nodes)
 		os.system("./findbad.py --cachenodes --debug=0 --dbname=findbad --increment --nodelist %s" % file)
