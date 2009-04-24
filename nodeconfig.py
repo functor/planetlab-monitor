@@ -7,7 +7,6 @@ api = plc.getAuthAPI()
 from monitor import parser as parsermodule
 from sets import Set
 
-from monitor.common import *
 from monitor.database.info.model import FindbadNodeRecord
 
 def network_config_to_str(net):
@@ -46,7 +45,8 @@ def main():
 			node_keys = ['boot_state', 'key', 'last_updated', 'last_contact']
 			for k in node_keys:
 				if 'last' in k:
-					print "%15s == %s" % (k, diff_time(n[k]))
+					#print "%15s == %s" % (k, diff_time(n[k]))
+					print "%15s == %s" % (k, n[k])
 				else:
 					print "%15s == %s" % (k, n[k])
 
@@ -55,8 +55,9 @@ def main():
 			#for k in net.keys():
 			#	print k, "==" , net[k]
 		except:
+			#from monitor.common import email_exception
 			print "Error with %s" % node
-			email_exception()
+			#email_exception()
 			import traceback; print traceback.print_exc()
 			pass
 

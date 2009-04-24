@@ -123,8 +123,13 @@ class BayTechCtrlC(PCUControl):
 
 		ssh_options="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no"
 		s = pxssh.pxssh()
-		if not s.login(self.host, self.username, self.password, ssh_options):
-			raise ExceptionPassword("Invalid Password")
+		try:
+			if not s.login(self.host, self.username, self.password, ssh_options):
+				raise ExceptionPassword("Invalid Password")
+		except pexpect.EOF:
+			raise ExceptionNoTransport("No Connection Possible")
+			
+			
 		# Otherwise, the login succeeded.
 
 		# Send a ctrl-c to the remote process.

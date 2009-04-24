@@ -159,6 +159,7 @@ def sync():
 		dbpcu.plc_pcu_stats = pcu
 	deleteExtra(l_pcus, PlcPCU, 'pcu_id', 'pcu_id')
 	deleteExtra(l_pcus, HistoryPCURecord, 'plc_pcuid', 'pcu_id')
+	deleteExtra(l_pcus, FindbadPCURecord, 'plc_pcuid', 'pcu_id')
 	session.flush()
 
 	print "sync nodes"
@@ -169,6 +170,7 @@ def sync():
 		dbnode.plc_node_stats = node
 	deleteExtra(l_nodes, PlcNode, 'hostname', 'hostname')
 	deleteExtra(l_nodes, HistoryNodeRecord, 'hostname', 'hostname')
+	deleteExtra(l_nodes, FindbadNodeRecord, 'hostname', 'hostname')
 	session.flush()
 
 	init()
@@ -176,6 +178,6 @@ def sync():
 	return
 
 if __name__ == '__main__':
-	profile.run('sync()')
+	sync()
 else:
 	init()

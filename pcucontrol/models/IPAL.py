@@ -21,7 +21,10 @@ class IPAL(PCUControl):
 			ret = s.recv(count, socket.MSG_DONTWAIT)
 		except socket.error, e:
 			if e[0] == errno.EAGAIN:
-				raise Exception(e[1])
+				#raise Exception(e[1])
+				raise ExceptionNotFound(e[1])
+			elif e[0] == errno.ETIMEDOUT:
+				raise ExceptionTimeout(e[1])
 			else:
 				# TODO: not other exceptions.
 				raise Exception(e)

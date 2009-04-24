@@ -364,8 +364,8 @@ case "$1" in
 		check_monitor_conf
 		check_monitor_schema_and_data
 
-		check_pg_hba $ZABBIX_DB_NAME $ZABBIX_DB_USER
-		check_user_and_db $ZABBIX_DB_NAME $ZABBIX_DB_USER
+		#check_pg_hba $ZABBIX_DB_NAME $ZABBIX_DB_USER
+		#check_user_and_db $ZABBIX_DB_NAME $ZABBIX_DB_USER
 
 		if [ -n "$WROTE_PG_CONFIG" ] ; then
 			# NOTE: restart db to enable access by users granted above.
@@ -375,8 +375,8 @@ case "$1" in
 			dialog "$MESSAGE"
 		fi
 
-		check_zabbix_schema_and_data
-		check_zabbix_templates_and_import
+		#check_zabbix_schema_and_data
+		#check_zabbix_templates_and_import
 
 
 		# create /etc/httpd/conf.d/monitorweb.conf
@@ -390,9 +390,9 @@ case "$1" in
 		start_tg_server
 
 		# START zabbix services.  SETUP default config files.
-		check_zab_server
-		check_zab_agentd
-		check_zab_webconfig
+		#check_zab_server
+		#check_zab_agentd
+		#check_zab_webconfig
 
 		result "$MESSAGE"
 	;;
@@ -428,8 +428,8 @@ case "$1" in
 		MESSAGE=$"Deleting databases..."
 		dialog "$MESSAGE"
 
-		dropdb -U postgres $ZABBIX_DB_NAME
-		dropuser -U postgres $ZABBIX_DB_USER
+		#dropdb -U postgres $ZABBIX_DB_NAME
+		#dropuser -U postgres $ZABBIX_DB_USER
 
 		dropdb -U postgres $MONITOR_DB_NAME
 		dropuser -U postgres $MONITOR_DB_USER
@@ -442,8 +442,8 @@ case "$1" in
 		dialog "$MESSAGE"
 
 		stop_tg_server
-		service zabbix_server stop
-		service zabbix_agentd stop
+		#service zabbix_server stop
+		#service zabbix_agentd stop
 		# TODO: is there anything to stop?
 		result "$MESSAGE"
 	;;
