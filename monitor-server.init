@@ -256,7 +256,7 @@ function create_httpd_conf ()
 # 	non-ssl session as non-ssl.  But it works.
 
 # NOTE: redirect path without trailing '/' to path with.  Favor SSL.
-Redirect /monitor https://${MONITOR_HOSTNAME}:${PLC_WWW_SSL_PORT}/monitor/
+Redirect /monitor https://${PLC_MONITOR_HOST}:${PLC_WWW_SSL_PORT}/monitor/
 
 # NOTE: this directive strips '/monitor/' from the requested path and pastes
 #       the remaining part to the end of the ProxyPass url below.  All TG urls

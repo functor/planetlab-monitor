@@ -8,9 +8,9 @@ import cherrypy
 # log = logging.getLogger("monitorweb.controllers")
 import re
 from monitor.database.info.model import *
-from monitor.database.zabbixapi.model import *
-from monitor.database.dborm import zab_session as session
-from monitor.database.dborm import zab_metadata as metadata
+#from monitor.database.zabbixapi.model import *
+#from monitor.database.dborm import zab_session as session
+#from monitor.database.dborm import zab_metadata as metadata
 from monitor_xmlrpc import MonitorXmlrpcServer
 
 from monitor import reboot
