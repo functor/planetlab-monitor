@@ -4,6 +4,7 @@ from distutils.core import setup
 
 packages=[	'monitor', 
 			'monitor.database', 
+			'monitor.Rpyc', 
 			'monitor.database.zabbixapi', 
 			'monitor.database.info', 
 			'monitor.sources', 
