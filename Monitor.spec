@@ -173,10 +173,14 @@ chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 install -D -m 755 RunlevelAgent.py $RPM_BUILD_ROOT/usr/bin/RunlevelAgent.py
 install -D -m 755 monitor-runlevelagent.init $RPM_BUILD_ROOT/%{_initrddir}/monitor-runlevelagent
 
+touch /var/log/server-deps.log
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%files server-deps
+/var/log/server-deps.log
 
 %files server
 %defattr(-,root,root)
