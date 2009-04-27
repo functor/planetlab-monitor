@@ -46,6 +46,28 @@ The client scripts handle account creation inside of a node.  This will
 include configuration setup for the monitoring agent running on the node.  It
 will also include any cron or init scripts needed to perform this kind of
 maintenance.
+######################################## Server Deps
+%package server-deps
+Summary: Monitor hooks for the PLC server.
+Group: Applications/System
+
+Requires: python
+Requires: python-setuptools-devel
+
+Requires: openssh-clients
+Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
+Requires: MySQL-python
+Requires: nmap
+
+#Requires: python-sqlalchemy
+#Requires: python-elixir
+#Requires: zabbix-client
+#Requires: zabbix-gui
+#Requires: zabbix-server
+
+%description server-deps
+The server side include all python modules and scripts needed to fully
 
 ######################################## Server
 %package server
@@ -53,21 +75,11 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
-#Requires: python-sqlalchemy
-#Requires: python-elixir
 
-Requires: openssh-clients
-Requires: perl-libwww-perl
-Requires: perl-IO-Socket-SSL 
-Requires: MySQL-python
+Requires: monitor-server-deps
 Requires: rt3 == 3.4.1
-Requires: nmap
 Requires: PLCWWW >= 4.2
 Requires: bootcd-planetlab-i386 >= 4.2
-
-#Requires: zabbix-client
-#Requires: zabbix-gui
-#Requires: zabbix-server
 
 %description server
 The server side include all python modules and scripts needed to fully
@@ -193,6 +205,10 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/RunlevelAgent.pyo
 /usr/bin/RunlevelAgent.pyc
 /%{_initrddir}/monitor-runlevelagent
+
+%post server-deps
+easy_install -UZ Elixir
+easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
