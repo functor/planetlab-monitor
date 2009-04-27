@@ -46,6 +46,29 @@ The client scripts handle account creation inside of a node.  This will
 include configuration setup for the monitoring agent running on the node.  It
 will also include any cron or init scripts needed to perform this kind of
 maintenance.
+######################################## Server Deps
+%package server-deps
+Summary: Monitor hooks for the PLC server.
+Group: Applications/System
+
+Requires: python
+Requires: python-setuptools-devel
+
+Requires: openssh-clients
+Requires: perl-libwww-perl
+Requires: perl-IO-Socket-SSL 
+Requires: MySQL-python
+Requires: nmap
+Requires: rt3
+
+#Requires: python-sqlalchemy
+#Requires: python-elixir
+#Requires: zabbix-client
+#Requires: zabbix-gui
+#Requires: zabbix-server
+
+%description server-deps
+The server side include all python modules and scripts needed to fully
 
 ######################################## Server
 %package server
@@ -53,21 +76,11 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
-#Requires: python-sqlalchemy
-#Requires: python-elixir
 
-Requires: openssh-clients
-Requires: perl-libwww-perl
-Requires: perl-IO-Socket-SSL 
-Requires: MySQL-python
-Requires: rt3 == 3.4.1
-Requires: nmap
+Requires: monitor-server-deps
+Requires: monitor-pcucontrol
 Requires: PLCWWW >= 4.2
 Requires: bootcd-planetlab-i386 >= 4.2
-
-#Requires: zabbix-client
-#Requires: zabbix-gui
-#Requires: zabbix-server
 
 %description server
 The server side include all python modules and scripts needed to fully
@@ -156,10 +169,15 @@ chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 install -D -m 755 RunlevelAgent.py $RPM_BUILD_ROOT/usr/bin/RunlevelAgent.py
 install -D -m 755 monitor-runlevelagent.init $RPM_BUILD_ROOT/%{_initrddir}/monitor-runlevelagent
 
+mkdir -p $RPM_BUILD_ROOT/var/log
+touch $RPM_BUILD_ROOT/var/log/server-deps.log
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%files server-deps
+/var/log/server-deps.log
 
 %files server
 %defattr(-,root,root)
@@ -189,6 +207,18 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/RunlevelAgent.pyc
 /%{_initrddir}/monitor-runlevelagent
 
+%post server-deps
+easy_install -UZ Elixir
+easy_install -UZ ElementTree
+easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+
+# NOTE: add the default xml stuff if it's not already in the default xml config.
+if ! grep '<category id="plc_monitor">' /etc/planetlab/default_config.xml ; then 
+    sed -i 's|<category id="plc_net">| <category id="plc_monitor">\n <name>Monitor Service Configuration</name>\n <description>Monitor</description>\n <variablelist>\n <variable id="enabled" type="boolean">\n <name>Enabled</name>\n <value>true</value>\n <description>Enable on this machine.</description>\n </variable>\n <variable id="email">\n <value></value>\n </variable>\n <variable id="dbpassword">\n <value></value>\n </variable>\n <variable id="host" type="hostname">\n <name>Hostname</name>\n <value>pl-virtual-06.cs.princeton.edu</value>\n <description>The fully qualified hostname.</description>\n </variable>\n <variable id="ip" type="ip">\n <name>IP Address</name>\n <value/>\n <description>The IP address of the monitor server.</description>\n </variable>\n </variablelist>\n </category>\n <category id="plc_net">|' /etc/planetlab/default_config.xml
+fi
+
+
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
 # 		an API server or so on.
@@ -199,7 +229,7 @@ rm -rf $RPM_BUILD_ROOT
 # TODO: Use the installed version of bootcd to create custom boot images. ( or, use the api now).
 
 # NOTE: generate the python defines from zabbix include files.
-php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
+#php /usr/share/%{name}/zabbix/getdefines.php > %{python_sitearch}/monitor/database/zabbixapi/defines.py
 
 # apply patches to zabbix
 #patch -d /var/www/html/zabbix/ -p0 < /usr/share/%{name}/zabbix/zabbix-auto-login.diff

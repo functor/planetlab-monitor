@@ -67,6 +67,8 @@ def main(hostnames, sitenames):
 			changed_lessthan(nodehist.last_changed, 1.0) and \
 			found_within(recent_actions, 'down_notice', 7.0) and \
 			not found_within(recent_actions, 'online_notice', 0.5):
+				# NOTE: chronicly flapping nodes will not get 'online' notices
+				# 		since, they are never up long enough to be 'good'.
 			    # NOTE: searching for down_notice proves that the node has
 				# 		gone through a 'down' state first, rather than just
 				# 		flapping through: good, offline, online, ...

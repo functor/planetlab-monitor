@@ -22,7 +22,10 @@ options_defaults['autosetup'] = False
 from elixir.statements import Statement
 from sqlalchemy import Sequence
 
-import defines
+try:
+	import defines
+except:
+	print "WARNING: no defines.py available"
 
 from monitor.database.dborm import zab_metadata, zab_session
 
