@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon Apr 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-2
+- merge from 2.0, remove more zabbix code, simplify install, etc.
+
 * Thu Apr 16 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-1
 - major merge from 2.0 branch.
 - ready to be updated with 4.3 and web changes.
@@ -348,6 +351,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 1
+%define taglevel 2
 
 %define version 3.0
