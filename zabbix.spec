@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon Apr 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-11
+- remove zabbix
+- improve install support
+- allow web to use monitor module in more cases.
+
 * Thu Apr 16 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-10
 - sync
 - cache

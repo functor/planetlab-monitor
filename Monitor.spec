@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 2.0
-%define taglevel 10
+%define taglevel 11
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -251,6 +251,11 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Mon Apr 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-11
+- remove zabbix
+- improve install support
+- allow web to use monitor module in more cases.
+
 * Thu Apr 16 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-10
 - sync
 - cache
