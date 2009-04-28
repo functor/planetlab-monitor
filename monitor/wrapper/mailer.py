@@ -3,6 +3,7 @@
 # Copyright (c) 2004  The Trustees of Princeton University (Trustees).
 #
 # Faiyaz Ahmed <faiyaza@cs.princeton.edu>
+# Stephen Soltesz <soltesz@cs.princeton.edu>
 #
 # $Id: mailer.py,v 1.10 2007/08/08 13:28:06 soltesz Exp $
 from emailTxt import *
@@ -352,18 +353,7 @@ if __name__=="__main__":
 	#email("[spam] bcc test from golf.cs.princeton.edu", 
 	#	  "It gets to both recipients", 
 	#	  "soltesz@cs.utk.edu")
-	#emailViaRT("rt via golf", 
-	#	  "It gets to both recipients", 
-	#	  "soltesz@cs.utk.edu")
-	email("Re: [PL #21323] TEST 7", 
-			   mailtxt.newbootcd_one[1] % {'hostname_list':"hostname list..."},
-			   [FROM])
-	#print "ticketid: %d" % id
-	#id = plc.siteId(["alice.cs.princeton.edu"])
-	#print id
-	#if id:
-   		#email('TEST', emailTxt.mailtxt.ssh % {'hostname': "ALICE.cs.princeton.edu"}, "tech-" + id + "@sites.planet-lab.org")
-	#else:
-	#	print "No dice."
-	#email("TEST111", "I'd like to see if this works anywhere", ["soltesz@cs.princeton.edu", "soltesz@cs.utk.edu"])
-	#print "mailer does nothing in main()"
+	emailViaRT("mail via RT", "Let's see if this succeeds...", [FROM])
+	#email("Re: [PL #21323] TEST 7", 
+	#		   mailtxt.newbootcd_one[1] % {'hostname_list':"hostname list..."},
+	#		   [FROM])
