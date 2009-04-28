@@ -413,12 +413,13 @@ def main():
 		try:
 			# Find the most recent record
 			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
+			if not fb_noderec: continue
+			fb_nodeinfo = fb_noderec.to_dict()
 		except:
 			print traceback.print_exc()
-			pass
+			continue
 
 		if config.listkeys:
-			fb_nodeinfo = fb_noderec.to_dict()
 			print "Primary keys available in the findbad object:"
 			for key in fb_nodeinfo.keys():
 				print "\t",key
@@ -431,7 +432,6 @@ def main():
 			if config.daysdown:
 				daysdown_print_nodeinfo(fb_nodeinfo, node)
 			else:
-				fb_nodeinfo = fb_noderec.to_dict()
 				if config.select:
 					if config.fields:
 						fields = config.fields.split(",")

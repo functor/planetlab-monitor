@@ -268,8 +268,8 @@ Redirect /monitor https://${PLC_MONITOR_HOST}:${PLC_WWW_SSL_PORT}/monitor/
     #Errorlog /var/log/httpd/monitorwebapp-error_log
     #Customlog /var/log/httpd/monitorwebapp-access_log common
 
-    ProxyPass http://127.0.0.1:8080/
-    ProxyPassReverse http://127.0.0.1:8080/
+    ProxyPass http://127.0.0.1:8082/
+    ProxyPassReverse http://127.0.0.1:8082/
 </Location>
 
 EOF
@@ -362,7 +362,6 @@ case "$1" in
 		check_user_and_db $MONITOR_DB_NAME $MONITOR_DB_USER
 		# WRITE default /etc/monitor.conf
 		check_monitor_conf
-		check_monitor_schema_and_data
 
 		#check_pg_hba $ZABBIX_DB_NAME $ZABBIX_DB_USER
 		#check_user_and_db $ZABBIX_DB_NAME $ZABBIX_DB_USER
@@ -374,6 +373,8 @@ case "$1" in
 			MESSAGE=$"Bootstrap Monitoring 2 (please wait...)"
 			dialog "$MESSAGE"
 		fi
+
+		check_monitor_schema_and_data
 
 		#check_zabbix_schema_and_data
 		#check_zabbix_templates_and_import
