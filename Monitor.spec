@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 2.0
-%define taglevel 11
+%define taglevel 12
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -251,6 +251,11 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Tue Apr 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-12
+- improve installation
+- improve nodequery defaults
+- add RT configuration check in mailer.py
+
 * Mon Apr 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-11
 - remove zabbix
 - improve install support

@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue Apr 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-12
+- improve installation
+- improve nodequery defaults
+- add RT configuration check in mailer.py
+
 * Mon Apr 27 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-2.0-11
 - remove zabbix
 - improve install support
