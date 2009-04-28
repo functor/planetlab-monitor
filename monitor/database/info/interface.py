@@ -1,4 +1,4 @@
-import bootman 		# debug nodes
+from monitor import bootman 		# debug nodes
 
 from monitor import reboot
 from monitor.common import *
