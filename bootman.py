@@ -26,6 +26,8 @@ from nodeconfig import network_config_to_str
 import traceback
 import config
 
+class ExceptionDoubleSSHError(Exception): pass
+
 import signal
 class Sopen(subprocess.Popen):
 	def kill(self, signal = signal.SIGTERM):
@@ -65,7 +67,8 @@ class NodeConnection:
 
 	def get_bootmanager_log(self):
 		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
-		os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
+		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
+		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
 		log = open("log/bm.%s.log" % self.node, 'r')
 		return log
 
@@ -232,7 +235,7 @@ class PlanetLabSession:
 			if ret != 0:
 				print "\tFAILED TWICE"
 				#sys.exit(1)
-				raise Exception("Failed twice trying to login with updated ssh host key")
+				raise ExceptionDoubleSSHError("Failed twice trying to login with updated ssh host key")
 
 		t1 = time.time()
 		# KILL any already running servers.
@@ -348,6 +351,10 @@ def reboot(hostname, config=None, forced_action=None):
 			session = PlanetLabSession(node, False, True)
 		else:
 			session = PlanetLabSession(node, config.nosetup, config.verbose)
+	except ExceptionDoubleSSHError, e:
+		msg = "ERROR setting up session for %s" % hostname
+		print msg
+		return False
 	except Exception, e:
 		msg = "ERROR setting up session for %s" % hostname
 		print msg
@@ -365,10 +372,14 @@ def reboot(hostname, config=None, forced_action=None):
 		try:
 			time.sleep(session.timeout*4)
 			conn = session.get_connection(config)
+		except EOFError:
+			# failed twice... no need to report this really, it's just in a
+			# weird state...
+			return False
 		except:
 			print traceback.print_exc()
 			from nodecommon import email_exception
-			email_exception()
+			email_exception(node)
 			return False
 
 	if forced_action == "reboot":

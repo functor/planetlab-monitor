@@ -296,11 +296,12 @@ class IPAL(PCUControl):
 
 		try:
 			# TODO: make sleep backoff, before stopping.
-			time.sleep(4)
+			time.sleep(8)
 			ret = s.recv(count, socket.MSG_DONTWAIT)
 		except socket.error, e:
 			if e[0] == errno.EAGAIN:
-				raise Exception(e[1])
+				#raise Exception(e[1])
+				raise ExceptionNotFound(e[1])
 			else:
 				# TODO: not other exceptions.
 				raise Exception(e)
@@ -321,6 +322,8 @@ class IPAL(PCUControl):
 			if e[0] == errno.ECONNREFUSED:
 				# cannot connect to remote host
 				raise Exception(e[1])
+			elif e[0] == errno.ETIMEDOUT:
+				raise ExceptionTimeout(e[1])
 			else:
 				# TODO: what other conditions are there?
 				raise Exception(e)
