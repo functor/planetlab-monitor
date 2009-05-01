@@ -135,15 +135,15 @@ class SSHKnownHosts:
 		if type(host) == type(""): host = [host]
 
 		# get the node(s) info
-		nodes = self.api.GetNodes(self.auth,host,["hostname","ssh_rsa_key","nodenetwork_ids"])
+		nodes = self.api.GetNodes(self.auth,host,["hostname","ssh_rsa_key","interface_ids"])
 
 		# for each node's node network, update the self.nodenetworks cache
 		nodenetworks = []
 		for node in nodes:
-			for net in node["nodenetwork_ids"]:
+			for net in node["interface_ids"]:
 				nodenetworks.append(net)
 
-		plcnodenetworks = self.api.GetNodeNetworks(self.auth,nodenetworks,["nodenetwork_id","ip"])
+		plcnodenetworks = self.api.GetInterfaces(self.auth,nodenetworks,["nodenetwork_id","ip"])
 		for n in plcnodenetworks:
 			self.nodenetworks[n["nodenetwork_id"]]=n
 		return nodes
@@ -152,10 +152,10 @@ class SSHKnownHosts:
 		host = node['hostname']
 		key = node['ssh_rsa_key']
 
-		nodenetworks = node['nodenetwork_ids']
+		nodenetworks = node['interface_ids']
 		if len(nodenetworks)==0: return (host, None, None, None)
 
-		# the [0] subscript to node['nodenetwork_ids'] means
+		# the [0] subscript to node['interface_ids'] means
 		# that this function wont work with multihomed nodes
 		l_nw = self.nodenetworks.get(nodenetworks[0],None)
 		if l_nw is None: return (host, None, None, None)

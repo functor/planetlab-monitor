@@ -97,10 +97,10 @@ for site in plcdb:
 
 	for node in nodes:
 		hn = node['hostname']
-		if len(node['nodenetwork_ids']) == 0:
+		if len(node['interface_ids']) == 0:
 			continue
 
-		ip = netid2ip[node['nodenetwork_ids'][0]]
+		ip = netid2ip[node['interface_ids'][0]]
 
 		if lon_x is not -1 and lat_y is not -1:
 			coords="%s,%s" % (lon_x, lat_y)

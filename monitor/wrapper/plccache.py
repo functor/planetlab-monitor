@@ -139,7 +139,7 @@ def sync():
 	l_nodes = plc.api.GetNodes({'peer_id':None}, 
 						['hostname', 'node_id', 'ports', 'site_id', 'boot_state',
 						 'version', 'last_updated', 'date_created', 'key',
-						 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
+						 'last_contact', 'pcu_ids', 'interface_ids'])
 	l_pcus = plc.api.GetPCUs()
 
 	print "sync sites"

@@ -134,7 +134,7 @@ for email in email_list:
 									  'model': node['model'],
 									  'hostname' : node['hostname'],
 									  'version' : node['version']})
-				nnets = api.GetNodeNetworks(node['nodenetwork_ids'])
+				nnets = api.GetInterfaces(node['interface_ids'])
 				for nnet in nnets:
 					del nnet['nodenetwork_id']
 					del nnet['nodenetwork_setting_ids']

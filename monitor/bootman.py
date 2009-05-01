@@ -813,7 +813,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 				args = {}
 				try:
 					node = plccache.GetNodeByName(hostname)
-					net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
+					net = api.GetInterfaces(node['interface_ids'])[0]
 				except:
 					email_exception()
 					print traceback.print_exc()
