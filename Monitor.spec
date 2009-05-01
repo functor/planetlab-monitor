@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 3
+%define taglevel 4
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -246,6 +246,11 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Fri May 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-4
+- Rough pass over monitor-3.0 to allow it to work with 4.3 API.
+- replaced GetNodeNetworks, nodeinterface_ids and using new bootstates
+- 'safeboot', 'failboot', 'reinstall', etc.
+
 * Tue Apr 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-3
 - same as 2.0-12 tag.
 
