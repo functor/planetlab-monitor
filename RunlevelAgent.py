@@ -76,12 +76,23 @@ class PLC:
     def __repr__(self):
         return self.api.__repr__()
 
+def extract_from(filename, pattern):
+	f = os.popen("grep -E %s %s" % (pattern, filename))
+	val = f.read().strip()
+	return val
+
+def check_running(commandname):
+	f = os.popen("ps ax | grep -E %s | grep -v grep" % (commandname))
+	val = f.read().strip()
+	return val
+	
+
 def main():
 
     f=open(SESSION_FILE,'r')
     session_str=f.read().strip()
     api = PLC(Auth(session=session_str), api_server_url)
-    # NOTE: should we rely on bootmanager for this functionality?
+	# NOTE: What should we do if this call fails?
     api.AuthCheck()
 
     try:
@@ -90,30 +101,36 @@ def main():
             env = sys.argv[1]
     except:
         traceback.print_exc()
-        pass
 
     while True:
-        # TODO: remove from output
-        print "reporting status: ", os.popen("uptime").read().strip()
+        #print "reporting status: ", os.popen("uptime").read().strip()
         try:
-            # NOTE: alternately, check other stuff in the environment to infer
-            # run_level
-            #     is BootManager running?
-            #     what is the boot_state at PLC?
-            #     does /vservers exist?
-            #     what about /tmp/source?
-            #     is BootManager in /tmp/source?
-            #     is /tmp/mnt/sysimg mounted?
-            #     how long have we been running?  if we were in safeboot and
-            #       still running, we're likely in failboot now.
-            #     length of runtime increases the certainty of inferred state.
-            #     
+            # NOTE: here we are inferring the runlevel by environmental
+			# 		observations.  We know how this process was started by the
+			# 		given command line argument.  Then in bootmanager
+			# 		runlevle, the bm.log gives information about the current
+			# 		activity.
+			# other options:
+			#   call plc for current boot state?
+			#   how long have we been running?
             if env == "bootmanager":
-                # if bm not running, and plc bootstate = boot, then
-                #api.ReportRunlevel({'run_level' : 'failboot'})
-                #api.ReportRunlevel({'run_level' : 'reinstall'})
-                # if bm not running, and plc bootstate = safeboot, then
-                api.ReportRunlevel({'run_level' : 'safeboot'})
+				bs_val = extract_from('/tmp/bm.log', 'Current boot state:').split()[3]
+				ex_val = extract_from('/tmp/bm.log', 'Exception')
+				fs_val = extract_from('/tmp/bm.log', 'mke2fs')
+				bm_val = check_running("BootManager.py")
+
+				if bs_val in ['diag', 'diagnose', 'safeboot', 'disabled', 'disable']:
+                	api.ReportRunlevel({'run_level' : 'safeboot'})
+
+				elif len(ex_val) > len("Exception"):
+                	api.ReportRunlevel({'run_level' : 'failboot'})
+
+				elif len(fs_val) > 0 and len(bm_val) > 0:
+                	api.ReportRunlevel({'run_level' : 'reinstall'})
+
+				else:
+                	api.ReportRunlevel({'run_level' : 'failboot'})
+
             elif env == "production":
                 api.ReportRunlevel({'run_level' : 'boot'})
             else:
@@ -124,7 +141,7 @@ def main():
 
         # TODO: change to a configurable value
         sys.stdout.flush()
-        time.sleep(60)
+        time.sleep(60*15)
 
 if __name__ == "__main__":
     main()
