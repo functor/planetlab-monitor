@@ -46,7 +46,7 @@ def check_node_state(rec, node):
 		last_contact = None
 
 	if boot_state == 'disable': boot_state = 'disabled'
-	if boot_state == 'diag': 	boot_state = 'diagnose'
+	if boot_state == 'diag' or boot_state == 'diagnose': boot_state = 'safeboot'
 
 	if len(rec.plc_node_stats['pcu_ids']) > 0:
 		node.haspcu = True
@@ -68,8 +68,8 @@ def check_node_state(rec, node):
 
 	if node_state == 'DEBUG' and node.status != 'monitordebug' and \
 								 node.status != 'disabled' and \
-								 node.status != 'diagnose':
-		if boot_state != 'disabled' and boot_state != 'diagnose':
+								 node.status != 'safeboot':
+		if boot_state != 'disabled' and boot_state != 'safeboot':
 
 			print "changed status from %s to monitordebug" % (node.status)
 			node.status = "monitordebug"
@@ -89,7 +89,7 @@ def check_node_state(rec, node):
 	#	  online -> good		after half a day
 	#	  offline -> down		after two days
 	#	  monitordebug -> down  after 30 days
-	#	  diagnose -> monitordebug after 60 days
+	#	  safeboot -> monitordebug after 60 days
 	#	  disabled -> down		after 60 days
 
 	if node.status == 'online' and changed_greaterthan(node.last_changed, 0.5):
@@ -107,7 +107,7 @@ def check_node_state(rec, node):
 		node.status = 'down'
 		# NOTE: do not reset last_changed, or you lose how long it's been down.
 
-	if node.status == 'diagnose' and changed_greaterthan(node.last_changed, 60):
+	if node.status == 'safeboot' and changed_greaterthan(node.last_changed, 60):
 		print "changed status from %s to down" % node.status
 		# NOTE: change an admin mode back into monitordebug after two months.
 		node.status = 'monitordebug'

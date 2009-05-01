@@ -58,26 +58,26 @@ def color_pcu_state(fbnode):
 		rb = values['reboot']
 		if rb == 0 or rb == "0":
 			return fbnode['pcu'] + "OK  "
-			#return fbnode['pcu'] + "OK  "
-			#return green(fbnode['pcu'])
 		elif "NetDown" == rb  or "Not_Run" == rb:
 			return fbnode['pcu'] + "DOWN"
-			#return yellow(fbnode['pcu'])
 		else:
 			return fbnode['pcu'] + "BAD "
-			#return red(fbnode['pcu'])
 	else:
-		#return red(fbnode['pcu'])
 		return fbnode['pcu'] + "BAD "
 
 def color_boot_state(l):
 	if    l == "dbg": return yellow("debg")
 	elif  l == "dbg ": return yellow("debg")
+	elif  l == "failboot": return yellow("debg")
 	elif  l == "diag": return lightblue(l)
+	elif  l == "diagnose": return lightblue(l)
+	elif  l == "safeboot": return lightblue(l)
 	elif  l == "disable": return red("dsbl")
+	elif  l == "disabled": return red("dsbl")
 	elif  l == "down": return red(l)
 	elif  l == "boot": return green(l)
 	elif  l == "rins": return blue(l)
+	elif  l == "reinstall": return blue(l)
 	else:
 		return l
 
