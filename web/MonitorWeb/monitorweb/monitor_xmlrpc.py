@@ -5,8 +5,11 @@ import turbogears
 from datetime import datetime, timedelta
 import time
 
-from monitor.database.info.model import *
-from monitor.database.info.interface import *
+try:
+	from monitor.database.info.model import *
+	from monitor.database.info.interface import *
+except:
+	pass
 
 try:
     from PLC.Parameter import Parameter, Mixed
@@ -120,6 +123,7 @@ class MonitorXmlrpcServer(object):
 	                   accepts=[],
 					   returns=Parameter(bool, 'True is successful'))
 	def upAndRunning(self):
+		""" This is a test """
 		return True
 
 	# SITES ------------------------------------------------------------
