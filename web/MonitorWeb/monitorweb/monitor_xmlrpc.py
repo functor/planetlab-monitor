@@ -8,6 +8,47 @@ import time
 from monitor.database.info.model import *
 from monitor.database.info.interface import *
 
+try:
+    from PLC.Parameter import Parameter, Mixed
+except:
+    def Parameter(a = None, b = None): pass
+    def Mixed(a = None, b = None, c = None): pass
+
+def export_to_docbook(**kwargs):
+
+    keywords = {
+        "group" : "Monitor",
+        "status" : "current",
+        "name": None,
+        "args": None,
+        "roles": [],
+        "accepts": [],
+        "returns": [],
+    }
+    def export(method):
+        def args():
+            # Inspect method. Remove self from the argument list.
+            max_args = method.func_code.co_varnames[0:method.func_code.co_argcount]
+            defaults = method.func_defaults
+            if defaults is None:
+                defaults = ()
+            min_args = max_args[0:len(max_args) - len(defaults)]
+
+            defaults = tuple([None for arg in min_args]) + defaults
+            return (min_args, max_args, defaults)
+
+        keywords['name'] = method.__name__
+        keywords['args'] = args
+        for arg in keywords:
+            method.__setattr__(arg, keywords[arg])
+
+        for arg in kwargs:
+            method.__setattr__(arg, kwargs[arg])
+        return method
+
+    return export
+
+
 class MonitorXmlrpcServerMethods:
 	@cherrypy.expose
 	def listMethods(self):
@@ -75,6 +116,9 @@ class MonitorXmlrpcServer(object):
 	# User-defined functions must use cherrypy.expose; turbogears.expose
 	# 	does additional checking of the response type that we don't want.
 	@cherrypy.expose
+	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
+	                   accepts=[],
+					   returns=Parameter(bool, 'True is successful'))
 	def upAndRunning(self):
 		return True
 
