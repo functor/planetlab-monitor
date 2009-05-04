@@ -121,15 +121,22 @@ class MonitorXmlrpcServer(object):
 	@cherrypy.expose
 	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
 	                   accepts=[],
-					   returns=Parameter(bool, 'True is successful'))
+					   returns=Parameter(bool, 'True if successful'))
 	def upAndRunning(self):
-		""" This is a test """
+		""" This call can indicate to a script whether the server is up
+		and running before trying any more sophisticated operations. """
 		return True
 
 	# SITES ------------------------------------------------------------
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(list, 'array of SiteStatus records'))
 	def getSiteStatus(self, auth):
+		""" This call returns a list that includes the status and observations 
+		of all sites, including those blacklisted.  At this time, there is no
+		indication which sites are blacklisted from this list. """
 		ret_list = []
 		sites = HistorySiteRecord.query.all()
 		for q in sites:
@@ -139,7 +146,12 @@ class MonitorXmlrpcServer(object):
 		return ret_list
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(bool, 'True on success.'))
 	def clearSitePenalty(self, auth, loginbase):
+		""" Rather than waiting for monitor to run automatically, this call
+			will manually clear a site's penalties. """
 		sitehist = SiteInterface.get_or_make(loginbase=loginbase)
 		sitehist.clearPenalty()
 		#sitehist.applyPenalty()
@@ -148,7 +160,12 @@ class MonitorXmlrpcServer(object):
 		return True
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(bool, 'True on success.'))
 	def increaseSitePenalty(self, auth, loginbase):
+		""" Rather than waiting for monitor to run automatically, this call
+			will manually increase a site's penalties."""
 		sitehist = SiteInterface.get_or_make(loginbase=loginbase)
 		sitehist.increasePenalty()
 		#sitehist.applyPenalty()
@@ -158,7 +175,13 @@ class MonitorXmlrpcServer(object):
 	# NODES ------------------------------------------------------------
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(list, 'array of NodeStatus records.'))
 	def getNodeStatus(self, auth):
+		""" This call returns a list of all nodes, including those
+			blacklisted.  The current observation and recorded status of each node
+			is returned."""
 		ret_list = []
 		sites = HistoryNodeRecord.query.all()
 		for q in sites:
@@ -168,14 +191,28 @@ class MonitorXmlrpcServer(object):
 		return ret_list
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(bool, 'True on success.'))
 	def getRecentActions(self, auth, loginbase=None, hostname=None):
+		""" Monitor takes various actions on sites (such as applying
+			penalties) and nodes (such as repairing a node installation via
+			BootManager).  As well, it makes a log of every email message sent
+			out, or believed to be sent.  This call returns a list of all actions,
+			filtered on site or for a specific node. """
 		ret_list = []
 		return ret_list
 
 	# BLACKLIST ------------------------------------------------------------
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
+	                   accepts=[Parameter(dict, "Auth struct")],
+					   returns=Parameter(bool, 'True on success.'))
 	def getBlacklist(self, auth):
+		""" Return a list of all nodes and sites that are excluded from
+		penalties.  Currently there is no way to exclude a node or site 
+		from being monitored. """
 		bl = BlacklistRecord.query.all()
 		ret_list = []
 		for q in bl:
@@ -184,20 +221,37 @@ class MonitorXmlrpcServer(object):
 			ret_list.append(d)
 
 		return ret_list
-		# datetime.datetime.fromtimestamp(time.mktime(time.strptime(mytime, time_format)))
 	
 	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct"), 
+					   			Parameter(str, "hostname"), 
+								Parameter(int, "expires number of seconds from time.now()")],
+					   returns=Parameter(bool, 'True on success.'))
 	def addHostToBlacklist(self, auth, hostname, expires=0):
+		""" Add a host to the blacklist, with an optional expiration time"""
 		bl = BlacklistRecord.findby_or_create(hostname=hostname, expires=expires)
 		return True
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct"),
+					   			Parameter(str, "loginbase"), 
+								Parameter(int, "expires number of seconds from time.now()")],
+					   returns=Parameter(bool, 'True on success.'))
 	def addSiteToBlacklist(self, auth, loginbase, expires=0):
+		""" Add a site to the blacklist, with an optional expiration time"""
 		bl = BlacklistRecord.findby_or_create(hostname=hostname, expires=expires)
 		return True
 
 	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct"),
+					   			Parameter(str, "loginbase"), 
+					   			Parameter(str, "hostname"),],
+					   returns=Parameter(bool, 'True on success.'))
 	def deleteFromBlacklist(self, auth, loginbase=None, hostname=None):
+		""" Remove a host or site from the blacklist """
 		if (loginbase==None and hostname == None) or (loginbase != None and hostname != None):
 			raise Exception("Please specify a single record to delete: either hostname or loginbase")
 		elif loginbase != None:
