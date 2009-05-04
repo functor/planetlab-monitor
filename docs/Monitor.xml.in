@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"@DOCBOOK-43@" [
+<!ENTITY Methods SYSTEM "Methods.xml">
+]>
+
+<book>
+  <bookinfo>
+    <title>PlanetLab Node Manager API Documentation</title>
+  </bookinfo>
+
+  <chapter id="Introduction">
+    <title>Introduction</title>
+
+    <para>The PlanetLab Node Manager API (NMAPI) is the interface through
+    which the slices access the Node API.</para>
+
+    <section id="Authentication">
+      <title>Authentication</title>
+
+	  <para>Authentication for NM operations is based on the identity of the
+	  connecting slice.  For slices whose roles are defined as
+	  'nm-controller', the target slice must be listed delegated and as
+	  controlled by the calling slice.</para>
+
+   </section>
+   <section id="Delegation">
+      <title>Delegation</title>
+	  <para> None </para>
+   </section>
+    <section id="Connection">
+      <title>Connection</title>
+
+	  <para>The NM XMLRPC server listens locally on every PlanetLab node at http://localhost:812.</para>
+	  <para>The NM XMLRPC server can be accessed remotely using an SSH connection through the nm-controller account.  Rather than a standard shell, a special command is run that forwards all standard input to the local XMLRPC server, essentially XML-RPC over ssh.</para>
+   </section>
+    <section id="Example">
+      <title>An Example using the PLC and NM API</title>
+
+	  <para>The nm-controller slice is given a stub account such that it can
+	  be accessed over ssh.  So rather than logging into NM server listens
+	  locally on every PlanetLab node at http://localhost:812.
+	  
+	  </para>
+      <programlisting>
+controller_slice_fields = {'name'      : 'princeton_mycontroller',
+                           'instantiation' : 'nm-controller',
+                           'url'           : 'http://www.yourhost.com', 
+                           'description'   : 'a brief description of this slice.', }
+controller_slice_id = api.AddSlices(plauth, controller_slice_fields)
+      </programlisting>
+
+	<para>After this, the controller owner, should both add users and nodes to
+	this slice.  As well, the controller slice is created using the standard
+	PlanetLab and NM mechanism.  So, wait at least 15 minutes before attempting 
+	to access the controller slice on any node.</para>
+
+	<para> Subsequently, slices that will be delegated to this controller will
+	be registered at PLC.  An example follows.
+	</para>
+
+	<programlisting>
+delegated_slice_fields = {'name'        : 'anothersite_mydelegated',
+                        'instantiation' : 'delegated',
+                        'url'           : 'http://www.yourhost.com', 
+                        'description'   : 'a brief description of this slice.', }
+delegated_slice_id = api.AddSlices(plauth, delegated_slice_fields)
+
+# Get ticket for this slice.
+ticket = api.GetSliceTicket(plauth, "princetondsl_solteszdelegated")
+	</programlisting>
+
+	<para>After the slice is registered with PLC, and your application has the
+	Ticket, the last step is to redeem the ticket by presenting it to the NM
+	through the nm-controller account.  The following code formats the message
+	correctly.</para>
+
+	<programlisting>
+# generate an XMLRPC request.
+print xmlrpclib.dumps((ticket,), 'Ticket')
+	</programlisting>
+
+	<para>Finally, this message must be sent to the NM using the controller
+	account.  It should be possible to create a program that creates the ssh
+	connection or to use a library that does this automatically such as: 
+	<ulink url="http://cheeseshop.python.org/pypi/pyXMLRPCssh/1.0-0">pyXMLRPCssh</ulink>
+	</para>
+
+	<para>
+	Or, you could use something much simpler.  Assuming the output from
+	<literal>dumps()</literal> above, is saved to a file called
+	<literal>ticket.txt</literal>, you could run a command like:
+	</para>
+
+	<programlisting>
+cat ticket.txt | ssh princeton_mycontroller@mynode.someuniversity.edu
+	</programlisting>
+	<para>
+	Alternately,
+	</para>
+	<programlisting>
+p = subprocess.Popen(['/usr/bin/ssh', 'princeton_mycontroller@mynode.someuniversity.edu'], 
+					stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+print >>p.stdin, xmlrpclib.dumps((ticket,), 'Ticket')
+p.stdin.close()
+print xmlrpclib.loads(p.stdout.read())
+p.wait() 
+	</programlisting>
+	<para>
+	The following is a stub to use as you would use the current
+	xmlrpclib.Server() object, but redirects the connection of SSH.
+	</para>
+	<programlisting>
+"""XML-RPC over SSH.
+
+	To use, create an XmlRpcOverSsh object like so:
+		>>> api = XmlRpcOverSsh('princeton_deisenst@planetlab-1.cs.princeton.edu')
+	and call methods as with the normal xmlrpclib.ServerProxy interface.
+"""
+
+from subprocess import PIPE, Popen
+from xmlrpclib import Fault, dumps, loads
+
+__all__ = ['XmlRpcOverSsh']
+
+
+class XmlRpcOverSsh:
+    def __init__(self, userAtHost):
+        self.userAtHost = userAtHost
+
+    def __getattr__(self, method):
+        return _Method(self.userAtHost, method)
+
+
+class _Method:
+    def __init__(self, userAtHost, method):
+        self.userAtHost = userAtHost
+        self.method = method
+
+    def __call__(self, *args):
+        p = Popen(['ssh', self.userAtHost], stdin=PIPE, stdout=PIPE)
+        stdout, stderr = p.communicate(dumps(args, self.method))
+        if stderr:
+            raise Fault(1, stderr)
+        else:
+            return loads(stdout)
+	</programlisting>
+
+   </section>
+
+  </chapter>
+
+  <chapter id="Methods">
+    <title>PlanetLab API Methods</title>
+    <para></para>
+
+    &Methods;
+  </chapter>
+
+</book>
+
+<!-- LocalWords:  PlanetLab API PLCAPI RPC HTTPS listMethods methodSignature
+-->
+<!-- LocalWords:  methodHelp multicall AuthMethod GetSession GnuPG Username GPG
+-->
+<!-- LocalWords:  AuthString AddPersonKey AddPeer UpdatePeer gpg
+-->
