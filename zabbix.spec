@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon May 04 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-5
+- add documentation hooks for adding in-line docs like NM and PLCAPI
+
 * Fri May 01 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-4
 - Rough pass over monitor-3.0 to allow it to work with 4.3 API.
 - replaced GetNodeNetworks, nodeinterface_ids and using new bootstates
@@ -359,6 +362,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 4
+%define taglevel 5
 
 %define version 3.0
