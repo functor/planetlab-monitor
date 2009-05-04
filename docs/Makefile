@@ -31,7 +31,7 @@ MONITOR_SOURCES = ../web/MonitorWeb/monitorweb/monitor_xmlrpc.py
 
 # path needs to mention PLCAPI/doc (for DocBook) and PLCAPI/ (for PLC.Parameter)
 Methods.xml: DocBookLocal.py $(MONITOR_SOURCES)
-	PYTHONPATH=..:../../PLCAPI:../../PLCAPI/doc ./DocBookLocal.py > $@
+	PYTHONPATH=..:../../PLCAPI:../../PLCAPI/doc:../web/MonitorWeb/monitorweb ./DocBookLocal.py > $@
 
 #
 # Documentation
