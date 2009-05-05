@@ -13,7 +13,9 @@
     <title>Introduction</title>
 
     <para>The PlanetLab Administrative-Monitor API (Admin-Mon) is the interface through
-    which the slices access the Node API.</para>
+    which PLC administrators access the Admin-Mon API.  Some functions are
+	also accessible to users with lower privileges. But, all users must have an account 
+	in the monitored PLC </para>
 
     <section id="Authentication">
       <title>Authentication</title>
@@ -25,7 +27,7 @@
     <section id="Connection">
       <title>Connection</title>
 
-	  <para>The Admin-Mon XMLRPC server listens at http://monitor.planet-lab.org:8082.</para>
+	  <para>The Admin-Mon XMLRPC server listens at http://PLC_MONITOR_HOST:8082/XMLRPC/</para>
 	  <para>The XMLRPC server can be accessed remotely using a standard Python XMLRPC shell.</para>
    </section>
     <section id="Example">
@@ -43,6 +45,8 @@ api  =  xmlrpclib.Server(API_SERVER, verbose=False, allow_none=True)
 if api.upAndRunning():
     for i in api.getSiteStatus(auth):
     	print i
+else:
+    print "Admin-Mon API is not running."
       </programlisting>
 
    </section>
