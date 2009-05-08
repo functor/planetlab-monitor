@@ -8,6 +8,10 @@
 #
 
 all: Monitor.html
+Monitor.html:
+	touch Monitor.html
+Monitor.pdf:
+	touch Monitor.pdf
 
 # XML - as opposed to SGML - requires an identifier - see 
 # http://www.docbook.org/tdg/en/html/appb.html
