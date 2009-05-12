@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue May 12 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-7
+- make docs a noop
+- fix for package name dependency
+- correct docs
+
 * Mon May 04 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-6
 - add improved docs to the latest build and tag.
 
@@ -365,6 +370,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 6
+%define taglevel 7
 
 %define version 3.0
