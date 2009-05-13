@@ -208,10 +208,10 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
-easy_install -UZ Elixir
-easy_install -UZ ElementTree
-easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install --build-directory /var/tmp -UZ Elixir
+easy_install --build-directory /var/tmp -UZ ElementTree
+easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 
 # NOTE: add the default xml stuff if it's not already in the default xml config.
 if ! grep '<category id="plc_monitor">' /etc/planetlab/default_config.xml ; then 
