@@ -146,6 +146,13 @@ def getAuthAPI():
 def getCachedAuthAPI():
 	return CachedPLC(auth.auth, auth.server)
 
+def getSessionAPI(session, server):
+	nodeauth = Auth(session=session)
+	return PLC(nodeauth.auth, server)
+def getUserAPI(username, password, server):
+	auth = Auth(username,password)
+	return PLC(auth.auth, server)
+
 def getTechEmails(loginbase):
 	"""
 		For the given site, return all user email addresses that have the 'tech' role.
