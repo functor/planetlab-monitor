@@ -46,7 +46,7 @@ if __name__ == '__main__':
 						help="""Force the recreation of the usb images.""")
 	parser = parsermodule.getParser(['defaults'], parser)
 
-	config = parsesrmodule.parse_args(parser)
+	config = parsermodule.parse_args(parser)
 
 	ret = {'url_list' : ''} 
 	for i in config.args:
