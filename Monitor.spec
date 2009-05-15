@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 7
+%define taglevel 8
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -247,6 +247,9 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Fri May 15 2009 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-3.0-8
+- first draft with sortable tables + checkpoint
+
 * Fri May 15 2009 Baris Metin <tmetin@sophia.inria.fr>
 - use plekit tables from plewww.
 - depend on plewww-plekit
