@@ -4,46 +4,70 @@ layout_params['page_title'] = "Monitor Node List"
 from monitor.util import diff_time
 from time import mktime
 from links import *
+
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
 	  xmlns:mochi="http://www.mochi.org">
 
-  <div py:match="item.tag == 'content'">
-  	<table width="100%">
-		<thead>
-			<tr>
-				<th><a href="${link('node', filter='boot')}">Prod(${fc['boot']})</a></th>
-				<th><a href="${link('node', filter='down')}">Down(${fc['down']})</a></th>
-				<th><a href="${link('node', filter='monitordebug')}">Errors(${fc['debug']})</a></th>
-				<th><a href="${link('node', filter='diagnose')}">Diagnose (${fc['diagnose']})</a></th>
-				<th><a href="${link('node', filter='disabled')}">Disabled (${fc['disabled']})</a></th>
-				<th><a href="${link('node', filter='neverboot')}">Never Booted(${fc['neverboot']})</a></th>
-				<!--th><a href="${link('node', filter='pending')}">Pending Reply(${fc['pending']})</a></th-->
-				<th><a href="${link('node', filter='all')}">All</a></th>
-			</tr>
-		</thead>
-		<tbody>
-		<tr>
-		<td colspan="7">
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
-			<thead>
-				<tr>
-					<th mochi:format="int"></th>
-					${nodewidget.display(node=None, header=True)}
-				</tr>
-			</thead>
-			<tbody>
-				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					${nodewidget.display(node=node, header=None)}
-				</tr>
-			</tbody>
-		</table>
-		</td>
-		</tr>
-		</tbody>
-	</table>
-  </div>
+<div py:match="item.tag == 'content'">
+
+  <script type="text/javascript">
+    function nodelist_paginator(opts) { plekit_table_paginator(opts, "nodelist"); }
+  </script>
+
+  <center>
+  <b py:content="'BOOT-PROD: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'boot'])"></b> | 
+  <b py:content="'BOOT-SAFEBOOT: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'safeboot'])"></b> | 
+  <b py:content="'BOOT-REINSTALL: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'reinstall'])"></b><br/>
+  </center>
+
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 rowstyle-alt colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+  <thead>
+
+    <tr class='pagesize_area'><td class='pagesize_area' colspan='8'>
+        <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
+            <input class='pagesize_input' type='text' id="nodelist_pagesize" value='25'
+                   onkeyup='plekit_pagesize_set("nodelist","nodelist_pagesize", 25);' 
+                   size='3' maxlength='3' />                                                          
+            <label class='pagesize_label'> items/page </label>                                     
+            <img class='reset' src="/planetlab/icons/clear.png" alt="reset visible size"           
+                 onmousedown='plekit_pagesize_reset("nodelist","nodelist_pagesize", 25);' />
+    </fieldset></form></td></tr>                                                                        
+    
+    <tr class='search_area'><td class='search_area' colspan='8'>
+        <div class='search'><fieldset>
+            <label class='search_label'> Search </label>                 
+            <input class='search_input' type='text' id='nodelist_search' 
+                   onkeyup='plekit_table_filter("nodelist","nodelist_search","nodelist_search_and");'
+                   size='self.search_width' maxlength='256' />                                            
+            <label>and</label>                                                                        
+            <input id='nodelist_search_and' class='search_and'                                        
+                   type='checkbox' checked='checked'                                                      
+                   onchange='plekit_table_filter("nodelist","nodelist_search","nodelist_search_and");' />
+            <img class='reset' src="/planetlab/icons/clear.png" alt="reset search"
+                 onmousedown='plekit_table_filter_reset("nodelist","nodelist_search","nodelist_search_and");' />
+    </fieldset></div></td></tr>
+    
+    <tr>
+      <th class="sortable plekit_table">Site</th>
+      <th class="sortable plekit_table">Ping</th>
+      <th class="sortable plekit_table">SSH</th>
+      <th class="sortable plekit_table">Status</th>
+      <th class="sortable plekit_table">pcu</th>
+      <th class="sortable plekit_table">Hostname</th>
+      <th class="sortable plekit_table">kernel</th>
+      <th class="sortable plekit_table">last_contact</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+      ${nodewidget.display(node=node, header=None)}
+    </tr>
+
+  </tbody>  
+</table>
+
+</div>
 
 </html>

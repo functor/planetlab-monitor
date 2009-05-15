@@ -7,9 +7,11 @@ from links import *
 <span xmlns:py="http://purl.org/kid/ns#">
 	<span py:if="header is not None">
 		<th>Site</th>
+                <th>Ping</th>
+                <th>SSH</th>
+                <th>Boot Status</th>
 		<th>pcu</th>
 		<th>Hostname</th>
-		<!--th>ssh</th-->
 		<th>kernel</th>
 		<th>last_contact</th>
 	</span>
@@ -17,6 +19,9 @@ from links import *
 		<td id="site-${node.site.status}">
 			<a href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
 		</td>
+                <td py:content="node.ping_status">ping</td>
+                <td py:content="node.ssh_status">ssh</td>
+                <td py:content="node.plc_node_stats['boot_state']">boot</td>
 		<td width="20%" nowrap='true' align='center' id="status-${node.pcu_short_status}">
 			<div id="links">
 				<a class="info" py:if="'error' in node.pcu_short_status" 

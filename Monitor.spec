@@ -61,6 +61,7 @@ Requires: MySQL-python
 Requires: nmap
 Requires: rt3
 
+Requires: plewww-plekit
 #Requires: python-sqlalchemy
 #Requires: python-elixir
 #Requires: zabbix-client
@@ -246,6 +247,10 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Fri May 15 2009 Baris Metin <tmetin@sophia.inria.fr>
+- use plekit tables from plewww.
+- depend on plewww-plekit
+
 * Tue May 12 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-7
 - make docs a noop
 - fix for package name dependency

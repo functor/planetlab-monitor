@@ -4,7 +4,19 @@
     <title>${page_title}</title>
     <link href="static/css/style.css" type="text/css" rel="stylesheet" />
     <script type="text/javascript" src="tg_js/MochiKit.js"></script>
-    <script type="text/javascript" src="static/javascript/sortable_tables.js"></script>
+
+    <script type="text/javascript" src="/plekit/prototype/prototype.js"></script>
+
+    <script type="text/javascript" src="/plekit/tablesort/tablesort.js"></script>
+    <script type="text/javascript" src="/plekit/tablesort/customsort.js"></script>
+    <script type="text/javascript" src="/plekit/tablesort/paginate.js"></script>
+    <script type="text/javascript" src="/plekit/table/table.js"></script>
+    <link href="/plekit/table/table.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="/plekit/niftycorner/niftycube.js"></script>
+    <script type="text/javascript" src="/plekit/niftycorner/nifty_init.js"></script>
+    <script type="text/javascript"> Event.observe(window,"load", nifty_init); </script>
+
 
 	<!-- If in an iframe, then include this... -->
 	<?python from monitor import config ?>

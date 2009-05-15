@@ -10,53 +10,66 @@ from links import *
 	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
-  	<table width="100%">
-		<thead>
-			<tr>
-				<th><a href="${link('site', filter='good')}">Compliant(${fc['good']})</a></th>
-				<th><a href="${link('site', filter='down')}">Down(${fc['down']})</a></th>
-				<th><a href="${link('site', filter='new')}">New Sites(${fc['new']})</a></th>
-				<th><a href="${link('site', filter='pending')}">Disabled(${fc['pending']})</a></th>
-				<th><a href="${link('site', filter='all')}">All(${fc['all']})</a></th>
-			</tr>
-		</thead>
-		<tbody>
-		<tr>
-		<td colspan="5">
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
-			<thead>
-				<tr>
-					<th></th>
-					<th>Site name</th>
-					<th>Enabled</th>
-					<th>Penalty</th>
-					<th mochi:format="int">Slices/Max</th>
-					<th mochi:format="int">Nodes/Total</th>
-					<th>Last Change</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr py:for="i,site in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<td nowrap="true">
-						<div class='oneline'>
-						<a class='left' href="${link('pcuview', loginbase=site.loginbase)}">${site.loginbase}</a>
-						<a class='right' href="${plc_site_uri(site.loginbase)}">
-							<img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
-						</div>
-					</td>
-					<td py:content="site.enabled"></td>
-					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
-					<td>${site.slices_used}/${site.slices_total}</td>
-					<td>${site.nodes_up} / ${site.nodes_total}</td>
-					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
-				</tr>
-			</tbody>
-		</table>
-		</td>
-		</tr>
-		</tbody>
-	</table>
+
+
+  <script type="text/javascript">
+    function sitelist_paginator(opts) { plekit_table_paginator(opts, "sitelist"); }
+  </script>
+
+<table id="sitelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 rowstyle-alt colstyle-alt no-arrow paginationcallback-sitelist_paginator max-pages-10 paginate-25">
+  <thead>
+
+    <tr class='pagesize_area'><td class='pagesize_area' colspan='5'>
+        <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
+            <input class='pagesize_input' type='text' id="sitelist_pagesize" value='25'
+                   onkeyup='plekit_pagesize_set("sitelist","sitelist_pagesize", 25);' 
+                   size='3' maxlength='3' />                                                          
+            <label class='pagesize_label'> items/page </label>                                     
+            <img class='reset' src="/planetlab/icons/clear.png" alt="reset visible size"           
+                 onmousedown='plekit_pagesize_reset("sitelist","sitelist_pagesize", "sitelist_search_and");' />
+    </fieldset></form></td></tr>                                                                        
+    
+    <tr class='search_area'><td class='search_area' colspan='5'>
+        <div class='search'><fieldset>
+            <label class='search_label'> Search </label>                 
+            <input class='search_input' type='text' id='sitelist_search' 
+                   onkeyup='plekit_table_filter("sitelist","sitelist_search","sitelist_search_and");'
+                   size='self.search_width' maxlength='256' />                                            
+            <label>and</label>                                                                        
+            <input id='sitelist_search_and' class='search_and'                                        
+                   type='checkbox' checked='checked'                                                      
+                   onchange='plekit_table_filter("sitelist","sitelist_search","sitelist_search_and");' />
+            <img class='reset' src="/planetlab/icons/clear.png" alt="reset search"
+                 onmousedown='plekit_table_filter_reset("sitelist","sitelist_search","sitelist_search_and");' />
+    </fieldset></div></td></tr>
+    
+    <tr>
+      <th class="sortable plekit_table">Site Name</th>        
+      <th class="sortable plekit_table">Enabled</th>         
+      <th class="sortable plekit_table">Penalty</th>    
+      <th class="sortable plekit_table">Slices/Max</th>      
+      <th class="sortable plekit_table">Nodes/Total</th>
+      <th class="sortable plekit_table">Last Change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr py:for="i,site in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+      <td nowrap="true">
+	<div class='oneline'>
+	  <a class='left' href="${link('pcuview', loginbase=site.loginbase)}">${site.loginbase}</a>
+	  <a class='right' href="${plc_site_uri(site.loginbase)}">
+	    <img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
+	</div>
+      </td>
+      <td py:content="site.enabled"></td>
+      <td id="site-${site.penalty_level}">${site.penalty_level}</td>
+      <td>${site.slices_used}/${site.slices_total}</td>
+      <td>${site.nodes_up} / ${site.nodes_total}</td>
+      <td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+    </tr>
+  </tbody>  
+</table>
+
   </div>
 
 </html>

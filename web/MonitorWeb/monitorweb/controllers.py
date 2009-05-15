@@ -164,10 +164,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	def nodeview(self, hostname=None):
 		nodequery=[]
 		if hostname:
-			for node in FindbadNodeRecord.get_latest_by(hostname=hostname):
-				# NOTE: reformat some fields.
-				prep_node_for_display(node)
-				nodequery += [node]
+                        node = FindbadNodeRecord.get_latest_by(hostname=hostname)
+                        # NOTE: reformat some fields.
+                        prep_node_for_display(node)
+                        nodequery += [node]
 
 		return self.pcuview(None, None, hostname) # dict(nodequery=nodequery)
 
