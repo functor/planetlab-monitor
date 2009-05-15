@@ -60,15 +60,18 @@ class NodeConnection:
 			return "unknown"
 
 	def get_dmesg(self):
+		t_stamp = time.strftime("%Y-%m-%d-%H:%M")
 		self.c.modules.os.system("dmesg > /var/log/dmesg.bm.log")
-		download(self.c, "/var/log/dmesg.bm.log", "log/dmesg.%s.log" % self.node)
+		download(self.c, "/var/log/dmesg.bm.log", "log/history/%s-dmesg.%s.log" % (t_stamp, self.node))
+		os.system("cp log/history/%s-dmesg.%s.log log/dmesg.%s.log" % (t_stamp, self.node, self.node))
 		log = open("log/dmesg.%s.log" % self.node, 'r')
 		return log
 
 	def get_bootmanager_log(self):
-		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
+		t_stamp = time.strftime("%Y-%m-%d-%H:%M")
+		download(self.c, "/tmp/bm.log", "log/history/%s-bm.%s.log" % (t_stamp, self.node))
 		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
-		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
+		os.system("cp log/history/%s-bm.%s.log log/bm.%s.log" % (t_stamp, self.node, self.node))
 		log = open("log/bm.%s.log" % self.node, 'r')
 		return log
 
