@@ -137,6 +137,8 @@ def prep_node_for_display(node):
 		if node.site is None:
 			# TODO: need a cleaner fix for this...
 			node.site = HistorySiteRecord.by_loginbase("pl")
+                        if not node.site:
+                                node.site = HistorySiteRecord.by_loginbase("ple")
 			
 
 	node.history = HistoryNodeRecord.by_hostname(node.hostname)
@@ -193,7 +195,11 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			elif node.history.status in ['debug', 'monitordebug']:
 				filtercount['debug'] += 1
 			else:
-				filtercount[node.history.status] += 1
+                                # TODO: need a better fix. filtercount
+                                # doesn't maps to GetBootStates() on
+                                # 4.3 so this one fails quite often.
+                                if filtercount.has_key(node.history.status):
+                                        filtercount[node.history.status] += 1
 				
 			## NOTE: count filters
 			#if node.observed_status != 'DOWN':
