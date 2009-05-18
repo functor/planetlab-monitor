@@ -40,7 +40,7 @@ def zabbix_event_ack_link(eventid):
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,node in enumerate(query)">
 					<td></td>
 					<td><a href="${link('pcuview', loginbase=node[0])}">${node[0]}</a></td>
 					<td nowrap="true" py:content="node[1]"></td>

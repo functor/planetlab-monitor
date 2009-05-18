@@ -23,7 +23,7 @@ from links import *
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,site in enumerate(sitequery)">
 					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
@@ -52,7 +52,7 @@ from links import *
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,node in enumerate(nodequery)">
 					<td></td>
 					<td id="node-${node.observed_status}" nowrap="true">
 						<a href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>

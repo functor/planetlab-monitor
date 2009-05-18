@@ -28,7 +28,7 @@ from links import *
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,site in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,site in enumerate(query)">
 					<td></td>
 					<td nowrap="true">
 						<div class='oneline'>

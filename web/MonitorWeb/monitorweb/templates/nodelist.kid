@@ -61,7 +61,7 @@ from links import *
   </tr>
   </thead>
   <tbody>
-    <tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+    <tr py:for="i,node in enumerate(query)">
       ${nodewidget.display(node=node, header=None)}
     </tr>
 
