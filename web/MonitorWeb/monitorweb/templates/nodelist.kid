@@ -22,10 +22,10 @@ from links import *
   <b py:content="'BOOT-REINSTALL: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'reinstall'])"></b><br/>
   </center>
 
-<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
   <thead>
 
-    <tr class='pagesize_area'><td class='pagesize_area' colspan='8'>
+    <tr class='pagesize_area'><td class='pagesize_area' colspan='9'>
         <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
             <input class='pagesize_input' type='text' id="nodelist_pagesize" value='25'
                    onkeyup='plekit_pagesize_set("nodelist","nodelist_pagesize", 25);' 
@@ -35,7 +35,7 @@ from links import *
                  onmousedown='plekit_pagesize_reset("nodelist","nodelist_pagesize", 25);' />
     </fieldset></form></td></tr>                                                                        
     
-    <tr class='search_area'><td class='search_area' colspan='8'>
+    <tr class='search_area'><td class='search_area' colspan='9'>
         <div class='search'><fieldset>
             <label class='search_label'> Search </label>                 
             <input class='search_input' type='text' id='nodelist_search' 
@@ -50,13 +50,13 @@ from links import *
     </fieldset></div></td></tr>
     
     <tr>
+      <th class="sortable plekit_table">ID</th>
+      <th class="sortable plekit_table">Hostname</th>
       <th class="sortable plekit_table">Site</th>
       <th class="sortable plekit_table">Ping</th>
       <th class="sortable plekit_table">SSH</th>
       <th class="sortable plekit_table">Stat</th>
       <th class="sortable plekit_table">pcu</th>
-      <th class="sortable plekit_table">Hostname</th>
-      <th class="sortable plekit_table">ID</th>
       <th class="sortable plekit_table">kernel</th>
       <th class="sortable plekit_table">Last_contact</th>
   </tr>
