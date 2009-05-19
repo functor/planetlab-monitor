@@ -17,7 +17,7 @@ from links import *
     function pculist_paginator(opts) { plekit_table_paginator(opts, "pculist"); }
   </script>
 
-<table id="pculist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 rowstyle-alt colstyle-alt no-arrow paginationcallback-pculist_paginator max-pages-10 paginate-25">
+<table id="pculist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-pculist_paginator max-pages-10 paginate-25">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='5'>
@@ -54,7 +54,7 @@ from links import *
     </tr>
   </thead>
   <tbody>
-    <tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
+    <tr py:for="i,node in enumerate(query)">
       <td nowrap='true'>
 	<div class='oneline'>
 	  <a class='left' href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>

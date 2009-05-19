@@ -22,7 +22,7 @@ from links import *
   <b py:content="'BOOT-REINSTALL: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'reinstall'])"></b><br/>
   </center>
 
-<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 rowstyle-alt colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='8'>
@@ -53,11 +53,12 @@ from links import *
       <th class="sortable plekit_table">Site</th>
       <th class="sortable plekit_table">Ping</th>
       <th class="sortable plekit_table">SSH</th>
-      <th class="sortable plekit_table">Status</th>
+      <th class="sortable plekit_table">Stat</th>
       <th class="sortable plekit_table">pcu</th>
       <th class="sortable plekit_table">Hostname</th>
+      <th class="sortable plekit_table">ID</th>
       <th class="sortable plekit_table">kernel</th>
-      <th class="sortable plekit_table">last_contact</th>
+      <th class="sortable plekit_table">Last_contact</th>
   </tr>
   </thead>
   <tbody>

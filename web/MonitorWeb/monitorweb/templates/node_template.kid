@@ -12,6 +12,7 @@ from links import *
                 <th>Boot Status</th>
 		<th>pcu</th>
 		<th>Hostname</th>
+                <th>ID</th>
 		<th>kernel</th>
 		<th>last_contact</th>
 	</span>
@@ -36,6 +37,7 @@ from links import *
 		</td>
 		<td id="node-${node.observed_status}" nowrap="true">
 			<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
+                <td py:content="node.plc_node_stats['node_id']">node_id</td>
 		<td nowrap="true" py:content="node.kernel"></td>
 		<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
 	</span>
