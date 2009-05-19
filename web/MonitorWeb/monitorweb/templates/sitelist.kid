@@ -19,17 +19,17 @@ from links import *
 <table id="sitelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-sitelist_paginator max-pages-10 paginate-25">
   <thead>
 
-    <tr class='pagesize_area'><td class='pagesize_area' colspan='5'>
+    <tr class='pagesize_area'><td class='pagesize_area' colspan='6'>
         <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
             <input class='pagesize_input' type='text' id="sitelist_pagesize" value='25'
                    onkeyup='plekit_pagesize_set("sitelist","sitelist_pagesize", 25);' 
                    size='3' maxlength='3' />                                                          
             <label class='pagesize_label'> items/page </label>                                     
             <img class='reset' src="/planetlab/icons/clear.png" alt="reset visible size"           
-                 onmousedown='plekit_pagesize_reset("sitelist","sitelist_pagesize", "sitelist_search_and");' />
+                 onmousedown='plekit_pagesize_reset("sitelist","sitelist_pagesize", 999);' />
     </fieldset></form></td></tr>                                                                        
     
-    <tr class='search_area'><td class='search_area' colspan='5'>
+    <tr class='search_area'><td class='search_area' colspan='6'>
         <div class='search'><fieldset>
             <label class='search_label'> Search </label>                 
             <input class='search_input' type='text' id='sitelist_search' 

@@ -14,9 +14,13 @@ from links import *
                 <th>Boot Status</th>
 		<th>pcu</th>
 		<th>kernel</th>
+                <th>BootCD</th>
 		<th>last_contact</th>
 	</span>
 	<span py:if="node is not None">
+<?python
+print dir(node)
+?>
                 <td py:content="node.plc_node_stats['node_id']">node_id</td>
 		<td nowrap="true">
 		  <a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
@@ -38,8 +42,8 @@ from links import *
 			  py:content="node.pcu_short_status">Reboot Status</span>
 		  </div>
 		</td>
-
 		<td nowrap="true" py:content="node.kernel"></td>
+		<td nowrap="true" py:content="node.bootcd_version"></td>
 		<td  id="node-${node.observed_status}" py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
 	</span>
 </span>
