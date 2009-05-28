@@ -644,7 +644,7 @@ To help us return this machine to running order, please verify that the register
 
 You may update the node's network information at the link below:
 
-    https://www.planet-lab.org/db/nodes/node_networks.php?id=%(nodenetwork_id)s
+    https://www.planet-lab.org/db/nodes/node_networks.php?id=%(interface_id)s
 
 If you have any questions, please feel free to contact us at PlanetLab Support (support@planet-lab.org).
 

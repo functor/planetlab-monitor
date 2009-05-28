@@ -20,7 +20,7 @@ def main():
 	for h in d_nodes:
 		host = d_nodes[h]
 		for nw_id in host['interface_ids']:
-			l_nw = plc.getNodeNetworks({'nodenetwork_id': host['interface_ids']})
+			l_nw = plc.getNodeNetworks({'interface_id': host['interface_ids']})
 			bwlimit[h] = []
 			for nw in l_nw:
 				if nw['bwlimit'] != None and nw['bwlimit'] < 500000:

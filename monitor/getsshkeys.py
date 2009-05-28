@@ -143,9 +143,9 @@ class SSHKnownHosts:
 			for net in node["interface_ids"]:
 				nodenetworks.append(net)
 
-		plcnodenetworks = self.api.GetInterfaces(self.auth,nodenetworks,["nodenetwork_id","ip"])
+		plcnodenetworks = self.api.GetInterfaces(self.auth,nodenetworks,["interface_id","ip"])
 		for n in plcnodenetworks:
-			self.nodenetworks[n["nodenetwork_id"]]=n
+			self.nodenetworks[n["interface_id"]]=n
 		return nodes
 
 	def _record_from_node(self, node, nokey_list=None):

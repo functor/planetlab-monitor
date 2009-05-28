@@ -135,24 +135,24 @@ class SSHKnownHosts:
 		if type(host) == type(""): host = [host]
 
 		# get the node(s) info
-		nodes = self.api.GetNodes(self.auth,host,["hostname","ssh_rsa_key","nodenetwork_ids"])
+		nodes = self.api.GetNodes(self.auth,host,["hostname","ssh_rsa_key","interface_ids"])
 
 		# for each node's node network, update the self.nodenetworks cache
 		nodenetworks = []
 		for node in nodes:
-			for net in node["nodenetwork_ids"]:
+			for net in node["interface_ids"]:
 				nodenetworks.append(net)
 
-		plcnodenetworks = self.api.GetNodeNetworks(self.auth,nodenetworks,["nodenetwork_id","ip"])
+		plcnodenetworks = self.api.GetInterfaces(self.auth,nodenetworks,["interface_id","ip"])
 		for n in plcnodenetworks:
-			self.nodenetworks[n["nodenetwork_id"]]=n
+			self.nodenetworks[n["interface_id"]]=n
 		return nodes
 
 	def _record_from_node(self, node, nokey_list=None):
 		host = node['hostname']
 		key = node['ssh_rsa_key']
 
-		nodenetworks = node['nodenetwork_ids']
+		nodenetworks = node['interface_ids']
 		if len(nodenetworks)==0: return (host, None, None, None)
 
 		# the [0] subscript to node['interface_ids'] means

@@ -42,6 +42,8 @@ api = plc.getAuthAPI()
 fb = None
 
 
+class ExceptionDoubleSSHError(Exception): pass
+
 class NodeConnection:
 	def __init__(self, connection, node, config):
 		self.node = node
@@ -248,7 +250,7 @@ class PlanetLabSession:
 			if ret != 0:
 				print "\tFAILED TWICE"
 				#sys.exit(1)
-				raise Exception("Failed twice trying to login with updated ssh host key")
+				raise ExceptionDoubleSSHError("Failed twice trying to login with updated ssh host key")
 
 		t1 = time.time()
 		# KILL any already running servers.
@@ -346,9 +348,11 @@ class DebugInterface:
 				self.session = PlanetLabSession(self.hostname, False, True)
 			else:
 				self.session = PlanetLabSession(self.hostname, config.nosetup, config.verbose)
-		except Exception, e:
+		except ExceptionDoubleSSHError, e:
 			msg = "ERROR setting up session for %s" % self.hostname
 			print msg
+			return False
+		except Exception, e:
 			traceback.print_exc()
 			email_exception(msg)
 			return False
@@ -361,6 +365,10 @@ class DebugInterface:
 			try:
 				time.sleep(self.session.timeout*5)
 				conn = self.session.get_connection(config)
+			except EOFError:
+				# failed twice... no need to report this really, it's just in a
+				# weird state...
+				return False
 			except:
 				traceback.print_exc()
 				email_exception(self.hostname)
@@ -399,7 +407,7 @@ class DebugInterface:
 				]:
 			sequences.update({n : "restart_bootmanager_boot"})
 
-		#	conn.restart_bootmanager('rins')
+		#	conn.restart_bootmanager('reinstall')
 		for n in [ "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done",
 				"bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
@@ -428,7 +436,7 @@ class DebugInterface:
 		# repair_node_keys
 		sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
 
-		#   conn.restart_node('rins')
+		#   conn.restart_node('reinstall')
 		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done",
 				"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done",
@@ -642,7 +650,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 	if type(conn) == type(False): return False
 
 	#if forced_action == "reboot":
-	#	conn.restart_node('rins')
+	#	conn.restart_node('reinstall')
 	#	return True
 
 	boot_state = conn.get_boot_state()
@@ -731,16 +739,16 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 			conn.restart_bootmanager('boot')
 		elif sequences[s] == "restart_bootmanager_rins":
 			print "...Restarting BootManager.py on %s "%hostname 
-			conn.restart_bootmanager('rins')
+			conn.restart_bootmanager('reinstall')
 		elif sequences[s] == "restart_node_rins":
-			conn.restart_node('rins')
+			conn.restart_node('reinstall')
 		elif sequences[s] == "restart_node_boot":
 			conn.restart_node('boot')
 		elif sequences[s] == "repair_node_keys":
 			if conn.compare_and_repair_nodekeys():
 				# the keys either are in sync or were forced in sync.
 				# so try to reboot the node again.
-				conn.restart_bootmanager('rins')
+				conn.restart_bootmanager('reinstall')
 				pass
 			else:
 				# there was some failure to synchronize the keys.
@@ -824,7 +832,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 
 				args['hostname'] = hostname
 				args['network_config'] = nodenet_str
-				args['nodenetwork_id'] = net['nodenetwork_id']
+				args['interface_id'] = net['interface_id']
 
 				sitehist.sendMessage('baddns_notice', **args)
 

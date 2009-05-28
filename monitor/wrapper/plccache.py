@@ -78,8 +78,16 @@ def init():
 	l_nodes = [ s.plc_node_stats for s in dbnodes ]
 
 	print "plcpcu"
-	dbpcus = PlcPCU.query.all()
-	l_pcus = [ s.plc_pcu_stats for s in dbpcus ]
+	dbpcus = PlcPCU2.query.all()
+	l_pcus = []
+	for s in dbpcus:
+		pcu = {}
+		for k in ['username', 'protocol', 'node_ids', 'ip', 
+				  'pcu_id', 'hostname', 'site_id', 'notes', 
+				  'model', 'password', 'ports']:
+			pcu[k] = getattr(s, k)
+		l_pcus.append(pcu)
+	#l_pcus = [ s.plc_pcu_stats for s in dbpcus ]
 
 	print "dsites_from_lsites"
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
@@ -154,10 +162,13 @@ def sync():
 
 	print "sync pcus"
 	for pcu in l_pcus:
-		dbpcu = PlcPCU.findby_or_create(pcu_id=pcu['pcu_id'])
+		dbpcu = PlcPCU2.findby_or_create(pcu_id=pcu['pcu_id'])
 		dbpcu.date_checked = datetime.now()
-		dbpcu.plc_pcu_stats = pcu
-	deleteExtra(l_pcus, PlcPCU, 'pcu_id', 'pcu_id')
+		for key in pcu.keys():
+			print "setting %s  = %s" % (key, pcu[key])
+			setattr(dbpcu, key, pcu[key])
+
+	deleteExtra(l_pcus, PlcPCU2, 'pcu_id', 'pcu_id')
 	deleteExtra(l_pcus, HistoryPCURecord, 'plc_pcuid', 'pcu_id')
 	deleteExtra(l_pcus, FindbadPCURecord, 'plc_pcuid', 'pcu_id')
 	session.flush()

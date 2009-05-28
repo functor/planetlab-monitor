@@ -136,7 +136,7 @@ for email in email_list:
 									  'version' : node['version']})
 				nnets = api.GetInterfaces(node['interface_ids'])
 				for nnet in nnets:
-					del nnet['nodenetwork_id']
+					del nnet['interface_id']
 					del nnet['nodenetwork_setting_ids']
 					api06.AddNodeNetwork(id, nnet) 
     print ""

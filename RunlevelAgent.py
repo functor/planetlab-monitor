@@ -93,6 +93,7 @@ def main():
     session_str=f.read().strip()
     api = PLC(Auth(session=session_str), api_server_url)
     # NOTE: What should we do if this call fails?
+	# TODO: handle dns failure here.
     api.AuthCheck()
 
     try:

@@ -84,7 +84,6 @@ class PLC:
 	def __repr__(self):
 		return self.api.__repr__()
 
-api = PLC(auth.auth, auth.server)
 
 class CachedPLC(PLC):
 
@@ -131,6 +130,9 @@ class CachedPLC(PLC):
 				return method(self.auth, *params)
 
 		return run_or_returncached
+
+api = PLC(auth.auth, auth.server)
+cacheapi = CachedPLC(auth.auth, auth.server)
 
 
 def getAPI(url):
