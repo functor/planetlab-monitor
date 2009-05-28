@@ -33,7 +33,7 @@ api = plc.getAuthAPI()
 
 def logic():
 
-	plc.nodeBootState(host, 'rins')
+	plc.nodeBootState(host, 'reinstall')
 	node_end_record(host)
 
 def main(hostnames, sitenames):

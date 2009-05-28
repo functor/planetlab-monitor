@@ -157,7 +157,7 @@ class ScanInterface(object):
 
 		except:
 			print "ERROR:"
-			email_exception(nodename)
+			email_exception(str(nodename))
 			print traceback.print_exc()
 			pass
 
@@ -204,13 +204,14 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "bmlog":"'`ls /tmp/bm.log`'",'
 						echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
 						echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
-						echo '  "fs_status":"'`touch /var/log/monitor 2>&1`'",'
+						echo '  "fs_status":"'`touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then touch /vservers/monitor.log 2>&1 ; fi ; grep proc /proc/mounts | grep ro,`'",'
 						echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
 						echo '  "princeton_comon_dir":"'`ls -d /vservers/princeton_comon`'",'
 
 						ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 						echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
+						echo '  "rpm_version":"'`rpm -q NodeManager`'",'
 						echo "}"
 EOF				""")
 					
@@ -225,6 +226,7 @@ EOF				""")
 										'nm_status' : '', 
 										'fs_status' : '',
 										'dns_status' : '',
+										'rpm_version' : '',
 										'princeton_comon_dir' : "", 
 										'princeton_comon_running' : "", 
 										'princeton_comon_procs' : "", 'ssh_portused' : None})
@@ -232,6 +234,7 @@ EOF				""")
 				print traceback.print_exc()
 				sys.exit(1)
 
+			print "RPMVERSION: %s %s" % (nodename, values['rpm_version'])
 			### RUN SSH ######################
 			b_getbootcd_id = True
 

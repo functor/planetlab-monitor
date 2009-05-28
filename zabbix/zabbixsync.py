@@ -22,8 +22,8 @@ def get_site_iplist(loginbase):
 	# TODO: if it is, then we need to break up the discovery rule.
 	ip_list = ""
 	for node in node_list:
-		if len(node['nodenetwork_ids']) > 0:
-			ip = netid2ip[node['nodenetwork_ids'][0]]
+		if len(node['interface_ids']) > 0:
+			ip = netid2ip[node['interface_ids'][0]]
 			if len(ip_list) > 0: ip_list += ","
 			ip_list += ip
 

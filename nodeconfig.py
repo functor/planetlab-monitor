@@ -39,7 +39,7 @@ def main():
 		try:
 			n = api.GetNodes(node)[0]
 			#print n
-			net = api.GetNodeNetworks(n['nodenetwork_ids'])[0]
+			net = api.GetInterfaces(n['interface_ids'])[0]
 			#print net
 
 			node_keys = ['boot_state', 'key', 'last_updated', 'last_contact']

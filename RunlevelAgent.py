@@ -82,6 +82,7 @@ def main():
     session_str=f.read().strip()
     api = PLC(Auth(session=session_str), api_server_url)
     # NOTE: should we rely on bootmanager for this functionality?
+	# TODO: handle dns failure here.
     api.AuthCheck()
 
     try:

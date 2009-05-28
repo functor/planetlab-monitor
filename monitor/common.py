@@ -78,6 +78,7 @@ def color_boot_state(l):
 	elif  l == "down": return red(l)
 	elif  l == "boot": return green(l)
 	elif  l == "rins": return blue(l)
+	elif  l == "reinstall": return blue(l)
 	else:
 		return l
 

@@ -31,3 +31,20 @@ class PlcPCU(Entity):
 
 	plc_pcu_stats = Field(PickleType,default=None)
 	acts_as_versioned(ignore=['date_checked'])
+
+class PlcPCU2(Entity):
+	pcu_id = Field(Integer,primary_key=True)
+	date_checked = Field(DateTime,default=datetime.now)
+
+	site_id = Field(Integer, default=0)
+	protocol = Field(String, default=None)
+	node_ids = Field(PickleType,default=None)
+	ports = Field(PickleType,default=None)
+	hostname = Field(String, default=None)
+	ip = Field(String, default=None)
+	username = Field(String, default=None)
+	password = Field(String, default=None)
+	model = Field(String, default=None)
+	notes = Field(String, default=None)
+
+	acts_as_versioned(ignore=['date_checked'])
