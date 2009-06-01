@@ -51,10 +51,10 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 def create_netid2ip(l_nodes, l_nodenetworks):
 	netid2ip = {}
 	for node in l_nodes:
-		for netid in node['nodenetwork_ids']:
+		for netid in node['interface_ids']:
 			found = False
 			for nn in l_nodenetworks:
-				if nn['nodenetwork_id'] == netid:
+				if nn['interface_id'] == netid:
 					found = True
 					netid2ip[netid] = nn['ip']
 			if not found:
@@ -73,7 +73,7 @@ def create_plcdb():
 
 	# get nodes at each site, and 
 	l_nodes = plc.getNodes({'peer_id':None}, ['hostname', 'node_id', 'ports', 'site_id', 'version', 
-	                                          'last_updated', 'date_created', 'last_contact', 'pcu_ids', 'nodenetwork_ids'])
+	                                          'last_updated', 'date_created', 'last_contact', 'pcu_ids', 'interface_ids'])
 
 	l_nodenetworks = plc.getNodeNetworks()
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)

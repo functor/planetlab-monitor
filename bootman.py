@@ -386,7 +386,7 @@ def reboot(hostname, config=None, forced_action=None):
 			return False
 
 	if forced_action == "reboot":
-		conn.restart_node('rins')
+		conn.restart_node('reinstall')
 		return True
 
 	boot_state = conn.get_boot_state()
@@ -593,7 +593,7 @@ def reboot(hostname, config=None, forced_action=None):
 			]:
 		sequences.update({n : "restart_bootmanager_boot"})
 
-	#	conn.restart_bootmanager('rins')
+	#	conn.restart_bootmanager('reinstall')
 	for n in [ "bminit-cfg-auth-getplc-installinit-validate-exception-modulefail-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-exception-modulefail-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-bmexceptmount-exception-noinstall-update-debug-done",
@@ -615,13 +615,15 @@ def reboot(hostname, config=None, forced_action=None):
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-update-debug-done",
 			"bminit-cfg-auth-getplc-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
+			"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-validate-done",
 			]:
 		sequences.update({n : "restart_bootmanager_rins"})
 
 	# repair_node_keys
 	sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
 
-	#   conn.restart_node('rins')
+	#   conn.restart_node('reinstall')
 	for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-exception-chrootfail-update-debug-done",
 			"bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-installcfg-exception-chrootfail-update-debug-done",
@@ -715,16 +717,16 @@ def reboot(hostname, config=None, forced_action=None):
 			conn.restart_bootmanager('boot')
 		elif sequences[s] == "restart_bootmanager_rins":
 			if config and not config.quiet: print "...Restarting BootManager.py on %s "% node
-			conn.restart_bootmanager('rins')
+			conn.restart_bootmanager('reinstall')
 		elif sequences[s] == "restart_node_rins":
-			conn.restart_node('rins')
+			conn.restart_node('reinstall')
 		elif sequences[s] == "restart_node_boot":
 			conn.restart_node('boot')
 		elif sequences[s] == "repair_node_keys":
 			if conn.compare_and_repair_nodekeys():
 				# the keys either are in sync or were forced in sync.
 				# so try to reboot the node again.
-				conn.restart_bootmanager('rins')
+				conn.restart_bootmanager('reinstall')
 				pass
 			else:
 				# there was some failure to synchronize the keys.
@@ -819,7 +821,7 @@ def reboot(hostname, config=None, forced_action=None):
 			args = {}
 			try:
 				node = api.GetNodes(hostname)[0]
-				net = api.GetNodeNetworks(node['nodenetwork_ids'])[0]
+				net = api.GetInterfaces(node['interface_ids'])[0]
 			except:
 				from nodecommon import email_exception
 				email_exception()
@@ -831,7 +833,7 @@ def reboot(hostname, config=None, forced_action=None):
 
 			args['hostname'] = hostname
 			args['network_config'] = nodenet_str
-			args['nodenetwork_id'] = net['nodenetwork_id']
+			args['interface_id'] = net['interface_id']
 			m = PersistMessage(hostname, mailtxt.baddns[0] % args,
 										 mailtxt.baddns[1] % args, True, db='baddns_persistmessages')
 

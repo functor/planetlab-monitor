@@ -943,7 +943,7 @@ class Action(Thread):
 		self.actions['suspendslices'] = lambda args: plc.suspendSlices(args['hostname'])
 		self.actions['nocreate'] = lambda args: plc.removeSliceCreation(args['hostname'])
 		self.actions['close_rt'] = lambda args: close_rt_backoff(args)
-		self.actions['rins'] = lambda args: plc.nodeBootState(args['hostname'], "rins")	
+		self.actions['rins'] = lambda args: plc.nodeBootState(args['hostname'], "reinstall")	
 		self.actions['noop'] = lambda args: args
 		self.actions['reboot_node'] = lambda args: reboot_node(args)
 		self.actions['reset_nodemanager'] = lambda args: args # reset_nodemanager(args)
@@ -1248,7 +1248,7 @@ class Action(Thread):
 				print "%s" % act_record['log'],
 				print "%15s" % (['reboot_node'],)
 				# Set node to re-install
-				plc.nodeBootState(act_record['nodename'], "rins")	
+				plc.nodeBootState(act_record['nodename'], "reinstall")	
 				try:
 					ret = reboot_node({'hostname': act_record['nodename']})
 				except Exception, exc:

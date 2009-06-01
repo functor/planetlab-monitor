@@ -12,7 +12,7 @@ try:
 	site_nodes = api.GetNodes(site['node_ids'])
 	site_people = api.GetPersons(site['person_ids'])
 	for node in site_nodes:
-		network = api.GetNodeNetworks(node['nodenetwork_ids'])
+		network = api.GetInterfaces(node['interface_ids'])
 	print "ok"
 except:
 	sys.stderr.write(traceback.format_exc())

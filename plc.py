@@ -232,14 +232,14 @@ def getSiteNodes2(loginbase):
 
 def getNodeNetworks(filter=None):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
-	nodenetworks = api.GetNodeNetworks(auth.auth, filter, None)
+	nodenetworks = api.GetInterfaces(auth.auth, filter, None)
 	return nodenetworks
 
 def getNodes(filter=None, fields=None):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	nodes = api.GetNodes(auth.auth, filter, fields) 
 			#['boot_state', 'hostname', 
-			#'site_id', 'date_created', 'node_id', 'version', 'nodenetwork_ids',
+			#'site_id', 'date_created', 'node_id', 'version', 'interface_ids',
 			#'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
 	return nodes
 

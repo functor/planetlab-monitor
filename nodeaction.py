@@ -30,7 +30,7 @@ for node in config.args:
 
 	if config.rins:
 		print "Setting %s to rins" % node
-		api.UpdateNode(node, {'boot_state' : 'rins'})
+		api.UpdateNode(node, {'boot_state' : 'reinstall'})
 
 	if config.backoff:
 		print "Enabling Slices & Slice Creation for %s" % node

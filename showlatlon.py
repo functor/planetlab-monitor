@@ -32,7 +32,7 @@ def gethardwarequality(nodename, fb):
 			return "BAD" # "cpu_slow",
 		if cstat['memsize'] != "null" and float(cstat['memsize']) < 2.8:
 			return "BAD" # "mem_small",
-		if cstat['disksize'] != "null" and float(cstat['disksize']) < 300.0:
+		if cstat['disksize'] != "null" and float(cstat['disksize']) < 250.0:
 			return "BAD" # "disk_small",
 
 		if cstat['disksize'] == "null" and \
@@ -43,7 +43,7 @@ def gethardwarequality(nodename, fb):
 		try:
 			if  float(cstat['cpuspeed']) >= 2.2 and \
 				float(cstat['memsize']) >= 2.8 and \
-				(cstat['disksize'] == "null" or float(cstat['disksize']) >= 300.0):
+				(cstat['disksize'] == "null" or float(cstat['disksize']) >= 250.0):
 				return "A-OK"
 		except:
 			print cstat

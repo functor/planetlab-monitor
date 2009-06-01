@@ -107,7 +107,7 @@ class Reboot(object):
 
 						# set node to 'rins' boot state.
 						print "CALLING REBOOT +++ RINS"
-						plc.nodeBootState(host, 'rins')
+						plc.nodeBootState(host, 'reinstall')
 						ret = reboot.reboot(host)
 
 						pflags.setRecentFlag('pcu_rins_tried')
@@ -189,11 +189,11 @@ def set_node_to_rins(host, fb):
 	node = api.GetNodes(host, ['boot_state', 'last_contact', 'last_updated', 'date_created'])
 	record = {'observation' : node[0], 
 			  'model' : 'USER_REQUEST', 
-			  'action' : 'api.UpdateNode(%s, {"boot_state" : "rins"})' % host, 
+			  'action' : 'api.UpdateNode(%s, {"boot_state" : "reinstall"})' % host, 
 			  'time' : time.time()}
 	l = Log(host, record)
 
-	ret = api.UpdateNode(host, {'boot_state' : 'rins'})
+	ret = api.UpdateNode(host, {'boot_state' : 'reinstall'})
 	if ret:
 		# it's nice to see the current status rather than the previous status on the console
 		node = api.GetNodes(host)[0]
@@ -247,7 +247,7 @@ config = parsermodule.parse_args(parser)
 
 # COLLECT nodegroups, nodes and node lists
 if config.nodegroup:
-	ng = api.GetNodeGroups({'name' : config.nodegroup})
+	ng = api.GetNodeGroups({'groupname' : config.nodegroup})
 	nodelist = api.GetNodes(ng[0]['node_ids'])
 	hostnames = [ n['hostname'] for n in nodelist ]
 

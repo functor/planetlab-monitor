@@ -75,6 +75,7 @@ def color_boot_state(l):
 	elif  l == "down": return red(l)
 	elif  l == "boot": return green(l)
 	elif  l == "rins": return blue(l)
+	elif  l == "reinstall": return blue(l)
 	else:
 		return l
 
@@ -182,7 +183,7 @@ def get_nodeset(config):
 		f_nodes = [config.node]
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.nodegroup:
-		ng = api.GetNodeGroups({'name' : config.nodegroup})
+		ng = api.GetNodeGroups({'groupname' : config.nodegroup})
 		l_nodes = api.GetNodes(ng[0]['node_ids'], ['hostname'])
 	elif config.site:
 		site = api.GetSites(config.site)

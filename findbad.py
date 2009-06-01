@@ -56,7 +56,7 @@ def collectPingAndSSH(nodename, cohash):
 				echo '  "bmlog":"'`ls /tmp/bm.log`'",'
 				echo '  "bootcd":"'`cat /mnt/cdrom/bootme/ID`'",'
 				echo '  "nm":"'`ps ax | grep nm.py | grep -v grep`'",'
-				echo '  "readonlyfs":"'`touch /var/log/monitor 2>&1`'",'
+				echo '  "readonlyfs":"'`touch /var/log/monitor 2>&1 ; touch /vservers/monitor.log 2>&1`'",'
 				echo '  "dns":"'`host boot.planet-lab.org 2>&1`'",'
 				echo '  "princeton_comon":"'`ls -d /vservers/princeton_comon`'",'
 
@@ -220,7 +220,7 @@ EOF			""")
 			values['pcu'] = "NOPCU"
 		site_id = d_node[0]['site_id']
 		last_contact = d_node[0]['last_contact']
-		nodegroups = [ i['name'] for i in api.GetNodeGroups(d_node[0]['nodegroup_ids']) ]
+		nodegroups = [ i['groupname'] for i in api.GetNodeGroups(d_node[0]['nodegroup_ids']) ]
 		values['plcnode'] = {'status' : 'SUCCESS', 
 							'pcu_ids': pcu, 
 							'boot_state' : d_node[0]['boot_state'],
@@ -361,7 +361,7 @@ def main():
 		f_nodes = [config.node]
 		l_nodes = filter(lambda x: x['hostname'] in f_nodes, l_nodes)
 	elif config.nodegroup:
-		ng = api.GetNodeGroups({'name' : config.nodegroup})
+		ng = api.GetNodeGroups({'groupname' : config.nodegroup})
 		l_nodes = api.GetNodes(ng[0]['node_ids'])
 	elif config.site:
 		site = api.GetSites(config.site)

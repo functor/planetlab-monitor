@@ -81,7 +81,7 @@ def main():
 		group_str = "selection"
 		
 	else:
-		ng = api.GetNodeGroups({'name' : config.nodegroup})
+		ng = api.GetNodeGroups({'grouname' : config.nodegroup})
 		nodelist = api.GetNodes(ng[0]['node_ids'])
 
 		group_str = config.nodegroup
