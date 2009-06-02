@@ -62,6 +62,9 @@ plcdb_lb2hn = None
 plcdb_id2lb = None
 
 def init():
+	import traceback
+	print "IMPORTING PLCCACHE: ",
+	traceback.print_stack()
 	global l_sites
 	global l_nodes
 	global l_pcus

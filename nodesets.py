@@ -3,8 +3,8 @@
 import sys
 import os
 from sets import Set
-import parser as parsermodule
-import util.file
+from monitor import parser as parsermodule
+from monitor.util import file
 
 def main():
 	parser = parsermodule.getParser()
@@ -17,8 +17,8 @@ def main():
 	f1 = config.args[0]
 	f2 = config.args[1]
 
-	s1 = util.file.getListFromFile(f1)
-	s2 = util.file.getListFromFile(f2)
+	s1 = file.getListFromFile(f1)
+	s2 = file.getListFromFile(f2)
 
 	s = nodesets(config.operation, s1, s2)
 

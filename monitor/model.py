@@ -2,7 +2,7 @@
 
 from monitor import database
 
-from monitor.wrapper import plc, plccache
+from monitor.wrapper import plc
 from monitor.wrapper import mailer
 import time
 
@@ -413,6 +413,7 @@ class Target:
 class Record(object):
 
 	def __init__(self, hostname, data):
+		from monitor.wrapper import plccache
 		self.hostname = hostname
 		self.data = data
 		self.plcdb_hn2lb = plccache.plcdb_hn2lb

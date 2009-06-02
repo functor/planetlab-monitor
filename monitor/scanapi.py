@@ -212,6 +212,7 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 						echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
 						echo '  "rpm_version":"'`rpm -q NodeManager`'",'
+						echo '  "rpm_versions":"'`rpm -q -a`'",'
 						echo "}"
 EOF				""")
 					
@@ -227,12 +228,15 @@ EOF				""")
 										'fs_status' : '',
 										'dns_status' : '',
 										'rpm_version' : '',
+										'rpm_versions' : '',
 										'princeton_comon_dir' : "", 
 										'princeton_comon_running' : "", 
 										'princeton_comon_procs' : "", 'ssh_portused' : None})
 			except:
 				print traceback.print_exc()
 				sys.exit(1)
+
+			print "ALLVERSIONS: %s %s" % (nodename, values['rpm_versions'])
 
 			print "RPMVERSION: %s %s" % (nodename, values['rpm_version'])
 			### RUN SSH ######################

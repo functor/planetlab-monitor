@@ -15,6 +15,7 @@ from monitor_xmlrpc import MonitorXmlrpcServer
 
 from monitor import reboot
 from monitor import scanapi
+import time
 
 from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
@@ -155,7 +156,6 @@ def prep_node_for_display(node):
 class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.welcome")
 	def index(self):
-		import time
 		# log.debug("Happy TurboGears Controller Responding For Duty")
 		flash("Your application is now running")
 		return dict(now=time.ctime())
@@ -173,7 +173,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='boot'):
-		import time
+		print "NODE------------------"
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		fbquery = FindbadNodeRecord.get_all_latest()
 		query = []
 		filtercount = {'down' : 0, 'boot': 0, 'debug' : 0, 'diagnose' : 0, 'disabled': 0, 
@@ -428,7 +431,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):
-		import time
+		print "PCUVIEW------------------"
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		fbquery = FindbadPCURecord.get_all_latest()
 		query = []
 		filtercount = {'ok' : 0, 'NetDown': 0, 'Not_Run' : 0, 'pending' : 0, 'all' : 0}
@@ -475,6 +481,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 	@expose(template="monitorweb.templates.sitelist")
 	def site(self, filter='all'):
+		print "SITE------------------"
+		print "befor-len: ", len( [ i for i in session] )
+		session.flush(); session.clear()
+		print "after-len: ", len( [ i for i in session] )
 		filtercount = {'good' : 0, 'down': 0, 'online':0, 'offline' : 0, 'new' : 0, 'pending' : 0, 'all' : 0}
 		fbquery = HistorySiteRecord.query.all()
 		query = []

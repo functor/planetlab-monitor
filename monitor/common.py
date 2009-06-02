@@ -4,7 +4,7 @@ import struct
 from monitor import reboot
 from monitor import util
 from monitor import database
-from monitor.wrapper import plc, plccache
+from monitor.wrapper import plc
 
 from datetime import datetime, timedelta
 from monitor.model import Message
@@ -187,6 +187,7 @@ def get_nodeset(config):
 		Given the config values passed in, return the set of hostnames that it
 		evaluates to.
 	"""
+	from monitor.wrapper import plccache
 	api = plc.getAuthAPI()
 	l_nodes = plccache.l_nodes
 

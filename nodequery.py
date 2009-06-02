@@ -13,11 +13,11 @@ import time
 import re
 import string
 
-from monitor.wrapper import plc, plccache
+from monitor.wrapper import plc
 api = plc.getAuthAPI()
 
-from monitor.database.info.model import FindbadNodeRecord, FindbadPCURecord, session
-from monitor import util
+from monitor.database.info.model import HistoryNodeRecord, FindbadNodeRecord, FindbadPCURecord, session
+from monitor.util import file as utilfile
 from monitor import config
 
 
@@ -383,13 +383,12 @@ def main():
 		fb = None
 
 	if config.nodelist:
-		nodelist = util.file.getListFromFile(config.nodelist)
+		nodelist = utilfile.getListFromFile(config.nodelist)
 	else:
 		# NOTE: list of nodes should come from findbad db.   Otherwise, we
 		# don't know for sure that there's a record in the db..
-		plcnodes = plccache.l_nodes
-		nodelist = [ node['hostname'] for node in plcnodes ]
-		#nodelist = ['planetlab-1.cs.princeton.edu']
+		fbquery = HistoryNodeRecord.query.all()
+		nodelist = [ n.hostname for n in fbquery ]
 
 	pculist = None
 	if config.select is not None and config.pcuselect is not None:

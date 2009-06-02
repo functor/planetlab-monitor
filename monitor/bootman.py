@@ -430,11 +430,16 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-update-debug-done",
 				"bminit-cfg-auth-getplc-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-validate-done",
 				]:
 			sequences.update({n : "restart_bootmanager_rins"})
 
 		# repair_node_keys
-		sequences.update({"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done": "repair_node_keys"})
+		for n in ["bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-validate-exception-done",
+					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done",
+				]:
+			sequences.update({n: "repair_node_keys"})
 
 		#   conn.restart_node('reinstall')
 		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-exception-chrootfail-update-debug-done",
@@ -459,6 +464,7 @@ class DebugInterface:
 				 "bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nospace-update-debug-done",
 				 "bminit-cfg-auth-getplc-hardware-installinit-installdisk-installbootfs-exception-downloadfail-update-debug-done",
 				 "bminit-cfg-auth-getplc-update-installinit-validate-implementerror-update-debug-done",
+				 "bminit-cfg-auth-getplc-exception-update-bootupdatefail-debug-done",
 				 ]:
 			sequences.update({n: "restart_node_boot"})
 
@@ -748,7 +754,8 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 			if conn.compare_and_repair_nodekeys():
 				# the keys either are in sync or were forced in sync.
 				# so try to reboot the node again.
-				conn.restart_bootmanager('reinstall')
+				# TODO: why was this originally 'reinstall' instead of 'boot'??
+				conn.restart_bootmanager('boot')
 				pass
 			else:
 				# there was some failure to synchronize the keys.

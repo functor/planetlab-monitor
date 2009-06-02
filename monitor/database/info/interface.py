@@ -1,4 +1,3 @@
-from monitor import bootman 		# debug nodes
 
 from monitor import reboot
 from monitor.common import *
@@ -162,6 +161,7 @@ class SiteInterface(HistorySiteRecord):
 		self.db.message_status = "new"
 
 	def runBootManager(self, hostname):
+		from monitor import bootman
 		print "attempting BM reboot of %s" % hostname
 		ret = ""
 		try:
