@@ -290,6 +290,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue Jun 02 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-12
+- tag of latest changes.
+- need to test end to end.
+
 * Sat May 30 2009 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-3.0-11
 - big merge from the 2.0 branch
 
@@ -381,6 +385,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 11
+%define taglevel 12
 
 %define version 3.0
