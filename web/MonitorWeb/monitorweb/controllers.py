@@ -183,7 +183,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			prep_node_for_display(node)
 
 			#node.history.status
-			print node.hostname
+			#print node.hostname
 
 			if node.history.status in ['down', 'offline']:
 				if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:

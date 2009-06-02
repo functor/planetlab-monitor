@@ -17,9 +17,8 @@ from links import *
   </script>
 
   <center>
-  <b py:content="'BOOT-PROD: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'boot'])"></b> | 
-  <b py:content="'BOOT-SAFEBOOT: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'safeboot'])"></b> | 
-  <b py:content="'BOOT-REINSTALL: %d' % len([node for node in query if node.plc_node_stats['boot_state'] == 'reinstall'])"></b><br/>
+  <b py:content="'BOOT: %d' % len([node for node in query if node.observed_status == 'BOOT'])"></b> | 
+  <b py:content="'DOWN: %d' % len([node for node in query if node.observed_status == 'DOWN'])"></b><br/>
   </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">

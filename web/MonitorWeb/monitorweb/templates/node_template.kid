@@ -18,9 +18,6 @@ from links import *
 		<th>last_contact</th>
 	</span>
 	<span py:if="node is not None">
-<?python
-print dir(node)
-?>
                 <td py:content="node.plc_node_stats['node_id']">node_id</td>
 		<td nowrap="true">
 		  <a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
