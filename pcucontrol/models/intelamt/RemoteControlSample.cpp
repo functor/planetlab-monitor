@@ -175,10 +175,16 @@ bool MainFlow(Soap *server, int option, bool verbose)
 			}	
 			/* Ensure that the machine is powered up before trying to
 			 * 'reset' it, since a reset on a down node will fail. */
+			/*if ((status = ExecuteRemoteControl(server,true,PowerDown)) == false)
+			{
+				return status;
+			}
+			sleep(10); */
 			if ((status = ExecuteRemoteControl(server,true,PowerUp)) == false)
 			{
 				return status;
 			}
+			sleep(5);
 			if ((status = ExecuteRemoteControl(server,true,Reset)) == false)
 			{
 				return status;
