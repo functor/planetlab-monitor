@@ -1,4 +1,11 @@
 #!/usr/bin/python
+#
+# RunlevelAgent - acts as a heartbeat back to myplc reporting that the node is
+# 	online and whether it is in boot or pre-boot run-level.
+#   This is useful to identify nodes that are behind a firewall, as well as to
+#   have the machine report run-time status both in safeboot and boot modes,
+#   so that it is immediately visible at myplc (gui or api).
+# 
 
 import xml, xmlrpclib
 import logging

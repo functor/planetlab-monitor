@@ -211,6 +211,11 @@ rm -rf $RPM_BUILD_ROOT
 %post server-deps
 easy_install --build-directory /var/tmp -UZ Elixir
 easy_install --build-directory /var/tmp -UZ ElementTree
+# TODO: something is bad wrong with this approach.
+#easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
+#easy_install --build-directory /var/tmp -UZ "Paste==1.5.1"
+#easy_install --build-directory /var/tmp -UZ "PasteDeploy==1.3.1"
+
 easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
 easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 

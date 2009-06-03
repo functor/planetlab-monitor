@@ -471,6 +471,7 @@ class DebugInterface:
 		# update_node_config_email
 		for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
 				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
+				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-validate-exception-done",
 				  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
 				]:
 			sequences.update({n : "update_node_config_email"})
