@@ -17,9 +17,7 @@ from monitor import reboot
 from monitor import scanapi
 import time
 
-from monitor.wrapper.plccache import plcdb_id2lb as site_id2lb
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
-from monitor.wrapper.plccache import plcdb_lb2hn as site_lb2hn
 
 from monitorweb.templates.links import *
 
@@ -80,7 +78,7 @@ def format_pcu_shortstatus(pcu):
 def prep_pcu_for_display(pcu):
 		
 	try:
-		pcu.loginbase = site_id2lb[pcu.plc_pcu_stats['site_id']]
+		pcu.loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
 	except:
 		pcu.loginbase = "unknown"
 
@@ -129,7 +127,7 @@ def prep_node_for_display(node):
 		node.kernel = ""
 
 	try:
-		node.loginbase = site_id2lb[node.plc_node_stats['site_id']]
+		node.loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
 	except:
 		node.loginbase = "unknown"
 
@@ -204,22 +202,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
                                 if filtercount.has_key(node.history.status):
                                         filtercount[node.history.status] += 1
 				
-			## NOTE: count filters
-			#if node.observed_status != 'DOWN':
-			#	print node.hostname, node.observed_status
-			#	if node.observed_status == 'DEBUG':
-			#		if node.plc_node_stats['boot_state'] in ['debug', 'diagnose', 'disabled']:
-			#			filtercount[node.plc_node_stats['boot_state']] += 1
-			#		else:
-			#			filtercount['debug'] += 1
-			#			
-			#	else:
-			#		filtercount[node.observed_status] += 1
-			#else:
-			#	if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:
-			#		filtercount[node.observed_status] += 1
-			#	else:
-			#		filtercount['neverboot'] += 1
 
 			# NOTE: apply filter
 			if filter == "neverboot":
@@ -232,22 +214,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			elif filter == 'boot':
 				query.append(node)
 
-			#if filter == node.observed_status:
-			#	if filter == "DOWN":
-			#		if node.plc_node_stats['last_contact'] != None:
-			#			query.append(node)
-			#	else:
-			#		query.append(node)
-			#elif filter == "neverboot":
-			#	if not node.plc_node_stats or node.plc_node_stats['last_contact'] == None:
-			#		query.append(node)
-			#elif filter == "pending":
-			#	# TODO: look in message logs...
-			#	pass
-			#elif filter == node.plc_node_stats['boot_state']:
-			#	query.append(node)
-			#elif filter == "all":
-			#	query.append(node)
 				
 		widget = NodeWidget(template='monitorweb.templates.node_template')
 		return dict(now=time.ctime(), query=query, fc=filtercount, nodewidget=widget)
@@ -350,8 +316,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			actions = [ a for a in actions ]
 			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
 			pcus = {}
-			for plcnode in site_lb2hn[loginbase]:
-					node = FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname'])
+			for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
 					# NOTE: reformat some fields.
 					prep_node_for_display(node)
 					nodequery += [node]
@@ -472,11 +437,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		# get site query
 		sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
 		nodequery = []
-		for plcnode in site_lb2hn[loginbase]:
-			for node in FindbadNodeRecord.get_latest_by(hostname=plcnode['hostname']):
-				# NOTE: reformat some fields.
-				prep_node_for_display(node)
-				nodequery += [node]
+		for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
+			# NOTE: reformat some fields.
+			prep_node_for_display(node)
+			nodequery += [node]
 		return dict(sitequery=sitequery, nodequery=nodequery, fc={})
 
 	@expose(template="monitorweb.templates.sitelist")
