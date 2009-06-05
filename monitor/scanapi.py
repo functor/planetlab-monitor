@@ -63,7 +63,7 @@ def get_nodes(node_ids):
 		l_node = plc.getNodes(node_ids, ['hostname', 'last_contact', 'node_id', 'ports'])
 	except:
 		try:
-			plc_nodes = plccache.l_plcnodes
+			plc_nodes = plccache.l_nodes
 			for n in plc_nodes:
 				if n['node_id'] in node_ids:
 					l_node.append(n)

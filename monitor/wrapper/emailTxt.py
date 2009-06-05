@@ -207,34 +207,75 @@ ERROR- 	   This is an error state, where there is absolutely no contact
            with PlanetLab.
 	""")
 
-	pcumissing_notice =("""MONTEST: No PCU available to reboot %(hostname)s""",
-"""As part of PlanetLab node monitoring and maintenance, we noticed that there is no PCU
-associated with %(hostname)s, so we could not reboot it ourselves.
+#############################################################################
+#############################################################################
+#############################################################################
 
-To save you time in the future, please take a moment to register the PCU functionality for
-your machines here:
+	pcumissing_notice =("""MONTEST: There is no PCU available to reboot %(hostname)s""",
+"""We've noticed that there is no PCU associated with %(hostname)s, so we could 
+not reboot it ourselves.
 
-    http://www.planet-lab.org/db/sites/pcu.php
+By taking a few moments now to register your PCU for this host, you will save
+time in the future the next time we need to reboot this machine, because we
+will be able to do so without disturbing you.
+
+    http://www.planet-lab.org/registerwizard/index.php
+
+The registration is very quick.  All we need are: PCU hostname, IP, username, 
+and password.  Then, choose which node to associate it with, and we will take 
+care of the rest.
 
 Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+
 	pcufailed_notice =("""MONTEST: Could not use PCU to reboot %(hostname)s""",
 
-"""As part of PlanetLab node monitoring and maintenance, we tried to use the PCU
-registered for %(hostname)s, but could not for some reason.
+"""We tried to use the PCU registered for %(hostname)s, but for some reason 
+the host did not come back online.  You may be able to learn more by visiting
+this link:
 
-Please help.
+	https://monitor.planet-lab.org/monitor/pcuview?pcu_id=%(pcu_id)s
+
+We need your help resolving this issue in a few ways:  
+
+ 1. First, we need your help rebooting %(hostname)s.  Because the above PCU does 
+    not appear to work, please manually reboot this machine.  If it turns out 
+	that there is a problem with the PCU configuration, we can help you
+    resolve that independently.
+
+ 2. If it is possible, please correcct the above PCU problem, or let us know
+ 	what steps you are taking.  By enabling us to take administrative actions
+ 	automatically without your intervention, you will save time in the future 
+	the next time we need to reboot this machine, because we will be able to 
+	do so without disturbing you.
+
+ 3. If there is nothing apparently wrong with the PCU, or the mapping between
+    the PCU and the host, then there is likely a problem with our bootstrap
+    software on your machine.  To help us, please make a note of any text on
+    the console and report it to mailto:support@planet-lab.org .  An example
+    might be that the console hangs waiting for a module to unload.  The last
+    reported name or any error messages on the screen would be very helpful.
+
+If the PCU is up and running, but behind a firewall, please make it accessible
+from address block 128.112.139.0/24.  You can confirm that this is the address
+space from which the PlanetLab Central servers run.
 
 Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
+
 	online_notice=("""MONTEST: Host %(hostname)s is online""",
 	"""
 This notice is simply to let you know that:
     %(hostname)s
 
-is online and operational.  Thank you very much for your help!
+is online and operational.  
+
+	http://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
+
+Thank you very much for your help!
+  -- PlanetLab Central (support@planet-lab.org)
 	""")
 	test_notice=("""MONTEST: Host %(hostname)s is testing""",
 	"""
@@ -258,18 +299,29 @@ This notice is simply to let you know that:
 
 is down, disconnected from the network and/or non-operational.  
 
-Please investigate, thank you very much for your help!
+Please investigate, and let us know if there's anything we can do to help get
+it back on-line.  You can see more information about the current status of
+this host here:
 
-	http://monitor.planet-lab.org:8082/pcuview?loginbase=%(loginbase)s
+	http://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
 	""")
 
-	clear_penalty=("""MONTEST: All penalties have been cleared from site %(loginbase)s""",
+	clear_penalty=("""MONTEST: All penalties cleared from site %(loginbase)s""",
 	"""
-This notice is to let you know that any penalties previously applied to your site have 
-been removed: %(penalty_level)s.
+This notice is to let you know that any penalties previously applied to your 
+site have been removed: %(penalty_level)s.
 
-All privileges have been restored.  If your slices were disabled, please allow
-up to 30 minutes for them to return to enabled.
+All privileges have been restored.  You may create slices again, and if your 
+slices were disabled, please allow up to 30 minutes for them to return to 
+enabled.
+
+	http://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
 
 Legend:
 
@@ -283,7 +335,16 @@ Legend:
 This notice is to let you know that the penalty applied to your site has
 increased: %(penalty_level)s.
 
-legend:
+Your privileges will be reduced corresponding to the legend below.  To 
+restore these privileges, please return at least two machines to working 
+state.
+
+	http://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
+
+Thank you very much for your help,
+  -- PlanetLab Central (support@planet-lab.org)
+  
+Legend:
 
   0  - no penalty applied
   1  - site is disabled.  no new slices can be created.
@@ -291,23 +352,27 @@ legend:
 	""")
 
 	newbootcd_notice=("""MONTEST: Host %(hostname)s needs a new BootImage""", """
-As part of PlanetLab node monitoring, we noticed the following nodes have an out-dated BootCD: 
+We noticed the following node has an out-dated BootImage: 
 
     %(hostname)s  
 
-This usually implies that you need to update the BootCD and node configuration file stored on the read-only media (either the all-in-one ISO CD, floppy disk, or write-protected USB stick).
+This usually implies that you need to update the BootImage and node
+configuration file stored on the read-only media (either the all-in-one ISO
+CD, floppy disk, or write-protected USB stick).
+
+You can do this by walking through the steps of the registration wizard, and
+downloading a new BootImage for your machine.
+
+    https://www.planet-lab.org/registerwizard/index.php
 
 Thank you for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	nmreset =("""NM Reset at %(loginbase)s""",
-	"""
-Monitor restarted NM on the following machines:
+#############################################################################
+#############################################################################
+#############################################################################
 
-%(hostname_list)s  
-
-	""")
 	pcudown_one =("""Could not use PCU to reboot %(hostname)s""",
 
 """As part of PlanetLab node monitoring and maintenance, we tried to use the PCU

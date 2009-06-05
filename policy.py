@@ -81,12 +81,12 @@ def main(hostnames, sitenames):
 
 
 		# if a node is offline and doesn't have a PCU, remind the user that they should have one.
-		if not nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
-			changed_greaterthan(nodehist.last_changed,1.0) and \
-			not found_within(recent_actions, 'pcumissing_notice', 7.0):
-
-				sitehist.sendMessage('pcumissing_notice', hostname=host)
-				print "send message for host %s pcumissing_notice" % host
+		#if not nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
+		#	changed_greaterthan(nodehist.last_changed,1.0) and \
+		#	not found_within(recent_actions, 'pcumissing_notice', 7.0):
+		#
+		#		sitehist.sendMessage('pcumissing_notice', hostname=host)
+		#		print "send message for host %s pcumissing_notice" % host
 
 		# if it is offline and HAS a PCU, then try to use it.
 		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \

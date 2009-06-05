@@ -21,8 +21,8 @@ from links import *
 					<th mochi:format="int"></th>
 					<!--th>Site</th>
 					<th>pcu</th-->
-					<th>Hostname</th>
-					<th>kernel</th>
+					<th>date</th>
+					<th>hostname</th>
 					<th>last_contact</th>
 				</tr>
 			</thead>

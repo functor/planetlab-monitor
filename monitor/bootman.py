@@ -643,7 +643,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 			sitehist.sendMessage('newbootcd_notice', hostname=hostname)
 
 			print "\tDisabling %s due to out-of-date BootImage" % hostname
-			api.UpdateNode(hostname, {'boot_state' : 'disable'})
+			api.UpdateNode(hostname, {'boot_state' : 'disabled'})
 
 		# NOTE: nothing else is possible.
 		return True
@@ -693,7 +693,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 
 				log=conn.get_dmesg().read()
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
-				conn.set_nodestate('disable')
+				conn.set_nodestate('disabled')
 
 			return False
 
@@ -813,7 +813,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 				args['log'] = conn.get_dmesg().read()
 
 				sitehist.sendMessage('baddisk_notice', **args)
-				conn.set_nodestate('disable')
+				conn.set_nodestate('disabled')
 
 		elif sequences[s] == "update_hardware_email":
 			if not found_within(recent_actions, 'minimalhardware_notice', 1):
