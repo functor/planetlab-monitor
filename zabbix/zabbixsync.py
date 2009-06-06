@@ -12,7 +12,7 @@ from monitor.database.zabbixapi.model import confirm_ids, HostGroup
 
 
 plcdb = plccache.l_sites # database.dbLoad("l_plcsites")
-netid2ip = plccache.plcdb_netid2ip # database.dbLoad("plcdb_netid2ip")
+#netid2ip = plccache.plcdb_netid2ip # database.dbLoad("plcdb_netid2ip")
 lb2hn = plccache.plcdb_lb2hn # database.dbLoad("plcdb_lb2hn")
 
 def get_site_iplist(loginbase):
@@ -23,7 +23,10 @@ def get_site_iplist(loginbase):
 	ip_list = ""
 	for node in node_list:
 		if len(node['interface_ids']) > 0:
-			ip = netid2ip[node['interface_ids'][0]]
+			ifs = plc.api.GetInterfaces({'interface_id' : node['interface_ids'], 'is_primary' : True})
+			print ifs
+			#ip = netid2ip[node['interface_ids'][0]]
+			ip = ifs[0]['ip']
 			if len(ip_list) > 0: ip_list += ","
 			ip_list += ip
 
@@ -76,6 +79,9 @@ if __name__=="__main__":
 		query = {'peer_id' : None}
 		if opts.site:
 			query.update({'login_base' : opts.site})
+		elif opts.sitelist:
+			l = opts.sitelist.split(",")
+			query.update({'login_base' : l})
 
 		# ADD SITES
 		sites = api.GetSites(query, ['login_base'])
@@ -91,6 +97,7 @@ if __name__=="__main__":
 			in_db_not_plc = set(site_db_list) - set(site_api_list)
 			for login_base in in_db_not_plc:
 				print "Deleting %s" % login_base
-				zabbixsite.delete_site(site['login_base'])
+				zabbixsite.delete_site(login_base)
+				session.flush()
 
 

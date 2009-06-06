@@ -40,6 +40,8 @@ def delete_site(loginbase):
 			#user.delete()
 			pass
 		ug.delete()
+	else:
+		print usergroupname, " not found"
 
 	hg = HostGroup.get_by(name=hostgroupname)
 	if hg: 
@@ -48,16 +50,21 @@ def delete_site(loginbase):
 		for host in hg.host_list:
 			host.delete()
 		hg.delete()
+	else:
+		print hostgroupname, " not found"
 
 	# delete dr
 	dr = DiscoveryRule.get_by(name=discovery_rule_name)
 	if dr: dr.delete()
+	else: print discovery_rule_name, " not found"
 
 	da = Action.get_by(name=discovery_action_name)
 	if da: da.delete()
+	else: print discovery_action_name, " not found"
 
 	ea = Action.get_by(name=escalation_action_name)
 	if ea: ea.delete()
+	else: print escalation_action_name, " not found"
 
 	return
 
@@ -118,7 +125,7 @@ def setup_global():
 	print "checking scripts"
 	script1 = Script.find_or_create(name="RebootNode",
 									set_if_new = {
-										'command':"%s/reboot.py {HOST.CONN}" % config.MONITOR_SCRIPT_ROOT,
+										'command':"%s/monitor/reboot.py {HOST.CONN}" % config.MONITOR_SCRIPT_ROOT,
 										'host_access':3 # r/w)
 									})
 	script2 = Script.find_or_create(name="NMap",
@@ -237,15 +244,15 @@ def setup_site(loginbase, techemail, piemail, iplist):
 				]
 				# THEN
 		a.actionoperation_list=[
-					# Send Email
-					ActionOperation(
-						operationtype=defines.OPERATION_TYPE_MESSAGE,
-						shortdata=mailtxt.node_discovered_subject,
-						longdata=mailtxt.node_discovered,
-						object=defines.OPERATION_OBJECT_GROUP, 
-						objectid=site_user_group.usrgrpid, 
-						esc_period=0, esc_step_to=1, esc_step_from=1, 
-					),
+					## Send Email
+					#ActionOperation(
+					#	operationtype=defines.OPERATION_TYPE_MESSAGE,
+					#	shortdata=mailtxt.node_discovered_subject,
+					#	longdata=mailtxt.node_discovered,
+					#	object=defines.OPERATION_OBJECT_GROUP, 
+					#	objectid=site_user_group.usrgrpid, 
+					#	esc_period=0, esc_step_to=1, esc_step_from=1, 
+					#),
 					# Add Host
 					ActionOperation(
 						operationtype=defines.OPERATION_TYPE_HOST_ADD,
@@ -348,17 +355,17 @@ def setup_site(loginbase, techemail, piemail, iplist):
 					esc_step_from=17, esc_step_to=17, 
 					esc_period=0, 
 					shortdata="",
-					longdata="%s:%s/checkslices.py {HOSTNAME} disableslices" % ( config.MONITOR_HOSTNAME, config.MONITOR_SCRIPT_ROOT ), 
+					longdata="%s:%s/monitor/reboot.py {HOSTNAME}" % ( config.MONITOR_HOSTNAME, config.MONITOR_SCRIPT_ROOT ), 
 					# TODO: send notice to users of slices
 					operationcondition_list=[ OperationConditionNotAck() ]),
-				ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
-					shortdata=mailtxt.nodedown_three_subject,
-					longdata=mailtxt.nodedown_three,
-					esc_step_from=17, esc_step_to=17, 
-					esc_period=0, 
-					object=defines.OPERATION_OBJECT_GROUP, 
-					objectid=site_user_group.usrgrpid, 
-					operationcondition_list=[ OperationConditionNotAck() ] ), 
+				#ActionOperation(operationtype=defines.OPERATION_TYPE_MESSAGE, 
+				#	shortdata=mailtxt.nodedown_three_subject,
+				#	longdata=mailtxt.nodedown_three,
+				#	esc_step_from=17, esc_step_to=17, 
+				#	esc_period=0, 
+				#	object=defines.OPERATION_OBJECT_GROUP, 
+				#	objectid=site_user_group.usrgrpid, 
+				#	operationcondition_list=[ OperationConditionNotAck() ] ), 
 				# STAGE 4++
 				ActionOperation(operationtype=defines.OPERATION_TYPE_COMMAND, 
 					esc_step_from=21, esc_step_to=0, 
