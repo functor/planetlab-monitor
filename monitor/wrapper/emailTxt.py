@@ -480,7 +480,6 @@ Thank you for your help,
 	#newalphacd=[newalphacd_one, newalphacd_one, newalphacd_one]
 	newthankyou=[thankyou,thankyou,thankyou]
 	pcuthankyou=[pcuthankyou_one,pcuthankyou_one,pcuthankyou_one]
-	NMReset=[nmreset,nmreset,nmreset]
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
