@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon Jun 08 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-13
+- remove plccache from controllers, all lookups from db.
+- reformat emailTxt messags
+- updated bootstates in bootman.py
+
 * Tue Jun 02 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-12
 - tag of latest changes.
 - need to test end to end.
@@ -385,6 +390,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 12
+%define taglevel 13
 
 %define version 3.0
