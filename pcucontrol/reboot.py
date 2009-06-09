@@ -365,7 +365,7 @@ def model_to_object(modelname):
 	elif "ePowerSwitch" in modelname:
 		return ePowerSwitchNew
 	elif "IPMI" in modelname:
-		return IPMI
+		return OpenIPMI
 	elif "BlackBoxPSMaverick" in modelname:
 		return BlackBoxPSMaverick
 	elif "PM211MIP" in modelname:
@@ -452,7 +452,8 @@ def reboot_test_new(nodename, values, verbose, dryrun):
 		values.update(values['plc_pcu_stats'])
 
 	try:
-		modelname = convert_oldmodelname_to_newmodelname(values['model'], values['pcu_id'])
+		#modelname = convert_oldmodelname_to_newmodelname(values['model'], values['pcu_id'])
+		modelname = values['model']
 		if modelname:
 			object = eval('%s(values, verbose)' % modelname)
 			rb_ret = object.reboot(values[nodename], dryrun)

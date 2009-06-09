@@ -60,6 +60,7 @@ fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
+${MONITOR_SCRIPT_ROOT}/syncwithplc.py $DATE || :
 
 echo "Performing FindAll Nodes"
 #########################

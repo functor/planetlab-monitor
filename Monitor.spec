@@ -53,6 +53,8 @@ Group: Applications/System
 
 Requires: python
 Requires: python-setuptools-devel
+Requires: python-peak-util-extremes
+Requires: TurboGears
 
 Requires: openssh-clients
 Requires: perl-libwww-perl
@@ -209,16 +211,16 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
-easy_install --build-directory /var/tmp -UZ Elixir
-easy_install --build-directory /var/tmp -UZ ElementTree
-# TODO: something is bad wrong with this approach.
-#easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
-#easy_install --build-directory /var/tmp -UZ "Paste==1.5.1"
-#easy_install --build-directory /var/tmp -UZ "PasteDeploy==1.3.1"
+#easy_install --build-directory /var/tmp -UZ Elixir
+#easy_install --build-directory /var/tmp -UZ ElementTree
+## TODO: something is bad wrong with this approach.
+##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
+#easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+#easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 
-easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-
+if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
+    sed -i -e 's/^session    required   pam_loginuid.so/#session    required   pam_loginuid.so/g' /etc/pam.d/crond
+fi
 # NOTE: add the default xml stuff if it's not already in the default xml config.
 if ! grep '<category id="plc_monitor">' /etc/planetlab/default_config.xml ; then 
     sed -i 's|<category id="plc_net">| <category id="plc_monitor">\n <name>Monitor Service Configuration</name>\n <description>Monitor</description>\n <variablelist>\n <variable id="enabled" type="boolean">\n <name>Enabled</name>\n <value>true</value>\n <description>Enable on this machine.</description>\n </variable>\n <variable id="email">\n <value></value>\n </variable>\n <variable id="dbpassword">\n <value></value>\n </variable>\n <variable id="host" type="hostname">\n <name>Hostname</name>\n <value>pl-virtual-06.cs.princeton.edu</value>\n <description>The fully qualified hostname.</description>\n </variable>\n <variable id="ip" type="ip">\n <name>IP Address</name>\n <value/>\n <description>The IP address of the monitor server.</description>\n </variable>\n </variablelist>\n </category>\n <category id="plc_net">|' /etc/planetlab/default_config.xml

@@ -235,7 +235,7 @@ Thank you very much for your help,
 the host did not come back online.  You may be able to learn more by visiting
 this link:
 
-	https://monitor.planet-lab.org/monitor/pcuview?pcu_id=%(pcu_id)s
+	https://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
 
 We need your help resolving this issue in a few ways:  
 

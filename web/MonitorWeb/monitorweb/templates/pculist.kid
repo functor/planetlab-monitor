@@ -27,7 +27,7 @@ from links import *
                    size='3' maxlength='3' />                                                          
             <label class='pagesize_label'> items/page </label>                                     
             <img class='reset' src="/planetlab/icons/clear.png" alt="reset visible size"           
-                 onmousedown='plekit_pagesize_reset("pculist","pculist_pagesize", "pculist_search_and");' />
+                 onmousedown='plekit_pagesize_reset("pculist","pculist_pagesize", 999);' />
     </fieldset></form></td></tr>                                                                        
     
     <tr class='search_area'><td class='search_area' colspan='5'>

@@ -7,6 +7,7 @@ import time
 from monitor import config
 
 api06 = plc.PLC(plc.Auth(config.API06_AUTH_USER, config.API06_AUTH_PASSWORD).auth, config.API06_SERVER)
+api06 = plc.api
 
 if True:
 	# update old model names to new model names.
