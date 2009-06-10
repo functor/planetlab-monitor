@@ -51,7 +51,7 @@ from links import *
 					<td py:content="node.last_checked"></td>
 					<td nowrap="true">
 						<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
-					<td py:content="node.status"></td>
+					<td id="node-${node.status}" py:content="node.status"></td>
 				</tr>
 			</tbody>
 		</table>

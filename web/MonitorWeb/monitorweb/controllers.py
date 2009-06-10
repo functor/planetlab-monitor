@@ -363,6 +363,19 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			
 		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, exceptions=exceptions)
 
+	@expose(template="monitorweb.templates.pcuhistory")
+	def pcuhistory(self, pcu_id=None):
+		query = []
+		if pcu_id:
+			fbnode = HistoryPCURecord.get_by(plc_pcuid=pcu_id)
+			l = fbnode.versions[-100:]
+			l.reverse()
+			for pcu in l:
+				#prep_node_for_display(node)
+				query.append(pcu)
+
+		return dict(query=query, pcu_id=pcu_id)
+
 	@expose(template="monitorweb.templates.nodehistory")
 	def nodehistory(self, hostname=None):
 		query = []

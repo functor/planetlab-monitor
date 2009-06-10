@@ -108,6 +108,16 @@ a.right { float: right; }
 #site-offline { background-color: red; }
 #site-down { background-color: indianred; }
 
+#node-online { background-color : lightgreen; }
+#node-good { background-color : darkseagreen; }
+#node-offline { background-color: red; }
+#node-down { background-color: indianred; }
+
+#pcu-online { background-color : lightgreen; }
+#pcu-good { background-color : darkseagreen; }
+#pcu-offline { background-color: red; }
+#pcu-down { background-color: indianred; }
+
 /*#site-0 { background-color : white; }*/
 #site-1 { background-color: gold; }
 #site-2 { background-color: indianred; }

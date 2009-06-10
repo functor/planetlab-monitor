@@ -44,9 +44,10 @@ from links import *
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
+					<th>History</th>
 					<th>PCU Name</th>
 					<th>Missing Fields</th>
-					<th>DNS Status</th>
+					<th nowrap='true'>DNS Status</th>
 					<th nowrap='true'>Port Status</th>
 					<th width="80%">Test Results</th>
 					<th>Model</th>
@@ -56,6 +57,7 @@ from links import *
 			<tbody>
 				<tr py:for="i,pcu in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
+					<td><a href="pcuhistory?pcu_id=${pcu.plc_pcuid}">history</a></td>
 					<td nowrap="true" >
 						<a class="ext-link" href="${plc_pcu_uri_id(pcu.plc_pcu_stats['pcu_id'])}">
 							<span class="icon">${pcu_name(pcu.plc_pcu_stats)}</span>
@@ -167,27 +169,27 @@ from links import *
 					</td>
 					<td>
 						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', hostname=node.hostname)}" name="externalscan${i}" method='post'>
+	  					<!--form action="${link('pcuview', hostname=node.hostname)}" name="externalscan${i}" method='post'>
 						<input type='hidden' name='hostname' value='${node.hostname}'/> 
 						<input type='hidden' name='type' value='ExternalScan' /> 
 	  					</form>
-						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a>
+						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a-->
 					</td>
 					<td>
 						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', hostname=node.hostname)}" name="internalscan${i}" method='post'>
+	  					<!--form action="${link('pcuview', hostname=node.hostname)}" name="internalscan${i}" method='post'>
 						<input type='hidden' name='hostname' value='${node.hostname}'/> 
 						<input type='hidden' name='type' value='InternalScan' /> 
 	  					</form>
-						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a>
+						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a-->
 					</td>
 					<td py:if="len(pcuquery) > 0">
 						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
+	  					<!--form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
 						<input type='hidden' name='hostname' value='${node.hostname}'/> 
 						<input type='hidden' name='type' value='Reboot' /> 
 	  					</form>
-						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a>
+						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a-->
 					</td>
 				</tr>
 			</tbody>
@@ -237,8 +239,8 @@ from links import *
 	<!-- TODO: figure out how to make this conditional by model rather than port;
 				it is convenient to have links to ilo, drac, amt, etc.
 				regardless of whether the last PCU scan was successful.  -->
-	<h4 py:if="len(pcuquery) != 0">Convenience Calls</h4>
-		<div py:if="len(pcuquery) != 0" class="code"> <!-- pcu is not None" class="code"-->
+	<!--h4 py:if="len(pcuquery) != 0">Convenience Calls</h4>
+		<div py:if="len(pcuquery) != 0" class="code"> 
 			<span	py:for="port,state in pcu.ports">
 					<span class="code" py:if="port == 22 and state == 'open'">
 						ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no 
@@ -257,9 +259,9 @@ from links import *
 						<br/>
 						<a href="https://${pcu_name(pcu.plc_pcu_stats)}">https://${pcu_name(pcu.plc_pcu_stats)}</a>
 						<br/>
-						curl -s --form 'user=${pcu.plc_pcu_stats['username']}' 
-								--form 'password=${pcu.plc_pcu_stats['password']}' 
-								--insecure https://${pcu_name(pcu.plc_pcu_stats)}/cgi-bin/webcgi/index
+						curl -s -form 'user=${pcu.plc_pcu_stats['username']}' 
+								-form 'password=${pcu.plc_pcu_stats['password']}' 
+								-insecure https://${pcu_name(pcu.plc_pcu_stats)}/cgi-bin/webcgi/index
 						<br/>
 						/usr/share/monitor/pcucontrol/models/racadm.py -r ${pcu.plc_pcu_stats['ip']} 
 							-u ${pcu.plc_pcu_stats['username']} -p '${pcu.plc_pcu_stats['password']}'
@@ -276,7 +278,7 @@ from links import *
 							-user admin -pass '${pcu.plc_pcu_stats['password']}'
 					</span>
 			</span>
-		</div>
+		</div-->
 
   </div>
 

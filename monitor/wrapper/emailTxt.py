@@ -309,12 +309,12 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 	""")
 
-	clear_penalty=("""MONTEST: All penalties cleared from site %(loginbase)s""",
+	clear_penalty=("""MONTEST: All privileges restored to site %(loginbase)s""",
 	"""
-This notice is to let you know that any penalties previously applied to your 
-site have been removed: %(penalty_level)s.
+This notice is to let you know that any privileges previously reduced at your 
+site have been restored: %(penalty_level)s.
 
-All privileges have been restored.  You may create slices again, and if your 
+All privileges are restored.  You may create slices again, and if your 
 slices were disabled, please allow up to 30 minutes for them to return to 
 enabled.
 
@@ -330,10 +330,10 @@ Legend:
   2+ - all existing slices will be disabled.
 	""")
 
-	increase_penalty=("""MONTEST: Penalty increased for site %(loginbase)s""",
+	increase_penalty=("""MONTEST: Privilege reduced for site %(loginbase)s""",
 	"""
-This notice is to let you know that the penalty applied to your site has
-increased: %(penalty_level)s.
+This notice is to let you know that the privileges granted to your site as
+a participating member of Planetlab have reduced: %(penalty_level)s.
 
 Your privileges will be reduced corresponding to the legend below.  To 
 restore these privileges, please return at least two machines to working 
