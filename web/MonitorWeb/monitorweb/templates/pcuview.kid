@@ -28,7 +28,7 @@ from links import *
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td><a href="sitehistory?loginbase=${site.loginbase}">history</a></td>
-					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
+					<td nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>
@@ -158,7 +158,7 @@ from links import *
 					<td></td>
 					<td><a href="nodehistory?hostname=${node.hostname}">history</a></td>
 					<td id="node-${node.observed_status}" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
+						<a class="ext-link" href="${plc_node_uri_id(node.plc_node_stats['node_id'])}">
 							<span class="icon">${node.hostname}</span></a>
 					</td>
 					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>

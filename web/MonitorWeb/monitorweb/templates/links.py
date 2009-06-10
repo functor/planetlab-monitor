@@ -6,6 +6,8 @@ def plc_mail_uri(ticketid):
 	return config.RT_WEB_SERVER + "/Ticket/Display.html?id=" + str(ticketid)
 def plc_node_uri(hostname):
 	return "https://" + config.PLC_WWW_HOSTNAME + "/db/nodes/index.php?nodepattern=" + str(hostname)
+def plc_node_uri_id(node_id):
+	return "https://" + config.PLC_WWW_HOSTNAME + "/db/nodes/index.php?id=" + str(node_id)
 def plc_site_uri(loginbase):
 	return "https://" + config.PLC_WWW_HOSTNAME + "/db/sites/index.php?site_pattern=" + str(loginbase)
 def plc_site_uri_id(site_id):

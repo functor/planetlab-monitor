@@ -41,6 +41,7 @@ def check_node_state(rec, node):
 		print rec.plc_node_stats
 		boot_state = rec.plc_node_stats['boot_state']
 		last_contact = rec.plc_node_stats['last_contact']
+		node.plc_nodeid = rec.plc_node_stats['node_id']
 	else:
 		boot_state = "unknown"
 		last_contact = None
@@ -52,6 +53,7 @@ def check_node_state(rec, node):
 		node.haspcu = True
 	else:
 		node.haspcu = False
+
 
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state

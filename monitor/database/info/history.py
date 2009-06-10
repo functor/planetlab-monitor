@@ -16,6 +16,8 @@ class HistoryNodeRecord(Entity):
 	last_changed = Field(DateTime,default=datetime.now)
 	status = Field(String,default="unknown")
 	haspcu = Field(Boolean,default=False)
+	plc_nodeid = Field(Int,default=1)
+
 	acts_as_versioned(ignore=['last_changed', 'last_checked'])
 
 	@classmethod
@@ -41,6 +43,7 @@ class HistoryPCURecord(Entity):
 
 class HistorySiteRecord(Entity):
 	loginbase = Field(String(250),primary_key=True)
+	plc_siteid = Field(Int,default=1)
 
 	last_checked = Field(DateTime,default=datetime.now)
 	last_changed = Field(DateTime,default=datetime.now)

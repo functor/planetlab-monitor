@@ -110,6 +110,7 @@ def checkAndRecordState(l_sites, l_plcsites):
 															'penalty_level' : 0})
 			sitehist.last_checked = datetime.now()
 
+			sitehist.plc_siteid = d_site['site_id']
 			sitehist.slices_total = d_site['max_slices']
 			sitehist.slices_used = len(d_site['slice_ids'])
 			sitehist.nodes_total = len(lb2hn[sitename])

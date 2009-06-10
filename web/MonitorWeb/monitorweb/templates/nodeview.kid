@@ -32,7 +32,7 @@ from links import *
 							<span class="icon">${node.loginbase}</span></a>
 					</td>
 					<td id="node-${node.observed_status}" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri(node.hostname)}">
+						<a class="ext-link" href="${plc_node_uri_id(node.plc_nodeid)}">
 							<span class="icon">${node.hostname}</span></a>
 					</td>
 					<td py:content="node.ping_status"></td>

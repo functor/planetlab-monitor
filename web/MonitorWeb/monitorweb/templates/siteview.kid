@@ -24,7 +24,7 @@ from links import *
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)">
-					<td nowrap="true"><a class="ext-link" href="${plc_site_uri(site.loginbase)}">
+					<td nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>

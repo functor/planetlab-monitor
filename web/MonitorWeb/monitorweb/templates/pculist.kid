@@ -58,7 +58,7 @@ from links import *
       <td nowrap='true'>
 	<div class='oneline'>
 	  <a class='left' href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
-	  <a class='right' href="${plc_site_uri(node.loginbase)}">
+	  <a class='right' href="${plc_site_uri_id(node.plc_pcu_stats['site_id'])}">
 	    <img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 	</div>
       </td>
