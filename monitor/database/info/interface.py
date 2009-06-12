@@ -131,7 +131,6 @@ class SiteInterface(HistorySiteRecord):
 			m = Message(message[0] % args, message[1] % args, viart, self.db.message_id)
 
 			contacts = self.getContacts()
-			contacts = [config.cc_email]	# TODO: remove after testing...
 
 			print "sending message: %s to site %s for host %s" % (type, self.db.loginbase, hostname)
 

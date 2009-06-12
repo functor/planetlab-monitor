@@ -151,7 +151,7 @@ def main(hostnames, sitenames):
 
 				# TODO: catch errors
 				sitehist.increasePenalty()
-				#sitehist.applyPenalty()
+				sitehist.applyPenalty()
 				sitehist.sendMessage('increase_penalty')
 
 				print "send message for site %s penalty increase" % site
@@ -164,7 +164,7 @@ def main(hostnames, sitenames):
 				# send message that penalties are cleared.
 
 				sitehist.clearPenalty()
-				#sitehist.applyPenalty()
+				sitehist.applyPenalty()
 				sitehist.sendMessage('clear_penalty')
 				sitehist.closeTicket()
 
