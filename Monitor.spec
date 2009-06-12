@@ -56,6 +56,7 @@ Requires: python-setuptools-devel
 Requires: python-peak-util-extremes
 Requires: TurboGears
 
+Requires: compat-libstdc++-296
 Requires: openssh-clients
 Requires: perl-libwww-perl
 Requires: perl-IO-Socket-SSL 
@@ -64,8 +65,7 @@ Requires: nmap
 Requires: rt3
 
 Requires: plewww-plekit
-#Requires: python-sqlalchemy
-#Requires: python-elixir
+
 #Requires: zabbix-client
 #Requires: zabbix-gui
 #Requires: zabbix-server
@@ -217,6 +217,9 @@ rm -rf $RPM_BUILD_ROOT
 ##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
 #easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
 #easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+
+# crazy openssl libs for racadm binary
+ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
 
 if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
     sed -i -e 's/^session    required   pam_loginuid.so/#session    required   pam_loginuid.so/g' /etc/pam.d/crond
