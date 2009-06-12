@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 13
+%define taglevel 14
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -257,6 +257,11 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Fri Jun 12 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-14
+- update web
+- update policy
+- added statistics dir
+
 * Mon Jun 08 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-13
 - remove plccache from controllers, all lookups from db.
 - reformat emailTxt messags
