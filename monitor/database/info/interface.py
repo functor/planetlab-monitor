@@ -127,6 +127,8 @@ class SiteInterface(HistorySiteRecord):
 
 			if viart:
 				self.getTicketStatus()		# get current message status
+				if self.db.message_status not in ['open', 'new']:
+					self.closeTicket()
 
 			m = Message(message[0] % args, message[1] % args, viart, self.db.message_id)
 

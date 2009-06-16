@@ -211,12 +211,17 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
-#easy_install --build-directory /var/tmp -UZ Elixir
 #easy_install --build-directory /var/tmp -UZ ElementTree
-## TODO: something is bad wrong with this approach.
 ##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
-#easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-#easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+
+# NOTE: enable monitor by default, since we're installing it.
+plc-config --save /etc/planetlab/default_config.xml \
+			--category plc_monitor --variable enabled --value true
+
+## TODO: something is bad wrong with this approach.
+easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install --build-directory /var/tmp -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
