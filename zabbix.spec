@@ -290,6 +290,12 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-16
+- Added Rpyc from 1.0 branch.
+- add pcuhistory
+- add setup-agent for password protected keys.
+- other minor improvements.
+
 * Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-15
 - automate install
 - auto-close tickets
@@ -399,6 +405,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 15
+%define taglevel 16
 
 %define version 3.0
