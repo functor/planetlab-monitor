@@ -16,7 +16,7 @@ def is_in_file(filename, pattern):
 		return False
 def add_to_file(filename, data):
 	os.system("echo '%s' >> %s" % (data, filename))
-	print "echo '%s' >> %s" % (data, filename)
+	#print "echo '%s' >> %s" % (data, filename)
 
 sites = api.GetSites({'login_base' : 'mlab*'}, ['node_ids'])
 for s in sites:
@@ -24,9 +24,9 @@ for s in sites:
 	for node in nodes:
 		try:
 			i = api.GetInterfaces({ 'interface_id' :  node['interface_ids'], 'is_primary' : True})
-			print len(i), i
-			print "%s %s" % (i[0]['ip'], node['hostname'])
-			#if not is_in_file(HOSTS_FILE, node['hostname']):
-			#	add_to_file(HOSTS_FILE, "%s %s" % (i[0]['ip'], node['hostname']))
+			#print len(i), i
+			#print "%s %s" % (i[0]['ip'], node['hostname'])
+			if not is_in_file(HOSTS_FILE, node['hostname']):
+				add_to_file(HOSTS_FILE, "%s %s" % (i[0]['ip'], node['hostname']))
 		except:
 			pass

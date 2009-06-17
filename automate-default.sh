@@ -60,28 +60,21 @@ fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
+${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
 ${MONITOR_SCRIPT_ROOT}/syncwithplc.py $DATE || :
+service plc restart monitor
 
 echo "Performing FindAll Nodes"
 #########################
 # 1. FINDBAD NODES 
-${MONITOR_SCRIPT_ROOT}/findall.py --increment $DATE || :
+${MONITOR_SCRIPT_ROOT}/findall.py $DATE || :
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 ${MONITOR_SCRIPT_ROOT}/policy.py $DATE
-
-echo "Archiving pkl files"
-#########################
-# Archive pkl files.
-for f in act_all l_plcnodes site_persistflags node_persistflags pcu_persistflags ; do
-	if [ -f ${MONITOR_DATA_ROOT}/production.$f.pkl ] ; then
-		cp ${MONITOR_DATA_ROOT}/production.$f.pkl ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.production.$f.pkl
-	else
-		echo "Warning: It failed to archive ${MONITOR_DATA_ROOT}/production.$f.pkl"
-	fi
-done
+${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
+service plc restart monitor
 
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log
 rm -f $MONITOR_PID

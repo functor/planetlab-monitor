@@ -211,7 +211,7 @@ ERROR- 	   This is an error state, where there is absolutely no contact
 #############################################################################
 #############################################################################
 
-	pcumissing_notice =("""MONTEST: There is no PCU available to reboot %(hostname)s""",
+	pcumissing_notice =("""There is no PCU available to reboot %(hostname)s""",
 """We've noticed that there is no PCU associated with %(hostname)s, so we could 
 not reboot it ourselves.
 
@@ -229,26 +229,26 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	pcufailed_notice =("""MONTEST: Could not use PCU to reboot %(hostname)s""",
+	pcufailed_notice =("""Could not use PCU to reboot %(hostname)s""",
 
 """We tried to use the PCU registered for %(hostname)s, but for some reason 
 the host did not come back online.  You may be able to learn more by visiting
 this link:
 
-	https://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
+    https://monitor.planet-lab.org/monitor/pcuview?loginbase=%(loginbase)s
 
 We need your help resolving this issue in a few ways:  
 
  1. First, we need your help rebooting %(hostname)s.  Because the above PCU does 
     not appear to work, please manually reboot this machine.  If it turns out 
-	that there is a problem with the PCU configuration, we can help you
+    that there is a problem with the PCU configuration, we can help you
     resolve that independently.
 
  2. If it is possible, please correcct the above PCU problem, or let us know
- 	what steps you are taking.  By enabling us to take administrative actions
- 	automatically without your intervention, you will save time in the future 
-	the next time we need to reboot this machine, because we will be able to 
-	do so without disturbing you.
+    what steps you are taking.  By enabling us to take administrative actions
+    automatically without your intervention, you will save time in the future 
+    the next time we need to reboot this machine, because we will be able to 
+    do so without disturbing you.
 
  3. If there is nothing apparently wrong with the PCU, or the mapping between
     the PCU and the host, then there is likely a problem with our bootstrap
@@ -265,7 +265,7 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	online_notice=("""MONTEST: Host %(hostname)s is online""",
+	online_notice=("""Host %(hostname)s is online""",
 	"""
 This notice is simply to let you know that:
     %(hostname)s
@@ -277,14 +277,14 @@ is online and operational.
 Thank you very much for your help!
   -- PlanetLab Central (support@planet-lab.org)
 	""")
-	test_notice=("""MONTEST: Host %(hostname)s is testing""",
+	test_notice=("""Host %(hostname)s is testing""",
 	"""
 This notice is simply to test whether notices work.
     %(hostname)s
 
 Thank you very much for your help!
 	""")
-	retry_bootman=("""MONTEST: Running BootManager on %(hostname)s""",
+	retry_bootman=("""Running BootManager on %(hostname)s""",
 	"""
 This notice is simply to let you know that:
     %(hostname)s
@@ -292,7 +292,7 @@ This notice is simply to let you know that:
 appears stuck in a debug mode.  To try to correct this, we're trying to rerun BootManager.py.  
 If any action is needed from you, you will recieve additional notices.  Thank you!
 	""")
-	down_notice=("""MONTEST: Host %(hostname)s is down""",
+	down_notice=("""Host %(hostname)s is down""",
 	"""
 This notice is simply to let you know that:
     %(hostname)s
@@ -309,7 +309,7 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 	""")
 
-	clear_penalty=("""MONTEST: All privileges restored to site %(loginbase)s""",
+	clear_penalty=("""All privileges restored to site %(loginbase)s""",
 	"""
 This notice is to let you know that any privileges previously reduced at your 
 site have been restored: %(penalty_level)s.
@@ -330,7 +330,7 @@ Legend:
   2+ - all existing slices will be disabled.
 	""")
 
-	increase_penalty=("""MONTEST: Privilege reduced for site %(loginbase)s""",
+	increase_penalty=("""Privilege reduced for site %(loginbase)s""",
 	"""
 This notice is to let you know that the privileges granted to your site as
 a participating member of Planetlab have reduced: %(penalty_level)s.
@@ -351,7 +351,7 @@ Legend:
   2+ - all existing slices will be disabled.
 	""")
 
-	newbootcd_notice=("""MONTEST: Host %(hostname)s needs a new BootImage""", """
+	newbootcd_notice=("""Host %(hostname)s needs a new BootImage""", """
 We noticed the following node has an out-dated BootImage: 
 
     %(hostname)s  
@@ -453,7 +453,7 @@ Thank you very much for your help,
   -- PlanetLab Central (support@planet-lab.org)
 """)
 
-	newalphacd_notice=("""MONTEST: New Boot Images for %(hostname)s""", 
+	newalphacd_notice=("""New Boot Images for %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed that we were not able to recognize all the hardware in your machine.  This means that it is so new that it needs a new BootCD, or that it is so old that it is no longer supported.
 
     %(hostname)s  
@@ -483,7 +483,7 @@ Thank you for your help,
 	pcutonodemapping=[pcutonodemapping_one, pcutonodemapping_one, pcutonodemapping_one]
 	pcudown=[pcudown_one, pcudown_one, pcudown_one]
 
-	unknownsequence_notice = ("""MONTEST: Unrecognized Error on PlanetLab host %(hostname)s""", 
+	unknownsequence_notice = ("""Unrecognized Error on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -569,7 +569,7 @@ Thank you for your help,
 	donation_down = [ donation_down_one, donation_down_one, donation_down_one ]
 
 
-	minimalhardware_notice = ("""MONTEST: Hardware requirements not met on PlanetLab host %(hostname)s""", 
+	minimalhardware_notice = ("""Hardware requirements not met on PlanetLab host %(hostname)s""", 
 					   """
 While trying to automatically recover this machine:
 
@@ -589,7 +589,7 @@ BootManager.log output follows:
 %(bmlog)s
 """	  )
 
-	baddisk_notice = ("""MONTEST: Bad Disk on PlanetLab node %(hostname)s""", 
+	baddisk_notice = ("""Bad Disk on PlanetLab node %(hostname)s""", 
 			   """As part of PlanetLab node monitoring, we noticed %(hostname)s has a number of disk or media related I/O errors, that prevent it from either booting or reliably running as a PlanetLab node.
 
 Please verify the integrity of the disk, and order a replacement if needed.  If you need to schedule downtime for the node, please let us know at support@planet-lab.org. 
@@ -655,7 +655,7 @@ BootManager.log output follows:
 %(bmlog)s
 """)
 
-	nodeconfig_notice=("""MONTEST:  Please Update Configuration file for PlanetLab node %(hostname)s""", 
+	nodeconfig_notice=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
 	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
@@ -695,7 +695,7 @@ Thanks.
 """)
 
 
-	baddns_notice=("""MONTEST: Planetlab node down: broken DNS configuration for %(hostname)s""", 
+	baddns_notice=("""Planetlab node down: broken DNS configuration for %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed the DNS servers used by the following machine(s) are not responding to queries.
 
     %(hostname)s 

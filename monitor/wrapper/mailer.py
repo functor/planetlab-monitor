@@ -28,7 +28,7 @@ def reformat_for_rt(text):
 		
 
 def _setupRTenvironment():
-	os.environ['PATH'] = os.environ['PATH'] + ":" + config.RT_WEB_TOOLS_PATH
+	os.environ['PATH'] = config.RT_WEB_TOOLS_PATH + ":" + os.environ['PATH']
 	os.environ['RTSERVER'] = config.RT_WEB_SERVER
 	os.environ['RTUSER']   = config.RT_WEB_USER
 	os.environ['RTPASSWD'] = config.RT_WEB_PASSWORD
@@ -41,6 +41,7 @@ def setTicketStatus(ticket_id, status):
 		return {}
 
 	cmd = "rt edit ticket/%s set status=%s" % (ticket_id, status)
+	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split('\n')
@@ -52,6 +53,7 @@ def getTicketStatus(ticket_id):
 		return {}
 
 	cmd = "rt show -t ticket -f id,subject,status,queue,created %s" % (ticket_id)
+	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split('\n')
@@ -78,6 +80,7 @@ def setAdminCCViaRT(ticket_id, to):
 	# create a comma-separated list
 	s_to = ",".join(to)
 	cmd = "rt edit ticket/%s set admincc='%s'" % (ticket_id, s_to)
+	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split()
@@ -101,6 +104,7 @@ def setSubjectViaRT(ticket_id, subject):
 	i_ticket_id = int(ticket_id)
 
 	cmd = "rt edit ticket/%s set subject='%s'" % (ticket_id, subject)
+	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split()
@@ -125,9 +129,11 @@ def addCommentViaRT(ticket_id, comment):
 	i_ticket_id = int(ticket_id)
 
 	cmd = "rt comment -m '%s' ticket/%s" % (comment, i_ticket_id)
+	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
 	l_values = value.split()
+	l_err = f_err.read()
 	f_in.close() ; f_out.close() ; f_err.close()
 	if len(l_values) > 1 and "recorded" in l_values[1]:
 		# Success
@@ -136,6 +142,7 @@ def addCommentViaRT(ticket_id, comment):
 		# Error
 		f_in.close() ; f_out.close() ; f_err.close()
 		print "ERROR: RT failed to add comment to id %s" % ticket_id
+		print "ERROR: %s" % l_err
 
 	return
 
@@ -153,6 +160,7 @@ def closeTicketViaRT(ticket_id, comment):
 
 	if not config.debug:
 		cmd = "rt edit ticket/%s set status=resolved" % i_ticket_id
+		print cmd
 		(f_in, f_out, f_err) = os.popen3(cmd)
 		f_in.close()
 		value = f_out.read()
@@ -184,6 +192,7 @@ def emailViaRT(subject, text, to, ticket_id=None):
 		setAdminCCViaRT(ticket_id, to)
 
 		cmd = "rt correspond -m - %s" % ticket_id
+		print cmd
 		(f_in, f_out, f_err) = os.popen3(cmd)
 		f_in.write(text)
 		f_in.flush()
@@ -229,6 +238,7 @@ def emailViaRT_NoTicket(subject, text, to):
 
 	if config.mail and not config.debug:
 		cmd = "rt create -i -t ticket"
+		print cmd
 		(f_in, f_out, f_err) = os.popen3(cmd)
 		f_in.write(input_text % (subject, spaced_text))
 		f_in.flush()
