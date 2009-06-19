@@ -144,33 +144,7 @@ def main(hostnames, sitenames):
 		recent_actions = sitehist.getRecentActions(loginbase=site)
 
 		print "%s %s %s" % (i, sitehist.db.loginbase, sitehist.db.status)
-		if sitehist.db.status == 'down':
-			if  not found_within(recent_actions, 'pause_penalty', 30) and \
-				not found_within(recent_actions, 'increase_penalty', 7) and \
-				changed_greaterthan(sitehist.db.last_changed, 7):
 
-				# TODO: catch errors
-				sitehist.increasePenalty()
-				sitehist.applyPenalty()
-				sitehist.sendMessage('increase_penalty')
-
-				print "send message for site %s penalty increase" % site
-
-		if sitehist.db.status == 'good':
-			# clear penalty
-			# NOTE: because 'all clear' should have an indefinite status, we
-			# 		have a boolean value rather than a 'recent action'
-			if sitehist.db.penalty_applied:
-				# send message that penalties are cleared.
-
-				sitehist.clearPenalty()
-				sitehist.applyPenalty()
-				sitehist.sendMessage('clear_penalty')
-				sitehist.closeTicket()
-
-				print "send message for site %s penalty cleared" % site
-
-		# find all ticket ids for site ( could be on the site record? )
 		# determine if there are penalties within the last 30 days?
 		# if so, add a 'pause_penalty' action.
 		if sitehist.db.message_id != 0 and sitehist.db.message_status == 'open' and \
@@ -178,6 +152,34 @@ def main(hostnames, sitenames):
 			#	pause escalation
 			print "Pausing penalties for %s" % site
 			sitehist.pausePenalty()
+		else:
+
+			if sitehist.db.status == 'down':
+				if  not found_within(recent_actions, 'pause_penalty', 30) and \
+					not found_within(recent_actions, 'increase_penalty', 7) and \
+					changed_greaterthan(sitehist.db.last_changed, 7):
+
+					# TODO: catch errors
+					sitehist.increasePenalty()
+					sitehist.applyPenalty()
+					sitehist.sendMessage('increase_penalty')
+
+					print "send message for site %s penalty increase" % site
+
+			if sitehist.db.status == 'good':
+				# clear penalty
+				# NOTE: because 'all clear' should have an indefinite status, we
+				# 		have a boolean value rather than a 'recent action'
+				if sitehist.db.penalty_applied:
+					# send message that penalties are cleared.
+
+					sitehist.clearPenalty()
+					sitehist.applyPenalty()
+					sitehist.sendMessage('clear_penalty')
+					sitehist.closeTicket()
+
+					print "send message for site %s penalty cleared" % site
+
 
 		site_count = site_count + 1
 
