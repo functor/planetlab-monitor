@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 15
+%define taglevel 16
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -266,6 +266,12 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+-* Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-16
+-- Added Rpyc from 1.0 branch.
+-- add pcuhistory
+-- add setup-agent for password protected keys.
+-- other minor improvements.
+
 * Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-15
 - automate install
 - auto-close tickets
