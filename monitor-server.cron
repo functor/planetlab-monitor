@@ -2,5 +2,5 @@
 # automated actions for debug nodes.
 
 01 * * * * root /usr/share/monitor/automate-default.sh 2>&1 > /usr/share/monitor/monitor.log
-30 * * * * root /etc/plc.d/monitor sync 2>&1 >> /var/log/monitorsync.log
+#30 * * * * root /etc/plc.d/monitor sync 2>&1 >> /var/log/monitorsync.log
 

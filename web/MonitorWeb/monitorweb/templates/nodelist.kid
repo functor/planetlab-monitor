@@ -17,8 +17,8 @@ from links import *
   </script>
 
   <center>
-  <b py:content="'BOOT: %d' % len([node for node in query if node.observed_status == 'BOOT'])"></b> | 
-  <b py:content="'DOWN: %d' % len([node for node in query if node.observed_status == 'DOWN'])"></b><br/>
+  <b py:content="'BOOT: %d' % len([agg for agg in query if agg.node.observed_status == 'BOOT'])"></b> | 
+  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.observed_status == 'DOWN'])"></b><br/>
   </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">

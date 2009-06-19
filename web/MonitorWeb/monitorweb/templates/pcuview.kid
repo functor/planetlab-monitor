@@ -55,23 +55,23 @@ from links import *
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,pcu in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,agg in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="pcuhistory?pcu_id=${pcu.plc_pcuid}">history</a></td>
+					<td><a href="pcuhistory?pcu_id=${agg.pcu.plc_pcuid}">history</a></td>
 					<td nowrap="true" >
-						<a class="ext-link" href="${plc_pcu_uri_id(pcu.plc_pcu_stats['pcu_id'])}">
-							<span class="icon">${pcu_name(pcu.plc_pcu_stats)}</span>
+						<a class="ext-link" href="${plc_pcu_uri_id(agg.pcu.plc_pcu_stats['pcu_id'])}">
+							<span class="icon">${pcu_name(agg.pcu.plc_pcu_stats)}</span>
 						</a>
 					</td>
-					<td py:content="pcu.entry_complete"></td>
-					<td id="dns-${pcu.dns_status}" py:content="pcu.dns_status"></td>
+					<td py:content="agg.pcu.entry_complete"></td>
+					<td nowrap='true' id="dns-${agg.pcu.dns_status}" py:content="agg.pcu.dns_status"></td>
 					<td nowrap='true'>
-						<span py:for="port,state in pcu.ports" 
+						<span py:for="port,state in agg.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
-					<td width="40" id="status-${pcu.status}"><pre class="results" py:content="pcu.reboot_trial_status"></pre></td>
-					<td py:content="pcu.plc_pcu_stats['model']"></td>
-					<td py:content="len(pcu.plc_pcu_stats['node_ids'])"></td>
+					<td width="40" id="status-${agg.status}"><pre class="results" py:content="agg.pcu.reboot_trial_status"></pre></td>
+					<td py:content="agg.pcu.plc_pcu_stats['model']"></td>
+					<td py:content="len(agg.pcu.plc_pcu_stats['node_ids'])"></td>
 				</tr>
 			</tbody>
 		</table>
@@ -154,31 +154,31 @@ from links import *
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,node in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
+				<tr py:for="i,agg in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="nodehistory?hostname=${node.hostname}">history</a></td>
-					<td id="node-${node.observed_status}" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri_id(node.plc_node_stats['node_id'])}">
-							<span class="icon">${node.hostname}</span></a>
+					<td><a href="nodehistory?hostname=${agg.node.hostname}">history</a></td>
+					<td id="node-${agg.node.observed_status}" nowrap="true" >
+						<a class="ext-link" href="${plc_node_uri_id(agg.node.plc_node_stats['node_id'])}">
+							<span class="icon">${agg.node.hostname}</span></a>
 					</td>
-					<td py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
-					<td py:content="diff_time(mktime(node.date_checked.timetuple()))"></td>
+					<td py:content="diff_time(agg.node.plc_node_stats['last_contact'])"></td>
+					<td py:content="diff_time(mktime(agg.node.date_checked.timetuple()))"></td>
 					<td>
-						<span py:for="port,state in node.ports" 
+						<span py:for="port,state in agg.ports" 
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
 					<td>
 						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=node.hostname)}" name="externalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="externalscan${i}" method='post'>
+						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
 						<input type='hidden' name='type' value='ExternalScan' /> 
 	  					</form>
 						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a-->
 					</td>
 					<td>
 						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=node.hostname)}" name="internalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="internalscan${i}" method='post'>
+						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
 						<input type='hidden' name='type' value='InternalScan' /> 
 	  					</form>
 						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a-->
@@ -186,7 +186,7 @@ from links import *
 					<td py:if="len(pcuquery) > 0">
 						<!-- TODO: add some values/code to authenticate the operation.  -->
 	  					<!--form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
-						<input type='hidden' name='hostname' value='${node.hostname}'/> 
+						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
 						<input type='hidden' name='type' value='Reboot' /> 
 	  					</form>
 						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a-->
@@ -231,7 +231,11 @@ from links import *
 					<td py:content="act.action_type"></td>
 					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
 							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
-					<td><pre py:content="act.error_string"></pre></td>
+					<td py:if="'bootmanager' in act.action_type">
+						<a href="/monitorlog/bm.${act.hostname}.log">latest bm log</a>
+					</td>
+					<td py:if="'bootmanager' not in act.action_type">
+						<pre py:content="act.error_string"></pre></td>
 				</tr>
 			</tbody>
 		</table>

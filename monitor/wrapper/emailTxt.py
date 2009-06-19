@@ -487,7 +487,7 @@ Thank you for your help,
 					   """
 While trying to automatically recover this machine:
 
-    http://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+    http://www.planet-lab.org/db/nodes/index.php?pattern=%(hostname)s
 
 We encountered an unknown situation.  Please re-code to handle, or manually intervene to repair this host.
 
@@ -517,7 +517,7 @@ It is essential that the AMT feature be configured to enable PlanetLab staff to 
     Configure the DC7800 AMT feature  : https://www.planet-lab.org/AMT
     Add a PCU to your site            : https://www.planet-lab.org/db/sites/pcu.php
 	Associate your node with the PCU  : Follow the 'My Site' link
-	Finally, download the Boot Image  : https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+	Finally, download the Boot Image  : https://www.planet-lab.org/db/nodes/index.php?pattern=%(hostname)s
 	Burn Boot Image to media & Reboot your node
 
 You can confirm that your machine's PCU is correctly configured by visiting the AMT
@@ -573,7 +573,7 @@ Thank you for your help,
 					   """
 While trying to automatically recover this machine:
 
-    http://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+    http://www.planet-lab.org/db/nodes/index.php?pattern=%(hostname)s
 
 We encountered an failed hardware requirement.  Please look at the log below to determine the exact nature of the failure, either Disk, CPU, Network, or Mimial RAM was not satisfied.
 
@@ -637,7 +637,7 @@ Thank you for your help,
 
 As part of PlanetLab node monitoring, we noticed that %(hostname)s has a network configuration error related to DNS or hostname lookups.  Often this can happen either due local configuraiton changes, or a misconfiguration of the node's DNS servers.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
-	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+	https://www.planet-lab.org/db/nodes/index.php?pattern=%(hostname)s
 
 Find the primary node network entry and confirm that the settings are correct.  
 
@@ -658,7 +658,7 @@ BootManager.log output follows:
 	nodeconfig_notice=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
 """As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
-	https://www.planet-lab.org/db/nodes/index.php?nodepattern=%(hostname)s
+	https://www.planet-lab.org/db/nodes/index.php?pattern=%(hostname)s
 
 Then, select, "Download -> Download plnode.txt file for %(hostname)s" menu.  This will generate a new configuration file for your node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machine.
 

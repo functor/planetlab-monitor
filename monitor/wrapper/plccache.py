@@ -63,8 +63,8 @@ plcdb_id2lb = None
 
 def init():
 	import traceback
-	print "IMPORTING PLCCACHE: ",
-	traceback.print_stack()
+	#print "IMPORTING PLCCACHE: ",
+	#traceback.print_stack()
 	global l_sites
 	global l_nodes
 	global l_pcus
@@ -73,14 +73,15 @@ def init():
 	global plcdb_id2lb
 	print "initing plccache"
 
+	print "collecting plcsites"
 	dbsites = PlcSite.query.all()
 	l_sites = [ s.plc_site_stats for s in dbsites ]
 
-	print "plcnode"
+	print "collecting plcnodes"
 	dbnodes = PlcNode.query.all()
 	l_nodes = [ s.plc_node_stats for s in dbnodes ]
 
-	print "plcpcu"
+	print "collecting plcpcus"
 	dbpcus = PlcPCU2.query.all()
 	l_pcus = []
 	for s in dbpcus:
@@ -90,11 +91,10 @@ def init():
 				  'model', 'password', 'ports']:
 			pcu[k] = getattr(s, k)
 		l_pcus.append(pcu)
-	#l_pcus = [ s.plc_pcu_stats for s in dbpcus ]
 
-	print "dsites_from_lsites"
+	print "building id2lb"
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
-	print "dsn_from_dsln"
+	print "building lb2hn"
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
 
 	plcdb_hn2lb = hn2lb

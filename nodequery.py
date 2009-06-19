@@ -317,6 +317,9 @@ def node_select(str_query, nodelist=None, fb=None):
 			fb_noderec = None
 			#fb_noderec = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname==node).order_by(FindbadNodeRecord.date_checked.desc()).first()
 			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node)
+		except KeyboardInterrupt:
+			print "Exiting at user request: Ctrl-C"
+			sys.exit(1)
 		except:
 			print traceback.print_exc()
 			continue
@@ -328,7 +331,6 @@ def node_select(str_query, nodelist=None, fb=None):
 			#if 'plcnode' in fb_nodeinfo:
 			#	fb_nodeinfo.update(fb_nodeinfo['plcnode'])
 
-			#if verifyDBrecord(dict_query, fb_nodeinfo):
 			if verify(dict_query, fb_nodeinfo):
 				#print fb_nodeinfo.keys()
 				#print node #fb_nodeinfo
@@ -414,6 +416,9 @@ def main():
 			fb_noderec = FindbadNodeRecord.get_latest_by(hostname=node) 
 			if not fb_noderec: continue
 			fb_nodeinfo = fb_noderec.to_dict()
+		except KeyboardInterrupt:
+			print "Exiting at user request: Ctrl-C"
+			sys.exit(1)
 		except:
 			print traceback.print_exc()
 			continue

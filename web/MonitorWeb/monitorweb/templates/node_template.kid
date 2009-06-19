@@ -18,29 +18,29 @@ from links import *
 		<th>last_contact</th>
 	</span>
 	<span py:if="node is not None">
-                <td py:content="node.plc_node_stats['node_id']">node_id</td>
+                <td py:content="node.node.plc_node_stats['node_id']">node_id</td>
 		<td nowrap="true">
-		  <a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
+		  <a target="_top" href="${link('pcuview', hostname=node.node.hostname)}" py:content="node.node.hostname">your.host.org</a></td>
 		<td>
-		  <a href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
+		  <a href="${link('pcuview', loginbase=node.node.loginbase)}">${node.node.loginbase}</a>
 		</td>
-                <td py:content="node.ping_status">ping</td>
-                <td py:content="node.ssh_status">ssh</td>
-                <td py:content="node.plc_node_stats['boot_state']">boot</td>
+                <td py:content="node.node.ping_status">ping</td>
+                <td py:content="node.node.ssh_status">ssh</td>
+                <td py:content="node.node.plc_node_stats['boot_state']">boot</td>
 		<td width="20%" nowrap='true' align='center' id="status-${node.pcu_short_status}">
 		  <div id="links">
 		    <a class="info" py:if="'error' in node.pcu_short_status" 
-		       href="${link('pcuview', pcuid=node.plc_pcuid)}">
-		      Error<span><pre>${node.pcu.reboot_trial_status}</pre></span></a>
+		       href="${link('pcuview', pcuid=node.pcu.pcu.plc_pcuid)}">
+		      Error<span><pre>${node.pcu.pcu.reboot_trial_status}</pre></span></a>
 		    <a py:if="'error' not in node.pcu_short_status and 'none' not in node.pcu_short_status" 
-		       href="${link('pcuview', pcuid=node.plc_pcuid)}"
+		       href="${link('pcuview', pcuid=node.pcu.pcu.plc_pcuid)}"
 		       py:content="node.pcu_short_status">Reboot Status</a>
 		    <span py:if="'none' in node.pcu_short_status" 
 			  py:content="node.pcu_short_status">Reboot Status</span>
 		  </div>
 		</td>
 		<td nowrap="true" py:content="node.kernel"></td>
-		<td nowrap="true" py:content="node.bootcd_version"></td>
-		<td  id="node-${node.observed_status}" py:content="diff_time(node.plc_node_stats['last_contact'])"></td>
+		<td nowrap="true" py:content="node.node.bootcd_version"></td>
+		<td  id="node-${node.node.observed_status}" py:content="diff_time(node.node.plc_node_stats['last_contact'])"></td>
 	</span>
 </span>

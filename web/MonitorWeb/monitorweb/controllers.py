@@ -22,6 +22,9 @@ from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
 from monitorweb.templates.links import *
 
 
+# make it easier group objects without invoking the elixir auto-write feature.
+class aggregate: pass
+
 
 def query_to_dict(query):
 	""" take a url query string and chop it up """
@@ -76,79 +79,85 @@ def format_pcu_shortstatus(pcu):
 	return status
 
 def prep_pcu_for_display(pcu):
+	agg = aggregate()
+	agg.pcu = pcu 
 		
 	try:
-		pcu.loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
+		agg.loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
 	except:
-		pcu.loginbase = "unknown"
+		agg.loginbase = "unknown"
 
-	pcu.ports = format_ports(pcu.port_status, pcu.plc_pcu_stats['model'])
-	pcu.status = format_pcu_shortstatus(pcu)
+	agg.ports = format_ports(pcu.port_status, pcu.plc_pcu_stats['model'])
+	agg.status = format_pcu_shortstatus(pcu)
 
 	#print pcu.entry_complete
-	pcu.entry_complete_str = pcu.entry_complete
+	agg.entry_complete_str = pcu.entry_complete
 	#pcu.entry_complete_str += "".join([ f[0] for f in pcu.entry_complete.split() ])
 	if pcu.dns_status == "NOHOSTNAME":
-		pcu.dns_short_status = 'NoHost'
+		agg.dns_short_status = 'NoHost'
 	elif pcu.dns_status == "DNS-OK":
-		pcu.dns_short_status = 'Ok'
+		agg.dns_short_status = 'Ok'
 	elif pcu.dns_status == "DNS-NOENTRY":
-		pcu.dns_short_status = 'NoEntry'
+		agg.dns_short_status = 'NoEntry'
 	elif pcu.dns_status == "NO-DNS-OR-IP":
-		pcu.dns_short_status = 'NoHostOrIP'
+		agg.dns_short_status = 'NoHostOrIP'
 	elif pcu.dns_status == "DNS-MISMATCH":
-		pcu.dns_short_status = 'Mismatch'
+		agg.dns_short_status = 'Mismatch'
+	return agg
 
 class NodeWidget(widgets.Widget):
 	pass
 
 def prep_node_for_display(node):
+	agg = aggregate()
+	agg.node = node
+
 	if node.plc_pcuid:
 		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
 		if pcu:
-			node.pcu_status = pcu.reboot_trial_status
-			node.pcu_short_status = format_pcu_shortstatus(pcu)
-			node.pcu = pcu
-			prep_pcu_for_display(node.pcu)
+			agg.pcu_status = pcu.reboot_trial_status
+			agg.pcu_short_status = format_pcu_shortstatus(pcu)
+			agg.pcu = prep_pcu_for_display(pcu)
 		else:
-			node.pcu_short_status = "none"
-			node.pcu_status = "nodata"
-			node.pcu = None
+			agg.pcu_short_status = "none"
+			agg.pcu_status = "nodata"
+			agg.pcu = None
 
 	else:
-		node.pcu_status = "nopcu"
-		node.pcu_short_status = "none"
-		node.pcu = None
+		agg.pcu_status = "nopcu"
+		agg.pcu_short_status = "none"
+		agg.pcu = None
 
 
 	if node.kernel_version:
-		node.kernel = node.kernel_version.split()[2]
+		agg.kernel = node.kernel_version.split()[2]
 	else:
-		node.kernel = ""
+		agg.kernel = ""
 
 	try:
-		node.loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+		agg.loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
 	except:
-		node.loginbase = "unknown"
+		agg.loginbase = "unknown"
 
-	if node.loginbase:
-		node.site = HistorySiteRecord.by_loginbase(node.loginbase)
-		if node.site is None:
+	if agg.loginbase:
+		agg.site = HistorySiteRecord.by_loginbase(agg.loginbase)
+		if agg.site is None:
 			# TODO: need a cleaner fix for this...
-			node.site = HistorySiteRecord.by_loginbase("pl")
-                        if not node.site:
-                                node.site = HistorySiteRecord.by_loginbase("ple")
-			
+			agg.site = HistorySiteRecord.by_loginbase("pl")
+			if not agg.site:
+				agg.site = HistorySiteRecord.by_loginbase("ple")
 
-	node.history = HistoryNodeRecord.by_hostname(node.hostname)
+	agg.history = HistoryNodeRecord.by_hostname(node.hostname)
 
-	node.ports = format_ports(node.port_status)
+	agg.ports = format_ports(node.port_status)
 
 	try:
 		exists = node.plc_node_stats['last_contact']
 	except:
+		# TODO: this should not assign to the fb object!
 		node.plc_node_stats = {'last_contact' : None}
-
+	
+	return agg
 
 
 class Root(controllers.RootController, MonitorXmlrpcServer):
@@ -162,10 +171,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	def nodeview(self, hostname=None):
 		nodequery=[]
 		if hostname:
-                        node = FindbadNodeRecord.get_latest_by(hostname=hostname)
-                        # NOTE: reformat some fields.
-                        prep_node_for_display(node)
-                        nodequery += [node]
+			node = FindbadNodeRecord.get_latest_by(hostname=hostname)
+			# NOTE: reformat some fields.
+			agg = prep_node_for_display(node)
+			nodequery += [agg]
 
 		return self.pcuview(None, None, hostname) # dict(nodequery=nodequery)
 
@@ -181,41 +190,41 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 						'neverboot' : 0, 'pending' : 0, 'all' : 0, None : 0}
 		for node in fbquery:
 			# NOTE: reformat some fields.
-			prep_node_for_display(node)
+			agg = prep_node_for_display(node)
 
 			#node.history.status
 			#print node.hostname
 
-			if not node.history:
+			if not agg.history:
 				continue
 
-			if node.history.status in ['down', 'offline']:
+			if agg.history.status in ['down', 'offline']:
 				if node.plc_node_stats and node.plc_node_stats['last_contact'] != None:
 					filtercount['down'] += 1
 				else:
 					filtercount['neverboot'] += 1
-			elif node.history.status in ['good', 'online']:
+			elif agg.history.status in ['good', 'online']:
 				filtercount['boot'] += 1
-			elif node.history.status in ['debug', 'monitordebug']:
+			elif agg.history.status in ['debug', 'monitordebug']:
 				filtercount['debug'] += 1
 			else:
-                                # TODO: need a better fix. filtercount
-                                # doesn't maps to GetBootStates() on
-                                # 4.3 so this one fails quite often.
-                                if filtercount.has_key(node.history.status):
-                                        filtercount[node.history.status] += 1
+				# TODO: need a better fix. filtercount
+				# doesn't maps to GetBootStates() on
+				# 4.3 so this one fails quite often.
+				if filtercount.has_key(agg.history.status):
+					filtercount[agg.history.status] += 1
 				
 
 			# NOTE: apply filter
 			if filter == "neverboot":
 				if not node.plc_node_stats or node.plc_node_stats['last_contact'] == None:
-					query.append(node)
+					query.append(agg)
 			elif filter == "all":
-				query.append(node)
-			elif filter == node.history.status:
-				query.append(node)
+				query.append(agg)
+			elif filter == agg.history.status:
+				query.append(agg)
 			elif filter == 'boot':
-				query.append(node)
+				query.append(agg)
 
 				
 		widget = NodeWidget(template='monitorweb.templates.node_template')
@@ -321,12 +330,12 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			pcus = {}
 			for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
 					# NOTE: reformat some fields.
-					prep_node_for_display(node)
-					nodequery += [node]
-					if node.plc_pcuid: 	# not None
-						pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
-						prep_pcu_for_display(pcu)
-						pcus[node.plc_pcuid] = pcu
+					agg = prep_node_for_display(node)
+					nodequery += [agg]
+					if agg.pcu: #.pcu.plc_pcuid: 	# not None
+						#pcu = FindbadPCURecord.get_latest_by(plc_pcuid=agg.plc_pcuid)
+						#prep_pcu_for_display(pcu)
+						pcus[agg.pcu.pcu.plc_pcuid] = agg.pcu
 
 			for pcuid_key in pcus:
 				pcuquery += [pcus[pcuid_key]]
@@ -335,10 +344,10 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			print "pcuid: %s" % pcuid
 			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
 			# NOTE: count filter
-			prep_pcu_for_display(pcu)
-			pcuquery += [pcu]
+			aggpcu = prep_pcu_for_display(pcu)
+			pcuquery += [aggpcu]
 			if 'site_id' in pcu.plc_pcu_stats:
-				sitequery = [HistorySiteRecord.by_loginbase(pcu.loginbase)]
+				sitequery = [HistorySiteRecord.by_loginbase(aggpcu.loginbase)]
 				
 			if 'nodenames' in pcu.plc_pcu_stats:
 				for nodename in pcu.plc_pcu_stats['nodenames']: 
@@ -347,19 +356,19 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 					print "%s" % node.port_status
 					print "%s" % node.to_dict()
 					if node:
-						prep_node_for_display(node)
-						nodequery += [node]
+						agg = prep_node_for_display(node)
+						nodequery += [agg]
 
 		if hostname and pcuid is None:
 				node = FindbadNodeRecord.get_latest_by(hostname=hostname)
 				# NOTE: reformat some fields.
-				prep_node_for_display(node)
-				sitequery = [node.site]
-				nodequery += [node]
-				if node.plc_pcuid: 	# not None
-					pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
-					prep_pcu_for_display(pcu)
-					pcuquery += [pcu]
+				agg = prep_node_for_display(node)
+				sitequery = [agg.site]
+				nodequery += [agg]
+				if agg.plc_pcuid: 	# not None
+					#pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
+					#prep_pcu_for_display(pcu)
+					pcuquery += [agg.pcu]
 			
 		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, exceptions=exceptions)
 
@@ -429,22 +438,22 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			else:
 				filtercount['pending'] += 1
 
-			prep_pcu_for_display(node)
+			pcuagg = prep_pcu_for_display(node)
 
 			# NOTE: apply filter
 			if filter == "all":
-				query.append(node)
+				query.append(pcuagg)
 			elif filter == "ok" and node.reboot_trial_status == str(0):
-				query.append(node)
+				query.append(pcuagg)
 			elif filter == node.reboot_trial_status:
-				query.append(node)
+				query.append(pcuagg)
 			elif filter == "pending":
 				# TODO: look in message logs...
 				if node.reboot_trial_status != str(0) and \
 					node.reboot_trial_status != 'NetDown' and \
 					node.reboot_trial_status != 'Not_Run':
 
-					query.append(node)
+					query.append(pcuagg)
 				
 		return dict(query=query, fc=filtercount)
 
@@ -455,8 +464,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		nodequery = []
 		for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
 			# NOTE: reformat some fields.
-			prep_node_for_display(node)
-			nodequery += [node]
+			agg = prep_node_for_display(node)
+			nodequery += [agg]
 		return dict(sitequery=sitequery, nodequery=nodequery, fc={})
 
 	@expose(template="monitorweb.templates.sitelist")

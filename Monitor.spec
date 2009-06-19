@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 16
+%define taglevel 15
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -137,6 +137,7 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
 
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 
@@ -146,6 +147,7 @@ rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
 
 echo " * Installing web pages"
 rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+rsync -a log/ $RPM_BUILD_ROOT/var/www/html/monitorlog/
 
 echo " * Installing cron job for automated polling"
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
@@ -225,6 +227,8 @@ easy_install --build-directory /var/tmp -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
+mkdir /usr/share/monitor/.ssh
+chmod 700 /usr/share/monitor/.ssh
 
 if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
     sed -i -e 's/^session    required   pam_loginuid.so/#session    required   pam_loginuid.so/g' /etc/pam.d/crond
@@ -262,12 +266,6 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
-* Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-16
-- Added Rpyc from 1.0 branch.
-- add pcuhistory
-- add setup-agent for password protected keys.
-- other minor improvements.
-
 * Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-15
 - automate install
 - auto-close tickets

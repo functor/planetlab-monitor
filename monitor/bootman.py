@@ -68,17 +68,33 @@ class NodeConnection:
 		return "unknown"
 
 	def get_dmesg(self):
+		t_stamp = time.strftime("%Y-%m-%d-%H:%M")
 		self.c.modules.os.system("dmesg > /var/log/dmesg.bm.log")
-		download(self.c, "/var/log/dmesg.bm.log", "log/dmesg.%s.log" % self.node)
-		log = open("log/dmesg.%s.log" % self.node, 'r')
+		download(self.c, "/var/log/dmesg.bm.log", "%s/history/%s-dmesg.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node))
+		os.system("cp %s/history/%s-dmesg.%s.log %s/dmesg.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node, config.MONITOR_BOOTMANAGER_LOG, self.node))
+		log = open("%s/dmesg.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, self.node), 'r')
 		return log
 
 	def get_bootmanager_log(self):
-		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
-		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
-		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
-		log = open("log/bm.%s.log" % self.node, 'r')
+		t_stamp = time.strftime("%Y-%m-%d-%H:%M")
+		download(self.c, "/tmp/bm.log", "%s/history/%s-bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node))
+		os.system("cp %s/history/%s-bm.%s.log %s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node, config.MONITOR_BOOTMANAGER_LOG, self.node))
+		log = open("%s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, self.node), 'r')
 		return log
+
+
+#	def get_dmesg(self):
+#		self.c.modules.os.system("dmesg > /var/log/dmesg.bm.log")
+#		download(self.c, "/var/log/dmesg.bm.log", "log/dmesg.%s.log" % self.node)
+#		log = open("log/dmesg.%s.log" % self.node, 'r')
+#		return log
+#
+#	def get_bootmanager_log(self):
+#		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
+#		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
+#		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
+#		log = open("log/bm.%s.log" % self.node, 'r')
+#		return log
 
 	def dump_plconf_file(self):
 		c = self.c
@@ -627,8 +643,12 @@ class DebugInterface:
 
 		return sequence
 		
-
 def restore(sitehist, hostname, config=None, forced_action=None):
+	ret = restore_basic(sitehist, hostname, config, forced_action)
+	session.flush()
+	return ret
+
+def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 	# NOTE: Nothing works if the bootcd is REALLY old.
 	#       So, this is the first step.
@@ -650,15 +670,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 
 	debugnode = DebugInterface(hostname)
 	conn = debugnode.getConnection()
-	#print "conn: %s" % conn
-	#print "trying to use conn after returning it."
-	#print conn.c.modules.sys.path
-	#print conn.c.modules.os.path.exists('/tmp/source')
 	if type(conn) == type(False): return False
-
-	#if forced_action == "reboot":
-	#	conn.restart_node('reinstall')
-	#	return True
 
 	boot_state = conn.get_boot_state()
 	if boot_state != "debug":
@@ -689,7 +701,7 @@ def restore(sitehist, hostname, config=None, forced_action=None):
 			print "...Should investigate.  Skipping node."
 			# TODO: send message related to these errors.
 
-			if not found_within(recent_actions, 'newbootcd_notice', 3):
+			if not found_within(recent_actions, 'baddisk_notice', 3):
 
 				log=conn.get_dmesg().read()
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
