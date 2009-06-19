@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 16
+%define taglevel 17
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -266,6 +266,13 @@ chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
 
 %changelog
+* Thu Jun 18 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-17
+- added bootmanager log links
+- addressed root cause of IntegrityErrors ; big deal
+- adjusted templates to accomodate fix for IntegrityErrors
+- added session.flush() to bootman.py to write out ActionsRecords
+- fixed policy to either pause penalties or apply them ; not both.
+
 -* Wed Jun 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-16
 -- Added Rpyc from 1.0 branch.
 -- add pcuhistory
