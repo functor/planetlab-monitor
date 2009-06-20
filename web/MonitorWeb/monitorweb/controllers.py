@@ -164,7 +164,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.welcome")
 	def index(self):
 		# log.debug("Happy TurboGears Controller Responding For Duty")
-		flash("Your application is now running")
+		flash("Welcome To MyOps!")
 		return dict(now=time.ctime())
 
 	@expose(template="monitorweb.templates.pcuview")
@@ -365,7 +365,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				agg = prep_node_for_display(node)
 				sitequery = [agg.site]
 				nodequery += [agg]
-				if agg.plc_pcuid: 	# not None
+				if agg.pcu: # .pcu.plc_pcuid: 	# not None
 					#pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
 					#prep_pcu_for_display(pcu)
 					pcuquery += [agg.pcu]
@@ -502,6 +502,23 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				query.append(site)
 				
 		return dict(query=query, fc=filtercount)
+
+	@expose(template="monitorweb.templates.actionsummary")
+	def actionsummary(self, since=7):
+		from monitor.wrapper.emailTxt import mailtxt
+		types = filter(lambda x: 'notice' in x, dir(mailtxt))
+		results = {}
+
+		try:
+			since = int(since)
+		except:
+			since = 7
+
+		for  t in types:
+			acts = ActionRecord.query.filter(ActionRecord.action_type==t
+					).filter(ActionRecord.date_created >= datetime.now() - timedelta(since))
+			results[t] = acts.count()
+		return dict(results=results)
 
 	@expose(template="monitorweb.templates.actionlist")
 	def action(self, filter='all'):

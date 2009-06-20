@@ -145,7 +145,7 @@ from links import *
 					<th mochi:format="int"></th>
 					<th>History</th>
 					<th>Hostname</th>
-					<th>last_contact</th>
+					<th>last_contact (cached)</th>
 					<th>last_checked</th>
 					<th nowrap='true'>Port Status</th>
 					<th></th>
@@ -231,7 +231,7 @@ from links import *
 					<td py:content="act.action_type"></td>
 					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
 							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
-					<td py:if="'bootmanager' in act.action_type">
+					<td py:if="'bootmanager' in act.action_type or 'unknown' in act.action_type">
 						<a href="/monitorlog/bm.${act.hostname}.log">latest bm log</a>
 					</td>
 					<td py:if="'bootmanager' not in act.action_type">

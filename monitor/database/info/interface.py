@@ -111,7 +111,12 @@ class SiteInterface(HistorySiteRecord):
 		# TODO: catch any errors here, and add an ActionRecord that contains
 		#       those errors.
 		
-		args = {'loginbase' : self.db.loginbase, 'penalty_level' : self.db.penalty_level}
+		args = {'loginbase' : self.db.loginbase, 
+				'penalty_level' : self.db.penalty_level,
+				'monitor_hostname' : config.MONITOR_HOSTNAME,
+				'support_email'   : config.support_email,
+				'plc_name' : config.PLC_NAME,
+				'plc_hostname' : config.PLC_WWW_HOSTNAME}
 		args.update(kwargs)
 
 		hostname = None
@@ -121,9 +126,15 @@ class SiteInterface(HistorySiteRecord):
 		if hasattr(mailtxt, type):
 
 			message = getattr(mailtxt, type)
+
+			saveact = True
 			viart = True
-			if 'viart' in kwargs:
+			if 'viart' in kwargs: 
+				saveact = kwargs['viart']
 				viart = kwargs['viart']
+
+			if 'saveact' in kwargs: 
+				saveact = kwargs['saveact']
 
 			if viart:
 				self.getTicketStatus()		# get current message status
@@ -133,6 +144,7 @@ class SiteInterface(HistorySiteRecord):
 			m = Message(message[0] % args, message[1] % args, viart, self.db.message_id)
 
 			contacts = self.getContacts()
+			#contacts = [config.cc_email]
 
 			print "sending message: %s to site %s for host %s" % (type, self.db.loginbase, hostname)
 
@@ -142,6 +154,7 @@ class SiteInterface(HistorySiteRecord):
 				# reset to previous status, since a new subject 'opens' RT tickets.
 				self.setTicketStatus(self.db.message_status) 
 
+			if saveact:
 				# NOTE: only make a record of it if it's in RT.
 				act = ActionRecord(loginbase=self.db.loginbase, hostname=hostname, action='notice', 
 								action_type=type, message_id=self.db.message_id)
@@ -154,12 +167,12 @@ class SiteInterface(HistorySiteRecord):
 		return
 
 	def closeTicket(self):
-		# TODO: close the rt ticket before overwriting the message_id
-		mailer.closeTicketViaRT(self.db.message_id, "Ticket Closed by Monitor")
-		act = ActionRecord(loginbase=self.db.loginbase, action='notice', 
-							action_type='close_ticket', message_id=self.db.message_id)
-		self.db.message_id = 0
-		self.db.message_status = "new"
+		if self.db.message_id:
+			mailer.closeTicketViaRT(self.db.message_id, "Ticket Closed by Monitor")
+			act = ActionRecord(loginbase=self.db.loginbase, action='notice', 
+								action_type='close_ticket', message_id=self.db.message_id)
+			self.db.message_id = 0
+			self.db.message_status = "new"
 
 	def runBootManager(self, hostname):
 		from monitor import bootman

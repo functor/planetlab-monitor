@@ -659,7 +659,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 	if fbnode['observed_category'] == "OLDBOOTCD":
 		print "\t...Notify owner to update BootImage!!!"
 
-		if not found_within(recent_actions, 'newbootcd_notice', 3):
+		if not found_within(recent_actions, 'newbootcd_notice', 3.5):
 			sitehist.sendMessage('newbootcd_notice', hostname=hostname)
 
 			print "\tDisabling %s due to out-of-date BootImage" % hostname
@@ -701,7 +701,8 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			print "...Should investigate.  Skipping node."
 			# TODO: send message related to these errors.
 
-			if not found_within(recent_actions, 'baddisk_notice', 3):
+			if not found_within(recent_actions, 'baddisk_notice', 7):
+				print "baddisk_notice not found recently"
 
 				log=conn.get_dmesg().read()
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
@@ -742,6 +743,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 		args['sequence'] = s
 		args['bmlog'] = conn.get_bootmanager_log().read()
 		args['viart'] = False
+		args['saveact'] = True
 
 		sitehist.sendMessage('unknownsequence_notice', **args)
 
@@ -780,6 +782,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			args['sequence'] = s
 			args['bmlog'] = conn.get_bootmanager_log().read()
 			args['viart'] = False
+			args['saveact'] = True
 
 			sitehist.sendMessage('unknownsequence_notice', **args)
 			conn.restart_bootmanager('boot')
@@ -787,7 +790,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 		# TODO: differentiate this and the 'nodenetwork_email' actions.
 		elif sequences[s] == "update_node_config_email":
 
-			if not found_within(recent_actions, 'nodeconfig_notice', 3):
+			if not found_within(recent_actions, 'nodeconfig_notice', 3.5):
 				args = {}
 				args['hostname'] = hostname
 				sitehist.sendMessage('nodeconfig_notice', **args)
@@ -795,7 +798,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 		elif sequences[s] == "nodenetwork_email":
 
-			if not found_within(recent_actions, 'nodeconfig_notice', 3):
+			if not found_within(recent_actions, 'nodeconfig_notice', 3.5):
 				args = {}
 				args['hostname'] = hostname
 				args['bmlog'] = conn.get_bootmanager_log().read()
@@ -804,7 +807,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 		elif sequences[s] == "update_bootcd_email":
 
-			if not found_within(recent_actions, 'newalphacd_notice', 3):
+			if not found_within(recent_actions, 'newalphacd_notice', 3.5):
 				args = {}
 				args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
 				args['hostname'] = hostname
@@ -818,7 +821,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			# require either an exception "/minhw" or other manual intervention.
 			# Definitely need to send out some more EMAIL.
 			# TODO: email notice of broken hardware
-			if not found_within(recent_actions, 'baddisk_notice', 1):
+			if not found_within(recent_actions, 'baddisk_notice', 7):
 				print "...NOTIFYING OWNERS OF BROKEN HARDWARE on %s!!!" % hostname
 				args = {}
 				args['hostname'] = hostname
@@ -828,7 +831,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				conn.set_nodestate('disabled')
 
 		elif sequences[s] == "update_hardware_email":
-			if not found_within(recent_actions, 'minimalhardware_notice', 1):
+			if not found_within(recent_actions, 'minimalhardware_notice', 7):
 				print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
 				args = {}
 				args['hostname'] = hostname

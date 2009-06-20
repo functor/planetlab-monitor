@@ -38,11 +38,10 @@
     </div>
 
     <div id="footer">
-        <img src="${tg.url('/static/images/under_the_hood_blue.png')}"
-            alt="TurboGears under the hood" />
-        <p>TurboGears is a open source front-to-back web development framework
-            written in Python</p>
-        <p>Copyright &#169; 2007 Kevin Dangoor</p>
+        <!--img src="${tg.url('/static/images/under_the_hood_blue.png')}"
+            alt="TurboGears under the hood" /-->
+        <p>MyOps is an open source monitoring and management framework for MyPLC </p>
+        <p>Copyright &#169; 2007-2009 Princeton</p>
     </div>
 </body>
 

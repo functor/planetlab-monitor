@@ -63,10 +63,31 @@ def check_node_state(rec, node):
 	#################################################################
 	# "Initialize" the findbad states into nodebad status if they are not already set
 
-	if node_state == 'DOWN' and ( node.status != 'offline' and node.status != 'down' ) and boot_state != 'disabled' :
-		print "changed status from %s to offline" % node.status
-		node.status = 'offline'
-		node.last_changed = datetime.now()
+	if node_state == 'DOWN':
+		if boot_state == 'disabled' and changed_lessthan(node.last_changed, 60) and \
+			node.status != 'disabled':
+			# NOTE: if changed less than 2 months, then we can allow this. 
+			# otherwise, apply 'down' status after greater than 2 months (below).
+
+			print "changed status from %s to %s" % (node.status, boot_state)
+			node.status = boot_state
+			node.last_changed = datetime.now()
+
+		if node.status not in ['offline', 'down', 'disabled']:
+			print "changed status from %s to offline" % node.status
+			node.status = 'offline'
+			node.last_changed = datetime.now()
+			
+
+	#if node_state == 'DOWN' and node.status not in ['offline', 'down', 'disabled']:
+	#	if boot_state != 'disabled':
+	#		print "changed status from %s to offline" % node.status
+	#		node.status = 'offline'
+	#		node.last_changed = datetime.now()
+	#	else:
+	#		print "changed status from %s to %s" % (node.status, boot_state)
+	#		node.status = boot_state
+	#		node.last_changed = datetime.now()
 
 	if node_state == 'DEBUG' and node.status != 'monitordebug' and \
 								 node.status != 'disabled' and \

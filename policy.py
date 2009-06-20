@@ -76,7 +76,7 @@ def main(hostnames, sitenames):
 				# NOTE: there is a narrow window in which this command must be
 				# 		evaluated, otherwise the notice will not go out.  
 				#		this is not ideal.
-				sitehist.sendMessage('online_notice', hostname=host, viart=False)
+				sitehist.sendMessage('online_notice', hostname=host, viart=False, saveact=True)
 				print "send message for host %s online" % host
 
 
@@ -253,6 +253,6 @@ if __name__ == "__main__":
 		session.flush()
 		sys.exit(0)
 	except:
-		#email_exception()
+		email_exception()
 		print traceback.print_exc();
 		print "fail all..."
