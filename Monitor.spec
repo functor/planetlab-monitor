@@ -90,6 +90,19 @@ The server side include all python modules and scripts needed to fully
 operation, track, and interact with any third-party monitoring software, such
 as Zabbix DB.
 
+######################################## RT setup
+
+%package rt
+summary: Dependencies and default configuration for RT3
+group: applications/system
+Requires: monitor-server
+Requires: rt3
+Requires: rt3-mailgate
+
+%description
+RT3 is a ticket tracking system.  This RPM integrates RT into the MyOps
+framework, and MyPLC in general.
+
 ######################################## PCU Control
 
 %package pcucontrol
@@ -139,7 +152,10 @@ install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
 
+install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
+install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
+install -D -m 755 rt3/monitor-rt3.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/rt3
 
 echo " * Installing core scripts"
 rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
@@ -203,6 +219,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_initrddir}/monitor
 %{_sysconfdir}/cron.d/monitor
 
+%files rt 
+%defattr(-,root,root)
+/usr/share/%{name}/rt3
+
 %files pcucontrol
 %{python_sitearch}/pcucontrol
 
@@ -216,9 +236,6 @@ rm -rf $RPM_BUILD_ROOT
 #easy_install --build-directory /var/tmp -UZ ElementTree
 ##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
 
-# NOTE: enable monitor by default, since we're installing it.
-plc-config --save /etc/planetlab/default_config.xml \
-			--category plc_monitor --variable enabled --value true
 
 ## TODO: something is bad wrong with this approach.
 easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
@@ -238,6 +255,13 @@ if ! grep '<category id="plc_monitor">' /etc/planetlab/default_config.xml ; then
     sed -i 's|<category id="plc_net">| <category id="plc_monitor">\n <name>Monitor Service Configuration</name>\n <description>Monitor</description>\n <variablelist>\n <variable id="enabled" type="boolean">\n <name>Enabled</name>\n <value>true</value>\n <description>Enable on this machine.</description>\n </variable>\n <variable id="email">\n <value></value>\n </variable>\n <variable id="dbpassword">\n <value></value>\n </variable>\n <variable id="host" type="hostname">\n <name>Hostname</name>\n <value>pl-virtual-06.cs.princeton.edu</value>\n <description>The fully qualified hostname.</description>\n </variable>\n <variable id="ip" type="ip">\n <name>IP Address</name>\n <value/>\n <description>The IP address of the monitor server.</description>\n </variable>\n </variablelist>\n </category>\n <category id="plc_net">|' /etc/planetlab/default_config.xml
 fi
 
+# NOTE: enable monitor by default, since we're installing it.
+plc-config --save /etc/planetlab/default_config.xml \
+			--category plc_monitor --variable enabled --value true
+
+%post rt
+plc-config --save /etc/planetlab/default_config.xml \
+			--category plc_rt --variable enabled --value true
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as

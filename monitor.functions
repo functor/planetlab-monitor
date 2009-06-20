@@ -1,0 +1,89 @@
+#!/bin/bash
+#
+# priority: 850
+#
+# Manage settings for the Zabbix installtion and 
+#	other monitor-related things
+#
+# Stephen Soltesz <soltesz@cs.princeton.edu>
+# Copyright (C) 2008 The Trustees of Princeton University
+#
+# $Id$
+#
+
+# Source function library and configuration
+. /etc/plc.d/functions
+. /etc/planetlab/plc_config
+local_config=/etc/planetlab/configs/site.xml
+
+MONITORPATH=/usr/share/monitor
+
+# Be verbose
+set -x
+
+# Default locations
+PGDATA=/var/lib/pgsql/data
+postgresql_conf=$PGDATA/postgresql.conf
+pghba_conf=$PGDATA/pg_hba.conf
+
+# Export so that we do not have to specify -p to psql invocations
+export PGPORT=$PLC_DB_PORT
+
+WROTE_PG_CONFIG=
+
+if [ -z "$PLC_MONITOR_IP" ] ; then
+	PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
+fi
+
+function check_pg_hba ()
+{
+	NAME=$1
+	USER=$2
+	#### SETUP ACCESS to this user and database
+	mkdir -p $PGDATA/pg_hba.conf.d
+	CONF=$PGDATA/pg_hba.conf.d/${NAME}.conf
+	if [ ! -f $CONF ] ; then
+		echo "host $NAME $USER 127.0.0.1/32 password"   > $CONF
+		echo "host $NAME $USER $PLC_MONITOR_IP/32 password" >> $CONF
+
+		WROTE_PG_CONFIG="true"
+	fi
+}
+
+function check_user_and_db()
+{
+    CREATED=
+	NAME=$1
+	USER=$2
+    # confirm user is present or create it
+    user_present=$( psql -U postgres -c "select * from pg_user;" -d template1 | grep $USER )
+    if [ -z $user_present ] ; then 
+        createuser --no-superuser --no-createdb --no-createrole --login --unencrypted --echo $USER -U postgres
+		CREATED="true"
+    fi
+    
+    # confirm database is present or create it
+    db_present=$( psql -U postgres -c "select * from pg_database;" -d template1 | grep $NAME )
+    if [ -z $db_present ] ; then
+        createdb --owner=$USER $NAME -U postgres
+		CREATED="true"
+    fi
+
+    # Create/update the unprivileged database user and password
+    if [[ -z "$PLC_MONITOR_DBPASSWORD" || "$PLC_MONITOR_DBPASSWORD" = "None" ]] ; then
+        # Zabbix doesn't like plain uuidgen passwords
+        PLC_MONITOR_DBPASSWORD=$( uuidgen | md5sum - | awk '{print $1}' )
+        plc-config --category=plc_monitor --variable=dbpassword --value="$PLC_MONITOR_DBPASSWORD" --save=$local_config $local_config
+        service plc reload
+		CREATED="true"
+    fi
+    if [ -n "$CREATED" ] ; then
+        psql -d template1 -U postgres -c "ALTER USER $USER WITH PASSWORD '$PLC_MONITOR_DBPASSWORD';"
+    fi
+}
+function check_monitor_schema_and_data() 
+{
+	# NOTE: call create_all() to setup the database from the info model.
+	python -c "from monitor.database.info.model import *; from elixir import create_all; create_all()"
+}
+
