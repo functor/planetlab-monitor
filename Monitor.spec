@@ -213,6 +213,8 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
 %{_sysconfdir}/plc.d/monitor
+%{_sysconfdir}/plc.d/monitor.functions
+%{_sysconfdir}/plc.d/zabbix
 
 %files client
 %defattr(-,root,root)
@@ -222,6 +224,7 @@ rm -rf $RPM_BUILD_ROOT
 %files rt 
 %defattr(-,root,root)
 /usr/share/%{name}/rt3
+%{_sysconfdir}/plc.d/rt3
 
 %files pcucontrol
 %{python_sitearch}/pcucontrol
