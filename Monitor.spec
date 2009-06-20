@@ -99,7 +99,7 @@ Requires: monitor-server
 Requires: rt3
 Requires: rt3-mailgate
 
-%description
+%description rt
 RT3 is a ticket tracking system.  This RPM integrates RT into the MyOps
 framework, and MyPLC in general.
 
