@@ -36,8 +36,8 @@ RT3_DB_NAME="rt3"
 
 WROTE_PG_CONFIG=
 
-if [ -z "$PLC_MONITOR_IP" ] ; then
-	PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
+if [ -z "$PLC_RT_IP" ] ; then
+	PLC_RT_IP=$( gethostbyname $PLC_RT_HOST )
 fi
 
 
@@ -158,6 +158,42 @@ EOF
 
 }
 
+check_rt_sendmail ()
+{
+	tmp_sendmailmc=$(mktemp)
+	
+	# if the templates is newer than the processed config, then update it
+	if grep -q "Addr=127.0.0.1," /etc/mail/sendmail.mc  ; 
+	then
+		# copy templates
+		cp -f /etc/mail/sendmail.mc $tmp_sendmailmc
+
+		# setup initialdata
+		update_config "Addr=127.0.0.1," "" $tmp_sendmailmc
+
+		# copy to live configuration
+		cp -f $tmp_sendmailmc /etc/mail/sendmail.mc
+		rm -f $tmp_sendmailmc
+
+		# edit /etc/mail/access to add local IP
+		if ! grep "$PLC_RT_IP" /etc/mail/access ; then
+			echo "$PLC_RT_IP		RELAY" >> /etc/mail/access
+			makemap hash /etc/mail/access.db < /etc/mail/access
+		fi
+		if [ !  -f /etc/smrsh/rt-mailgate ] ; then
+			ln -s /usr/sbin/rt-mailgate /etc/smrsh/rt-mailgate
+		fi
+		if ! grep "$PLC_RT_HOST" /etc/mail/local-host-names ; then
+			# edit /etc/mail/local-host-names
+			echo "$PLC_RT_HOST" >> /etc/mail/local-host-names
+		fi
+		m4 /etc/mail/sendmail.mc > /etc/mail/sendmail.cf
+		service sendmail restart
+	fi
+
+
+}
+
 if [ "$PLC_RT_ENABLED" != "1" ] ; then
     exit 0
 fi
@@ -179,6 +215,7 @@ case "$1" in
 		fi
 		check_rt_aliases
 		check_rt_init
+		check_rt_sendmail
 
 		result "$MESSAGE"
 	;;
@@ -199,6 +236,8 @@ case "$1" in
 
 		sed -i -e "s/.*mailgate.*//g" /etc/aliases
 		rm -f /etc/rt3/setup.finished
+
+		sed -i -e "s/Port=smtp, Name=MTA/Port=smtp,Addr=127.0.0.1, Name=MTA/g" /etc/mail/sendmail.mc
 
 		result "$MESSAGE"
 	;;

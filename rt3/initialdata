@@ -9,7 +9,7 @@
 
     {  Name         => 'root',
        Gecos        => 'root',
-       RealName     => 'Enoch Root',
+       RealName     => 'RT Admin',
        Password     => 'password',
        EmailAddress => "root\@localhost",
        Comments     => 'SuperUser',
@@ -60,7 +60,7 @@
     }, );
 
 @Queues = ({ Name              => 'support',
-             Description       => 'Queue for general issues',
+             Description       => 'Support',
              CorrespondAddress => 'support@PLC_RT_HOSTNAME',
              CommentAddress    => '', },
 
@@ -251,13 +251,13 @@ assigned an ID of [{$rtname} #{$Ticket->id()}].
 
 Please include the string:
 
-         [{$rtname} #{$Ticket->id}]
+    [{$rtname} #{$Ticket->id}]
 
 in the subject line of all future correspondence about this issue. To do so, 
 you may reply to this message.
 
-                        Thank you,
-                        {$Ticket->QueueObj->CorrespondAddress()}
+Thank you,
+{$Ticket->QueueObj->CorrespondAddress()}
 
 -------------------------------------------------------------------------
 {$Transaction->Content()}
