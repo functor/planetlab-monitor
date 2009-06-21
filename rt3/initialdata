@@ -238,13 +238,14 @@
        Description => 'Default Autoresponse template',                     # loc
        Content     => 'Subject: AutoReply: {$Ticket->Subject}
 
+Hello,
 
-Greetings,
+Thank you very much for reporting this.
 
-This message has been automatically generated in response to the
+This message was automatically generated in response to the
 creation of a trouble ticket regarding:
-	"{$Ticket->Subject()}", 
-a summary of which appears below.
+
+	"{$Ticket->Subject()}"
 
 There is no need to reply to this message right now.  Your ticket has been
 assigned an ID of [{$rtname} #{$Ticket->id()}].
@@ -258,6 +259,7 @@ you may reply to this message.
 
 Thank you,
 {$Ticket->QueueObj->CorrespondAddress()}
+{$Ticket->AddCustomFieldValue(Field => 'Problem Category', Value => 'Trivial');}
 
 -------------------------------------------------------------------------
 {$Transaction->Content()}
