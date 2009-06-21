@@ -102,7 +102,7 @@ function check_rt_aliases ()
 	if ! grep -q "rt-mailgate --queue support" /etc/aliases ; 
 	then 
 		sed -i -e "s/^support.*postmaster//g" /etc/aliases
-		sed -i -e "s/^security.*postmaster//g" /etc/aliases
+		sed -i -e "s/^security.*root//g" /etc/aliases
         cat <<EOF >> /etc/aliases
 # added by RT init scripts for default queues.
 support: "|/usr/sbin/rt-mailgate --queue support --action correspond --url http://localhost/rt3/"
