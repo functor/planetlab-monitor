@@ -26,7 +26,9 @@ my $address1 = '';
 my $city = '';
 my $country = '';
 
-open(USERS_DATA, "./users_data.csv") || die("Could not open file!");
+print $ARGV[0];
+
+open(USERS_DATA, $ARGV[0]) || die("Could not open file!");
 @raw_data=<USERS_DATA>;
 close(USERS_DATA);
 foreach $bc_user (@raw_data)
@@ -35,12 +37,13 @@ foreach $bc_user (@raw_data)
  ($email_address,$realname,$organization)=split(/\,/,$bc_user);
 
   my $UserObj = new RT::User(RT::SystemUser);
+  print "adding user: $email_address\n";
   $UserObj->Create(Name => $email_address,
              RealName => $realname,
              EmailAddress => $email_address,
              Password => 'Passw0rd',
              Organization => $organization,
-             Privileged => 1);
+             Privileged => 0);
              #Address1 => $address1,
              #City => $city,
              #Country => country,

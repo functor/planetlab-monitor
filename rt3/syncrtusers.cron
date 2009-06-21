@@ -1,0 +1,7 @@
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/share/monitor/rt3
+HOME=/usr/share/monitor
+MAILTO=soltesz@cs.princeton.edu
+
+01 * * * * root getusersfromplc.py | adduserstort.pl -
+

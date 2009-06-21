@@ -225,6 +225,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/share/%{name}/rt3
 %{_sysconfdir}/plc.d/rt3
+%{_sysconfdir}/cron.d/syncrcusers.cron
 
 %files pcucontrol
 %{python_sitearch}/pcucontrol
@@ -271,6 +272,7 @@ plc-config --save /etc/planetlab/default_config.xml \
 %post rt
 plc-config --save /etc/planetlab/default_config.xml \
 			--category plc_rt --variable enabled --value true
+install -D -m 644 /usr/share/monitor/rt3/synncrtusers.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/syncrcusers.cron
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
