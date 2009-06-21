@@ -139,6 +139,11 @@ EOF
 	fi
 }
 
+if [ "$PLC_ZABBIX_ENABLED" != "1" ] ; then
+    exit 0
+fi
+
+
 case "$1" in
 	start)
 		MESSAGE=$"Bootstrap Zabbix (please wait...)"

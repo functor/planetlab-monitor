@@ -79,11 +79,6 @@
              CorrespondAddress => 'legal@PLC_RT_HOSTNAME',
              CommentAddress    => '', },
 
-		   { Name              => 'General',
-             Description       => 'The default queue',
-             CorrespondAddress => "",
-             CommentAddress    => "", },
-
            { Name        => '___Approvals',
              Description => 'A system-internal queue for the approvals system',
              Disabled    => 2, } );

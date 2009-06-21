@@ -13,6 +13,7 @@
 
 # Source function library and configuration
 . /etc/plc.d/functions
+. /etc/plc.d/monitor.functions
 . /etc/planetlab/plc_config
 local_config=/etc/planetlab/configs/site.xml
 
@@ -39,9 +40,6 @@ if [ -z "$PLC_MONITOR_IP" ] ; then
 	PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
 fi
 
-if [ "$PLC_MONITOR_ENABLED" != "1" ] ; then
-    exit 0
-fi
 
 # TODO: make values re-configurable...  this may be an issue with RT's db, though.
 function update_config ()
@@ -65,15 +63,15 @@ function check_rt_siteconfig ()
 		cp -f $MONITORPATH/rt3/initialdata $tmp_initialdata
 
 		# setup RT_SiteConfig.pm
-		update_config PLC_NAME $PLC_NAME $tmp_siteconfig
-		update_config PLC_RT_HOSTNAME $PLC_RT_HOSTNAME $tmp_siteconfig
+		update_config PLC_NAME "$PLC_NAME" $tmp_siteconfig
+		update_config PLC_RT_HOSTNAME $PLC_RT_HOST $tmp_siteconfig
 
 		update_config RT_DB_NAME $RT3_DB_NAME $tmp_siteconfig
 		update_config RT_DB_USER $RT3_DB_USER $tmp_siteconfig
 		update_config RT_DB_PASSWORD $PLC_MONITOR_DBPASSWORD $tmp_siteconfig
 
 		# setup initialdata
-		update_config PLC_RT_HOSTNAME $PLC_RT_HOSTNAME $tmp_initialdata
+		update_config PLC_RT_HOSTNAME $PLC_RT_HOST $tmp_initialdata
 
 		# copy to live configuration
 		cp -f $tmp_siteconfig /etc/rt3/RT_SiteConfig.pm 
@@ -91,9 +89,9 @@ function check_rt_pghba ()
 	CONF=$PGDATA/pg_hba.conf.d/${NAME}.conf
 	PATTERN="host all postgres 127.0.0.1/32 trust"
 
-	if ! grep -q $PATTERN $CONF ; then
+	if ! grep -q "$PATTERN" $CONF ; then
 		#### SETUP ACCESS from postgres user to run init for the first time.
-		echo $PATTERN >> $CONF
+		echo "$PATTERN" >> $CONF
 	fi
 
 }
@@ -103,8 +101,9 @@ function check_rt_aliases ()
 
 	if ! grep -q "rt-mailgate --queue support" /etc/aliases ; 
 	then 
+		sed -i -e "s/^support.*postmaster//g" /etc/aliases
+		sed -i -e "s/^security.*postmaster//g" /etc/aliases
         cat <<EOF >> /etc/aliases
-
 # added by RT init scripts for default queues.
 support: "|/usr/sbin/rt-mailgate --queue support --action correspond --url http://localhost/rt3/"
 monitor: "|/usr/sbin/rt-mailgate --queue monitor --action correspond --url http://localhost/rt3/"
@@ -121,22 +120,47 @@ function check_rt_init ()
 	if [ ! -f /etc/rt3/setup.finished ] ; then
 		/usr/sbin/rt-setup-database --action init --dba postgres
 		touch /etc/rt3/setup.finished
-	fi
 
 	###Last DB adjustments
-	#disable queue General, set disabled to 0 in table queues, set defaultduein to 1 for support queue
-#	/bin/su - -c "/bin/echo \"UPDATE queues SET disabled = 1 WHERE name='General';\"|/usr/bin/psql -U postgres -d rt" postgres
-#	/bin/su - -c "/bin/echo \"UPDATE queues SET defaultduein = 1 WHERE name='support';\"|/usr/bin/psql -U postgres -d rt" postgres
-#
+	#set defaultduein to 1 for support queue
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+UPDATE queues SET defaultduein = 1 WHERE name='support'
+EOF
+
 	#alter acl for Everyone be able to create new tickets in support list
-	#Everyone (installation id 3) on support ( installation is 3)
-#	/bin/su - -c "/bin/echo \"INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',3,0,0);\"|/usr/bin/psql -U postgres -d rt" postgres
-#	/bin/su - -c "/bin/echo \"INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',3,0,0);\"|/usr/bin/psql -U postgres -d rt" postgres
-#	#Everyone (installation id 3) on monitor ( installation is 2)
-#	/bin/su - -c "/bin/echo \"INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',2,0,0);\"|/usr/bin/psql -U postgres -d rt" postgres
-#	/bin/su - -c "/bin/echo \"INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',2,0,0);\"|/usr/bin/psql -U postgres -d rt" postgres
-	
+	#Everyone (groups.id == 3) on support (queues.id == 1 (based on order in initialdata))
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',1,0,0);
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',1,0,0);
+EOF
+	#Everyone (groups.id == 3) on monitor ( queues.id == 2 (based on order in initaldata))
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',2,0,0);
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',2,0,0);
+EOF
+	#setup custom field values
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+INSERT INTO objectcustomfields (customfield, objectid, sortorder, creator, lastupdatedby) VALUES (1,1,1,12,12);
+INSERT INTO customfields (name, "type", maxvalues, repeated, pattern, lookuptype, description, sortorder, creator, lastupdatedby,disabled) VALUES ('Problem Category', 'Select',1,0,'(?#Mandatory).','RT::Queue-RT::Ticket','How severe this problem is',0,12,12,0);
+EOF
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Critical',0,12,12);
+INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Major',1,12,12);
+INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Minor',2,12,12);
+INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Trivial',3,12,12);
+EOF
+	# give permissions to users to set this field.
+	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ModifyCustomField','RT::CustomField',1,0,0);
+INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'SeeCustomField','RT::CustomField',1,0,0);
+EOF
+	fi
+
 }
+
+if [ "$PLC_RT_ENABLED" != "1" ] ; then
+    exit 0
+fi
 
 case "$1" in
 	start)
@@ -144,7 +168,7 @@ case "$1" in
 		dialog "$MESSAGE"
 
 		check_pg_hba $RT3_DB_NAME $RT3_DB_USER
-		check_user_and_db $RT3_DB_NAME $RT3_DB_USER
+		#check_user_and_db $RT3_DB_NAME $RT3_DB_USER
 		check_rt_siteconfig
 		check_rt_pghba
 		if [ -n "$WROTE_PG_CONFIG" ] ; then
@@ -164,20 +188,23 @@ case "$1" in
 		MESSAGE=$"Deleting databases..."
 		dialog "$MESSAGE"
 
+		service plc stop httpd
+
 		dropdb -U postgres $RT3_DB_NAME
 		dropuser -U postgres $RT3_DB_USER
 		rm -f /etc/rt3/RT_SiteConfig.pm
 		rm -f /etc/rt3/initialdata
 		PATTERN="host all postgres 127.0.0.1/32 trust"
-		sed -i -e "s/$PATTERN//g" $PGDATA/pg_hba.conf.d/${RT3_DB_USER}.conf
+		sed -i -e "s|$PATTERN||g" $PGDATA/pg_hba.conf.d/${RT3_DB_NAME}.conf
 
 		sed -i -e "s/.*mailgate.*//g" /etc/aliases
+		rm -f /etc/rt3/setup.finished
 
 		result "$MESSAGE"
 	;;
 
 	stop)
-		MESSAGE=$"Stopping Monitor"
+		MESSAGE=$"Stopping RT"
 		dialog "$MESSAGE"
 
 		# TODO: is there anything to stop?
