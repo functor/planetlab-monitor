@@ -183,7 +183,7 @@ install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
-install -D -m 644 rt3/syncrtusers.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/syncrtusers.cron
+install -D -m 644 rt3/rt.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/rt.cron
 #install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 #cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
@@ -226,7 +226,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/share/%{name}/rt3
 %{_sysconfdir}/plc.d/rt3
-%{_sysconfdir}/cron.d/syncrtusers.cron
+%{_sysconfdir}/cron.d/rt.cron
 
 %files pcucontrol
 %{python_sitearch}/pcucontrol
