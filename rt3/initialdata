@@ -346,6 +346,41 @@ According to our records, your request has been resolved. If you have any
 further questions or concerns, please respond to this message.
 '
     },
+	{
+      Queue       => '0',
+      Name        => 'correspondance with CC',                 # loc
+      Description => 'Message with the recipients in the header',          # loc
+      Content     => 'RT-Attach-Message: yes
+
+Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id})
+    Owner: {$Ticket->OwnerObj->Name}
+    Requestor: {$Ticket->RequestorAddresses}
+{ if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
+==================================================
+
+{$Transaction->Content()}
+'
+	},
+	{
+      Queue       => '0',
+      Name        => 'Create with CC in body',                 # loc
+      Description => 'Create with CC in body',                 # loc
+      Content     => 'RT-Attach-Message: yes
+
+Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id})
+    Owner: {$Ticket->OwnerObj->Name}
+    Requestor: {$Ticket->RequestorAddresses}
+{ if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
+==================================================
+
+{$Transaction->CreatedAsString}: Request {$Ticket->id} was acted upon.
+Transaction: {$Transaction->Description}
+
+Subject: {$Transaction->Subject || $Ticket->Subject || "(No subject given)"}
+
+{$Transaction->Content()}
+'
+	},
     {  Queue       => '___Approvals',
        Name        => "New Pending Approval",    # loc
        Description =>
@@ -433,6 +468,16 @@ Your ticket has been rejected by { eval { $Approval->OwnerObj->Name } }.
     {  ScripCondition => 'On Resolve',
        ScripAction    => 'Notify Requestors',
        Template       => 'Resolved' },
+	#On Create Autoreply To Requestors with template Autoreply
+	#On Correspond Notify Requestors, Ccs and AdminCcs with template correspondance with CC
+	#On Create Notify AdminCcs with template Create with CC in body
+
+    {  ScripCondition => 'On Create',
+       ScripAction    => 'Notify AdminCcs',
+       Template       => 'Create with CC in body', },
+    {  ScripCondition => 'On Correspond',
+       ScripAction    => 'Notify Requestors, Ccs and AdminCcs',
+       Template       => 'correspondance with CC', },
     {  Description => "When an approval ticket is created, notify the Owner and AdminCc of the item awaiting their approval",    # loc
        Queue          => '___Approvals',
        ScripCondition => 'User Defined',
