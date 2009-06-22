@@ -183,6 +183,7 @@ install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
+install -D -m 644 rt3/syncrtusers.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/syncrtusers.cron
 #install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 #cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
@@ -225,7 +226,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/share/%{name}/rt3
 %{_sysconfdir}/plc.d/rt3
-%{_sysconfdir}/cron.d/syncrcusers.cron
+%{_sysconfdir}/cron.d/syncrtusers.cron
 
 %files pcucontrol
 %{python_sitearch}/pcucontrol
@@ -272,7 +273,6 @@ plc-config --save /etc/planetlab/default_config.xml \
 %post rt
 plc-config --save /etc/planetlab/default_config.xml \
 			--category plc_rt --variable enabled --value true
-install -D -m 644 /usr/share/monitor/rt3/synncrtusers.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/syncrcusers.cron
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
