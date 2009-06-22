@@ -128,22 +128,6 @@ function check_rt_init ()
 		touch /etc/rt3/setup.finished
 
 	###Last DB adjustments
-	#set defaultduein to 1 for support queue
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-UPDATE queues SET defaultduein = 1 WHERE name='support'
-EOF
-
-	#alter acl for Everyone be able to create new tickets in support list
-	#Everyone (groups.id == 3) on support (queues.id == 1 (based on order in initialdata))
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',1,0,0);
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',1,0,0);
-EOF
-	#Everyone (groups.id == 3) on monitor ( queues.id == 2 (based on order in initaldata))
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'CreateTicket','RT::Queue',2,0,0);
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ReplyToTicket','RT::Queue',2,0,0);
-EOF
 	#setup custom field values
 	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
 INSERT INTO objectcustomfields (customfield, objectid, sortorder, creator, lastupdatedby) VALUES (1,1,1,12,12);
@@ -155,12 +139,6 @@ INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdate
 INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Minor',2,12,12);
 INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Trivial',3,12,12);
 EOF
-	# give permissions to users to set this field.
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'ModifyCustomField','RT::CustomField',1,0,0);
-INSERT INTO acl (principaltype,principalid,rightname,objecttype,objectid,delegatedby,delegatedfrom) VALUES ('Group',3,'SeeCustomField','RT::CustomField',1,0,0);
-EOF
-	fi
 
 }
 
