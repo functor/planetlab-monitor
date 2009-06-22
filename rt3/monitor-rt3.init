@@ -122,24 +122,18 @@ function check_rt_init ()
 {
 	if [ ! -f /etc/rt3/setup.finished ] ; then
 		/usr/sbin/rt-setup-database --action init --dba postgres
-		for f in $MONITORPATH/rt3/rtinit.d/*.pl ; do 
+		for f in $MONITORPATH/rt3/rtconf.d/*.pl ; do 
 			/usr/sbin/rt-setup-database --action insert --dba postgres --datafile $f
 		done
+
+		# run initial setup scripts (run only once, or for the first time)
+		for f in $MONITORPATH/rt3/rtsetup.d/*.{pl,py,sh} ; do 
+			$f
+		done
+
 		touch /etc/rt3/setup.finished
 
-	###Last DB adjustments
-	#setup custom field values
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-INSERT INTO objectcustomfields (customfield, objectid, sortorder, creator, lastupdatedby) VALUES (1,1,1,12,12);
-INSERT INTO customfields (name, "type", maxvalues, repeated, pattern, lookuptype, description, sortorder, creator, lastupdatedby,disabled) VALUES ('Problem Category', 'Select',1,0,'(?#Mandatory).','RT::Queue-RT::Ticket','How severe this problem is',0,12,12,0);
-EOF
-	cat <<EOF | /usr/bin/psql -U postgres -d $RT3_DB_NAME
-INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Critical',0,12,12);
-INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Major',1,12,12);
-INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Minor',2,12,12);
-INSERT INTO customfieldvalues (customfield, name, sortorder, creator, lastupdatedby) VALUES (1,'Trivial',3,12,12);
-EOF
-
+	fi
 }
 
 check_rt_sendmail ()

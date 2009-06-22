@@ -25,8 +25,13 @@ my $organization = '';
 my $address1 = '';
 my $city = '';
 my $country = '';
+my $priv = 0;
 
-print $ARGV[0];
+if ( $ARGV[0] == 'priv' )
+{
+   shift @ARGV;
+   $priv = 1;
+}
 
 open(USERS_DATA, $ARGV[0]) || die("Could not open file!");
 @raw_data=<USERS_DATA>;
@@ -42,8 +47,8 @@ foreach $bc_user (@raw_data)
              RealName => $realname,
              EmailAddress => $email_address,
              Password => 'Passw0rd',
-             Organization => $organization,
-             Privileged => 0);
+			 Organization => $organization,
+             Privileged => $priv);
              #Address1 => $address1,
              #City => $city,
              #Country => country,
