@@ -76,6 +76,8 @@ function check_rt_siteconfig ()
 		# copy to live configuration
 		cp -f $tmp_siteconfig /etc/rt3/RT_SiteConfig.pm 
 		cp -f $tmp_initialdata /etc/rt3/initialdata 
+		chmod 644 /etc/rt3/RT_SiteConfig.pm 
+		chmod 644 /etc/rt3/initialdata 
 
 		rm -f $tmp_siteconfig
 		rm -f $tmp_initialdata
@@ -92,6 +94,7 @@ function check_rt_pghba ()
 	if ! grep -q "$PATTERN" $CONF ; then
 		#### SETUP ACCESS from postgres user to run init for the first time.
 		echo "$PATTERN" >> $CONF
+		WROTE_PG_CONFIG="true"
 	fi
 
 }
@@ -119,6 +122,9 @@ function check_rt_init ()
 {
 	if [ ! -f /etc/rt3/setup.finished ] ; then
 		/usr/sbin/rt-setup-database --action init --dba postgres
+		for f in $MONITORPATH/rt3/rtinit.d/*.pl ; do 
+			/usr/sbin/rt-setup-database --action insert --dba postgres --datafile $f
+		done
 		touch /etc/rt3/setup.finished
 
 	###Last DB adjustments
@@ -238,6 +244,7 @@ case "$1" in
 		rm -f /etc/rt3/setup.finished
 
 		sed -i -e "s/Port=smtp, Name=MTA/Port=smtp,Addr=127.0.0.1, Name=MTA/g" /etc/mail/sendmail.mc
+		service plc start httpd
 
 		result "$MESSAGE"
 	;;

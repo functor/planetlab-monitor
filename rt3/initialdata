@@ -233,38 +233,6 @@
       Name        => 'Blank',                                             # loc
       Description => 'A blank template',                                  # loc
       Content     => '', },
-    {  Queue       => '0',
-       Name        => 'Autoreply',                                         # loc
-       Description => 'Default Autoresponse template',                     # loc
-       Content     => 'Subject: AutoReply: {$Ticket->Subject}
-
-Hello,
-
-Thank you very much for reporting this.
-
-This message was automatically generated in response to the
-creation of a trouble ticket regarding:
-
-	"{$Ticket->Subject()}"
-
-There is no need to reply to this message right now.  Your ticket has been
-assigned an ID of [{$rtname} #{$Ticket->id()}].
-
-Please include the string:
-
-    [{$rtname} #{$Ticket->id}]
-
-in the subject line of all future correspondence about this issue. To do so, 
-you may reply to this message.
-
-Thank you,
-{$Ticket->QueueObj->CorrespondAddress()}
-{$Ticket->AddCustomFieldValue(Field => 'Problem Category', Value => 'Trivial');}
-
--------------------------------------------------------------------------
-{$Transaction->Content()}
-'
-    },
 
     {  Queue       => '0',
        Name        => 'Transaction',                     # loc
@@ -352,7 +320,7 @@ further questions or concerns, please respond to this message.
       Description => 'Message with the recipients in the header',          # loc
       Content     => 'RT-Attach-Message: yes
 
-Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id})
+Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id} )
     Owner: {$Ticket->OwnerObj->Name}
     Requestor: {$Ticket->RequestorAddresses}
 { if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
@@ -367,7 +335,7 @@ Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket
       Description => 'Create with CC in body',                 # loc
       Content     => 'RT-Attach-Message: yes
 
-Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id})
+Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id} )
     Owner: {$Ticket->OwnerObj->Name}
     Requestor: {$Ticket->RequestorAddresses}
 { if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
@@ -468,9 +436,6 @@ Your ticket has been rejected by { eval { $Approval->OwnerObj->Name } }.
     {  ScripCondition => 'On Resolve',
        ScripAction    => 'Notify Requestors',
        Template       => 'Resolved' },
-	#On Create Autoreply To Requestors with template Autoreply
-	#On Correspond Notify Requestors, Ccs and AdminCcs with template correspondance with CC
-	#On Create Notify AdminCcs with template Create with CC in body
 
     {  ScripCondition => 'On Create',
        ScripAction    => 'Notify AdminCcs',
@@ -646,6 +611,7 @@ return 0; # ignore $passed;
 
     { UserId => 'root',        # - principalid
       Right  => 'SuperUser', },
+	
 
 );
 
