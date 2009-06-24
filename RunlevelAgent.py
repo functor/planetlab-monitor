@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # RunlevelAgent - acts as a heartbeat back to myplc reporting that the node is
-# 	online and whether it is in boot or pre-boot run-level.
+#     online and whether it is in boot or pre-boot run-level.
 #   This is useful to identify nodes that are behind a firewall, as well as to
 #   have the machine report run-time status both in safeboot and boot modes,
 #   so that it is immediately visible at myplc (gui or api).
@@ -96,12 +96,21 @@ def check_running(commandname):
 
 def main():
 
-    f=open(SESSION_FILE,'r')
-    session_str=f.read().strip()
-    api = PLC(Auth(session=session_str), api_server_url)
-    # NOTE: What should we do if this call fails?
-	# TODO: handle dns failure here.
-    api.AuthCheck()
+    # Keep trying to authenticate session, waiting for NM to re-write the
+    # session file, or DNS to succeed, until AuthCheck succeeds.
+    while True:
+        try:
+            f=open(SESSION_FILE,'r')
+            session_str=f.read().strip()
+            api = PLC(Auth(session=session_str), api_server_url)
+            # NOTE: What should we do if this call fails?
+            # TODO: handle dns failure here.
+            api.AuthCheck()
+            break
+        except:
+            print "Retry in 30 seconds: ", os.popen("uptime").read().strip()
+            traceback.print_exc()
+            time.sleep(30)
 
     try:
         env = 'production'
@@ -115,7 +124,7 @@ def main():
             # NOTE: here we are inferring the runlevel by environmental
             #         observations.  We know how this process was started by the
             #         given command line argument.  Then in bootmanager
-            #         runlevle, the bm.log gives information about the current
+            #         runlevel, the bm.log gives information about the current
             #         activity.
             # other options:
             #   call plc for current boot state?
