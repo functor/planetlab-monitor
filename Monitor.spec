@@ -184,6 +184,8 @@ touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
 install -D -m 644 rt3/rt.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/rt.cron
+chmod 755 $RPM_BUILD_ROOT/usr/share/%{name}/rt3/adduserstort.pl
+chmod 755 $RPM_BUILD_ROOT/usr/share/%{name}/rt3/rtcron.d/*.sh
 #install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 #cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
 
@@ -299,6 +301,10 @@ chkconfig monitor on
 %post runlevelagent
 chkconfig --add monitor-runlevelagent
 chkconfig monitor-runlevelagent on
+if [ "$PL_BOOTCD" != "1" ] ; then
+	service monitor-runlevelagent restart
+fi
+
 
 %changelog
 * Thu Jun 18 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-17
