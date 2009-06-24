@@ -27,7 +27,14 @@
 	{ GroupDomain => 'RT::System-Role',
 	  GroupType => 'Owner',
 	  Right => 'ModifyTicket', },
-)
+);
+
+@Scrips = (
+    {  ScripCondition => 'On Create',
+       ScripAction    => 'AutoReply To Requestors',
+       Template       => 'AutoReply' },
+);
+
 @Templates = (
     {  Queue       => '0',
        Name        => 'Autoreply',                                         # loc
@@ -60,4 +67,19 @@ Thank you,
 {$Transaction->Content()}
 '
     },
-)
+	{
+      Queue       => '0',
+      Name        => 'correspondance with CC',                 # loc
+      Description => 'Message with the recipients in the header',          # loc
+      Content     => 'RT-Attach-Message: yes
+
+Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id} )
+    Owner: {$Ticket->OwnerObj->Name}
+    Requestor: {$Ticket->RequestorAddresses}
+{ if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
+==================================================
+
+{$Transaction->Content()}
+'
+	},
+);

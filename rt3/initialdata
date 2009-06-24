@@ -316,21 +316,6 @@ further questions or concerns, please respond to this message.
     },
 	{
       Queue       => '0',
-      Name        => 'correspondance with CC',                 # loc
-      Description => 'Message with the recipients in the header',          # loc
-      Content     => 'RT-Attach-Message: yes
-
-Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id} )
-    Owner: {$Ticket->OwnerObj->Name}
-    Requestor: {$Ticket->RequestorAddresses}
-{ if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
-==================================================
-
-{$Transaction->Content()}
-'
-	},
-	{
-      Queue       => '0',
       Name        => 'Create with CC in body',                 # loc
       Description => 'Create with CC in body',                 # loc
       Content     => 'RT-Attach-Message: yes

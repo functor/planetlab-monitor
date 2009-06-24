@@ -27,7 +27,7 @@ my $city = '';
 my $country = '';
 my $priv = 0;
 
-if ( $ARGV[0] == 'priv' )
+if ( $ARGV[0] =~ /priv/ )
 {
    shift @ARGV;
    $priv = 1;
@@ -42,7 +42,7 @@ foreach $bc_user (@raw_data)
  ($email_address,$realname,$organization)=split(/\,/,$bc_user);
 
   my $UserObj = new RT::User(RT::SystemUser);
-  print "adding user: $email_address\n";
+	# print "adding user: $email_address\n";
   $UserObj->Create(Name => $email_address,
              RealName => $realname,
              EmailAddress => $email_address,

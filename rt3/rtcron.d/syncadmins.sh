@@ -1,6 +1,5 @@
 #!/bin/bash
 
-echo "syncadmins.sh"
 MDIR=/usr/share/monitor
 source $MDIR/monitorconfig.sh
 ${MONITOR_SCRIPT_ROOT}/plcquery.py --type person --withsitename --byrole admin \

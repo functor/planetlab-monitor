@@ -65,8 +65,10 @@ Set($NotifyActor, 1);
 #Send a copy to RT owner: True
 Set($LoopsToRTOwner , 1);
 
-#Standard Support Email Address
-Set($RTAddressRegexp , '^support@PLC_RT_HOSTNAME$');
+# Try to figure out CC watchers 
+Set($ParseNewMessageForTicketCcs , 1);
 
+# pattern to self-identify to avoid loops to itself.
+Set($RTAddressRegexp , '^(support|monitor|legal|security)@PLC_RT_HOSTNAME$');
 
 1;
