@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Node View"
+layout_params['page_title'] = "MyOps Action List"
 from monitor.util import diff_time
 from monitor import config
 from time import mktime
@@ -18,48 +18,54 @@ def zabbix_event_ack_link(eventid):
   	<table width="100%">
 		<thead>
 			<tr>
-				<th></th>
-				<th><a href="${tg.url('action', filter='active')}">Not Acknowledged(${fc['active']})</a></th>
-				<th><a href="${tg.url('action', filter='acknowledged')}">Acknowledged(${fc['acknowledged']})</a></th>
-				<th><a href="${tg.url('action', filter='all')}">All(${fc['all']})</a></th>
+				<th><a href="${link('actionlist', action_type='online_notice', since=1)}">Last Day</a></th>
+				<th><a href="${link('actionlist', action_type='online_notice', since=7)}">Last Week</a></th>
+				<th><a href="${link('actionlist', action_type='online_notice', since=30)}">Last Month</a></th>
 			</tr>
 		</thead>
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
+	<h4>Actions Over the Last ${since} Days</h4>
+		<p py:if="actions and len(actions) == 0">
+			There are no recent actions taken for this site.
+		</p>
+		<table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
-					<th mochi:format="str">Site</th>
-					<th>Hostname</th>
-					<th>Issue (severity)</th>
-					<th>Last change</th>
-					<th>Notes (acknowledged)</th>
-					<th></th>
+					<th>Date</th>
+					<th>Action taken on</th>
+					<th>Action Type</th>
+					<th>Message ID</th>
+					<th>Errors</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,node in enumerate(query)">
+				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="${link('pcuview', loginbase=node[0])}">${node[0]}</a></td>
-					<td nowrap="true" py:content="node[1]"></td>
-					<td nowrap='true' id="severity-${node[3]}" py:content="node[2]"></td>
-					<td nowrap='true' py:content="diff_time(int(node[4]))"></td>
-					<?python
-						try:
-							int(node[5])
-							val = True
-						except:
-							val = False
-					?>
-					<!-- NOTE: only one of the next two columns will be displayed. -->
-					<td py:if="val"><a href="${zabbix_event_ack_link(node[5])}">Provide Ack</a></td>
-					<td py:if="not val" py:content="node[5]">Message from user</td>
-					<td py:if="not val"><a href="${zabbix_event_ack_link(node[6])}">Add</a></td>
+					<td py:content="act.date_created"></td>
+					<td py:if="act.hostname is not None" nowrap="true" >
+						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
+							<span class="icon">${act.hostname}</span></a>
+					</td>
+					<td py:if="act.hostname is None" nowrap="true">
+						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
+							<span class="icon">${act.loginbase}</span></a>
+					</td>
+					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
+					<td py:content="act.action_type"></td>
+					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
+							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
+					<td py:if="'bootmanager' in act.action_type or 'unknown' in act.action_type">
+						<a href="/monitorlog/bm.${act.hostname}.log">latest bm log</a>
+					</td>
+					<td py:if="'bootmanager' not in act.action_type">
+						<pre py:content="act.error_string"></pre></td>
 				</tr>
 			</tbody>
 		</table>
+
 		</td>
 		</tr>
 		</tbody>

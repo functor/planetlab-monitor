@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor PCU View"
+layout_params['page_title'] = "MyOps Detail View"
 from monitor.util import diff_time
 from monitor import config
 from time import mktime
@@ -200,7 +200,7 @@ from links import *
 		<div id="status_block" class="flash"
             py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
 
-	<h4>Actions Over the Last Week</h4>
+	<h4>Actions Over the Last ${since} Days</h4>
 		<p py:if="actions and len(actions) == 0">
 			There are no recent actions taken for this site.
 		</p>

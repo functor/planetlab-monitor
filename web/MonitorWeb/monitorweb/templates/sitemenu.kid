@@ -36,7 +36,7 @@
 				<th><a href="${link('site')}">Sites</a></th>
 				<th><a href="${link('pcu')}">PCUs</a></th>
 				<th><a href="${link('node')}">Nodes</a></th>
-				<th><a href="">Actions</a></th>
+				<th><a href="${link('actionsummary')}">Actions</a></th>
 			</tr>
 			</thead>
 			<tbody>

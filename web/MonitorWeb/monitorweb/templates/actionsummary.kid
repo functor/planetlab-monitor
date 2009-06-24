@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Node View"
+layout_params['page_title'] = "MyOps Action Summary"
 from monitor.util import diff_time
 from monitor import config
 from time import mktime
@@ -18,9 +18,9 @@ def zabbix_event_ack_link(eventid):
   	<table width="100%">
 		<thead>
 			<tr>
-				<th>Last Day</th>
-				<th>Last Week</th>
-				<th>Last Month</th>
+				<th><a href="actionsummary?since=1">Last Day</a></th>
+				<th><a href="actionsummary?since=7">Last Week</a></th>
+				<th><a href="actionsummary?since=30">Last Month</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -37,7 +37,7 @@ def zabbix_event_ack_link(eventid):
 			<tbody>
 				<tr py:for="key in results.keys()">
 					<td></td>
-					<td nowrap="true" py:content="key"></td>
+					<td nowrap="true"><a href="actionlist?action_type=${key}" py:content="key"></a></td>
 					<td nowrap='true' py:content="results[key]"></td>
 				</tr>
 			</tbody>

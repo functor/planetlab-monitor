@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "Monitor Node List"
+layout_params['page_title'] = "MyOps Node History"
 from monitor.util import diff_time
 from time import mktime
 from links import *
