@@ -490,7 +490,7 @@ class ScanPCU(ScanInterface):
 						values['dns_status'] = "DNS-OK"
 					else:
 						values['dns_status'] = "DNS-MISMATCH"
-						continue_probe = False
+						values['plc_pcu_stats']['hostname'] = values['plc_pcu_stats']['ip']
 
 				except Exception, err:
 					values['dns_status'] = "DNS-NOENTRY"

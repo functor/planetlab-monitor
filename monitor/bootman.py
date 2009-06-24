@@ -744,6 +744,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 		args['bmlog'] = conn.get_bootmanager_log().read()
 		args['viart'] = False
 		args['saveact'] = True
+		args['ccemail'] = True
 
 		sitehist.sendMessage('unknownsequence_notice', **args)
 
@@ -783,6 +784,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			args['bmlog'] = conn.get_bootmanager_log().read()
 			args['viart'] = False
 			args['saveact'] = True
+			args['ccemail'] = True
 
 			sitehist.sendMessage('unknownsequence_notice', **args)
 			conn.restart_bootmanager('boot')

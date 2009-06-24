@@ -127,6 +127,7 @@ class SiteInterface(HistorySiteRecord):
 
 			message = getattr(mailtxt, type)
 
+			ccemail = False
 			saveact = True
 			viart = True
 			if 'viart' in kwargs: 
@@ -136,6 +137,9 @@ class SiteInterface(HistorySiteRecord):
 			if 'saveact' in kwargs: 
 				saveact = kwargs['saveact']
 
+			if 'ccemail' in kwargs: 
+				ccemail = kwargs['ccemail']
+
 			if viart:
 				self.getTicketStatus()		# get current message status
 				if self.db.message_status not in ['open', 'new']:
@@ -143,8 +147,10 @@ class SiteInterface(HistorySiteRecord):
 
 			m = Message(message[0] % args, message[1] % args, viart, self.db.message_id)
 
-			contacts = self.getContacts()
-			#contacts = [config.cc_email]
+			if ccemail:
+				contacts = [config.cc_email]
+			else:
+				contacts = self.getContacts()
 
 			print "sending message: %s to site %s for host %s" % (type, self.db.loginbase, hostname)
 
