@@ -167,17 +167,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		flash("Welcome To MyOps!")
 		return dict(now=time.ctime())
 
-	@expose(template="monitorweb.templates.pcuview")
-	def nodeview(self, hostname=None):
-		nodequery=[]
-		if hostname:
-			node = FindbadNodeRecord.get_latest_by(hostname=hostname)
-			# NOTE: reformat some fields.
-			agg = prep_node_for_display(node)
-			nodequery += [agg]
-
-		return self.pcuview(None, None, hostname) # dict(nodequery=nodequery)
-
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='boot'):
 		print "NODE------------------"
@@ -301,7 +290,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	# TODO: add form validation
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
-	def pcuview(self, loginbase=None, pcuid=None, hostname=None, **data):
+	def pcuview(self, loginbase=None, pcuid=None, hostname=None, since=20, **data):
 		print "PCUVIEW------------------"
 		print "befor-len: ", len( [ i for i in session] )
 		session.flush(); session.clear()
@@ -312,6 +301,9 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		actions=[]
 		exceptions = None
 
+		try: since = int(since)
+		except: since = 7
+
 		for key in data:
 			print key, data[key]
 
@@ -321,9 +313,18 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		if 'exceptions' in data:
 			exceptions = data['exceptions']
 
+		if pcuid:
+			print "pcuid: %s" % pcuid
+			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
+			loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
+
+		if hostname:
+			node = FindbadNodeRecord.get_latest_by(hostname=hostname)
+			loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+
 		if loginbase:
 			actions = ActionRecord.query.filter_by(loginbase=loginbase
-							).filter(ActionRecord.date_created >= datetime.now() - timedelta(14)
+							).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
 							).order_by(ActionRecord.date_created.desc())
 			actions = [ a for a in actions ]
 			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
@@ -340,37 +341,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			for pcuid_key in pcus:
 				pcuquery += [pcus[pcuid_key]]
 
-		if pcuid and hostname is None:
-			print "pcuid: %s" % pcuid
-			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
-			# NOTE: count filter
-			aggpcu = prep_pcu_for_display(pcu)
-			pcuquery += [aggpcu]
-			if 'site_id' in pcu.plc_pcu_stats:
-				sitequery = [HistorySiteRecord.by_loginbase(aggpcu.loginbase)]
-				
-			if 'nodenames' in pcu.plc_pcu_stats:
-				for nodename in pcu.plc_pcu_stats['nodenames']: 
-					print "query for %s" % nodename
-					node = FindbadNodeRecord.get_latest_by(hostname=nodename)
-					print "%s" % node.port_status
-					print "%s" % node.to_dict()
-					if node:
-						agg = prep_node_for_display(node)
-						nodequery += [agg]
-
-		if hostname and pcuid is None:
-				node = FindbadNodeRecord.get_latest_by(hostname=hostname)
-				# NOTE: reformat some fields.
-				agg = prep_node_for_display(node)
-				sitequery = [agg.site]
-				nodequery += [agg]
-				if agg.pcu: # .pcu.plc_pcuid: 	# not None
-					#pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
-					#prep_pcu_for_display(pcu)
-					pcuquery += [agg.pcu]
-			
-		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, exceptions=exceptions)
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, since=since, exceptions=exceptions)
 
 	@expose(template="monitorweb.templates.pcuhistory")
 	def pcuhistory(self, pcu_id=None):
@@ -457,17 +428,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				
 		return dict(query=query, fc=filtercount)
 
-	@expose(template="monitorweb.templates.siteview")
-	def siteview(self, loginbase='pl'):
-		# get site query
-		sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
-		nodequery = []
-		for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
-			# NOTE: reformat some fields.
-			agg = prep_node_for_display(node)
-			nodequery += [agg]
-		return dict(sitequery=sitequery, nodequery=nodequery, fc={})
-
 	@expose(template="monitorweb.templates.sitelist")
 	def site(self, filter='all'):
 		print "SITE------------------"
@@ -506,13 +466,12 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.actionsummary")
 	def actionsummary(self, since=7):
 		from monitor.wrapper.emailTxt import mailtxt
+
 		types = filter(lambda x: 'notice' in x, dir(mailtxt))
 		results = {}
 
-		try:
-			since = int(since)
-		except:
-			since = 7
+		try: since = int(since)
+		except: since = 7
 
 		for  t in types:
 			acts = ActionRecord.query.filter(ActionRecord.action_type==t
@@ -521,65 +480,19 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		return dict(results=results)
 
 	@expose(template="monitorweb.templates.actionlist")
-	def action(self, filter='all'):
-		session.bind = metadata.bind
-		filtercount = {'active' : 0, 'acknowledged': 0, 'all' : 0}
-		# With Acknowledgement
-		sql_ack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,a.message,e.eventid '+ \
-              ' FROM triggers t,hosts h,items i,functions f, hosts_groups hg,escalations e,acknowledges a ' + \
-              ' WHERE f.itemid=i.itemid ' + \
-                  ' AND h.hostid=i.hostid ' + \
-                  ' AND hg.hostid=h.hostid ' + \
-                  ' AND t.triggerid=f.triggerid ' + \
-                  ' AND t.triggerid=e.triggerid ' + \
-                  ' AND a.eventid=e.eventid ' + \
-                  ' AND t.status=' + str(defines.TRIGGER_STATUS_ENABLED) + \
-                  ' AND i.status=' + str(defines.ITEM_STATUS_ACTIVE) + \
-                  ' AND h.status=' + str(defines.HOST_STATUS_MONITORED) + \
-                  ' AND t.value=' + str(defines.TRIGGER_VALUE_TRUE) + \
-              ' ORDER BY t.lastchange DESC';
+	def actionlist(self, action_type='down_notice', since=7, loginbase=None):
 
-		# WithOUT Acknowledgement
-		sql_noack = 'SELECT DISTINCT h.host,t.description,t.priority,t.lastchange,e.eventid ' + \
-              ' FROM triggers t,hosts h,items i,functions f, hosts_groups hg,escalations e,acknowledges a ' + \
-              ' WHERE f.itemid=i.itemid ' + \
-                  ' AND h.hostid=i.hostid ' + \
-                  ' AND hg.hostid=h.hostid ' + \
-                  ' AND t.triggerid=f.triggerid ' + \
-                  ' AND t.triggerid=e.triggerid ' + \
-                  ' AND e.eventid not in (select eventid from acknowledges) ' + \
-                  ' AND t.status=' + str(defines.TRIGGER_STATUS_ENABLED) + \
-                  ' AND i.status=' + str(defines.ITEM_STATUS_ACTIVE) + \
-                  ' AND h.status=' + str(defines.HOST_STATUS_MONITORED) + \
-                  ' AND t.value=' + str(defines.TRIGGER_VALUE_TRUE) + \
-              ' ORDER BY t.lastchange DESC';
-		# for i in session.execute(sql): print i
+		try: since = int(since)
+		except: since = 7
 
-		query=[]
-		replace = re.compile(' {.*}')
-		for sql,ack in [(sql_ack,True), (sql_noack,False)]:
-			result = session.execute(sql)
-			for row in result:
-				try:
-					newrow = [ site_hn2lb[row[0].lower()] ] + [ r for r in row ]
-				except:
-					print site_hn2lb.keys()
-					newrow = [ "unknown" ] + [ r for r in row ]
-
-				newrow[2] = replace.sub("", newrow[2]) # strip {.*} expressions
-
-				# NOTE: filter count
-				filtercount['all'] += 1
-				if not ack: # for unacknowledged
-					filtercount['active'] += 1
-					if filter == 'active':
-						query.append(newrow)
-				else:
-					filtercount['acknowledged'] += 1
-					if filter == 'acknowledged':
-						query.append(newrow)
-					
-				if filter != "acknowledged" and filter != "active":
-					query.append(newrow)
-
-		return dict(query=query, fc=filtercount)
+		if loginbase:
+			acts = ActionRecord.query.filter_by(loginbase=loginbase
+				).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
+				).order_by(ActionRecord.date_created.desc())
+		else:
+			acts = ActionRecord.query.filter(ActionRecord.action_type==action_type
+				).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
+				).order_by(ActionRecord.date_created.desc())
+		query = [ a for a in acts ]
+		
+		return dict(actions=query, action_type=action_type, since=since)
