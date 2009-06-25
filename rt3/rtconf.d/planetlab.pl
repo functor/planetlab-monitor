@@ -33,6 +33,12 @@
     {  ScripCondition => 'On Create',
        ScripAction    => 'AutoReply To Requestors',
        Template       => 'AutoReply' },
+    {  ScripCondition => 'On Correspond',
+       ScripAction    => 'Notify Requestors, Ccs and AdminCcs',
+       Template       => 'PlanetLab Correspond with CC in body', },
+    {  ScripCondition => 'On Create',
+       ScripAction    => 'Notify AdminCcs',
+       Template       => 'PlanetLab Create with CC in body', },
 );
 
 @Templates = (
@@ -67,19 +73,58 @@ Thank you,
 {$Transaction->Content()}
 '
     },
-	{
+    {
       Queue       => '0',
-      Name        => 'correspondance with CC',                 # loc
+      Name        => 'PlanetLab Correspond with CC in body',
       Description => 'Message with the recipients in the header',          # loc
       Content     => 'RT-Attach-Message: yes
 
-Email Recipients (see http://PLC_RT_HOSTNAME/rt3/Ticket/Display.html?id={$Ticket->id} )
+Email Recipients (see http://PLC_RT_HOSTNAME/support )
     Owner: {$Ticket->OwnerObj->Name}
     Requestor: {$Ticket->RequestorAddresses}
 { if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
+
 ==================================================
 
 {$Transaction->Content()}
 '
-	},
+    },
+    {
+      Queue       => '0',
+      Name        => 'PlanetLab Create with CC in body',
+      Description => 'Create with CC in body',                 # loc
+      Content     => 'RT-Attach-Message: yes
+
+Email Recipients (see http://PLC_RT_HOSTNAME/support )
+    Owner: {$Ticket->OwnerObj->Name}
+    Requestor: {$Ticket->RequestorAddresses}
+{ if ($acc=$Ticket->AdminCcAddresses) { "    Ticket Ccs: " . $acc } }
+
+==================================================
+
+{$Transaction->CreatedAsString}: Request {$Ticket->id} was acted upon.
+Transaction: {$Transaction->Description}
+
+Subject: {$Transaction->Subject || $Ticket->Subject || "(No subject given)"}
+
+{$Transaction->Content()}
+'
+    },
 );
+
+@Queues = (
+	   { Name              => 'monitor',
+         Description       => 'Queue for monitor',
+         CorrespondAddress => 'monitor@PLC_RT_HOSTNAME',
+         CommentAddress    => '', },
+
+	   { Name              => 'security',
+         Description       => 'Queue for security issues',
+         CorrespondAddress => 'security@PLC_RT_HOSTNAME',
+         CommentAddress    => '', },
+
+	   { Name              => 'legal',
+         Description       => 'Queue for legal issues',
+         CorrespondAddress => 'legal@PLC_RT_HOSTNAME',
+         CommentAddress    => '', },
+)
