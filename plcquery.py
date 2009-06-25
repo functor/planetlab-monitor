@@ -27,12 +27,22 @@ def parse_filter(filter):
     else:
         return None
 
+def conv(s):
+    # strip non-ascii characters to prvent errors
+    r = "".join([x for x in s if ord(x) < 128])
+    return r
+
 def print_fields(obj, fields, format):
     if format:
+        for f in obj:
+            if type(obj[f]) in (str, unicode): 
+                obj[f] = conv(obj[f])
+            
         print format % obj
     else:
         for f in fields:
             if f in obj:
+                obj[f] = conv(obj[f])
                 print obj[f],
         print ""
 
@@ -127,7 +137,7 @@ def main():
                 if len(sitelist) > 0:
                     s = sitelist[0]
                     if i['person_id'] in s['person_ids']:
-                        i['name'] = s['name']
+                        i['name'] = conv(s['name'])
                         print_fields(i, fields, config.format)
         else:
             n = api.GetPersons(f, fields)
