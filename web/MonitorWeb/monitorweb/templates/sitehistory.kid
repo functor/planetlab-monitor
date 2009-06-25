@@ -20,9 +20,10 @@ from links import *
 				<tr>
 					<th mochi:format="int"></th>
 					<th>Site name</th>
+					<th mochi:format="int">Slices/Max</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
-					<th mochi:format="int">Slices/Max</th>
+					<th>Last Change</th>
 					<th mochi:format="int">Nodes/Total</th>
 					<th>Date Checked</th>
 				</tr>
@@ -37,11 +38,11 @@ from links import *
 							<img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 						</div>
 					</td>
-					<td py:content="site.enabled"></td>
-					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td>${site.slices_used}/${site.slices_total}</td>
-					<td>${site.nodes_up} / ${site.nodes_total}</td>
+					<td id="site-${site.enabled}" py:content="site.enabled"></td>
+					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+					<td id="site-${site.nodes_up >= 2}">${site.nodes_up} / ${site.nodes_total}</td>
 					<td py:content="site.timestamp"></td>
 				</tr>
 			</tbody>

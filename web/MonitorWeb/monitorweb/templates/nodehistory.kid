@@ -18,37 +18,16 @@ from links import *
 		<table id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
-					<!--th>Site</th>
-					<th>pcu</th-->
-					<th>date</th>
+					<th>Last Check</th>
+					<th>Last Change</th>
 					<th>hostname</th>
-					<th>last_contact</th>
+					<th>Status</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,node in enumerate(query)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<!--td id="site-${node.site.status}">
-						<a href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
-					</td>
-					<td width="20%" nowrap='true' align='center' id="status-${node.pcu_short_status}">
-						<div id="links">
-							<a class="info" py:if="'error' in node.pcu_short_status" 
-								href="${link('pcuview', pcuid=node.plc_pcuid)}">
-							Error<span><pre>${node.pcu.reboot_trial_status}</pre></span></a>
-							<a py:if="'error' not in node.pcu_short_status and 'none' not in node.pcu_short_status" 
-								href="${link('pcuview', pcuid=node.plc_pcuid)}"
-								py:content="node.pcu_short_status">Reboot Status</a>
-							<span py:if="'none' in node.pcu_short_status" 
-								py:content="node.pcu_short_status">Reboot Status</span>
-						</div>
-					</td-->
-					<!--td id="node-${node.observed_status}" nowrap="true">
-						<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td-->
-					<!--td nowrap="true" py:content="node.kernel"></td-->
-					<!--td py:content="node.date_checked"></td-->
 					<td py:content="node.last_checked"></td>
+					<td py:content="diff_time(mktime(node.last_changed.timetuple()))"></td>
 					<td nowrap="true">
 						<a target="_top" href="${link('pcuview', hostname=node.hostname)}" py:content="node.hostname">your.host.org</a></td>
 					<td id="node-${node.status}" py:content="node.status"></td>

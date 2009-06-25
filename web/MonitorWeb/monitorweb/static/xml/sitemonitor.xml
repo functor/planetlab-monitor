@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Module>
-	<ModulePrefs title="PlanetLab Site Status" title_url="http://www.planet-lab.org">
+	<ModulePrefs title="MyOps Site Status" title_url="http://www.planet-lab.org">
 		<Require feature="dynamic-height"/>
 	</ModulePrefs>
 	<UserPref name="loginBase" display_name="Site Login Base" 
@@ -13,7 +13,7 @@ var displaycontent = function (responseText) {
 	_gel('content_div').innerHTML = responseText; 
 	_IG_AdjustIFrameHeight();
 };
-var url = 'http://monitor.planet-lab.org/monitor/actionlist?loginbase=' + prefs.getString("loginBase");
+var url = 'http://monitor.planet-lab.org/monitor/sitesummary?loginbase=' + prefs.getString("loginBase");
 _IG_FetchContent(url, displaycontent, { refreshInterval: 1200 }); 
 </script>
 ]]></Content>

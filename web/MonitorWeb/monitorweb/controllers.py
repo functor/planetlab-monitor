@@ -108,12 +108,16 @@ def prep_pcu_for_display(pcu):
 class NodeWidget(widgets.Widget):
 	pass
 
-def prep_node_for_display(node):
+def prep_node_for_display(node, pcuhash=None):
 	agg = aggregate()
 	agg.node = node
 
 	if node.plc_pcuid:
-		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
+		if pcuhash:
+			pcu = pcuhash[node.plc_pcuid]
+		else:
+			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=node.plc_pcuid)
+
 		if pcu:
 			agg.pcu_status = pcu.reboot_trial_status
 			agg.pcu_short_status = format_pcu_shortstatus(pcu)
@@ -168,6 +172,31 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		return dict(now=time.ctime())
 
 	@expose(template="monitorweb.templates.nodelist")
+	def node2(self, filter='boot'):
+
+		fbquery = FindbadNodeRecord.get_all_latest()
+		fbpcus = FindbadPCURecord.get_all_latest()
+		def fbtohash(fbpculist):
+			h = {}
+			for p in fbpculist:
+				h[p.plc_pcuid] = p
+
+		pcuhash = fbtohash(fbpcus)
+
+		query = []
+		for node in fbquery:
+			# NOTE: reformat some fields.
+			agg = prep_node_for_display(node, pcuhash)
+
+			if not agg.history:
+				continue
+
+			query.append(agg)
+				
+		widget = NodeWidget(template='monitorweb.templates.node_template')
+		return dict(now=time.ctime(), query=query, nodewidget=widget)
+
+	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='boot'):
 		print "NODE------------------"
 		print "befor-len: ", len( [ i for i in session] )
@@ -180,9 +209,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		for node in fbquery:
 			# NOTE: reformat some fields.
 			agg = prep_node_for_display(node)
-
-			#node.history.status
-			#print node.hostname
 
 			if not agg.history:
 				continue
@@ -197,9 +223,6 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			elif agg.history.status in ['debug', 'monitordebug']:
 				filtercount['debug'] += 1
 			else:
-				# TODO: need a better fix. filtercount
-				# doesn't maps to GetBootStates() on
-				# 4.3 so this one fails quite often.
 				if filtercount.has_key(agg.history.status):
 					filtercount[agg.history.status] += 1
 				
@@ -462,6 +485,41 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				query.append(site)
 				
 		return dict(query=query, fc=filtercount)
+	@expose(template="monitorweb.templates.sitesummary")
+	def sitesummary(self, loginbase="princeton"):
+		nodequery = []
+		for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
+			agg = prep_node_for_display(node)
+			nodequery += [agg]
+		
+		return dict(nodequery=nodequery, loginbase=loginbase)
+
+	@expose(template="monitorweb.templates.summary")
+	def summary(self, since=7):
+		sumdata = {}
+		sumdata['nodes'] = {}
+		sumdata['sites'] = {}
+		sumdata['pcus'] = {}
+
+		def summarize(query, type):
+			for o in query:
+				if o.status not in sumdata[type]:
+					sumdata[type][o.status] = 0
+				sumdata[type][o.status] += 1
+
+		fbquery = HistorySiteRecord.query.all()
+		summarize(fbquery, 'sites')
+		fbquery = HistoryPCURecord.query.all()
+		summarize(fbquery, 'pcus')
+		fbquery = HistoryNodeRecord.query.all()
+		summarize(fbquery, 'nodes')
+
+		if 'monitordebug' in sumdata['nodes']:
+			d = sumdata['nodes']['monitordebug']
+			del sumdata['nodes']['monitordebug']
+			sumdata['nodes']['failboot'] = d
+		
+		return dict(sumdata=sumdata, setorder=['good', 'offline', 'down', 'online']) 
 
 	@expose(template="monitorweb.templates.actionsummary")
 	def actionsummary(self, since=7):

@@ -1,4 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?python
+from links import *
+?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://purl.org/kid/ns#"
     py:extends="'master.kid'">
 <head>
@@ -32,7 +35,13 @@
         <p> All nodes: <a href="node">Nodes</a> <br/> </p>
       </li>
     </ol>
-    <!--div class="notice"> If you create something cool, please <a href="http://groups.google.com/group/turbogears">let people know</a>, and consider contributing something back to the <a href="http://groups.google.com/group/turbogears">community</a>.</div-->
+	<p>If you'd like to track things a little more informally, you can install
+	these Google Gadgets for summaries of the entire system or a specific
+	site.</p>
+    <ul class="links">
+      <li><a href="http://fusion.google.com/add?source=atgs&amp;moduleurl=${plc_myops_uri()}/monitor/gadget.xml">MyOps Summary</a></li>
+      <li><a href="http://fusion.google.com/add?source=atgs&amp;moduleurl=${plc_myops_uri()}/monitor/sitemonitor.xml">Site Summary</a></li>
+    </ul>
   </div>
   <!-- End of getting_started -->
 </body>
