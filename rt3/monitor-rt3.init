@@ -70,6 +70,7 @@ function check_rt_siteconfig ()
 		# setup RT_SiteConfig.pm
 		update_config PLC_NAME "$PLC_NAME" $tmp_siteconfig
 		update_config PLC_RT_HOSTNAME $PLC_RT_HOST $tmp_siteconfig
+		update_config PLC_WWW_HOSTNAME $PLC_WWW_HOST $tmp_siteconfig
 
 		update_config RT_DB_NAME $RT3_DB_NAME $tmp_siteconfig
 		update_config RT_DB_USER $RT3_DB_USER $tmp_siteconfig
