@@ -54,6 +54,11 @@ function check_rt_siteconfig ()
 {
 	tmp_siteconfig=$(mktemp)
 	tmp_initialdata=$(mktemp)
+
+	# TODO: need a better approach for this.
+	for f in $MONITORPATH/rt3/rtconf.d/*.pl ; do 
+		update_config PLC_RT_HOSTNAME $PLC_RT_HOST $f
+	done
 	
 	# if the templates are newer than the actual config, then replace them.
 	if [ $MONITORPATH/rt3/RT_SiteConfig.pm -nt /etc/rt3/RT_SiteConfig.pm ] ;
@@ -82,6 +87,11 @@ function check_rt_siteconfig ()
 		rm -f $tmp_siteconfig
 		rm -f $tmp_initialdata
 	fi
+}
+
+function check_rt_custom ()
+{
+	rsync -qv -az $MONITORPATH/rt3/local/html /usr/share/rt3
 }
 
 function check_rt_pghba ()
@@ -194,6 +204,7 @@ case "$1" in
 		check_rt_aliases
 		check_rt_init
 		check_rt_sendmail
+		check_rt_custom		# todo: restart httpd if needed.
 
 		result "$MESSAGE"
 	;;
