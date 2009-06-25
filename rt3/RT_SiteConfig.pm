@@ -47,7 +47,7 @@ Set($DatabaseRTHost , 'localhost');
 Set($WebPath , "/rt3"); # e.g. Set($WebPath , "");
 
 #URL
-Set($WebBaseURL , "http://PLC_RT_HOSTNAME"); # Set($WebBaseURL , "http://rt.PLC_RT_HOSTNAME");
+Set($WebBaseURL , "https://PLC_RT_HOSTNAME"); # Set($WebBaseURL , "http://rt.PLC_RT_HOSTNAME");
 
 #Adding plugins
 #Set(@Plugins,qw(RT::FM));
@@ -70,5 +70,11 @@ Set($ParseNewMessageForTicketCcs , 1);
 
 # pattern to self-identify to avoid loops to itself.
 Set($RTAddressRegexp , '^(support|monitor|legal|security)@PLC_RT_HOSTNAME$');
+
+Set($WebImagesURL , $WebPath . "/NoAuth/images/");  # need this for below 
+Set($LogoURL, "/misc/logo.gif"); 
+Set($LogoLinkURL, 'http://PLC_WWW_HOSTNAME'); 
+Set($LogoImageURL, "http://PLC_RT_HOSTNAME/misc/logo.gif"); 
+Set($LogoAltText, "PLC_NAME");
 
 1;
