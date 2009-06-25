@@ -67,7 +67,7 @@ class HistorySiteRecord(Entity):
 
 	penalty_level   = Field(Int, default=0)
 	penalty_applied = Field(Boolean, default=False)
-	acts_as_versioned(ignore=['last_changed', 'last_checked'])
+	acts_as_versioned(ignore=['last_changed', 'last_checked', 'message_status'])
 
 	@classmethod
 	def by_loginbase(cls, loginbase):

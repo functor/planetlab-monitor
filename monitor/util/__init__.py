@@ -26,8 +26,8 @@ def diff_time(timestamp, abstime=True):
 		t = diff / (60*60*24)
 		t_str = "%s days ago" % int(math.ceil(t))
 	elif diff <= 60*60*24*30: # approx sec in month
-		t = diff / (60*60*24*7)
-		t_str = "%s wks ago" % int(math.ceil(t))
+		t = diff / (60*60*24)
+		t_str = "%s days ago" % int(math.ceil(t))
 	elif diff > 60*60*24*30: # approx sec in month
 		t = diff / (60*60*24*30)
 		t_str = "%s mnths ago" % int(t)

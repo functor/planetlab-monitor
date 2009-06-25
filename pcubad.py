@@ -64,17 +64,20 @@ def check_pcu_state(rec, pcu):
 
 	pcu_state = rec.reboot_trial_status
 
-	if ( pcu_state == 'NetDown' or pcu_state == 'Not_Run' or not ( pcu_state == 0 or pcu_state == "0" ) ) and \
-			( pcu.status == 'online' or pcu.status == 'good' ):
-		print "changed status from %s to offline" % pcu.status
-		pcu.status = 'offline'
-		pcu.last_changed = datetime.now()
+	# DOWN
+	if pcu_state not in [0, "0"] and pcu.status not in ['offline', 'down']:
+			print "changed status from %s to offline" % pcu.status
+			pcu.status = 'offline'
+			pcu.last_changed = datetime.now()
 
-	if ( pcu_state == 0 or pcu_state == "0" ) and pcu.status not in [ 'online', 'good' ]:
+	# ONLINE
+	if pcu_state in [0, "0"] and pcu.status not in [ 'online', 'good' ]:
 		print "changed status from %s to online" % pcu.status
 		pcu.status = 'online'
 		pcu.last_changed = datetime.now()
 
+
+	# STATE TRANSITIONS
 	if pcu.status == 'online' and changed_greaterthan(pcu.last_changed, 0.5):
 		#send thank you notice, or on-line notice.
 		print "changed status from %s to good" % pcu.status
@@ -85,12 +88,11 @@ def check_pcu_state(rec, pcu):
 		# send down pcu notice
 		print "changed status from %s to down" % pcu.status
 		pcu.status = 'down'
-		pcu.last_changed = datetime.now()
 
-	if ( pcu.status == 'offline' or pcu.status == 'down' ) and changed_greaterthan(pcu.last_changed, 2*30):
-		print "changed status from %s to down" % pcu.status
-		pcu.status = 'down'
-		pcu.last_changed = datetime.now()
+#	if pcu.status in [ 'offline', 'down' ] and changed_greaterthan(pcu.last_changed, 2*30):
+#		print "changed status from %s to down" % pcu.status
+#		pcu.status = 'down'
+#		pcu.last_changed = datetime.now()
 
 def checkAndRecordState(l_pcus, l_plcpcus):
 	count = 0
