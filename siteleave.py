@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import plc
+from monitor.wrapper import plc
 import os
 import sys
 import time

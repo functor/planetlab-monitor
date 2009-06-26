@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from monitor.wrapper import plc
+from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
 from monitor import *
@@ -55,7 +55,7 @@ def fb_print_nodeinfo(fbnode):
 	else:
 		print "Unknown"
 	print "\t      state |  ssh  |  pcu  | bootcd | category | last change | kernel"
-	if fbnode['bootcd']:
+	if 'bootcd' in fbnode and fbnode['bootcd']:
 		fbnode['bootcd'] = fbnode['bootcd'].split()[-1]
 	else:
 		fbnode['bootcd'] = "unknown"
@@ -63,9 +63,11 @@ def fb_print_nodeinfo(fbnode):
 		fbnode['state'] = color_boot_state(get_current_state(fbnode))
 	else:
 		fbnode['state'] = "none"
-	if len(fbnode['kernel'].split()) > 2:
+	if 'kernel' in fbnode and len(fbnode['kernel'].split()) > 2:
 		fbnode['kernel'] = fbnode['kernel'].split()[2]
-	print "\t       %(state)5s | %(ssh)5.5s | %(pcu)5.5s | %(bootcd)6.6s | %(category)8.8s | %(last_change)11s | %(kernel)s" % fbnode
+	else:
+		fbnode['kernel'] = ""
+	print "\t       %(state)5s | %(ssh_status)5.5s | %(bootcd)6.6s | %(observed_category)8.8s | %(last_change)11s | %(kernel)s" % fbnode
 
 def act_print_nodeinfo(actnode, header):
 	if header[0]:
@@ -101,6 +103,7 @@ def act_print_nodeinfo(actnode, header):
 
 def pcu_print_info(pcuinfo, hostname):
 	print "   Checked: ",
+	pcuinfo.update(pcuinfo['plc_pcu_stats'])
 	if 'checked' in pcuinfo:
 		print "%11.11s " % diff_time(pcuinfo['checked'])
 	else:
@@ -111,23 +114,23 @@ def pcu_print_info(pcuinfo, hostname):
 		(pcuinfo['username'], pcuinfo['password'], 
 		 pcuinfo[hostname], pcuinfo['pcu_id'], reboot.pcu_name(pcuinfo), pcuinfo['model'])
 
-	if 'portstatus' in pcuinfo and pcuinfo['portstatus'] != {} and pcuinfo['portstatus'] != None:
-		if pcuinfo['portstatus']['22'] == "open":
+	if 'port_status' in pcuinfo and pcuinfo['port_status'] != {} and pcuinfo['port_status'] != None:
+		if pcuinfo['port_status']['22'] == "open":
 			print "\t ssh -o PasswordAuthentication=yes -o PubkeyAuthentication=no %s@%s" % (pcuinfo['username'], reboot.pcu_name(pcuinfo))
-		if pcuinfo['portstatus']['23'] == "open":
+		if pcuinfo['port_status']['23'] == "open":
 			print "\t telnet %s" % (reboot.pcu_name(pcuinfo))
-		if pcuinfo['portstatus']['80'] == "open" or \
-			pcuinfo['portstatus']['443'] == "open":
+		if pcuinfo['port_status']['80'] == "open" or \
+			pcuinfo['port_status']['443'] == "open":
 			print "\t https://%s" % (reboot.pcu_name(pcuinfo))
 			print "\t import %s.png" % (reboot.pcu_name(pcuinfo))
 			print """\t mutt -s "crash for %s" -a %s.png sapanb@cs.princeton.edu < /dev/null""" % (hostname, reboot.pcu_name(pcuinfo))
-		if pcuinfo['portstatus']['443'] == "open":
+		if pcuinfo['port_status']['443'] == "open":
 			print "\t racadm.py -r %s -u %s -p '%s'" % (pcuinfo['ip'], pcuinfo['username'], pcuinfo['password'])
 			print "\t cmdhttps/locfg.pl -s %s -f iloxml/Reset_Server.xml -u %s -p '%s' | grep MESSAGE" % \
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
 			print "\t cmdhttps/locfg.pl -s %s -f iloxml/License.xml -u %s -p '%s' | grep MESSAGE" % \
 				(reboot.pcu_name(pcuinfo), pcuinfo['username'], pcuinfo['password'])
-		if pcuinfo['portstatus']['16992'] == "open":
+		if pcuinfo['port_status']['16992'] == "open":
 			print "\t ./cmdamt/remoteControl -A -verbose 'http://%s:16992/RemoteControlService' -user admin -pass '%s'" % (reboot.pcu_name(pcuinfo), pcuinfo['password'])
 
 if config.findbad:
@@ -148,9 +151,9 @@ for node in config.args:
 	fb_nodeinfo['hostname'] = node
 	fb_print_nodeinfo(fb_nodeinfo)
 
-	if fb_nodeinfo['pcu'] == "PCU":
-		pcu = reboot.get_pcu_values(fb_nodeinfo['plcnode']['pcu_ids'][0])
-		if pcu: pcu_print_info(pcu, config.node)
+	if fb_nodeinfo['plc_pcuid'] > 0:
+		pcu = FindbadPCURecord.get_latest_by(plc_pcuid=fb_nodeinfo['plc_pcuid'])
+		if pcu: pcu_print_info(pcu.to_dict(), config.node)
 
 	try:
 		act_all = database.dbLoad("act_all")
