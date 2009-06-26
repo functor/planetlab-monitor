@@ -26,7 +26,10 @@ from links import *
 			<?python orig=False ?>
 			<tr>
 				<span py:for="key in setorder + [s for s in set(sumdata[primarykey].keys())-set(setorder)]">
-					<td bgcolor="lightgrey" valign="top" align="center" py:content="sumdata[primarykey][key]"></td>
+					<td bgcolor="lightgrey" valign="top" align="center">
+						<a target="_blank" href="${link(plc_myops_uri() + '/monitor/node2', filter=key)}" py:if="primarykey == 'nodes'" py:content="sumdata[primarykey][key]"></a>
+						<div py:if="primarykey != 'nodes'" py:content="sumdata[primarykey][key]"></div>
+						</td>
 				</span>
 			</tr>
   		</span>

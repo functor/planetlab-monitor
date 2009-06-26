@@ -108,11 +108,11 @@ def prep_pcu_for_display(pcu):
 class NodeWidget(widgets.Widget):
 	pass
 
-def prep_node_for_display(node, pcuhash=None):
+def prep_node_for_display(node, pcuhash=None, preppcu=True, asofdate=None):
 	agg = aggregate()
 	agg.node = node
 
-	if node.plc_pcuid:
+	if node.plc_pcuid and preppcu:
 		if pcuhash:
 			pcu = pcuhash[node.plc_pcuid]
 		else:
@@ -145,6 +145,10 @@ def prep_node_for_display(node, pcuhash=None):
 
 	if agg.loginbase:
 		agg.site = HistorySiteRecord.by_loginbase(agg.loginbase)
+
+		if asofdate:
+			agg.site = agg.site.get_as_of(asofdate)
+
 		if agg.site is None:
 			# TODO: need a cleaner fix for this...
 			agg.site = HistorySiteRecord.by_loginbase("pl")
@@ -152,6 +156,8 @@ def prep_node_for_display(node, pcuhash=None):
 				agg.site = HistorySiteRecord.by_loginbase("ple")
 
 	agg.history = HistoryNodeRecord.by_hostname(node.hostname)
+	if asofdate:
+		agg.history = agg.history.get_as_of(asofdate)
 
 	agg.ports = format_ports(node.port_status)
 
@@ -172,29 +178,46 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		return dict(now=time.ctime())
 
 	@expose(template="monitorweb.templates.nodelist")
-	def node2(self, filter='boot'):
-
-		fbquery = FindbadNodeRecord.get_all_latest()
-		fbpcus = FindbadPCURecord.get_all_latest()
-		def fbtohash(fbpculist):
-			h = {}
-			for p in fbpculist:
-				h[p.plc_pcuid] = p
-
-		pcuhash = fbtohash(fbpcus)
-
+	def node2(self, filter=None):
+		nhquery = HistoryNodeRecord.query.all()
 		query = []
-		for node in fbquery:
-			# NOTE: reformat some fields.
-			agg = prep_node_for_display(node, pcuhash)
+		for nh in nhquery:
+			if filter:
+				if nh.status == filter:
+					query.append(nh)
+			else:
+				query.append(nh)
 
-			if not agg.history:
-				continue
+		rquery=[]
+		for q in query:
+			fb = FindbadNodeRecord.get_latest_by(hostname=q.hostname)
+			agg = prep_node_for_display(fb)
+			rquery.append(agg)
 
-			query.append(agg)
+		#fbquery = FindbadNodeRecord.get_all_latest()
+		#fbpcus = FindbadPCURecord.get_all_latest()
+		#def fbtohash(fbpculist):
+		#	h = {}
+		#	for p in fbpculist:
+		#		h[p.plc_pcuid] = p
+#
+#		pcuhash = fbtohash(fbpcus)
+
+#		query = []
+#		for node in fbquery:
+#			# NOTE: reformat some fields.
+#			agg = prep_node_for_display(node, pcuhash)
+#			if not agg.history:
+#				continue
+#
+#			if filter:
+#				if agg.history.status == filter:
+#					query.append(agg)
+#			else:
+#				query.append(agg)
 				
 		widget = NodeWidget(template='monitorweb.templates.node_template')
-		return dict(now=time.ctime(), query=query, nodewidget=widget)
+		return dict(now=time.ctime(), query=rquery, nodewidget=widget)
 
 	@expose(template="monitorweb.templates.nodelist")
 	def node(self, filter='boot'):
@@ -314,10 +337,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
 	def pcuview(self, loginbase=None, pcuid=None, hostname=None, since=20, **data):
-		print "PCUVIEW------------------"
-		print "befor-len: ", len( [ i for i in session] )
 		session.flush(); session.clear()
-		print "after-len: ", len( [ i for i in session] )
 		sitequery=[]
 		pcuquery=[]
 		nodequery=[]
@@ -335,6 +355,11 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			self.nodeaction(**data)
 		if 'exceptions' in data:
 			exceptions = data['exceptions']
+
+		if 'query' in data:
+			obj = data['query']
+			if len(obj.split(".")) > 1: hostname = obj
+			else: loginbase=obj
 
 		if pcuid:
 			print "pcuid: %s" % pcuid
@@ -379,18 +404,26 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 		return dict(query=query, pcu_id=pcu_id)
 
+	@expose(template="monitorweb.templates.nodescanhistory")
+	def nodescanhistory(self, hostname=None, length=10):
+		try: length = int(length)
+		except: length = 10
+
+		fbnode = FindbadNodeRecord.get_by(hostname=hostname)
+		# TODO: add links for earlier history if desired.
+		l = fbnode.versions[-length:]
+		l.reverse()
+		query=[]
+		for node in l:
+			agg = prep_node_for_display(node, pcuhash=None, preppcu=False, asofdate=node.timestamp)
+			query.append(agg)
+
+		return dict(query=query, hostname=hostname)
+
 	@expose(template="monitorweb.templates.nodehistory")
 	def nodehistory(self, hostname=None):
 		query = []
 		if hostname:
-			#fbnode = FindbadNodeRecord.get_by(hostname=hostname)
-			## TODO: add links for earlier history if desired.
-			#l = fbnode.versions[-100:]
-			#l.reverse()
-			#for node in l:
-			#	prep_node_for_display(node)
-			#	query.append(node)
-
 			fbnode = HistoryNodeRecord.get_by(hostname=hostname)
 			l = fbnode.versions[-100:]
 			l.reverse()

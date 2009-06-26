@@ -143,7 +143,7 @@ from links import *
 			<thead>
 				<tr>
 					<th mochi:format="int"></th>
-					<th>History</th>
+					<th>History (scan)</th>
 					<th>Hostname</th>
 					<th>last_contact (cached)</th>
 					<th>last_checked</th>
@@ -156,7 +156,8 @@ from links import *
 			<tbody>
 				<tr py:for="i,agg in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td></td>
-					<td><a href="nodehistory?hostname=${agg.node.hostname}">history</a></td>
+					<td><a href="nodehistory?hostname=${agg.node.hostname}">status</a>
+						(<a href="nodescanhistory?hostname=${agg.node.hostname}">scan</a>) history</td>
 					<td id="node-${agg.node.observed_status}" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri_id(agg.node.plc_node_stats['node_id'])}">
 							<span class="icon">${agg.node.hostname}</span></a>

@@ -26,9 +26,20 @@
 
   <body>
   	<table valign="top" border="1" bgcolor="white" align="center" width="700px">
-	<tr> <td> <div id="header">${page_title}</div> </td> </tr>
-	<tr>
+	<tr> <td> <div id="header">${page_title}</div> </td> 
 		<td>
+			<form action="pcuview" method="GET"> 
+				<table>
+					<tr><td> Quick Search:</td>
+						<td><input type="text" name="query"/></td>
+						<td><input type="submit"/></td>
+					</tr>
+				</table>
+			</form>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
 			<table id="nps-table" width="100%">
 			<thead>
 			<tr>
@@ -50,7 +61,7 @@
 			</table>
 		</td>
 	</tr>
-	<tr> <td> <div id="footer">Copywrite © 2007-2008 The Trustees of Princeton University</div> </td> </tr>
+	<tr> <td> <div id="footer">Copyright © 2007-2008 The Trustees of Princeton University</div> </td> </tr>
   	</table>
 
   </body>
