@@ -109,6 +109,7 @@ framework, and MyPLC in general.
 summary: pcu controls for monitor and plcapi
 group: applications/system
 requires: python
+requires: OpenIPMI-tools
 
 %description pcucontrol
 both monitor and the plcapi use a set of common commands to reboot machines
