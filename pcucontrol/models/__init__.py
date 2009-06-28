@@ -1,4 +1,5 @@
 from OpenIPMI import *
+from OpenIPMI import OpenIPMI as IPMI
 from IPAL import *
 from APCControl import *
 from IntelAMT import *
