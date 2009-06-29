@@ -290,6 +290,12 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Sun Jun 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-18
+- bug fixes.
+- improved templates and views
+- cleaned controller code for web
+- added IPMI requirement to pcucontrol package.
+
 * Thu Jun 18 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-17
 - added bootmanager log links
 - addressed root cause of IntegrityErrors ; big deal
@@ -412,6 +418,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 17
+%define taglevel 18
 
 %define version 3.0
