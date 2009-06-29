@@ -21,6 +21,10 @@ class FindbadNodeRecord(Entity):
 		return cls.query.filter_by(**kwargs).first()
 
 	@classmethod
+	def get_latest_by(cls, **kwargs):
+		return cls.query.filter_by(**kwargs).first()
+
+	@classmethod
 	def get_latest_n_by(cls, n=3, **kwargs):
 		return cls.query.filter_by(**kwargs)
 

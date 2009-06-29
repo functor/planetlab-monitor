@@ -197,6 +197,7 @@ class ScanNodeInternal(ScanInterface):
 			try:
 				for port in [22, 806]: 
 					ssh = command.SSH('root', nodename, port)
+					#echo '  "fs_status":"'`touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then touch /vservers/monitor.log 2>&1 ; fi ; grep proc /proc/mounts | grep ro,`'",'
 
 					(oval, errval) = ssh.run_noexcept2(""" <<\EOF
 						echo "{"
@@ -204,7 +205,6 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "bmlog":"'`ls /tmp/bm.log`'",'
 						echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
 						echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
-						echo '  "fs_status":"'`touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then touch /vservers/monitor.log 2>&1 ; fi ; grep proc /proc/mounts | grep ro,`'",'
 						echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
 						echo '  "princeton_comon_dir":"'`ls -d /vservers/princeton_comon`'",'
 
@@ -236,6 +236,7 @@ EOF				""")
 				print traceback.print_exc()
 				sys.exit(1)
 
+			values['fs_status'] = ""
 			print "ALLVERSIONS: %s %s" % (nodename, values['rpm_versions'])
 
 			print "RPMVERSION: %s %s" % (nodename, values['rpm_version'])

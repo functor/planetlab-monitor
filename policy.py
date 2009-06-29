@@ -134,9 +134,11 @@ def main(hostnames, sitenames):
 	for i,site in enumerate(sitenames):
 		sitehist = SiteInterface.get_or_make(loginbase=site)
 		siteblack = BlacklistRecord.get_by(loginbase=site)
+		skip_due_to_blacklist=False
 
 		if siteblack and not siteblack.expired():
 			print "skipping %s due to blacklist.  will expire %s" % (site, siteblack.willExpire() )
+			skip_due_to_blacklist=True
 			continue
 
 		# TODO: make query only return records within a certin time range,
