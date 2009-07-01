@@ -71,7 +71,7 @@ class PLC:
 
 		try:
 			return lambda *params : method(self.auth, *params)
-		except ProtocolError:
+		except xmlrpclib.ProtocolError:
 			traceback.print_exc()
 			global_error_count += 1
 			if global_error_count >= 10:

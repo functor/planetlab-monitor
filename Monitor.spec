@@ -229,8 +229,8 @@ easy_install --build-directory /var/tmp -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
-mkdir /usr/share/monitor/.ssh
-chmod 700 /usr/share/monitor/.ssh
+mkdir %{_datadir}/%{name}/.ssh
+chmod 700 %{_datadir}/%{name}/.ssh
 
 if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
     sed -i -e 's/^session    required   pam_loginuid.so/#session    required   pam_loginuid.so/g' /etc/pam.d/crond
@@ -244,7 +244,7 @@ if ! grep '<category id="plc_zabbix">' /etc/planetlab/default_config.xml ; then
 fi
 
 # NOTE: enable monitor by default, since we're installing it.
-plc-config --save /etc/planetlab/default_config.xml \
+plc-config --save /etc/planetlab/configs/site.xml \
 			--category plc_monitor --variable enabled --value true
 
 %post server

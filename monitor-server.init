@@ -13,6 +13,7 @@
 
 # Source function library and configuration
 . /etc/plc.d/functions
+. /etc/plc.d/monitor.functions
 . /etc/planetlab/plc_config
 local_config=/etc/planetlab/configs/site.xml
 
