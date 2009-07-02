@@ -58,7 +58,7 @@ from links import *
       <th class="sortable plekit_table">pcu</th>
       <th class="sortable plekit_table">kernel</th>
       <th class="sortable plekit_table">BootCD</th>
-      <th class="sortable plekit_table">Last_contact</th>
+      <th class="sortable-sortLastContact plekit_table">Last_contact</th>
   </tr>
   </thead>
   <tbody>
