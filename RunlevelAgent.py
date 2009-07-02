@@ -130,7 +130,7 @@ def main():
             #   call plc for current boot state?
             #   how long have we been running?
             if env == "bootmanager":
-                bs_val = extract_from('/tmp/bm.log', 'Current boot state:')
+                bs_val = extract_from('/tmp/bm.log', "'Current boot state:'")
                 if len(bs_val) > 0: bs_val = bs_val.split()[-1]
                 ex_val = extract_from('/tmp/bm.log', 'Exception')
                 fs_val = extract_from('/tmp/bm.log', 'mke2fs')

@@ -191,6 +191,90 @@ class BayTechCtrlC(PCUControl):
 
 		return 0
 
+
+class BayTech5CtrlC(PCUControl):
+	"""
+		For some reason, these units let you log in fine, but they hang
+		indefinitely, unless you send a Ctrl-C after the password.  No idea
+		why.
+	"""
+	supported_ports = [22]
+	def run_ssh(self, node_port, dryrun):
+		print "BayTech5CtrlC %s" % self.host
+
+		ssh_options="-o StrictHostKeyChecking=no -o PasswordAuthentication=yes -o PubkeyAuthentication=no"
+		s = pxssh.pxssh()
+		try:
+			if not s.login(self.host, self.username, self.password, ssh_options):
+				raise ExceptionPassword("Invalid Password")
+		except pexpect.EOF:
+			raise ExceptionNoTransport("No Connection Possible")
+			
+			
+		# Otherwise, the login succeeded.
+		# Control Outlets  (5 ,1).........5
+		try:
+			print "EXPECTING: ", "Enter Request :"
+			s.send("\r\n")
+			time.sleep(2)
+			index = s.expect(["Enter Request"])
+
+			if index == 0:
+				print "SENDING: 5"
+				s.send("5\r\n")
+				print "EXPECTING: ", "DS-RPC>"
+				time.sleep(3)
+				# Send a ctrl-c to the remote process.
+				#print "SENDING ctrl-c"
+				#s.send(chr(3))
+
+				index = s.expect(["DS-RPC>", "Enter user name:", "Port in use."])
+				if index == 1:
+					print "sending username"
+					s.send(self.username + "\r\n")
+					index = s.expect(["DS-RPC>"])
+				elif index == 2:
+					raise ExceptionPrompt("PCU Reported 'Port in use.'")
+
+				if index == 0:
+					print "SENDING: Reboot %d" % node_port
+					#s.send("Reboot %d\r\n" % node_port)
+					s.send("Reboot %d\r" % node_port)
+
+					print "SLEEPING: 5"
+					time.sleep(5)
+					print "EXPECTING: ", "Y/N?"
+					index = s.expect(["\(Y/N\)\?", "Port in use", "DS-RPC>"])
+					if index == 0:
+						if dryrun:
+							print "sending N"
+							s.send("N\r\n")
+						else:
+							print "SENDING: Y"
+							s.send("Y\r\n")
+					elif index == 1:
+						raise ExceptionPrompt("PCU Reported 'Port in use.'")
+					elif index == 2:
+						raise ExceptionSequence("Issued command 'Reboot' failed.")
+
+				# NOTE: for some reason, the script times out with the
+				# following line.  In manual tests, it works correctly, but
+				# with automated tests, evidently it fails.
+				print "SLEEPING: 5"
+				time.sleep(5)
+				#print "TOTAL--", s.allstr, "--EOT"
+				index = s.expect(["DS-RPC>"])
+				print "got prompt back"
+
+			s.close()
+
+		except pexpect.EOF:
+			raise ExceptionPrompt("EOF before 'Enter Request' Prompt")
+		except pexpect.TIMEOUT:
+			raise ExceptionPrompt("Timeout before Prompt")
+
+		return 0
+
 class BayTech(PCUControl):
 	supported_ports = [22,23]
 

@@ -122,7 +122,7 @@ class MonitorXmlrpcServer(object):
 	@export_to_docbook(roles=['tech', 'user', 'pi', 'admin'],
 	                   accepts=[],
 					   returns=Parameter(bool, 'True if successful'))
-	def upAndRunning(self):
+	def upAndRunning(self,noop=None):
 		""" This call can indicate to a script whether the server is up
 		and running before trying any more sophisticated operations. """
 		return True

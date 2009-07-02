@@ -139,6 +139,8 @@ def main(hostnames, sitenames):
 		if siteblack and not siteblack.expired():
 			print "skipping %s due to blacklist.  will expire %s" % (site, siteblack.willExpire() )
 			skip_due_to_blacklist=True
+			sitehist.clearPenalty()
+			sitehist.applyPenalty()
 			continue
 
 		# TODO: make query only return records within a certin time range,
