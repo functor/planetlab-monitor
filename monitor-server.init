@@ -61,21 +61,16 @@ EOF
 	if [ ! -f ${MONITOR_CONFIG} ] ; then
 		cat <<EOF > ${MONITOR_CONFIG}
 [monitorconfig]
-RT_DB_HOST=rt.planet-lab.org
-RT_DB_USER=
-RT_DB_PASSWORD=
-RT_DB_NAME=
-
 # RT Web user account
-RT_WEB_SERVER=https://rt.planet-lab.org/
-RT_WEB_TOOLS_PATH=
-RT_WEB_USER=
-RT_WEB_PASSWORD=
+RT_WEB_SERVER=http://${PLC_RT_HOST}/
+RT_WEB_TOOLS_PATH=/usr/bin/
+RT_WEB_USER=${PLC_RT_WEB_USER}
+RT_WEB_PASSWORD=${PLC_RT_WEB_PASSWORD}
 RT_WEB_DEBUG=0
-RT_QUEUE=
+RT_QUEUE=${PLC_MONITOR_RT_QUEUE}
 
 # PLC admin account
-API_SERVER=https://${PLC_BOOT_HOST}/PLCAPI/
+API_SERVER=https://${PLC_API_HOST}:${PLC_API_PORT}/PLCAPI/
 API_AUTH_USER=${PLC_MONITOR_EMAIL}
 API_AUTH_PASSWORD=${PLC_MONITOR_DBPASSWORD}
 
@@ -92,16 +87,19 @@ PLC_WWW_HOSTNAME=${PLC_WWW_HOST}
 PLC_NAME=${PLC_NAME}
 
 # used for debug mode
-email=
-
+email=${PLC_MONITOR_CC_EMAIL}
 # all messages will appear to be from this address
 from_email=${PLC_MONITOR_EMAIL}
-
 # a separate address for support messages
 support_email=${PLC_MAIL_SUPPORT_ADDRESS}
-
 # mailing list copied on all out-going messages
-cc_email=
+cc_email=${PLC_MONITOR_CC_EMAIL}
+
+# these are reserved values
+RT_DB_HOST=${PLC_RT_HOST}
+RT_DB_USER=
+RT_DB_PASSWORD=
+RT_DB_NAME=
 
 [monitordatabase]
 monitor_dburi=postgres://${MONITOR_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${MONITOR_DB_NAME}

@@ -235,17 +235,36 @@ chmod 700 %{_datadir}/%{name}/.ssh
 if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
     sed -i -e 's/^session    required   pam_loginuid.so/#session    required   pam_loginuid.so/g' /etc/pam.d/crond
 fi
-# NOTE: add the default xml stuff if it's not already in the default xml config.
-if ! grep '<category id="plc_monitor">' /etc/planetlab/default_config.xml ; then 
-    sed -i 's|<category id="plc_net">| <category id="plc_monitor">\n <name>Monitor Service Configuration</name>\n <description>Monitor</description>\n <variablelist>\n <variable id="enabled" type="boolean">\n <name>Enabled</name>\n <value>true</value>\n <description>Enable on this machine.</description>\n </variable>\n <variable id="email">\n <value></value>\n </variable>\n <variable id="dbpassword">\n <value></value>\n </variable>\n <variable id="host" type="hostname">\n <name>Hostname</name>\n <value>pl-virtual-06.cs.princeton.edu</value>\n <description>The fully qualified hostname.</description>\n </variable>\n <variable id="ip" type="ip">\n <name>IP Address</name>\n <value/>\n <description>The IP address of the monitor server.</description>\n </variable>\n </variablelist>\n </category>\n <category id="plc_net">|' /etc/planetlab/default_config.xml
-fi
-if ! grep '<category id="plc_zabbix">' /etc/planetlab/default_config.xml ; then 
-    sed -i 's|<category id="plc_net">| <category id="plc_zabbix">\n <name>Zabbix Configuration</name>\n <description>Zabbix</description>\n <variablelist>\n <variable id="enabled" type="boolean">\n <name>Enabled</name>\n <value>false</value>\n <description>Enable on this machine.</description>\n </variable>\n <variable id="host" type="hostname">\n <name>Hostname</name>\n <value>localhost.localdomain</value>\n <description>The fully qualified hostname.</description>\n </variable>\n <variable id="ip" type="ip">\n <name>IP Address</name>\n <value/>\n <description>The IP address of the Zabbix server.</description>\n </variable>\n </variablelist>\n </category>\n <category id="plc_net">|' /etc/planetlab/default_config.xml
-fi
 
 # NOTE: enable monitor by default, since we're installing it.
 plc-config --save /etc/planetlab/configs/site.xml \
 			--category plc_monitor --variable enabled --value true
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_monitor --variable from_email --value monitor@localhost.localdomain
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_monitor --variable cc_email --value monitor@localhost.localdomain
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_monitor --variable rt_queue --value support
+
+# NOTE: setup default values until myplc includes them by default.
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_rt --variable enabled --value false
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_rt --variable host --value localhost.localdomain
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_rt --variable ip --value ""
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_rt --variable web_user --value root
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_rt --variable web_password --value password
+
+# zabbix:
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_zabbix --variable enabled --value false
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_zabbix --variable host --value localhost.localdomain
+plc-config --save /etc/planetlab/configs/site.xml \
+			--category plc_zabbix --variable ip --value ""
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
