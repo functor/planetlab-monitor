@@ -67,9 +67,9 @@ class BlacklistRecord(Entity):
 			return False
 		else:
 			if self.date_created + timedelta(0,self.expires) > datetime.now():
-				return True
-			else:
 				return False
+			else:
+				return True
 
 	def willExpire(self):
 		if self.neverExpires():
