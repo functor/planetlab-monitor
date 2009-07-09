@@ -448,6 +448,7 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-bmexceptmount-exception-noinstall-update-debug-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-validate-done",
+				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
 				]:
 			sequences.update({n : "restart_bootmanager_rins"})
 

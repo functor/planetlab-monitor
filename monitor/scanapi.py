@@ -197,7 +197,6 @@ class ScanNodeInternal(ScanInterface):
 			try:
 				for port in [22, 806]: 
 					ssh = command.SSH('root', nodename, port)
-					#echo '  "fs_status":"'`touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then touch /vservers/monitor.log 2>&1 ; fi ; grep proc /proc/mounts | grep ro,`'",'
 
 					(oval, errval) = ssh.run_noexcept2(""" <<\EOF
 						echo "{"
@@ -211,11 +210,12 @@ class ScanNodeInternal(ScanInterface):
 						ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 						echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
-						echo '  "rpm_version":"'`rpm -q NodeManager`'",'
-						echo '  "rpm_versions":"'`rpm -q -a`'",'
+						echo '  "fs_status":"'`grep proc /proc/mounts | grep ro, ; if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 20 touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then timeout.pl 20 touch /vservers/monitor.log 2>&1  ; fi ; fi`'",'
+						echo '  "rpm_version":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 30 rpm -q NodeManager ; fi`'",'
+						echo '  "rpm_versions":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 45 rpm -q -a ; fi`'",'
 						echo "}"
 EOF				""")
-					
+
 					values['ssh_error'] = errval
 					if len(oval) > 0:
 						#print "OVAL: %s" % oval
