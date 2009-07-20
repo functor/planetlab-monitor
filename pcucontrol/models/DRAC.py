@@ -45,7 +45,8 @@ class DRAC(PCUControl):
 			# returns right away without waiting for the commands above to
 			# complete...  Therefore, this delay is guaranteed to fail in some
 			# other context...
-			time.sleep(5)
+			s.send("\r\n\r\n")
+			time.sleep(20)
 			index = s.expect(["\$", "\[%s\]#" % self.username ])
 			print s
 			print "INDEX 2:", index
