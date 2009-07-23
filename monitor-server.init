@@ -111,6 +111,7 @@ cachetime=60
 [commandline]
 cachecalls=True
 embedded=False
+zabbix_enabled=False
 
 echo=False
 debug=False
@@ -170,6 +171,8 @@ function start_tg_server ()
 {
 	stop_tg_server
 	pushd ${MONITORPATH}/web/MonitorWeb/
+	mkdir -p /var/log/monitor/monitorweb/
+	cp /var/log/monitorweb.log /var/lib/monitor/monitorweb/`date +%Y-%m-%d-%H-%M`-monitorweb.log
 	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log &
 	popd
 }
