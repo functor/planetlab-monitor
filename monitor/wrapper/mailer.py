@@ -194,7 +194,8 @@ def emailViaRT(subject, text, to, ticket_id=None):
 		cmd = "rt correspond -m - %s" % ticket_id
 		print cmd
 		(f_in, f_out, f_err) = os.popen3(cmd)
-		f_in.write(text)
+		#f_in.write(input[:32000])
+		f_in.write(text[:32000])
 		f_in.flush()
 		f_in.close()
 		value = f_out.read()
@@ -231,6 +232,7 @@ def emailViaRT_NoTicket(subject, text, to):
 	input_text += "Queue: %s\n" % config.RT_QUEUE
 	for recipient in to:
 		input_text += "AdminCc: %s\n" % recipient
+	#input_text += "AdminCc: %s\n" % config.cc_email
 	input_text += "Text: %s"
 
 	# Add a space for each new line to get RT to accept the file.
@@ -240,7 +242,12 @@ def emailViaRT_NoTicket(subject, text, to):
 		cmd = "rt create -i -t ticket"
 		print cmd
 		(f_in, f_out, f_err) = os.popen3(cmd)
-		f_in.write(input_text % (subject, spaced_text))
+		input = input_text % (subject, spaced_text)
+		print "length: %s" % len(input)
+		# NOTE: RT hangs with larger input, probably due to some internal
+		# buffering.  So, chop off messages at 32000
+		#f_in.write(input[:32000])
+		f_in.write(input[:32000])
 		f_in.flush()
 		f_in.close()
 		value = f_out.read()
