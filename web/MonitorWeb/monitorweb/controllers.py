@@ -177,7 +177,25 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		flash("Welcome To MyOps!")
 		return dict(now=time.ctime())
 
-	@expose(template="monitorweb.templates.nodelist")
+	@expose(template="monitorweb.templates.nodelist", allow_json=True)
+	def node3(self, filter=None):
+		nhquery = HistoryNodeRecord.query.all()
+		query = []
+		for nh in nhquery:
+			if filter:
+				if nh.status == filter:
+					query.append(nh)
+			else:
+				query.append(nh)
+
+		rquery=[]
+		for q in query:
+			fb = FindbadNodeRecord.get_latest_by(hostname=q.hostname)
+			rquery.append(fb)
+
+		return dict(now=time.ctime(), query=rquery)
+
+	@expose(template="monitorweb.templates.nodelist", allow_json=True)
 	def node2(self, filter=None):
 		nhquery = HistoryNodeRecord.query.all()
 		query = []
@@ -407,7 +425,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	@expose(template="monitorweb.templates.nodescanhistory")
 	def nodescanhistory(self, hostname=None, length=10):
 		try: length = int(length)
-		except: length = 10
+		except: length = 21
 
 		fbnode = FindbadNodeRecord.get_by(hostname=hostname)
 		# TODO: add links for earlier history if desired.
@@ -418,7 +436,9 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			agg = prep_node_for_display(node, pcuhash=None, preppcu=False, asofdate=node.timestamp)
 			query.append(agg)
 
-		return dict(query=query, hostname=hostname)
+		if 'length' in request.params: 
+			del request.params['length']
+		return dict(query=query, hostname=hostname, params=request.params)
 
 	@expose(template="monitorweb.templates.nodehistory")
 	def nodehistory(self, hostname=None):

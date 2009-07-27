@@ -1,9 +1,10 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "MyOps Node List"
+layout_params['page_title'] = "MyOps Node Scan History"
 from monitor.util import diff_time
 from time import mktime
 from links import *
+from cherrypy import request, response
 
 ?>
 <html py:layout="'sitemenu.kid'"
@@ -15,6 +16,17 @@ from links import *
   <script type="text/javascript">
     function nodelist_paginator(opts) { plekit_table_paginator(opts, "nodelist"); }
   </script>
+  	<table width="100%">
+		<thead>
+			<tr>
+				<th><a href="${link('nodescanhistory', length=42, **params)}">Last Week</a></th>
+				<th><a href="${link('nodescanhistory', length=180, **params)}">Last Month</a></th>
+				<th><a href="${link('nodescanhistory', length=1000, **params)}">Last 1000</a></th>
+			</tr>
+		</thead>
+		<tbody>
+		<tr>
+		<td colspan="5">
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
   <thead>
@@ -70,6 +82,10 @@ from links import *
 
   </tbody>  
 </table>
+		</td>
+		</tr>
+		</tbody>
+	</table>
 
 </div>
 
