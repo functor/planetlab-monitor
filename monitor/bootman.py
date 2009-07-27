@@ -122,6 +122,28 @@ class NodeConnection:
 		else:
 			print "   Unable to read Node Configuration"
 		
+	def fsck_repair_node(self):
+		c = self.c
+		self.c.modules.sys.path.append("/tmp/source/")
+		self.c.modules.os.chdir('/tmp/source')
+		# TODO: restart
+		# TODO: set boot state to node's actually boot state.
+		# could be 'boot' or 'safeboot'
+		self.c.modules.os.chdir('/tmp/source')
+		if self.c.modules.os.path.exists('/tmp/BM_RUNNING'):
+			print "Running MANUAL FSCK already... try again soon."
+		else:
+			print "Running MANUAL fsck on %s" % self.node
+			cmd = "( touch /tmp/BM_RUNNING ;  " + \
+				  "  fsck -v -f -y /dev/planetlab/root &> out.fsck ; " + \
+				  "  fsck -v -f -y /dev/planetlab/vserver >> out.fsck 2>&1 ; " + \
+				  "  python ./BootManager.py %s &> server.log < /dev/null ; " + \
+				  "  rm -f /tmp/BM_RUNNING " + \
+				  ") &" 
+			cmd = cmd % self.get_nodestate()
+			self.c.modules.os.system(cmd)
+		#self.restart_bootmanager('boot')	
+		pass
 
 	def compare_and_repair_nodekeys(self):
 		c = self.c
@@ -172,6 +194,16 @@ class NodeConnection:
 
 	def set_nodestate(self, state='boot'):
 		return api.UpdateNode(self.node, {'boot_state' : state})
+
+	def get_nodestate(self):
+		try:
+			return api.GetNodes(self.node, ['boot_state'])[0]['boot_state']
+		except:
+			traceback.print_exc()
+			# NOTE: use last cached value from plc
+			fbnode = FindbadNodeRecord.get_latest_by(hostname=self.node).to_dict()
+			return fbnode['plc_node_stats']['boot_state']
+
 
 	def restart_node(self, state='boot'):
 		api.UpdateNode(self.node, {'boot_state' : state})
@@ -248,7 +280,8 @@ class PlanetLabSession:
 			return 
 
 		# COPY Rpyc files to host
-		cmd = "rsync -qv -az -e ssh %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
+		#cmd = "rsync -vvv -az -e ssh %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
+		cmd = """rsync -vvv -az -e "ssh -o BatchMode=yes" %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc""" % args
 		if self.verbose: print cmd
 		print cmd
 		# TODO: Add timeout
@@ -261,6 +294,8 @@ class PlanetLabSession:
 			print "\tUNKNOWN SSH KEY FOR %s; making an exception" % self.node
 			#print "MAKE EXPLICIT EXCEPTION FOR %s" % self.node
 			k = SSHKnownHosts(); k.updateDirect(self.node); k.write(); del k
+			print "trying: ", cmd
+			print [ "%s=%s" % (a, os.environ[a]) for a in filter(lambda x: 'SSH' in x, os.environ.keys()) ]
 			ret = localos.system(cmd, timeout)
 			print ret
 			if ret != 0:
@@ -359,13 +394,13 @@ class DebugInterface:
 			print traceback.print_exc()
 			return False
 
+		msg = "ERROR setting up session for %s" % self.hostname
 		try:
 			if config == None:
 				self.session = PlanetLabSession(self.hostname, False, True)
 			else:
 				self.session = PlanetLabSession(self.hostname, config.nosetup, config.verbose)
 		except ExceptionDoubleSSHError, e:
-			msg = "ERROR setting up session for %s" % self.hostname
 			print msg
 			return False
 		except Exception, e:
@@ -455,6 +490,7 @@ class DebugInterface:
 		# repair_node_keys
 		for n in ["bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-validate-exception-done",
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done",
+					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-debug-validate-exception-done",
 				]:
 			sequences.update({n: "repair_node_keys"})
 
@@ -485,16 +521,25 @@ class DebugInterface:
 				 ]:
 			sequences.update({n: "restart_node_boot"})
 
+		# fsck_repair
+		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-fsckabort-exception-fsckfail-bmexceptmount-exception-noinstall-update-debug-validate-fsckabort-exception-fsckfail-bmexceptmount-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-noinstall-update-debug-validate-exception-fsckfail-done",
+				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail-exception-noinstall-update-debug-validate-exception-fsckfail-done"
+				]:
+			sequences.update({n : "fsck_repair"})
+
 		# update_node_config_email
 		for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
 				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
 				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-validate-exception-done",
 				  "bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-validate-exception-done",
 				  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
+				  "bminit-cfg-exception-noconfig-update-debug-validate-exception-done",
 				]:
 			sequences.update({n : "update_node_config_email"})
 
 		for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
+				   "bminit-cfg-update-exception-nodehostname-update-debug-validate-exception-done",
 				   "bminit-cfg-update-exception-nodehostname-update-debug-done", 
 				]:
 			sequences.update({n : "nodenetwork_email"})
@@ -606,12 +651,15 @@ class DebugInterface:
 			('protoerror'   , 'XML RPC protocol error'),
 			('nodehostname' , 'Configured node hostname does not resolve'),
 			('implementerror', 'Implementation Error'),
-			('readonlyfs'   , '[Errno 30] Read-only file system'),
-			('baddisk'      , "IOError: [Errno 13] Permission denied: '/tmp/mnt/sysimg//vservers/\w+/etc/hosts'"),
+			('fsckabort'	, 'is mounted.  e2fsck: Cannot continue, aborting'),
+			('fsckfail'		, 'Running e2fsck -v -p /dev/planetlab/root failed'),
+			('readonlyfs'   , '\[Errno 30\] Read-only file system'),
+			('baddisk'      , "IOError: \[Errno 13\] Permission denied: '/tmp/mnt/sysimg//vservers/\w+/etc/hosts'"),
 			('noinstall'    , 'notinstalled'),
 			('bziperror'    , 'bzip2: Data integrity error when decompressing.'),
 			('noblockdev'   , "No block devices detected."),
 			('dnserror'     , 'Name or service not known'),
+			('noconfig'		, "Unable to find and read a node configuration file"),
 			('downloadfail' , 'Unable to download main tarball /boot/bootstrapfs-planetlab-i386.tar.bz2 from server.'),
 			('disktoosmall' , 'The total usable disk size of all disks is insufficient to be usable as a PlanetLab node.'),
 			('hardwarerequirefail' , 'Hardware requirements not met'),
@@ -768,12 +816,13 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			conn.restart_node('reinstall')
 		elif sequences[s] == "restart_node_boot":
 			conn.restart_node('boot')
+		elif sequences[s] == "fsck_repair":
+			conn.fsck_repair_node()
 		elif sequences[s] == "repair_node_keys":
 			if conn.compare_and_repair_nodekeys():
 				# the keys either are in sync or were forced in sync.
-				# so try to reboot the node again.
-				# TODO: why was this originally 'reinstall' instead of 'boot'??
-				conn.restart_bootmanager('boot')
+				# so try to start BM again.
+				conn.restart_bootmanager(conn.get_nodestate())
 				pass
 			else:
 				# there was some failure to synchronize the keys.
