@@ -3,6 +3,9 @@
 import sys
 import os
 import site
+from monitor.config import config
+config.zabbix_enabled = True
+
 from monitor.wrapper import plc, plccache
 from monitor import database
 
