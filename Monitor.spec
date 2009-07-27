@@ -240,34 +240,36 @@ if grep 'pam_loginuid.so' /etc/pam.d/crond ; then
 fi
 
 # NOTE: enable monitor by default, since we're installing it.
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_monitor --variable enabled --value true
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_monitor --variable from_email --value monitor@localhost.localdomain
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_monitor --variable cc_email --value monitor@localhost.localdomain
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_monitor --variable rt_queue --value support
-
-# NOTE: setup default values until myplc includes them by default.
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_rt --variable enabled --value false
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_rt --variable host --value localhost.localdomain
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_rt --variable ip --value ""
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_rt --variable web_user --value root
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_rt --variable web_password --value password
+if ! plc-config --category plc_monitor --variable enabled ; then 
+	plc-config --category plc_monitor --variable enabled --value true \
+			--save /etc/planetlab/configs/site.xml  /etc/planetlab/configs/site.xml 
+fi
+if ! plc-config --category plc_monitor --variable from_email ; then
+	plc-config --category plc_monitor --variable from_email --value monitor@localhost.localdomain \
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
+if ! plc-config --category plc_monitor --variable cc_email ; then
+	plc-config --category plc_monitor --variable cc_email --value monitor@localhost.localdomain \
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
+if ! plc-config --category plc_monitor --variable rt_queue ; then
+	plc-config --category plc_monitor --variable rt_queue --value support \
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
 
 # zabbix:
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_zabbix --variable enabled --value false
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_zabbix --variable host --value localhost.localdomain
-plc-config --save /etc/planetlab/configs/site.xml \
-			--category plc_zabbix --variable ip --value ""
+if ! plc-config --category plc_zabbix --variable enabled ; then
+	plc-config --category plc_zabbix --variable enabled --value false \
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
+if ! plc-config --category plc_zabbix --variable host ; then
+	plc-config --category plc_zabbix --variable host --value localhost.localdomain \
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
+if ! plc-config --category plc_zabbix --variable ip ; then
+	plc-config --category plc_zabbix --variable ip --value "" \ 
+			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
+fi
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
