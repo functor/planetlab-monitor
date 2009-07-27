@@ -83,6 +83,11 @@ class ActionRecord(Entity):
 		# TODO: need to sort on 'round' since actions will not be globally sync'd.
 		return cls.query.filter_by(**kwargs).order_by(ActionRecord.id.desc()).first()
 
+	@classmethod
+	def delete_recent_by(cls, since, **kwargs):
+		acts = cls.query.filter_by(**kwargs).filter(cls.date_created >= datetime.now() - timedelta(since)).order_by(cls.date_created.desc())
+		for i in acts: i.delete()
+
 	# ACCOUNTING
 	date_created = Field(DateTime,default=datetime.now)
 	loginbase = Field(String,default=None)

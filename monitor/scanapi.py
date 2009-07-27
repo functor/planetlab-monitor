@@ -206,6 +206,7 @@ class ScanNodeInternal(ScanInterface):
 						echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
 						echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
 						echo '  "princeton_comon_dir":"'`ls -d /vservers/princeton_comon`'",'
+						echo '  "uptime":"'`uptime`'",'
 
 						ID=`grep princeton_comon /etc/passwd | awk -F : '{if ( $3 > 500 ) { print $3}}'` 
 						echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
@@ -226,6 +227,7 @@ EOF				""")
 						values.update({'kernel_version': "", 'bmlog' : "", 'bootcd_version' : '', 
 										'nm_status' : '', 
 										'fs_status' : '',
+										'uptime' : '',
 										'dns_status' : '',
 										'rpm_version' : '',
 										'rpm_versions' : '',
@@ -240,6 +242,7 @@ EOF				""")
 			print "ALLVERSIONS: %s %s" % (nodename, values['rpm_versions'])
 
 			print "RPMVERSION: %s %s" % (nodename, values['rpm_version'])
+			print "UPTIME: %s %s" % (nodename, values['uptime'])
 			### RUN SSH ######################
 			b_getbootcd_id = True
 
@@ -340,16 +343,7 @@ EOF				""")
 										'memsize'  : 'null'}
 			# include output value
 			### GET PLC NODE ######################
-			plc_lock.acquire()
-			d_node = None
-			try:
-				d_node = plccache.GetNodeByName(nodename)
-				#d_node = plc.getNodes({'hostname': nodename}, ['pcu_ids', 'site_id', 
-				#						'date_created', 'last_updated', 
-				#						'last_contact', 'boot_state', 'nodegroup_ids'])[0]
-			except:
-				traceback.print_exc()
-			plc_lock.release()
+			d_node = plccache.GetNodeByName(nodename)
 			values['plc_node_stats'] = d_node
 
 			##### NMAP  ###################
