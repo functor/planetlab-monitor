@@ -233,6 +233,7 @@ Thank you for your help,
 While trying to automatically recover this machine:
 
     http://%(plc_hostname)s/db/nodes/index.php?pattern=%(hostname)s
+    https://%(monitor_hostname)s/monitor/pcuview?hostname=%(hostname)s
 
 We encountered an unknown situation.  Please re-code to handle, or manually intervene to repair this host.
 
@@ -283,13 +284,17 @@ The output of `dmesg` follows:
 
 
 	nodeconfig_notice=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
-"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file with no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to an initial configuration failure at your site, with information entered into our database, or after a software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
+"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file.  
+
+Either our boot scripts cannot find it because the boot media is corrupted, or it has no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to a configuration mistake at your site, with bad information entered into our database, or after a necessary software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 
     https://%(plc_hostname)s/db/nodes/index.php?pattern=%(hostname)s
 
-Then, select, "Download -> Download plnode.txt file for %(hostname)s" menu.  This will generate a new configuration file for your node.  Copy this file to the appropriate read-only media, either floppy or USB stick, and reboot the machine.
+Then double check the network settings for your host.
 
-There is no need to respond to this message if you're able to update the configuration file without difficulty and your node returns to normal operation.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue. 
+Then, select, "Download -> Download ISO image for %(hostname)s" menu.  This will generate a new All-in-one BootImage file for your node.  Copy this file to the appropriate read-only media, and reboot the machine.
+
+There is no need to respond to this message. If you're able to update the boot image without difficulty and your node returns to normal operation, please accept our thanks.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue. 
 
 Thank you for your help,
   -- %(plc_name)s (%(support_email)s)
