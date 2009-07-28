@@ -16,6 +16,7 @@ class HistoryNodeRecord(Entity):
 	last_changed = Field(DateTime,default=datetime.now)
 	status = Field(String,default="unknown")
 	haspcu = Field(Boolean,default=False)
+	firewall = Field(Boolean,default=False)
 	plc_nodeid = Field(Int,default=1)
 
 	acts_as_versioned(ignore=['last_changed', 'last_checked'])

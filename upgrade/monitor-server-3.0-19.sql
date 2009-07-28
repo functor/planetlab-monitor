@@ -16,3 +16,6 @@ ALTER TABLE findbadnoderecord_history ADD COLUMN uptime varchar DEFAULT NULL;
 ALTER TABLE findbadnoderecord ADD COLUMN traceroute varchar DEFAULT NULL;
 ALTER TABLE findbadnoderecord_history ADD COLUMN traceroute varchar DEFAULT NULL;
 
+ALTER TABLE historynoderecord ADD COLUMN firewall boolean DEFAULT false;
+ALTER TABLE historynoderecord_history ADD COLUMN firewall boolean DEFAULT false;
+

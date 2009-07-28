@@ -215,14 +215,19 @@ def get_nodeset(config):
 
 	return l_nodes
 
-def email_exception(content=None):
+def email_exception(content=None, title=None):
     import config
     from monitor.model import Message
     import traceback
     msg=traceback.format_exc()
     if content:
         msg = content + "\n" + msg
-    m=Message("exception running monitor", msg, False)
+
+    full_title = "exception running monitor"
+    if title:
+        full_title = "exception running monitor %s" % title
+
+    m=Message(full_title, msg, False)
     m.send([config.cc_email])
     return
 

@@ -62,6 +62,7 @@ Requires: perl-libwww-perl
 Requires: perl-IO-Socket-SSL 
 Requires: MySQL-python
 Requires: nmap
+Requires: nc
 Requires: rt3
 
 Requires: plewww-plekit

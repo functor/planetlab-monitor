@@ -25,7 +25,7 @@
   </head>
 
   <body>
-  	<table valign="top" border="1" bgcolor="white" align="center" width="700px">
+  	<table valign="top" border="1" bgcolor="white" align="center">
 	<tr> <td> <div id="header">${page_title}</div> </td> 
 		<td>
 			<form action="pcuview" method="GET"> 
@@ -40,7 +40,7 @@
 	</tr>
 	<tr>
 		<td colspan="2">
-			<table id="nps-table" width="100%">
+			<table width="100%">
 			<thead>
 			<tr>
 				<?python from monitorweb.templates.links import link ?>

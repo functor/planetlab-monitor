@@ -16,26 +16,23 @@ from links import *
 		<table py:if="len(sitequery) > 0" id="sub-table" border="1" width="100%">
 			<thead>
 				<tr>
-					<th>History</th>
-					<th>Site name</th>
+					<th>Status Since</th>
+					<th>Site Name</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
 					<th>Slices/Max</th>
-					<th>Nodes/Total</th>
-					<th>Status</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
-					<td><a href="sitehistory?loginbase=${site.loginbase}">history</a></td>
-					<td nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
+					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+					<td id="site-${site.status}" nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>
 					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td>${site.slices_used}/${site.slices_total}</td>
-					<td>${site.nodes_up} / ${site.nodes_total}</td>
-					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+					<td nowrap="true" width="70em"><a href="${link('detailview', loginbase=site.loginbase)}">More Details</a></td>
 				</tr>
 			</tbody>
 		</table>
@@ -43,97 +40,28 @@ from links import *
 		<table py:if="len(pcuquery) != 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
-					<th>History</th>
+					<th>Status Since</th>
 					<th>PCU Name</th>
-					<th>Missing Fields</th>
-					<th nowrap='true'>DNS Status</th>
-					<th nowrap='true'>Port Status</th>
-					<th width="80%">Test Results</th>
 					<th>Model</th>
 					<th>Nodes</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,agg in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<td><a href="pcuhistory?pcu_id=${agg.pcu.plc_pcuid}">history</a></td>
-					<td nowrap="true" >
+					<td id="site-${agg.pcuhist.status}" py:content="diff_time(mktime(agg.pcuhist.last_changed.timetuple()))"></td>
+					<td nowrap="true" id="status-${agg.status}">
 						<a class="ext-link" href="${plc_pcu_uri_id(agg.pcu.plc_pcu_stats['pcu_id'])}">
 							<span class="icon">${pcu_name(agg.pcu.plc_pcu_stats)}</span>
 						</a>
 					</td>
-					<td py:content="agg.pcu.entry_complete"></td>
-					<td nowrap='true' id="dns-${agg.pcu.dns_status}" py:content="agg.pcu.dns_status"></td>
-					<td nowrap='true'>
-						<span py:for="port,state in agg.ports" 
-						id="port${state}" py:content="'%s, ' % port">80</span>
-					</td>
-					<td width="40" id="status-${agg.status}"><pre class="results" py:content="agg.pcu.reboot_trial_status"></pre></td>
 					<td py:content="agg.pcu.plc_pcu_stats['model']"></td>
 					<td py:content="len(agg.pcu.plc_pcu_stats['node_ids'])"></td>
+					<td nowrap="true" width="70em"><a href="${link('detailview', loginbase=site.loginbase)}">More Details</a></td>
 				</tr>
 			</tbody>
 		</table>
 	<div class="oneline" id="legend" py:if="len(pcuquery) == 0">
 		<em>There are no PCUs associated with this host.</em>
-	</div>
-	<div class="oneline" id="legend" py:if="len(pcuquery) > 0">
-		<em>Legend: </em>
-		<a class="info" href="#">DNS Status<span>
-			<table border="1" align="center" width="100%">
-				<tr><th colspan="2">Legend for 'DNS Status'</th></tr>
-
-				<tr><td id="dns-DNS-OK">DNS-OK</td>
-					<td>This indicates that the DNS name and registered IP address match.</td>
-				</tr>
-				<tr><td id="dns-DNS-MISMATCH">DNS-MISMATCH</td>
-					<td>Sometimes, the registered IP and DNS IP address do not match.  
-						In these cases it is not clear which is correct, 
-						so an error is flagged.</td>
-				</tr>
-				<tr><td id="dns-DNS-NOENTRY">DNS-NOENTRY</td>
-					<td>While a hostname is provided in the registration, the hostname is not actually registered in DNS.</td>
-				</tr>
-				<tr><td id="dns-NOHOSTNAME">NOHOSTNAME</td>
-					<td>While we prefer that a hostname be registered, it is not
-					strictly required, since simply the IP address, if it is static, is enough to access the PCU.</td>
-				</tr>
-			</table>
-			</span> </a> &nbsp;
-		<a class="info" href="#">Port Status<span>
-		<table border="1" align="center" width="100%">
-			<tr><th colspan="2">Legend for 'Port Status'</th></tr>
-
-			<tr><td id="portopen">Open</td>
-				<td>Green port numbers are believed to be open.</td>
-			</tr>
-			<tr><td id="portfiltered">Filtered</td>
-				<td>Gold port numbers are believed to be filtered or simply offline.</td>
-			</tr>
-			<tr><td id="portclosed">Closed</td>
-				<td>Finally, red ports appear to be closed.</td>
-			</tr>
-		</table>
-				</span> </a> &nbsp;
-		<a class="info" href="#">Test Results<span>
-		<table border="1" align="center" width="100%">
-			<tr><th colspan="2">Legend for 'Test Results'</th></tr>
-
-			<tr><td id="status-0">OK</td>
-				<td>The PCU is accessible, and short of actually rebooting the node, everything appears to work.</td>
-			</tr>
-			<tr><td id="status-NetDown">NetDown</td>
-				<td>The PCU is inaccessible from the PlanetLab address block 128.112.139.0/25, or it is simply offline.</td>
-			</tr>
-			<tr><td id="status-Not_Run">Not_Run</td>
-				<td>Previous errors, such as DNS or an incomplete configuration prevented the actual test from begin performed.</td>
-			</tr>
-			<tr><td id="status-error">Other Errors</td>
-				<td>Other errors are reported by the test that are more specific to the block encountered by the script.</td>
-			</tr>
-		</table>
-				</span> </a>
 	</div>
 	<h3>Nodes</h3> 
 		<p py:if="len(nodequery) == 0">
@@ -142,59 +70,20 @@ from links import *
 		<table py:if="len(nodequery) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
-					<th>History (scan)</th>
+					<th>Status Since</th>
 					<th>Hostname</th>
-					<th>DNS</th>
-					<th>last_contact (cached)</th>
 					<th>last_checked</th>
-					<th nowrap='true'>Port Status</th>
-					<th>Filter</th>
-					<th></th>
-					<th></th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,agg in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<td><a href="nodehistory?hostname=${agg.node.hostname}">status</a>
-						(<a href="nodescanhistory?hostname=${agg.node.hostname}">scan</a>) history</td>
+					<td id="site-${agg.history.status}" py:content="diff_time(mktime(agg.history.last_changed.timetuple()))"></td>
 					<td id="node-${agg.node.observed_status}" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri_id(agg.node.plc_node_stats['node_id'])}">
 							<span class="icon">${agg.node.hostname}</span></a>
 					</td>
-					<td py:content="agg.node.external_dns_status"></td>
-					<td py:content="diff_time(agg.node.plc_node_stats['last_contact'])"></td>
 					<td py:content="diff_time(mktime(agg.node.date_checked.timetuple()))"></td>
-					<td>
-						<span py:for="port,state in agg.ports" 
-						id="port${state}" py:content="'%s, ' % port">80</span>
-					</td>
-					<td py:content="agg.node.firewall"></td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="externalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='ExternalScan' /> 
-	  					</form>
-						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a-->
-					</td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="internalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='InternalScan' /> 
-	  					</form>
-						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a-->
-					</td>
-					<td py:if="len(pcuquery) > 0">
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='Reboot' /> 
-	  					</form>
-						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a-->
-					</td>
+					<td nowrap="true" width="70em"><a href="${link('detailview', loginbase=site.loginbase)}">More Details</a></td>
 				</tr>
 			</tbody>
 		</table>

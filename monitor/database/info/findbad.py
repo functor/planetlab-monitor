@@ -40,6 +40,9 @@ class FindbadNodeRecord(Entity):
 	nm_status = Field(String,default=None)
 	fs_status = Field(String,default=None)
 	dns_status = Field(String,default=None)
+	external_dns_status = Field(Boolean,default=True)
+	uptime = Field(String,default=None)	
+	rpms = Field(String,default=None)	
 	princeton_comon_dir = Field(Boolean,default=False)
 	princeton_comon_running = Field(Boolean,default=False)
 	princeton_comon_procs = Field(Int,default=None)
@@ -50,9 +53,11 @@ class FindbadNodeRecord(Entity):
 	plc_pcuid      = Field(Int,default=None)
 	comon_stats    = Field(PickleType,default=None)
 	port_status    = Field(PickleType,default=None)
+	firewall 		= Field(Boolean,default=False)
 	ssh_portused = Field(Int,default=22)
 	ssh_status = Field(Boolean,default=False)
 	ssh_error = Field(String,default=None)	# set if ssh_access == False
+	traceroute = Field(String,default=None)	
 	ping_status = Field(Boolean,default=False)
 
 # INFERRED

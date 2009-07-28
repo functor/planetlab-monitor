@@ -17,25 +17,25 @@ from links import *
 			<thead>
 				<tr>
 					<th>History</th>
-					<th>Site name</th>
+					<th>Status Since</th>
+					<th>Site Name</th>
 					<th>Enabled</th>
 					<th>Penalty</th>
 					<th>Slices/Max</th>
 					<th>Nodes/Total</th>
-					<th>Status</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,site in enumerate(sitequery)" class="${i%2 and 'odd' or 'even'}" >
 					<td><a href="sitehistory?loginbase=${site.loginbase}">history</a></td>
-					<td nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
+					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
+					<td id="site-${site.status}" nowrap="true"><a class="ext-link" href="${plc_site_uri_id(site.plc_siteid)}">
 							<span class="icon">${site.loginbase}</span></a>
 					</td>
 					<td py:content="site.enabled"></td>
 					<td id="site-${site.penalty_level}">${site.penalty_level}</td>
 					<td>${site.slices_used}/${site.slices_total}</td>
 					<td>${site.nodes_up} / ${site.nodes_total}</td>
-					<td id="site-${site.status}" py:content="diff_time(mktime(site.last_changed.timetuple()))"></td>
 				</tr>
 			</tbody>
 		</table>
@@ -43,8 +43,8 @@ from links import *
 		<table py:if="len(pcuquery) != 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
 					<th>History</th>
+					<th>Status Since</th>
 					<th>PCU Name</th>
 					<th>Missing Fields</th>
 					<th nowrap='true'>DNS Status</th>
@@ -56,9 +56,9 @@ from links import *
 			</thead>
 			<tbody>
 				<tr py:for="i,agg in enumerate(pcuquery)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
 					<td><a href="pcuhistory?pcu_id=${agg.pcu.plc_pcuid}">history</a></td>
-					<td nowrap="true" >
+					<td nowrap="true" id="site-${agg.pcuhist.status}" py:content="diff_time(mktime(agg.pcuhist.last_changed.timetuple()))"></td>
+					<td nowrap="true" id="status-${agg.status}">
 						<a class="ext-link" href="${plc_pcu_uri_id(agg.pcu.plc_pcu_stats['pcu_id'])}">
 							<span class="icon">${pcu_name(agg.pcu.plc_pcu_stats)}</span>
 						</a>
@@ -142,28 +142,28 @@ from links import *
 		<table py:if="len(nodequery) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
 					<th>History (scan)</th>
+					<th>Status Since</th>
 					<th>Hostname</th>
 					<th>DNS</th>
+					<th>SSH</th>
 					<th>last_contact (cached)</th>
-					<th>last_checked</th>
+					<th>Last Checked</th>
 					<th nowrap='true'>Port Status</th>
-					<th>Filter</th>
-					<th></th>
-					<th></th>
+					<th>Firewall</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,agg in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
 					<td><a href="nodehistory?hostname=${agg.node.hostname}">status</a>
-						(<a href="nodescanhistory?hostname=${agg.node.hostname}">scan</a>) history</td>
+						(<a href="nodescanhistory?hostname=${agg.node.hostname}">scan</a>)</td>
+					<td id="site-${agg.history.status}" py:content="diff_time(mktime(agg.history.last_changed.timetuple()))"></td>
 					<td id="node-${agg.node.observed_status}" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri_id(agg.node.plc_node_stats['node_id'])}">
 							<span class="icon">${agg.node.hostname}</span></a>
 					</td>
 					<td py:content="agg.node.external_dns_status"></td>
+					<td py:content="agg.node.ssh_status"></td>
 					<td py:content="diff_time(agg.node.plc_node_stats['last_contact'])"></td>
 					<td py:content="diff_time(mktime(agg.node.date_checked.timetuple()))"></td>
 					<td>

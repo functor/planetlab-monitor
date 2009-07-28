@@ -87,6 +87,8 @@ def prep_pcu_for_display(pcu):
 	except:
 		agg.loginbase = "unknown"
 
+	agg.pcuhist = HistoryPCURecord.query.get(pcu.plc_pcuid)
+
 	agg.ports = format_ports(pcu.port_status, pcu.plc_pcu_stats['model'])
 	agg.status = format_pcu_shortstatus(pcu)
 
@@ -350,6 +352,81 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			# unknown action
 			raise RuntimeError("Unknown action given")
 		return
+
+	@expose(template="monitorweb.templates.simpleview")
+	def simpleview(self, **data):
+		return self.pre_view(**data)
+
+	@expose(template="monitorweb.templates.detailview")
+	def detailview(self, **data):
+		return self.pre_view(**data)
+
+	def pre_view(self, **data):
+		session.flush(); session.clear()
+
+		loginbase=None
+		hostname=None
+		pcuid=None
+		since=20
+
+		exceptions = None
+		sitequery=[]
+		nodequery=[]
+		pcuquery=[]
+		actions=[]
+
+		for key in data:
+			print key, data[key]
+
+		if 'query' in data:
+			obj = data['query']
+			if len(obj.split(".")) > 1: hostname = obj
+			else: loginbase=obj
+
+		if 'loginbase' in data:
+			loginbase = data['loginbase']
+
+		if 'hostname' in data:
+			hostname = data['hostname']
+
+		if 'pcuid' in data:
+			try: pcuid = int(data['pcuid'])
+			except: pcuid = None
+
+		if 'since' in data:
+			try: since = int(since)
+			except: since = 20
+
+		if pcuid:
+			print "pcuid: %s" % pcuid
+			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
+			loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
+
+		if hostname:
+			node = FindbadNodeRecord.get_latest_by(hostname=hostname)
+			loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+
+		if loginbase:
+			actions = ActionRecord.query.filter_by(loginbase=loginbase
+							).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
+							).order_by(ActionRecord.date_created.desc())
+			actions = [ a for a in actions ]
+			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
+			# NOTE: because a single pcu may be assigned to multiple hosts,
+			# track unique pcus by their plc_pcuid, then turn dict into list
+			pcus = {}
+			for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
+					# NOTE: reformat some fields.
+					agg = prep_node_for_display(node)
+					nodequery += [agg]
+					if agg.pcu: 
+						pcus[agg.pcu.pcu.plc_pcuid] = agg.pcu
+
+			for pcuid_key in pcus:
+				pcuquery += [pcus[pcuid_key]]
+
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, since=since, exceptions=exceptions)
+
 
 	# TODO: add form validation
 	@expose(template="monitorweb.templates.pcuview")

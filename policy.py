@@ -119,12 +119,17 @@ def main(hostnames, sitenames):
 			#	sitehist.sendMessage('retry_bootman', hostname=host)
 
 		if nodehist.status == 'down' and \
-			changed_greaterthan(nodehist.last_changed, 2) and \
-			not found_within(recent_actions, 'down_notice', 3.5):
-				# send down node notice
+			changed_greaterthan(nodehist.last_changed, 2):
+				if not nodehist.firewall and not found_within(recent_actions, 'down_notice', 3.5):
+					# send down node notice
+					sitehist.sendMessage('down_notice', hostname=host)
+					print "send message for host %s down" % host
 
-				sitehist.sendMessage('down_notice', hostname=host)
-				print "send message for host %s down" % host
+				if nodehist.firewall and not found_within(recent_actions, 'firewall_notice', 3.5):
+					# send down node notice
+					email_exception(host, "firewall_notice")
+					sitehist.sendMessage('firewall_notice', hostname=host)
+					print "send message for host %s down" % host
 
 		node_count = node_count + 1
 		print "time: ", time.strftime('%Y-%m-%d %H:%M:%S')

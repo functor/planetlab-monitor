@@ -54,6 +54,8 @@ def check_node_state(rec, node):
 	else:
 		node.haspcu = False
 
+	node.firewall = rec.firewall
+
 
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state

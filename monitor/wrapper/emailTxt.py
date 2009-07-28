@@ -119,6 +119,29 @@ This notice is simply to let you know that:
 appears stuck in a debug mode.  To try to correct this, we're trying to rerun BootManager.py.  
 If any action is needed from you, you will recieve additional notices.  Thank you!
 	""")
+	firewall_notice=("""Host %(hostname)s blocked by a firewall""",
+	"""
+This notice is simply to let you know that:
+    %(hostname)s
+
+has some ports that appear to be blocked, making the node unusable.  While
+some ports are open, to be a fully functional node, all ports need to be
+accessible at all times.  Please see the following for the list of
+requirements for hosting a node:
+
+    http://www.planet-lab.org/hosting
+
+The node will be considered 'DOWN' until the ports are unblocked.
+
+Please investigate, and let us know if there's anything we can do to help get
+it back on-line.  You can see more information about the current status of
+this host here:
+
+    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+
+Thank you very much for your help,
+  -- %(plc_name)s (%(support_email)s)
+	""")
 	down_notice=("""Host %(hostname)s is down""",
 	"""
 This notice is simply to let you know that:
