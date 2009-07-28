@@ -300,7 +300,7 @@ class PlanetLabSession:
 			print ret
 			if ret != 0:
 				print "\tFAILED TWICE"
-				#sys.exit(1)
+				email_exception("%s rsync failed twice" % self.node)
 				raise ExceptionDoubleSSHError("Failed twice trying to login with updated ssh host key")
 
 		t1 = time.time()
@@ -316,19 +316,6 @@ class PlanetLabSession:
             python Rpyc/Servers/forking_server.py &> server.log &
             echo "done" >> out.log
 EOF""")
-		#cmd = """ssh %(user)s@%(hostname)s """ + \
-		#	 """'ps ax | grep Rpyc | grep -v grep | awk "{print \$1}" | xargs kill 2> /dev/null' """
-		#cmd = cmd % args
-		#if self.verbose: print cmd
-		## TODO: Add timeout
-		#print localos.system(cmd,timeout)
-
-		## START a new rpyc server.
-		#cmd = """ssh -n %(user)s@%(hostname)s "export PYTHONPATH=\$HOME; """ + \
-		#	 """python Rpyc/Servers/forking_server.py &> server.log < /dev/null &" """ 
-		#cmd = cmd % args
-		#if self.verbose: print cmd
-		#print localos.system(cmd,timeout)
 		print "setup rpyc server over ssh"
 		print ssh.ret
 
@@ -491,6 +478,7 @@ class DebugInterface:
 		for n in ["bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-validate-exception-done",
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done",
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-debug-validate-exception-done",
+					"bminit-cfg-auth-bootcheckfail-authfail-exception-authfail-debug-validate-exception-done",
 				]:
 			sequences.update({n: "repair_node_keys"})
 
