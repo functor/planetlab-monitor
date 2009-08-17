@@ -12,6 +12,18 @@ from links import *
 	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
+  <div py:if="len(sitequery) == 0">
+  	<p>Your 'quick jump' query failed to find a matching site or hostname.</p>
+	<p>MyOps recognizes three types of expressions:
+	<ul>
+	    <li>Site names, e.g. princeton, utah, nyu, etc</li>
+	    <li>Host names, e.g. planetlab-1.cs.princeton.edu, pl1.university.edu, etc</li>
+	    <li>Prefix a pattern with "site:" or "node:" to return all sites or
+		nodes that match a pattern.  e.g. site:mlab* node:*redclara*</li>
+	</ul>
+	</p>
+  </div>
+  <div py:if="len(sitequery) != 0">
     <h3 py:if="len(sitequery) > 0">Site Status</h3>
 		<table py:if="len(sitequery) > 0" id="sub-table" border="1" width="100%">
 			<thead>
@@ -56,12 +68,12 @@ from links import *
 					</td>
 					<td py:content="agg.pcu.plc_pcu_stats['model']"></td>
 					<td py:content="len(agg.pcu.plc_pcu_stats['node_ids'])"></td>
-					<td nowrap="true" width="70em"><a href="${link('detailview', loginbase=site.loginbase)}">More Details</a></td>
+					<td nowrap="true" width="70em"><a href="${link('detailview', pcuid=agg.pcu.plc_pcuid)}">More Details</a></td>
 				</tr>
 			</tbody>
 		</table>
 	<div class="oneline" id="legend" py:if="len(pcuquery) == 0">
-		<em>There are no PCUs associated with this host.</em>
+		<h3>PCUs: None</h3>
 	</div>
 	<h3>Nodes</h3> 
 		<p py:if="len(nodequery) == 0">
@@ -83,7 +95,7 @@ from links import *
 							<span class="icon">${agg.node.hostname}</span></a>
 					</td>
 					<td py:content="diff_time(mktime(agg.node.date_checked.timetuple()))"></td>
-					<td nowrap="true" width="70em"><a href="${link('detailview', loginbase=site.loginbase)}">More Details</a></td>
+					<td nowrap="true" width="70em"><a href="${link('detailview', hostname=agg.node.hostname)}">More Details</a></td>
 				</tr>
 			</tbody>
 		</table>
@@ -177,6 +189,7 @@ from links import *
 			</span>
 		</div-->
 
+     </div>
   </div>
 
 </html>

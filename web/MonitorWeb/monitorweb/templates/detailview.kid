@@ -145,16 +145,17 @@ from links import *
 					<th>History (scan)</th>
 					<th>Status Since</th>
 					<th>Hostname</th>
-					<th>DNS</th>
+					<th>Resolves?</th>
 					<th>SSH</th>
 					<th>last_contact (cached)</th>
 					<th>Last Checked</th>
 					<th nowrap='true'>Port Status</th>
-					<th>Firewall</th>
+					<th>Blocked Ports?</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr py:for="i,agg in enumerate(nodequery)" class="${i%2 and 'odd' or 'even'}" >
+				<span py:for="i,agg in enumerate(nodequery)">
+				<tr class="${i%2 and 'odd' or 'even'}" >
 					<td><a href="nodehistory?hostname=${agg.node.hostname}">status</a>
 						(<a href="nodescanhistory?hostname=${agg.node.hostname}">scan</a>)</td>
 					<td id="site-${agg.history.status}" py:content="diff_time(mktime(agg.history.last_changed.timetuple()))"></td>
@@ -171,31 +172,23 @@ from links import *
 						id="port${state}" py:content="'%s, ' % port">80</span>
 					</td>
 					<td py:content="agg.node.firewall"></td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="externalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='ExternalScan' /> 
-	  					</form>
-						<a onclick='document.externalscan${i}.submit();' href="javascript: void(1);">ExternalScan</a-->
-					</td>
-					<td>
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', hostname=agg.node.hostname)}" name="internalscan${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='InternalScan' /> 
-	  					</form>
-						<a onclick='javascript: document.internalscan${i}.submit();' href="javascript: void(1);">InternalScan</a-->
-					</td>
-					<td py:if="len(pcuquery) > 0">
-						<!-- TODO: add some values/code to authenticate the operation.  -->
-	  					<!--form action="${link('pcuview', pcuid=pcu.plc_pcuid)}" name="reboot${i}" method='post'>
-						<input type='hidden' name='hostname' value='${agg.node.hostname}'/> 
-						<input type='hidden' name='type' value='Reboot' /> 
-	  					</form>
-						<a onclick='javascript: document.reboot${i}.submit();' href="javascript: void(1);">Reboot</a-->
-					</td>
 				</tr>
+				<tr>
+					<td></td>
+					<th>Kernel:</th>
+					<td colspan="3" py:content="agg.kernel"> </td>
+				</tr>
+				<tr>
+					<td></td>
+					<th>DNS Status:</th>
+					<td colspan="3"><pre py:content="agg.node.dns_status"> </pre></td>
+				</tr>
+				<tr>
+					<td></td>
+					<th>Traceroute:</th>
+					<td colspan="3"><pre py:content="agg.node.traceroute"> </pre></td>
+				</tr>
+				</span>
 			</tbody>
 		</table>
 		<div class="error" py:if="exceptions is not None">

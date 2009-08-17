@@ -115,6 +115,9 @@ a.right { float: right; }
 #node-good { background-color : darkseagreen; }
 #node-offline { background-color: red; }
 #node-down { background-color: indianred; }
+#node-failboot { background-color: gold; }
+#node-safeboot { background-color: lightyellow; }
+#node-disabled { background-color: grey; }
 
 #pcu-online { background-color : lightgreen; }
 #pcu-good { background-color : darkseagreen; }
@@ -145,7 +148,7 @@ a.right { float: right; }
   color: black;
   font-size: 127%;
   background-color: white;
-  width: 757px;
+  /*width: 757px;*/
   margin: 0 auto 0 auto;
   border-left: 1px solid #aaa;
   border-right: 1px solid #aaa;
@@ -158,7 +161,7 @@ a.right { float: right; }
   margin: 0.5em;
   padding: 1em;
   float: right;
-  width: 200px;
+  /*width: 200px;*/
   font-size: 88%;
 }
 
@@ -209,7 +212,7 @@ h2 {
   padding: 10px;
   font-size: 80%;
   text-align: center;
-  width: 765px;
+  /*width: 765px;*/
   margin: 0 auto 1em auto;
 }
 
@@ -229,7 +232,7 @@ span.code {
   padding: 15px 10px 15px 55px;
   background: #cec URL('../images/ok.png') left center no-repeat;
   border: 1px solid #9c9;
-  width: 450px;
+  /*width: 450px;*/
   font-size: 120%;
   font-weight: bolder;
 }
@@ -237,14 +240,14 @@ span.code {
 .notice {
   margin: 0.5em auto 0.5em auto;
   padding: 15px 10px 15px 55px;
-  width: 450px;
+  /*width: 450px;*/
   background: #eef URL('../images/info.png') left center no-repeat;
   border: 1px solid #cce;
 }
 .error {
   margin: 0.5em auto 0.5em auto;
   padding: 15px 10px 15px 55px;
-  width: 450px;
+  /*width: 450px;*/
   background: #e30 URL('../images/widgets.png') left center no-repeat;
   border: 1px solid #c00;
 }

@@ -28,11 +28,12 @@
   	<table valign="top" border="1" bgcolor="white" align="center">
 	<tr> <td> <div id="header">${page_title}</div> </td> 
 		<td>
-			<form action="pcuview" method="GET"> 
+			<form action="simpleview" method="GET"> 
 				<table>
-					<tr><td> Quick Search:</td>
+					<tr><td> Quick Jump:</td>
 						<td><input type="text" name="query"/></td>
 						<td><input type="submit"/></td>
+						<td><a href="query">Advanced Query</a></td>
 					</tr>
 				</table>
 			</form>

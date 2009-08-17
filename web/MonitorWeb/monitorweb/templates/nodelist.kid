@@ -36,7 +36,7 @@ from links import *
     
     <tr class='search_area'><td class='search_area' colspan='10'>
         <div class='search'><fieldset>
-            <label class='search_label'> Search </label>                 
+            <label class='search_label'> Refine List</label>                 
             <input class='search_input' type='text' id='nodelist_search' 
                    onkeyup='plekit_table_filter("nodelist","nodelist_search","nodelist_search_and");'
                    size='self.search_width' maxlength='256' />                                            

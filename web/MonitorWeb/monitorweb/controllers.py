@@ -21,6 +21,67 @@ from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
 
 from monitorweb.templates.links import *
 
+class ObjectQueryFields(widgets.WidgetsList):
+	"""The WidgetsList defines the fields of the form."""
+	pass
+
+
+
+class NodeQueryFields(widgets.WidgetsList):
+	"""The WidgetsList defines the fields of the form."""
+
+	object = widgets.RadioButtonList(label="Query Type", options=[('nodes', 'All Nodes'), 
+															  ('nodehistory', 'Single Node History'),
+															  #('sites', 'All Sites'),
+															  #('sitehistory', 'Single Site History'),
+															  ], default="nodes")
+	nodehistory_hostname = widgets.TextField(label="Hostname Node History", attrs={'size':30})
+
+	hostname = widgets.CheckBox(label="Hostname")
+	firewall = widgets.CheckBox(label="Firewall?")
+	dns_status = widgets.CheckBox(label="DNS Status")
+	external_dns_status = widgets.CheckBox(label="Hostname Resolves?")
+	kernel_version = widgets.CheckBox(label="Kernel")
+	observed_status = widgets.CheckBox(label="Observed Status")
+	port_status = widgets.CheckBox(label="Port Status")
+	rpms = widgets.CheckBox(label="RPM")
+	rpmvalue = widgets.TextField(label="RPM Pattern")
+
+class QueryForm(widgets.TableForm):
+    template = """
+    <form xmlns:py="http://purl.org/kid/ns#"
+        name="${name}"
+        action="${action}"
+        method="${method}"
+        class="tableform"
+        py:attrs="form_attrs"
+    >
+        <div py:for="field in hidden_fields"
+            py:replace="field.display(value_for(field), **params_for(field))"
+        />
+        <table border="0" cellspacing="0" cellpadding="2" py:attrs="table_attrs">
+            <tr py:for="i, field in enumerate(fields)"
+                class="${i%2 and 'odd' or 'even'}"
+            >
+                <th>
+                    <label class="fieldlabel" for="${field.field_id}" py:content="field.label" />
+                </th>
+                <td>
+                    <span py:replace="field.display(value_for(field), **params_for(field))" />
+                    <span py:if="error_for(field)" class="fielderror" py:content="error_for(field)" />
+                    <span py:if="field.help_text" class="fieldhelp" py:content="field.help_text" />
+                </td>
+            </tr>
+            <tr>
+                <td>&#160;</td>
+                <td py:content="submit.display(submit_text)" />
+            </tr>
+        </table>
+    </form>
+	"""
+
+def getNodeQueryForm():
+	return QueryForm(fields=NodeQueryFields(), action="query")
 
 # make it easier group objects without invoking the elixir auto-write feature.
 class aggregate: pass
@@ -109,6 +170,18 @@ def prep_pcu_for_display(pcu):
 
 class NodeWidget(widgets.Widget):
 	pass
+
+def prep_nodehist(node):
+	agg = aggregate()
+	agg.node = node
+	agg.loginbase = "unknown"
+	try:
+		agg.loginbase = PlcSite.query.get(node.plc_siteid).plc_site_stats['login_base']
+	except:
+		agg.loginbase = "exception"
+		
+
+	return agg
 
 def prep_node_for_display(node, pcuhash=None, preppcu=True, asofdate=None):
 	agg = aggregate()
@@ -214,33 +287,68 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			agg = prep_node_for_display(fb)
 			rquery.append(agg)
 
-		#fbquery = FindbadNodeRecord.get_all_latest()
-		#fbpcus = FindbadPCURecord.get_all_latest()
-		#def fbtohash(fbpculist):
-		#	h = {}
-		#	for p in fbpculist:
-		#		h[p.plc_pcuid] = p
-#
-#		pcuhash = fbtohash(fbpcus)
-
-#		query = []
-#		for node in fbquery:
-#			# NOTE: reformat some fields.
-#			agg = prep_node_for_display(node, pcuhash)
-#			if not agg.history:
-#				continue
-#
-#			if filter:
-#				if agg.history.status == filter:
-#					query.append(agg)
-#			else:
-#				query.append(agg)
-				
 		widget = NodeWidget(template='monitorweb.templates.node_template')
 		return dict(now=time.ctime(), query=rquery, nodewidget=widget)
 
+	@expose(template="monitorweb.templates.query", allow_json=True)
+	def query(self, **data):
+		query = []
+
+		for k in data:
+			print k, data[k]
+
+		fbquery = None
+		
+		if 'object' in data and data['object'] == "nodes":
+			fbquery = FindbadNodeRecord.get_all_latest()
+		elif 'object' in data and data['object'] == "nodehistory": 
+			hostname = data['nodehistory_hostname']
+			data['date_checked'] = 'date_checked'
+			fbrecord = FindbadNodeRecord.get_by(hostname=hostname)
+			fbquery = fbrecord.versions[-500:]
+
+		if fbquery:
+			for node in fbquery:
+				# NOTE: reformat some fields.
+				if type(node) is not type(FindbadNodeRecord):
+					agg = node.__dict__.copy()
+				else:
+					agg = node.to_dict()
+				agg.update(agg['plc_node_stats'])
+				if 'rpmvalue' in data and 'rpms' in data:
+					if agg['rpms']:
+						rpm_list = agg['rpms'].split()
+						rpm_list = filter(lambda x: data['rpmvalue'] in x, rpm_list)
+						agg['rpms'] = " ".join(rpm_list)
+
+				query.append(agg)
+
+		fields=data.copy()
+
+		try: 
+			del fields['object']
+			del fields['rpmvalue']
+			del fields['nodehistory_hostname']
+		except: pass
+		return dict(now=time.ctime(), query=query, fields=fields, data=data, queryform=getNodeQueryForm())
+
+	@expose(template="monitorweb.templates.nodefast", allow_json=True)
+	def node(self, filter=None):
+		nhquery = HistoryNodeRecord.query.all()
+		query = []
+		for nh in nhquery:
+			if filter:
+				if nh.status == filter:
+					agg = prep_nodehist(nh)
+					query.append(agg)
+			else:
+				agg = prep_nodehist(nh)
+				query.append(agg)
+
+		return dict(now=time.ctime(), query=query)
+
 	@expose(template="monitorweb.templates.nodelist")
-	def node(self, filter='boot'):
+	def nodeslow(self, filter='boot'):
 		print "NODE------------------"
 		print "befor-len: ", len( [ i for i in session] )
 		session.flush(); session.clear()
@@ -365,23 +473,35 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		session.flush(); session.clear()
 
 		loginbase=None
+		loginbase_list=[]
 		hostname=None
 		pcuid=None
 		since=20
+		# if objtype is not None, then treat 'hostname' or 'loginbase' as a search pattern
+		objtype=None
 
 		exceptions = None
 		sitequery=[]
 		nodequery=[]
 		pcuquery=[]
 		actions=[]
+		actions_list=[]
 
 		for key in data:
 			print key, data[key]
 
 		if 'query' in data:
 			obj = data['query']
-			if len(obj.split(".")) > 1: hostname = obj
-			else: loginbase=obj
+			fields = obj.split(":")
+			if len(fields) > 1:
+				objtype = fields[0]
+				obj = fields[1].replace("*", "%")
+				print "obj: %s"% obj
+
+			if len(obj.split(".")) > 1 or objtype == "node": 
+				hostname = obj
+			else: 
+				loginbase = obj
 
 		if 'loginbase' in data:
 			loginbase = data['loginbase']
@@ -400,32 +520,50 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		if pcuid:
 			print "pcuid: %s" % pcuid
 			pcu = FindbadPCURecord.get_latest_by(plc_pcuid=pcuid)
-			loginbase = PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base']
+			loginbase_list += [ PlcSite.query.get(pcu.plc_pcu_stats['site_id']).plc_site_stats['login_base'] ]
 
 		if hostname:
-			node = FindbadNodeRecord.get_latest_by(hostname=hostname)
-			loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+			if not objtype:
+				nodes = [ FindbadNodeRecord.get_latest_by(hostname=hostname) ]
+			else:
+				nodes = FindbadNodeRecord.query.filter(FindbadNodeRecord.hostname.like(hostname)) 
+
+			for node in nodes:
+				lb = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+				if lb not in loginbase_list:
+					loginbase_list += [ lb ]
 
 		if loginbase:
-			actions = ActionRecord.query.filter_by(loginbase=loginbase
-							).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
-							).order_by(ActionRecord.date_created.desc())
-			actions = [ a for a in actions ]
-			sitequery = [HistorySiteRecord.by_loginbase(loginbase)]
-			# NOTE: because a single pcu may be assigned to multiple hosts,
-			# track unique pcus by their plc_pcuid, then turn dict into list
-			pcus = {}
-			for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
-					# NOTE: reformat some fields.
-					agg = prep_node_for_display(node)
-					nodequery += [agg]
-					if agg.pcu: 
-						pcus[agg.pcu.pcu.plc_pcuid] = agg.pcu
+			if not objtype:
+				loginbase_list = [ loginbase ]
+			else:
+				loginbase_list = HistorySiteRecord.query.filter(HistorySiteRecord.loginbase.like(loginbase)) 
+				loginbase_list = [ l.loginbase for l in loginbase_list ]
+			
 
-			for pcuid_key in pcus:
-				pcuquery += [pcus[pcuid_key]]
+		if loginbase_list:
+			for loginbase in loginbase_list:
+				actions = ActionRecord.query.filter_by(loginbase=loginbase
+								).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
+								).order_by(ActionRecord.date_created.desc())
+				actions_list += [ a for a in actions ]
+				site = HistorySiteRecord.by_loginbase(loginbase)
+				if site:
+					sitequery.append(site)
+				# NOTE: because a single pcu may be assigned to multiple hosts,
+				# track unique pcus by their plc_pcuid, then turn dict into list
+				pcus = {}
+				for node in FindbadNodeRecord.query.filter_by(loginbase=loginbase):
+						# NOTE: reformat some fields.
+						agg = prep_node_for_display(node)
+						nodequery += [agg]
+						if agg.pcu: 
+							pcus[agg.pcu.pcu.plc_pcuid] = agg.pcu
 
-		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions, since=since, exceptions=exceptions)
+				for pcuid_key in pcus:
+					pcuquery += [pcus[pcuid_key]]
+
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions_list, since=since, exceptions=exceptions)
 
 
 	# TODO: add form validation

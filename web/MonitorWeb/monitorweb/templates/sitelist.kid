@@ -31,7 +31,7 @@ from links import *
     
     <tr class='search_area'><td class='search_area' colspan='6'>
         <div class='search'><fieldset>
-            <label class='search_label'> Search </label>                 
+            <label class='search_label'> Refine List </label>                 
             <input class='search_input' type='text' id='sitelist_search' 
                    onkeyup='plekit_table_filter("sitelist","sitelist_search","sitelist_search_and");'
                    size='self.search_width' maxlength='256' />                                            
@@ -56,7 +56,7 @@ from links import *
     <tr py:for="i,site in enumerate(query)">
       <td nowrap="true">
 	<div class='oneline'>
-	  <a class='left' href="${link('pcuview', loginbase=site.loginbase)}">${site.loginbase}</a>
+	  <a class='left' href="${link('simpleview', loginbase=site.loginbase)}">${site.loginbase}</a>
 	  <a class='right' href="${plc_site_uri_id(site.plc_siteid)}">
 	    <img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 	</div>

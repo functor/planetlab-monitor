@@ -145,11 +145,11 @@ from links import *
 					<th mochi:format="int"></th>
 					<th>History (scan)</th>
 					<th>Hostname</th>
-					<th>DNS</th>
+					<th>Resolves?</th>
 					<th>last_contact (cached)</th>
 					<th>last_checked</th>
 					<th nowrap='true'>Port Status</th>
-					<th>Filter</th>
+					<th>Blocked Ports?</th>
 					<th></th>
 					<th></th>
 				</tr>

@@ -1,10 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?python
-layout_params['page_title'] = "MyOps Node Scan History"
+layout_params['page_title'] = "MyOps Node List"
 from monitor.util import diff_time
 from time import mktime
 from links import *
-from cherrypy import request, response
 
 ?>
 <html py:layout="'sitemenu.kid'"
@@ -16,20 +15,15 @@ from cherrypy import request, response
   <script type="text/javascript">
     function nodelist_paginator(opts) { plekit_table_paginator(opts, "nodelist"); }
   </script>
-  	<table width="100%">
-		<thead>
-			<tr>
-				<th><a href="${link('nodescanhistory', length=42, **params)}">Last Week</a></th>
-				<th><a href="${link('nodescanhistory', length=180, **params)}">Last Month</a></th>
-				<th><a href="${link('nodescanhistory', length=1000, **params)}">Last 1000</a></th>
-			</tr>
-		</thead>
-		<tbody>
-		<tr>
-		<td colspan="5">
+
+  <center>
+  <b py:content="'BOOT: %d' % len([agg for agg in query if agg.node.status == 'good'])"></b> | 
+  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status == 'down'])"></b><br/>
+  </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
   <thead>
+
     <tr class='pagesize_area'><td class='pagesize_area' colspan='10'>
         <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
             <input class='pagesize_input' type='text' id="nodelist_pagesize" value='25'
@@ -55,37 +49,26 @@ from cherrypy import request, response
     </fieldset></div></td></tr>
     
     <tr>
-      <th nowrap="true" class="sortable plekit_table">Date Checked</th>
+      <th class="sortable plekit_table">ID</th>
+      <th class="sortable plekit_table">Site</th>
       <th class="sortable plekit_table">Hostname</th>
-      <th class="sortable plekit_table">Ping</th>
-      <th class="sortable plekit_table">SSH</th>
-      <th class="sortable plekit_table">Stat</th>
-      <th class="sortable plekit_table">kernel</th>
-      <th class="sortable plekit_table">BootCD</th>
-      <th class="sortable plekit_table">Last_contact</th>
+      <th class="sortable plekit_table">Status</th>
+      <th class="sortable-sortLastContact plekit_table">Last Changed</th>
+      <th class="sortable plekit_table">Firewall</th>
   </tr>
   </thead>
   <tbody>
-    <tr py:for="i,node in enumerate(query)">
-	<span py:if="node is not None">
-                <td nowrap="true" py:content="node.node.date_checked">date_checked</td>
-		<td nowrap="true">
-		  <a target="_top" href="${link('pcuview', hostname=node.node.hostname)}" py:content="node.node.hostname">your.host.org</a></td>
-                <td py:content="node.node.ping_status">ping</td>
-                <td py:content="node.node.ssh_status">ssh</td>
-                <td py:content="node.node.plc_node_stats['boot_state']">boot</td>
-		<td nowrap="true" py:content="node.kernel"></td>
-		<td nowrap="true" py:content="node.node.bootcd_version"></td>
-		<td  id="node-${node.node.observed_status}" py:content="diff_time(node.node.plc_node_stats['last_contact'])"></td>
-	</span>
+    <tr py:for="i,agg in enumerate(query)">
+        <td py:content="agg.node.plc_nodeid">node_id</td>
+		<td> <a href="${link('simpleview', loginbase=agg.loginbase)}">${agg.loginbase}</a> </td>
+		<td nowrap="true"> <a target="_top" href="${link('simpleview', hostname=agg.node.hostname)}" py:content="agg.node.hostname">your.host.org</a></td>
+        <td py:content="agg.node.status">boot</td>
+		<td  id="node-${agg.node.status}" py:content="diff_time(mktime(agg.node.last_changed.timetuple()))"></td>
+		<td nowrap="true" py:content="agg.node.firewall"></td>
     </tr>
 
   </tbody>  
 </table>
-		</td>
-		</tr>
-		</tbody>
-	</table>
 
 </div>
 

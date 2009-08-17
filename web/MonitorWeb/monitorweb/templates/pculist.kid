@@ -32,7 +32,7 @@ from links import *
     
     <tr class='search_area'><td class='search_area' colspan='5'>
         <div class='search'><fieldset>
-            <label class='search_label'> Search </label>                 
+            <label class='search_label'> Refine List</label>                 
             <input class='search_input' type='text' id='pculist_search' 
                    onkeyup='plekit_table_filter("pculist","pculist_search","pculist_search_and");'
                    size='self.search_width' maxlength='256' />                                            
@@ -57,14 +57,14 @@ from links import *
     <tr py:for="i,node in enumerate(query)">
       <td nowrap='true'>
 	<div class='oneline'>
-	  <a class='left' href="${link('pcuview', loginbase=node.loginbase)}">${node.loginbase}</a>
+	  <a class='left' href="${link('simpleview', loginbase=node.loginbase)}">${node.loginbase}</a>
 	  <a class='right' href="${plc_site_uri_id(node.pcu.plc_pcu_stats['site_id'])}">
 	    <img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 	</div>
       </td>
       <td nowrap='true'>
 	<div class='oneline'>
-	  <a class='left' href="${link('pcuview', pcuid=node.pcu.plc_pcuid)}">${pcu_name(node.pcu.plc_pcu_stats)}</a>
+	  <a class='left' href="${link('simpleview', pcuid=node.pcu.plc_pcuid)}">${pcu_name(node.pcu.plc_pcu_stats)}</a>
 	  <a class='right' href="${plc_pcu_uri_id(node.pcu.plc_pcu_stats['pcu_id'])}">
 	    <img style='display: inline' border='0' src="static/images/extlink.gif" align='right'/></a>
 	</div>
@@ -76,10 +76,10 @@ from links import *
       <td width="20%" nowrap='true' align='center' id="status-${node.status}">
 	<div id="links">
 	  <a class="info" py:if="'error' in node.status" 
-	     href="${link('pcuview', pcuid=node.pcu.plc_pcuid)}">
+	     href="${link('simpleview', pcuid=node.pcu.plc_pcuid)}">
 	    Error<span><pre>${node.pcu.reboot_trial_status}</pre></span></a>
 	  <a py:if="'error' not in node.status" 
-	     href="${link('pcuview', pcuid=node.pcu.plc_pcuid)}"
+	     href="${link('simpleview', pcuid=node.pcu.plc_pcuid)}"
 	     py:content="node.status">Reboot Status</a>
 	</div>
       </td>
