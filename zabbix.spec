@@ -290,6 +290,13 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon Aug 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-19
+- Major increment -
+- adds multiple features and web changes
+- adds new fields to db
+- improved layout
+- general improvements otherwise
+
 * Sun Jun 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-18
 - bug fixes.
 - improved templates and views
@@ -418,6 +425,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 18
+%define taglevel 19
 
 %define version 3.0

@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 18
+%define taglevel 19
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -303,6 +303,13 @@ fi
 
 
 %changelog
+* Mon Aug 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-19
+- Major increment -
+- adds multiple features and web changes
+- adds new fields to db
+- improved layout
+- general improvements otherwise
+
 * Sun Jun 28 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-18
 - bug fixes.
 - improved templates and views
