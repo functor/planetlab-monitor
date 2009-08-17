@@ -136,7 +136,7 @@ class NodeConnection:
 			print "Running MANUAL fsck on %s" % self.node
 			cmd = "( touch /tmp/BM_RUNNING ;  " + \
 				  "  fsck -v -f -y /dev/planetlab/root &> out.fsck ; " + \
-				  "  fsck -v -f -y /dev/planetlab/vserver >> out.fsck 2>&1 ; " + \
+				  "  fsck -v -f -y /dev/planetlab/vservers >> out.fsck 2>&1 ; " + \
 				  "  python ./BootManager.py %s &> server.log < /dev/null ; " + \
 				  "  rm -f /tmp/BM_RUNNING " + \
 				  ") &" 
@@ -300,7 +300,7 @@ class PlanetLabSession:
 			print ret
 			if ret != 0:
 				print "\tFAILED TWICE"
-				email_exception("%s rsync failed twice" % self.node)
+				#email_exception("%s rsync failed twice" % self.node)
 				raise ExceptionDoubleSSHError("Failed twice trying to login with updated ssh host key")
 
 		t1 = time.time()
@@ -435,6 +435,7 @@ class DebugInterface:
 
 				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
 				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-protoerror-exception-update-debug-validate-exception-done",
 				"bminit-cfg-auth-getplc-update-debug-done",
 				"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
 				"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
@@ -471,6 +472,7 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-validate-done",
 				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
+				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-debug-validate-bmexceptvgscan-done",
 				]:
 			sequences.update({n : "restart_bootmanager_rins"})
 
@@ -512,7 +514,15 @@ class DebugInterface:
 		# fsck_repair
 		for n in ["bminit-cfg-auth-getplc-update-installinit-validate-fsckabort-exception-fsckfail-bmexceptmount-exception-noinstall-update-debug-validate-fsckabort-exception-fsckfail-bmexceptmount-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-noinstall-update-debug-validate-exception-fsckfail-done",
-				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail-exception-noinstall-update-debug-validate-exception-fsckfail-done"
+				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail-exception-noinstall-update-debug-validate-exception-fsckfail-done",
+				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail2-exception-noinstall-update-debug-validate-exception-fsckfail2-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail2-exception-debug-validate-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail2-exception-debug-validate-exception-fsckfail2-done",
+				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail2-exception-debug-validate-exception-fsckfail2-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail2-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-done",
+				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail-done",
 				]:
 			sequences.update({n : "fsck_repair"})
 
@@ -529,6 +539,7 @@ class DebugInterface:
 		for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
 				   "bminit-cfg-update-exception-nodehostname-update-debug-validate-exception-done",
 				   "bminit-cfg-update-exception-nodehostname-update-debug-done", 
+				   "bminit-cfg-exception-nodehostname-debug-validate-exception-done",
 				]:
 			sequences.update({n : "nodenetwork_email"})
 
@@ -641,6 +652,7 @@ class DebugInterface:
 			('implementerror', 'Implementation Error'),
 			('fsckabort'	, 'is mounted.  e2fsck: Cannot continue, aborting'),
 			('fsckfail'		, 'Running e2fsck -v -p /dev/planetlab/root failed'),
+			('fsckfail2'	, 'Running e2fsck -v -p /dev/planetlab/vservers failed'),
 			('readonlyfs'   , '\[Errno 30\] Read-only file system'),
 			('baddisk'      , "IOError: \[Errno 13\] Permission denied: '/tmp/mnt/sysimg//vservers/\w+/etc/hosts'"),
 			('noinstall'    , 'notinstalled'),
@@ -744,7 +756,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 				log=conn.get_dmesg().read()
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
-				conn.set_nodestate('disabled')
+				#conn.set_nodestate('disabled')
 
 			return False
 
@@ -869,7 +881,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['log'] = conn.get_dmesg().read()
 
 				sitehist.sendMessage('baddisk_notice', **args)
-				conn.set_nodestate('disabled')
+				#conn.set_nodestate('disabled')
 
 		elif sequences[s] == "update_hardware_email":
 			if not found_within(recent_actions, 'minimalhardware_notice', 7):

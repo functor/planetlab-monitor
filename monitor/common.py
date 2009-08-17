@@ -228,7 +228,7 @@ def email_exception(content=None, title=None):
         full_title = "exception running monitor %s" % title
 
     m=Message(full_title, msg, False)
-    m.send([config.cc_email])
+    m.send([config.exception_email])
     return
 
 def changed_lessthan(last_changed, days):

@@ -384,6 +384,11 @@ EOF			""")
 				values['observed_status'] = 'DOWN'
 				values['firewall'] = True
 
+			#if   values['port_status']['22']  == "open" and \
+			#	 values['port_status']['80']  == "closed" and \
+			#	 values['port_status']['806'] == "open" :
+			#	email_exception("%s port 80 blocked" % nodename, "possible VSERVER ref blocked")
+
 		#if not values['external_dns_status']:
 		#	email_exception("%s DNS down" % nodename)
 

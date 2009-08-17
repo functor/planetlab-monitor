@@ -148,7 +148,7 @@ def sync():
 						'longitude', 'max_slices', 'slice_ids', 'node_ids', 
 						'enabled', 'date_created' ])
 	l_nodes = plc.api.GetNodes({'peer_id':None}, 
-						['hostname', 'node_id', 'ports', 'site_id', 'boot_state',
+						['hostname', 'node_id', 'ports', 'site_id', 'boot_state', 'run_level',
 						 'version', 'last_updated', 'date_created', 'key',
 						 'last_contact', 'pcu_ids', 'interface_ids'])
 	l_pcus = plc.api.GetPCUs()

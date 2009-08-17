@@ -19,3 +19,5 @@ ALTER TABLE findbadnoderecord_history ADD COLUMN traceroute varchar DEFAULT NULL
 ALTER TABLE historynoderecord ADD COLUMN firewall boolean DEFAULT false;
 ALTER TABLE historynoderecord_history ADD COLUMN firewall boolean DEFAULT false;
 
+ALTER TABLE historynoderecord ADD COLUMN plc_siteid integer DEFAULT 1;
+ALTER TABLE historynoderecord_history ADD COLUMN plc_siteid integer DEFAULT 1;

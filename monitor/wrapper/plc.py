@@ -142,8 +142,11 @@ def getNodeAPI(session):
 	nodeauth = Auth(session=session)
 	return PLC(nodeauth.auth, auth.server)
 
-def getAuthAPI():
-	return PLC(auth.auth, auth.server)
+def getAuthAPI(url=None):
+	if url:
+		return PLC(auth.auth, url)
+	else:
+		return PLC(auth.auth, auth.server)
 
 def getCachedAuthAPI():
 	return CachedPLC(auth.auth, auth.server)

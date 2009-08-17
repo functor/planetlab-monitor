@@ -71,7 +71,7 @@ We need your help resolving this issue in a few ways:
     that there is a problem with the PCU configuration, we can help you
     resolve that independently.
 
- 2. If it is possible, please correcct the above PCU problem, or let us know
+ 2. If it is possible, please correct the above PCU problem, or let us know
     what steps you are taking.  By enabling us to take administrative actions
     automatically without your intervention, you will save time in the future 
     the next time we need to reboot this machine, because we will be able to 
@@ -125,15 +125,15 @@ This notice is simply to let you know that:
     %(hostname)s
 
 has some ports that appear to be blocked, making the node unusable.  While
-some ports are open, to be a fully functional node, all ports need to be
-accessible at all times.  Please see the following for the list of
-requirements for hosting a node:
+some ports are open, a fully functional node needs all ports accessible at all
+times.  Please see the following for the list of requirements for hosting a
+node:
 
     http://www.planet-lab.org/hosting
 
-The node will be considered 'DOWN' until the ports are unblocked.
+We will consider the node 'DOWN' until the ports are unblocked.
 
-Please investigate, and let us know if there's anything we can do to help get
+Please investigate and let us know if there's anything we can do to help get
 it back on-line.  You can see more information about the current status of
 this host here:
 

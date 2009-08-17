@@ -62,7 +62,7 @@ fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
-${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
+#${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
 ${MONITOR_SCRIPT_ROOT}/syncwithplc.py $DATE || :
 service plc restart monitor
 
@@ -75,7 +75,7 @@ ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 ${MONITOR_SCRIPT_ROOT}/policy.py $DATE
-${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
+#${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
 service plc restart monitor
 curl -s 'http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeview&formatcsv' > /var/lib/monitor/comon/$DATE.comon.csv
 

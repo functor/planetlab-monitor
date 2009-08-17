@@ -18,6 +18,7 @@ class HistoryNodeRecord(Entity):
 	haspcu = Field(Boolean,default=False)
 	firewall = Field(Boolean,default=False)
 	plc_nodeid = Field(Int,default=1)
+	plc_siteid = Field(Int,default=1)
 
 	acts_as_versioned(ignore=['last_changed', 'last_checked'])
 

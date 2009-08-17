@@ -91,6 +91,7 @@ def main(hostnames, sitenames):
 		# if it is offline and HAS a PCU, then try to use it.
 		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
 			changed_greaterthan(nodehist.last_changed,1.0) and \
+			not nodehist.firewall and \
 			not found_between(recent_actions, 'try_reboot', 3.5, 1):
 
 				sitehist.attemptReboot(host)
@@ -100,6 +101,7 @@ def main(hostnames, sitenames):
 		# 		will be false for a day after the above condition is satisfied
 		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
 			changed_greaterthan(nodehist.last_changed,1.5) and \
+			not nodehist.firewall and \
 			found_between(recent_actions, 'try_reboot', 3.5, 1) and \
 			not found_within(recent_actions, 'pcufailed_notice', 3.5):
 				
@@ -108,7 +110,7 @@ def main(hostnames, sitenames):
 				sitehist.sendMessage('pcufailed_notice', hostname=host)
 				print "send message for host %s PCU Failure" % host
 
-		if nodehist.status == 'monitordebug' and \
+		if nodehist.status == 'failboot' and \
 			changed_greaterthan(nodehist.last_changed, 1) and \
 			not found_between(recent_actions, 'bootmanager_restore', 0.5, 0):
 				# send down node notice
@@ -127,7 +129,7 @@ def main(hostnames, sitenames):
 
 				if nodehist.firewall and not found_within(recent_actions, 'firewall_notice', 3.5):
 					# send down node notice
-					email_exception(host, "firewall_notice")
+					#email_exception(host, "firewall_notice")
 					sitehist.sendMessage('firewall_notice', hostname=host)
 					print "send message for host %s down" % host
 

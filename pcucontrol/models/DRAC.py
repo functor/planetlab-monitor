@@ -25,7 +25,7 @@ class DRAC(PCUControl):
 			# Testing Reboot ?
 			#index = s.expect(["DRAC 5", "[%s]#" % self.username ])
 			# NOTE: be careful to escape any characters used by 're.compile'
-			index = s.expect(["\$", "\[%s\]#" % self.username ])
+			index = s.expect(["\$", "\[%s\]#" % self.username, "/.*>" ])
 			print "INDEX:", index
 			print s
 			if dryrun:
@@ -33,12 +33,16 @@ class DRAC(PCUControl):
 					s.sendline("racadm getsysinfo")
 				elif index == 1:
 					s.sendline("getsysinfo")
+				elif index == 2:
+					s.sendline("racadm getsysinfo")
 			else:
 				print "serveraction powercycle"
 				if index == 0:
 					s.sendline("racadm serveraction powercycle")
 				elif index == 1:
 					s.sendline("serveraction powercycle")
+				elif index == 2:
+					s.sendline("racadm serveraction powercycle")
 				
 			# TODO:  this is really lousy.  Without the sleep, the sendlines
 			# don't completely get through.  Even the added, expect line
@@ -47,7 +51,7 @@ class DRAC(PCUControl):
 			# other context...
 			s.send("\r\n\r\n")
 			time.sleep(20)
-			index = s.expect(["\$", "\[%s\]#" % self.username ])
+			index = s.expect(["\$", "\[%s\]#" % self.username, "/.*>" ])
 			print s
 			print "INDEX 2:", index
 			s.sendline("exit")

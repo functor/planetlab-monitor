@@ -40,6 +40,7 @@ def check_node_state(rec, node):
 	if rec.plc_node_stats:
 		print rec.plc_node_stats
 		boot_state = rec.plc_node_stats['boot_state']
+		run_level = rec.plc_node_stats['run_level']
 		last_contact = rec.plc_node_stats['last_contact']
 		node.plc_nodeid = rec.plc_node_stats['node_id']
 	else:
@@ -55,13 +56,12 @@ def check_node_state(rec, node):
 		node.haspcu = False
 
 	node.firewall = rec.firewall
-
+	node.plc_siteid = rec.plc_node_stats['site_id']
 
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state
 	#		'BOOT' is a permanent state, but we want it to have a bit of
 	#			hysteresis (less than 0.5 days)
-
 	#################################################################
 	# "Initialize" the findbad states into nodebad status if they are not already set
 
@@ -80,24 +80,10 @@ def check_node_state(rec, node):
 			node.status = 'offline'
 			node.last_changed = datetime.now()
 			
-
-	#if node_state == 'DOWN' and node.status not in ['offline', 'down', 'disabled']:
-	#	if boot_state != 'disabled':
-	#		print "changed status from %s to offline" % node.status
-	#		node.status = 'offline'
-	#		node.last_changed = datetime.now()
-	#	else:
-	#		print "changed status from %s to %s" % (node.status, boot_state)
-	#		node.status = boot_state
-	#		node.last_changed = datetime.now()
-
-	if node_state == 'DEBUG' and node.status != 'monitordebug' and \
-								 node.status != 'disabled' and \
-								 node.status != 'safeboot':
+	if node_state == 'DEBUG' and node.status not in ['failboot', 'disabled', 'safeboot']:
 		if boot_state != 'disabled' and boot_state != 'safeboot':
-
-			print "changed status from %s to monitordebug" % (node.status)
-			node.status = "monitordebug"
+			print "changed status from %s to failboot" % (node.status)
+			node.status = "failboot"
 			node.last_changed = datetime.now()
 		else:
 			print "changed status from %s to %s" % (node.status, boot_state)
@@ -113,8 +99,8 @@ def check_node_state(rec, node):
 	# Switch temporary hystersis states into their 'firm' states.
 	#	  online -> good		after half a day
 	#	  offline -> down		after two days
-	#	  monitordebug -> down  after 30 days
-	#	  safeboot -> monitordebug after 60 days
+	#	  failboot -> down  after 30 days
+	#	  safeboot -> failboot after 60 days
 	#	  disabled -> down		after 60 days
 
 	if node.status == 'online' and changed_greaterthan(node.last_changed, 0.5):
@@ -127,15 +113,15 @@ def check_node_state(rec, node):
 		node.status = 'down'
 		# NOTE: do not reset last_changed, or you lose how long it's been down.
 
-	if node.status == 'monitordebug' and changed_greaterthan(node.last_changed, 30):
+	if node.status == 'failboot' and changed_greaterthan(node.last_changed, 30):
 		print "changed status from %s to down" % node.status
 		node.status = 'down'
 		# NOTE: do not reset last_changed, or you lose how long it's been down.
 
 	if node.status == 'safeboot' and changed_greaterthan(node.last_changed, 60):
 		print "changed status from %s to down" % node.status
-		# NOTE: change an admin mode back into monitordebug after two months.
-		node.status = 'monitordebug'
+		# NOTE: change an admin mode back into failboot after two months.
+		node.status = 'failboot'
 		node.last_changed = datetime.now()
 
 	# extreme cases of offline nodes

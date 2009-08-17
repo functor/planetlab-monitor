@@ -148,7 +148,7 @@ class SiteInterface(HistorySiteRecord):
 			m = Message(message[0] % args, message[1] % args, viart, self.db.message_id)
 
 			if ccemail:
-				contacts = [config.cc_email]
+				contacts = [config.exception_email]
 			else:
 				contacts = self.getContacts()
 

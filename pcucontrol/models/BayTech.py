@@ -22,6 +22,31 @@ class BayTechRPC3NC(PCUControl):
 		self.transport.close()
 		return 0
 
+class BayTechGeorgeTown(PCUControl):
+	supported_ports = [22,23]
+	def run_telnet(self, node_port, dryrun):
+		return self.run_ssh(node_port, dryrun)
+	def run_ssh(self, node_port, dryrun):
+		# NOTE: The georgetown pcu always drops the first connection, 
+		self.transport.open(self.host, self.username, None, "Enter user name:")
+		self.transport.close()
+		time.sleep(1)
+		self.transport.open(self.host, self.username, None, "Enter user name:")
+		self.transport.sendPassword(self.password, "Enter Password:")
+
+		self.transport.ifThenSend("RPC-16>", "Reboot %d" % node_port)
+
+		# Reboot Outlet  N        (Y/N)?
+		if dryrun:
+			self.transport.ifThenSend("(Y/N)?", "N")
+		else:
+			self.transport.ifThenSend("(Y/N)?", "Y")
+		self.transport.ifThenSend("RPC-16>", "")
+
+		self.transport.close()
+		return 0
+
+
 class BayTechRPC16(PCUControl):
 	supported_ports = [22,23]
 	def run_telnet(self, node_port, dryrun):
