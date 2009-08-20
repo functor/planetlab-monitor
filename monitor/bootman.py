@@ -435,6 +435,7 @@ class DebugInterface:
 
 				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-disk-update4-update3-exception-protoerror-update-debug-done",
 				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-exception-chrootfail-update-debug-done",
+				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-exception-protoerror-protoerror-debug-validate-done",
 				"bminit-cfg-auth-protoerror-exception-update-debug-validate-exception-done",
 				"bminit-cfg-auth-getplc-update-debug-done",
 				"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
@@ -518,23 +519,27 @@ class DebugInterface:
 				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail2-exception-noinstall-update-debug-validate-exception-fsckfail2-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail2-exception-debug-validate-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail2-exception-debug-validate-exception-fsckfail2-done",
+				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail2-exception-debug-validate-exception-fsckfail-done",
+				  "bminit-cfg-auth-getplc-update-installinit-validate-fsckabort-exception-fsckfail-exception-debug-validate-fsckabort-exception-fsckfail-done",
 				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail2-exception-debug-validate-exception-fsckfail2-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail2-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail-done",
 				  "bminit-cfg-auth-getplc-installinit-validate-exception-fsckfail-exception-debug-validate-done",
 				  "bminit-cfg-auth-getplc-update-installinit-validate-exception-fsckfail-exception-debug-validate-exception-fsckfail-done",
+				  "bminit-cfg-auth-getplc-update-debug-validate-exception-fsckfail-done",
 				]:
 			sequences.update({n : "fsck_repair"})
 
-		# update_node_config_email
+		# nodeconfig_notice
 		for n in ["bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-done",
 				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-done",
 				  "bminit-cfg-exception-update-bootupdatefail-nonode-debug-validate-exception-done",
 				  "bminit-cfg-exception-nocfg-update-bootupdatefail-nonode-debug-validate-exception-done",
 				  "bminit-cfg-auth-bootcheckfail-nonode-exception-update-bootupdatefail-nonode-debug-done",
+				  "bminit-cfg-exception-noconfig-nonode-debug-validate-exception-done",
 				  "bminit-cfg-exception-noconfig-update-debug-validate-exception-done",
 				]:
-			sequences.update({n : "update_node_config_email"})
+			sequences.update({n : "nodeconfig_notice"})
 
 		for n in [ "bminit-cfg-exception-nodehostname-update-debug-done", 
 				   "bminit-cfg-update-exception-nodehostname-update-debug-validate-exception-done",
@@ -543,32 +548,37 @@ class DebugInterface:
 				]:
 			sequences.update({n : "nodenetwork_email"})
 
-		# update_bootcd_email
+		# noblockdevice_notice
 		for n in ["bminit-cfg-auth-getplc-update-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
 				"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
 				"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
-				"bminit-cfg-auth-getplc-hardware-exception-hardwarerequirefail-update-debug-done",
+				]:
+			sequences.update({n : "noblockdevice_notice"})
+
+		# update_bootcd_email
+		for n in [ "bminit-cfg-auth-getplc-hardware-exception-hardwarerequirefail-update-debug-done",
 				]:
 			sequences.update({n : "update_bootcd_email"})
 
 		for n in [ "bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-update3-implementerror-nofilereference-update-debug-done",
 				]:
-			sequences.update({n: "suspect_error_email"})
+			sequences.update({n: "unknownsequence_notice"})
 
-		# update_hardware_email
-		sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
-		sequences.update({"bminit-cfg-auth-getplc-hardware-disktoosmall-exception-hardwarerequirefail-update-debug-done" : "update_hardware_email"})
+		# minimalhardware_notice
+		sequences.update({"bminit-cfg-auth-getplc-hardware-exception-disktoosmall-hardwarerequirefail-update-debug-done" : "minimalhardware_notice"})
+		sequences.update({"bminit-cfg-auth-getplc-hardware-disktoosmall-exception-hardwarerequirefail-update-debug-done" : "minimalhardware_notice"})
 
-		# broken_hardware_email
-		sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "broken_hardware_email"})
+		# baddisk_notice
+		sequences.update({"bminit-cfg-auth-getplc-update-hardware-exception-hardwarerequirefail-update-debug-done" : "baddisk_notice"})
 
-		# bad_dns_email
+		# baddns_notice
 		for n in [ 
 		 "bminit-cfg-update-implementerror-bootupdatefail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
 			"bminit-cfg-auth-implementerror-bootcheckfail-dnserror-update-implementerror-bootupdatefail-dnserror-done",
 			]:
-			sequences.update( { n : "bad_dns_email"})
+			sequences.update( { n : "baddns_notice"})
 
 		return sequences
 
@@ -703,6 +713,8 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 	# NOTE: Nothing works if the bootcd is REALLY old.
 	#       So, this is the first step.
 
+	bootman_action = "unknown"
+
 	fbnode = FindbadNodeRecord.get_latest_by(hostname=hostname).to_dict()
 	recent_actions = sitehist.getRecentActions(hostname=hostname)
 
@@ -716,20 +728,20 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			api.UpdateNode(hostname, {'boot_state' : 'disabled'})
 
 		# NOTE: nothing else is possible.
-		return True
+		return "disabled"
 
 	debugnode = DebugInterface(hostname)
 	conn = debugnode.getConnection()
-	if type(conn) == type(False): return False
+	if type(conn) == type(False): return "error"
 
 	boot_state = conn.get_boot_state()
 	if boot_state != "debug":
 		print "... %s in %s state: skipping..." % (hostname , boot_state)
-		return boot_state == "boot"
+		return "skipped" #boot_state == "boot"
 
 	if conn.bootmanager_running():
 		print "...BootManager is currently running.  Skipping host %s" %hostname 
-		return True
+		return "skipped" # True
 
 	# Read persistent flags, tagged on one week intervals.
 
@@ -758,13 +770,13 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
 				#conn.set_nodestate('disabled')
 
-			return False
+			return "skipping_baddisk"
 
 	print "...Downloading bm.log from %s" %hostname 
 	log = conn.get_bootmanager_log()
 	child = fdpexpect.fdspawn(log)
 
-	if hasattr(config, 'collect') and config.collect: return True
+	if hasattr(config, 'collect') and config.collect: return "collect"
 
 	if config and not config.quiet: print "...Scanning bm.log for errors"
 
@@ -800,11 +812,14 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 		conn.restart_bootmanager('boot')
 
+		bootman_action = "restart_bootmanager"
+
 		# NOTE: Do not set the pflags value for this sequence if it's unknown.
 		# This way, we can check it again after we've fixed it.
 		flag_set = False
 
 	else:
+		bootman_action = sequences[s]
 
 		if   sequences[s] == "restart_bootmanager_boot":
 			print "...Restarting BootManager.py on %s "%hostname 
@@ -828,7 +843,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				# there was some failure to synchronize the keys.
 				print "...Unable to repair node keys on %s" %hostname 
 
-		elif sequences[s] == "suspect_error_email":
+		elif sequences[s] == "unknownsequence_notice":
 			args = {}
 			args['hostname'] = hostname
 			args['sequence'] = s
@@ -840,8 +855,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			sitehist.sendMessage('unknownsequence_notice', **args)
 			conn.restart_bootmanager('boot')
 
-		# TODO: differentiate this and the 'nodenetwork_email' actions.
-		elif sequences[s] == "update_node_config_email":
+		elif sequences[s] == "nodeconfig_notice":
 
 			if not found_within(recent_actions, 'nodeconfig_notice', 3.5):
 				args = {}
@@ -858,18 +872,16 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				sitehist.sendMessage('nodeconfig_notice', **args)
 				conn.dump_plconf_file()
 
-		elif sequences[s] == "update_bootcd_email":
+		elif sequences[s] == "noblockdevice_notice":
 
-			if not found_within(recent_actions, 'newalphacd_notice', 3.5):
+			if not found_within(recent_actions, 'noblockdevice_notice', 3.5):
 				args = {}
-				args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
+				#args.update(getconf.getconf(hostname)) # NOTE: Generates boot images for the user:
 				args['hostname'] = hostname
 			
-				sitehist.sendMessage('newalphacd_notice', **args)
+				sitehist.sendMessage('noblockdevice_notice', **args)
 
-				print "\tDisabling %s due to out-of-date BOOTCD" % hostname
-
-		elif sequences[s] == "broken_hardware_email":
+		elif sequences[s] == "baddisk_notice":
 			# MAKE An ACTION record that this host has failed hardware.  May
 			# require either an exception "/minhw" or other manual intervention.
 			# Definitely need to send out some more EMAIL.
@@ -883,7 +895,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				sitehist.sendMessage('baddisk_notice', **args)
 				#conn.set_nodestate('disabled')
 
-		elif sequences[s] == "update_hardware_email":
+		elif sequences[s] == "minimalhardware_notice":
 			if not found_within(recent_actions, 'minimalhardware_notice', 7):
 				print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
 				args = {}
@@ -891,7 +903,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['bmlog'] = conn.get_bootmanager_log().read()
 				sitehist.sendMessage('minimalhardware_notice', **args)
 
-		elif sequences[s] == "bad_dns_email":
+		elif sequences[s] == "baddns_notice":
 			if not found_within(recent_actions, 'baddns_notice', 1):
 				print "...NOTIFYING OWNERS OF DNS FAILURE on %s!!!" % hostname
 				args = {}
@@ -903,7 +915,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 					print traceback.print_exc()
 					# TODO: api error. skip email, b/c all info is not available,
 					# flag_set will not be recorded.
-					return False
+					return "exception"
 				nodenet_str = network_config_to_str(net)
 
 				args['hostname'] = hostname
@@ -912,7 +924,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 				sitehist.sendMessage('baddns_notice', **args)
 
-	return True
+	return bootman_action
 	
 
 # MAIN -------------------------------------------------------------------

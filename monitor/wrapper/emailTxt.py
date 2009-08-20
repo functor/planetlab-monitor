@@ -56,11 +56,29 @@ Thank you very much for your help,
   -- %(plc_name)s (%(support_email)s)
 """)
 
+	pcuerror_notice=("""Please help us configure your PCU: %(pcu_name)s""",
+"""During our standard monitoring of your site we noticed that the following
+PCU is misconfigured:
+
+    %(pcu_name)s
+	%(pcu_errors)s
+You can learn more details about the problem by visiting the link below.
+
+    https://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+
+We would like to save you time by taking care of as many administrative situations for your site's machines as possible without disturbing you.  Errors like these prevent us from being able to remotely administer your machines, and so we must solicit your help using messages like these.
+
+So, any help and time that you can offer now to help us remotely administer your machines will pay off for you in the future.
+
+Thank you very much for your help,
+  -- %(plc_name)s (%(support_email)s)
+""")
+
 	pcufailed_notice =("""Could not use PCU to reboot %(hostname)s""",
 
-"""We tried to use the PCU registered for %(hostname)s, but for some reason 
-the host did not come back online.  You may be able to learn more by visiting
-this link:
+"""We tried to use the PCU registered for %(hostname)s, but for some reason the host did not come back online.  This may be for several reasons, and you can learn more by visiting this link:
+
+    %(pcu_name)s
 
     https://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
 
@@ -219,9 +237,25 @@ Thank you for your help,
   -- %(plc_name)s (%(support_email)s)
 """)
 
+	noblockdevice_notice=("""Cannot Detect Disks on %(hostname)s""", 
+"""As part of PlanetLab node monitoring, we noticed that we were not able to detect any hard disks in your machine.  
+
+    %(hostname)s  
+
+This may be the case for a number of reasons:
+    * the hardware is very new and needs a new driver,
+    * the hardware is very old is no longer supported,
+    * the hard disk was physically removed, 
+    * the hard disk cable is loose or disconnected,
+
+Please help us investigate and let us know if there's anything that we can do to assist in getting your machine up and running again.
+
+Thank you for your help,
+  -- %(plc_name)s (%(support_email)s)
+""")
 
 	newalphacd_notice=("""New Boot Images for %(hostname)s""", 
-"""As part of PlanetLab node monitoring, we noticed that we were not able to recognize all the hardware in your machine.  This means that it is so new that it needs a new BootCD, or that it is so old that it is no longer supported.
+"""As part of PlanetLab node monitoring, we noticed that we were not able to recognize all the hardware in your machine.  This means that either it is so new that it needs a new BootCD, or that it is so old that it is no longer supported.
 
     %(hostname)s  
 

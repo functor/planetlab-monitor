@@ -26,17 +26,17 @@ def zabbix_event_ack_link(eventid):
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table id="sortable_table" class="datagrid" border="1" width="100%">
+		<table id="actionsummarylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionsummarylist_paginator max-pages-10 paginate-50" >
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
-					<th>Notice Name</th>
-					<th>Count</th>
+					<th class="sortable plekit_table">Type</th>
+					<th class="sortable plekit_table">Notice Name</th>
+					<th class="sortable plekit_table">Count</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="key in results.keys()">
-					<td></td>
+					<td nowrap="true" py:content="'bootman' in key and 'bootmanager' or ( 'notice' in key and 'notice' or ( 'penalty' in key and 'penalty' or 'unknown' ) ) "></td>
 					<td nowrap="true"><a href="actionlist?action_type=${key}" py:content="key"></a></td>
 					<td nowrap='true' py:content="results[key]"></td>
 				</tr>

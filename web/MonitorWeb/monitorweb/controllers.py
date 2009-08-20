@@ -9,8 +9,6 @@ import cherrypy
 import re
 from monitor.database.info.model import *
 #from monitor.database.zabbixapi.model import *
-#from monitor.database.dborm import zab_session as session
-#from monitor.database.dborm import zab_metadata as metadata
 from monitor_xmlrpc import MonitorXmlrpcServer
 
 from monitor import reboot
@@ -795,6 +793,14 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 		types = filter(lambda x: 'notice' in x, dir(mailtxt))
 		results = {}
+
+		print mon_metadata.bind
+		if session.bind is None:
+			#TODO: figure out why this value gets cleared out...
+			session.bind = mon_metadata.bind
+		result = session.execute("select distinct(action_type) from actionrecord;")
+
+		types = [r[0] for r in result]
 
 		try: since = int(since)
 		except: since = 7

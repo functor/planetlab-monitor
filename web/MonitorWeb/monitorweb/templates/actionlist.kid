@@ -18,9 +18,9 @@ def zabbix_event_ack_link(eventid):
   	<table width="100%">
 		<thead>
 			<tr>
-				<th><a href="${link('actionlist', action_type='online_notice', since=1)}">Last Day</a></th>
-				<th><a href="${link('actionlist', action_type='online_notice', since=7)}">Last Week</a></th>
-				<th><a href="${link('actionlist', action_type='online_notice', since=30)}">Last Month</a></th>
+				<th><a href="${link('actionlist', action_type=action_type, since=1)}">Last Day</a></th>
+				<th><a href="${link('actionlist', action_type=action_type, since=7)}">Last Week</a></th>
+				<th><a href="${link('actionlist', action_type=action_type, since=30)}">Last Month</a></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -30,20 +30,19 @@ def zabbix_event_ack_link(eventid):
 		<p py:if="actions and len(actions) == 0">
 			There are no recent actions taken for this site.
 		</p>
-		<table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
+		<table id="actionlist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionlist_paginator max-pages-10 paginate-50" py:if="actions and len(actions) > 0">
+		<!--table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%"-->
 			<thead>
 				<tr>
-					<th mochi:format="int"></th>
-					<th>Date</th>
-					<th>Action taken on</th>
-					<th>Action Type</th>
-					<th>Message ID</th>
-					<th>Errors</th>
+					<th class="sortable plekit_table">Date</th>
+					<th class="sortable plekit_table">Action taken on</th>
+					<th class="sortable plekit_table">Action Type</th>
+					<th class="sortable plekit_table">Message ID</th>
+					<th class="sortable plekit_table">Errors</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
 					<td py:content="act.date_created"></td>
 					<td py:if="act.hostname is not None" nowrap="true" >
 						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
@@ -58,7 +57,7 @@ def zabbix_event_ack_link(eventid):
 					<td><a class="ext-link" href="${plc_mail_uri(act.message_id)}">
 							<span py:if="act.message_id != 0" class="icon">${act.message_id}</span></a></td>
 					<td py:if="'bootmanager' in act.action_type or 'unknown' in act.action_type">
-						<a href="/monitorlog/bm.${act.hostname}.log">latest bm log</a>
+						<a href="/monitorlog/bm.${act.hostname}.log">bm log before action</a>
 					</td>
 					<td py:if="'bootmanager' not in act.action_type">
 						<pre py:content="act.error_string"></pre></td>

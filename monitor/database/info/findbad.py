@@ -5,6 +5,7 @@ from datetime import datetime,timedelta
 import elixir
 import traceback
 from elixir.ext.versioned import *
+from pcucontrol import reboot
 
 from monitor.database.dborm import mon_metadata, mon_session
 __metadata__ = mon_metadata
@@ -76,6 +77,68 @@ class FindbadPCURecord(Entity):
 	@classmethod
 	def get_latest_by(cls, **kwargs):
 		return cls.query.filter_by(**kwargs).first()
+
+	def pcu_name(self):
+		if self.plc_pcu_stats['hostname'] is not None and self.plc_pcu_stats['hostname'] is not "":
+			return self.plc_pcu_stats['hostname']
+		elif self.plc_pcu_stats['ip'] is not None and self.plc_pcu_stats['ip'] is not "":
+			return self.plc_pcu_stats['ip']
+		else:
+			return None
+
+	def format_ports(self):
+		retval = []
+		filtered_length=0
+
+		supported_ports=reboot.model_to_object(self.plc_pcu_stats['model']).supported_ports
+		data = self.port_status.copy()
+
+		if data and len(data.keys()) > 0 :
+			for port in supported_ports:
+				try:
+					state = data[str(port)]
+				except:
+					state = "unknown"
+
+				if state == "filtered":
+					filtered_length += 1
+					
+				retval.append( (port, state) )
+
+		if retval == []: 
+			retval = [( "Closed/Filtered", "" )]
+
+		if filtered_length == len(supported_ports):
+			retval = [( "All Filtered", "" )]
+
+		return retval
+
+	def format_pcu_shortstatus(self):
+		status = "error"
+		if self.reboot_trial_status:
+			if self.reboot_trial_status == str(0):
+				status = "Ok"
+			elif self.reboot_trial_status == "NetDown" or self.reboot_trial_status == "Not_Run":
+				status = self.reboot_trial_status
+			else:
+				status = "error"
+
+		return status
+
+	def test_is_ok(self):
+		if self.reboot_trial_status == str(0):
+			return True
+		else:
+			return False
+
+	def pcu_errors(self):
+		message = "\n"
+		message += "\tModel: %s\n" % self.plc_pcu_stats['model']
+		message += "\tMissing Fields: %s\n" % ( self.entry_complete == "" and "None missing" or self.entry_complete )
+		message += "\tDNS Status: %s\n" % self.dns_status
+		message += "\tPort Status: %s\n" % self.format_ports()
+		message += "\tTest Results: %s\n" % self.format_pcu_shortstatus()
+		return message
 
 # ACCOUNTING
 	date_checked = Field(DateTime)

@@ -94,8 +94,30 @@ def main(hostnames, sitenames):
 			not nodehist.firewall and \
 			not found_between(recent_actions, 'try_reboot', 3.5, 1):
 
+				# TODO: there MUST be a better way to do this... 
+				# get fb node record for pcuid
+				fbpcu = None
+				fbnode = FindbadNodeRecord.get_latest_by(hostname=host)
+				if fbnode:
+					fbpcu = FindbadPCURecord.get_latest_by(plc_pcuid=fbnode.plc_pcuid)
+
 				sitehist.attemptReboot(host)
 				print "send message for host %s try_reboot" % host
+				if not fbpcu.test_is_ok() and \
+					not found_within(recent_actions, 'pcuerror_notice', 3.0):
+
+					args = {}
+					if fbpcu:
+						args['pcu_name'] = fbpcu.pcu_name()
+						args['pcu_errors'] = fbpcu.pcu_errors()
+					else:
+						args['pcu_name'] = "error looking up pcu name"
+						args['pcu_errors'] = ""
+
+					args['hostname'] = host
+					sitehist.sendMessage('pcuerror_notice', **args)
+					print "send message for host %s PCU Failure" % host
+					
 
 		# NOTE: non-intuitive is that found_between(try_reboot, 3.5, 1)
 		# 		will be false for a day after the above condition is satisfied
@@ -105,13 +127,24 @@ def main(hostnames, sitenames):
 			found_between(recent_actions, 'try_reboot', 3.5, 1) and \
 			not found_within(recent_actions, 'pcufailed_notice', 3.5):
 				
+				# TODO: there MUST be a better way to do this... 
+				# get fb node record for pcuid
+				fbpcu = None
+				fbnode = FindbadNodeRecord.get_latest_by(hostname=host)
+				if fbnode:
+					fbpcu = FindbadPCURecord.get_latest_by(plc_pcuid=fbnode.plc_pcuid)
+				if fbpcu:
+					pcu_name = fbpcu.pcu_name()
+				else:
+					pcu_name = "error looking up pcu name"
+
+				# get fb pcu record for pcuid
 				# send pcu failure message
-				#act = ActionRecord(**kwargs)
-				sitehist.sendMessage('pcufailed_notice', hostname=host)
+				sitehist.sendMessage('pcufailed_notice', hostname=host, pcu_name=pcu_name)
 				print "send message for host %s PCU Failure" % host
 
 		if nodehist.status == 'failboot' and \
-			changed_greaterthan(nodehist.last_changed, 1) and \
+			changed_greaterthan(nodehist.last_changed, 0.25) and \
 			not found_between(recent_actions, 'bootmanager_restore', 0.5, 0):
 				# send down node notice
 				# delay 0.5 days before retrying...

@@ -79,15 +79,19 @@ def check_node_state(rec, node):
 			print "changed status from %s to offline" % node.status
 			node.status = 'offline'
 			node.last_changed = datetime.now()
-			
-	if node_state == 'DEBUG' and node.status not in ['failboot', 'disabled', 'safeboot']:
+
+	if node_state == 'DEBUG':
 		if boot_state != 'disabled' and boot_state != 'safeboot':
 			print "changed status from %s to failboot" % (node.status)
-			node.status = "failboot"
-			node.last_changed = datetime.now()
+			current_status = "failboot"
 		else:
 			print "changed status from %s to %s" % (node.status, boot_state)
-			node.status = boot_state
+			current_status = boot_state
+
+		if current_status != node.status and \
+			current_status in ['failboot', 'disabled', 'safeboot']:
+
+			node.status = current_status
 			node.last_changed = datetime.now()
 
 	if node_state == 'BOOT' and node.status != 'online' and node.status != 'good':

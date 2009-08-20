@@ -1,11 +1,13 @@
 
-from monitor import reboot
 from monitor.common import *
 from monitor.model import *
 from monitor.wrapper import plc
 from monitor.wrapper import plccache
 from monitor.wrapper.emailTxt import mailtxt
 from monitor.database.info.model import *
+# NOTE: must import this after monitor.database.info.model b/c that imports
+# 	pcucontro.reboot and blocks this version, if it comes last.
+from monitor import reboot
 
 class SiteInterface(HistorySiteRecord):
 	@classmethod
@@ -183,7 +185,7 @@ class SiteInterface(HistorySiteRecord):
 	def runBootManager(self, hostname):
 		from monitor import bootman
 		print "attempting BM reboot of %s" % hostname
-		ret = ""
+		ret = "error"
 		try:
 			ret = bootman.restore(self, hostname)
 			err = ""
@@ -191,10 +193,18 @@ class SiteInterface(HistorySiteRecord):
 			err = traceback.format_exc()
 			print err
 
+		# TODO: keep this record so that the policy.py can identify all
+		# 		bootmanager_* actions without explicitly listing every kind.
 		act = ActionRecord(loginbase=self.db.loginbase,
 							hostname=hostname,
 							action='reboot',
 							action_type='bootmanager_restore',
+							error_string="")
+
+		act = ActionRecord(loginbase=self.db.loginbase,
+							hostname=hostname,
+							action='reboot',
+							action_type='bootmanager_' + ret,
 							error_string=err)
 		return ret
 
