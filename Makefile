@@ -8,7 +8,7 @@ SPECFILE = zabbix.spec
 #main.URL	:= http://build.planet-lab.org/third-party/zabbix-1.6.2.tar.gz
 #main.SHA1SUM	:= 575c443adec1703c2c242dbf353de9dc3bb4cafb
 main.URL	:= http://build.planet-lab.org/third-party/zabbix-1.6.5.tar.gz
-main.SHA1SUM	:= d8c3dababcfc0bbcf737a2b13cca337c
+main.SHA1SUM	:= b4a224cd9037911c1e68799a13518896de675d3d
 main.FILE	:= $(notdir $(main.URL))
 
 # Thierry - when called from within the build, PWD is /build
