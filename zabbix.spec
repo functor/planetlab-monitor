@@ -3,7 +3,7 @@
 %define _prefix		/usr/local/zabbix
 
 Name:		zabbix
-Version:	1.6.2
+Version:	1.6.5
 Release:	1
 Group:		System Environment/Daemons
 License:	GPL
