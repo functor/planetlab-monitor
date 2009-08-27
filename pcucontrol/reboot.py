@@ -57,7 +57,11 @@ class PCU(object):
 						'pcu_id', 'model', 
 						'node_ids', 'ports', ]:
 			if field in plc_pcu_dict:
-				self.__setattr__(field, plc_pcu_dict[field])
+				if type(u"") == type(plc_pcu_dict[field]):
+					# NOTE: if is a unicode string, convert it.
+					self.__setattr__(field, str(plc_pcu_dict[field]))
+				else:
+					self.__setattr__(field, plc_pcu_dict[field])
 			else:
 				raise Exception("No such field %s in PCU object" % field)
 
@@ -327,8 +331,8 @@ class PCUControl(PCUModel,PCURecord):
 			traceback.print_exc()
 			return "EOF connection reset" + str(err)
 		except Exception, err:
-			from monitor.common import email_exception
-			email_exception(self.host)
+			#from monitor.common import email_exception
+			#email_exception(self.host)
 			raise Exception(err)
 
 from pcucontrol.util import command

@@ -77,8 +77,8 @@ class CMD:
 			print "Interrupted, exiting..."
 			sys.exit(1)
 		except Exception, err:
-			from monitor.common import email_exception
-			email_exception()
+			#from monitor.common import email_exception
+			#email_exception()
 			return ("", str(err))
 			
 	def system(self, cmd, timeout=COMMAND_TIMEOUT*2):
