@@ -45,8 +45,9 @@ def zabbix_event_ack_link(eventid):
 				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
 					<td py:content="act.date_created"></td>
 					<td py:if="act.hostname is not None" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
-							<span class="icon">${act.hostname}</span></a>
+						<!--a class="ext-link" href="${plc_node_uri(act.hostname)}">
+							<span class="icon">${act.hostname}</span></a-->
+						<a href="${link('detailview', hostname=act.hostname)}">${act.hostname}</a>
 					</td>
 					<td py:if="act.hostname is None" nowrap="true">
 						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
