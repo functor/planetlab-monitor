@@ -1,5 +1,5 @@
 import turbogears as tg
-from turbogears import controllers, expose, flash, exception_handler
+from turbogears import controllers, expose, flash, exception_handler, redirect
 from turbogears import widgets
 from cherrypy import request, response
 import cherrypy
@@ -7,6 +7,7 @@ import cherrypy
 # import logging
 # log = logging.getLogger("monitorweb.controllers")
 import re
+import os
 from monitor.database.info.model import *
 #from monitor.database.zabbixapi.model import *
 from monitor_xmlrpc import MonitorXmlrpcServer
@@ -37,9 +38,16 @@ class NodeQueryFields(widgets.WidgetsList):
 
 	hostname = widgets.CheckBox(label="Hostname")
 	firewall = widgets.CheckBox(label="Firewall?")
+	ssh_status = widgets.CheckBox(label="SSH Status")
+	ssh_error = widgets.CheckBox(label="SSH Errors")
 	dns_status = widgets.CheckBox(label="DNS Status")
+	nm_status = widgets.CheckBox(label="NM Status")
+	princeton_comon_dir = widgets.CheckBox(label="CoMon Dir")
+	princeton_comon_running = widgets.CheckBox(label="CoMon Running")
+	princeton_comon_procs = widgets.CheckBox(label="CoMon Processes")
 	external_dns_status = widgets.CheckBox(label="Hostname Resolves?")
 	kernel_version = widgets.CheckBox(label="Kernel")
+	bootcd_version = widgets.CheckBox(label="BootCD")
 	observed_status = widgets.CheckBox(label="Observed Status")
 	port_status = widgets.CheckBox(label="Port Status")
 	rpms = widgets.CheckBox(label="RPM")
@@ -268,8 +276,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 
 		return dict(now=time.ctime(), query=rquery)
 
-	@expose(template="monitorweb.templates.nodelist", allow_json=True)
-	def node2(self, filter=None):
+	def node_query(self, filter):
 		nhquery = HistoryNodeRecord.query.all()
 		query = []
 		for nh in nhquery:
@@ -284,10 +291,18 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 			fb = FindbadNodeRecord.get_latest_by(hostname=q.hostname)
 			agg = prep_node_for_display(fb)
 			rquery.append(agg)
+		return rquery
 
+	@expose("cheetah:monitorweb.templates.nodelist_plain", as_format="plain", 
+		accept_format="text/plain", content_type="text/plain")
+	@expose(template="monitorweb.templates.nodelist", allow_json=True)
+	def node2(self, filter=None):
+		rquery=self.node_query(filter)
 		widget = NodeWidget(template='monitorweb.templates.node_template')
 		return dict(now=time.ctime(), query=rquery, nodewidget=widget)
 
+	@expose("cheetah:monitorweb.templates.query_plain", as_format="plain", 
+		accept_format="text/plain", content_type="text/plain")
 	@expose(template="monitorweb.templates.query", allow_json=True)
 	def query(self, **data):
 		query = []
@@ -313,6 +328,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				else:
 					agg = node.to_dict()
 				agg.update(agg['plc_node_stats'])
+				if agg['kernel_version']:
+					agg['kernel_version'] = agg['kernel_version'].split()[2]
 				if 'rpmvalue' in data and 'rpms' in data:
 					if agg['rpms']:
 						rpm_list = agg['rpms'].split()
@@ -828,3 +845,24 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		query = [ a for a in acts ]
 		
 		return dict(actions=query, action_type=action_type, since=since)
+
+	@cherrypy.expose()
+	def upload(self, log, **keywords):
+		print "got data"
+		data = log.file.read()
+		target_file_name = os.path.join(os.getcwd(), log.filename)
+		# open file in binary mode for writing
+
+		f = open(target_file_name, 'wb')
+		print "write data"
+		f.write(data)
+		f.close()
+
+		#flash("File uploaded successfully: %s saved as: %s" \
+		#  		% (upload_file.filename, target_file_name))
+		#u = UploadedFile(filename=upload_file.filename,
+		#  abspath=target_file_name, size=0)
+		print "redirecting "
+
+		#redirect("monitor")
+		return dict()
