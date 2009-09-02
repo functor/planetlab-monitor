@@ -2,8 +2,6 @@
 
 # Attempt to reboot a node in debug state.
 
-
-
 import os
 import sys
 import time
@@ -14,7 +12,6 @@ import subprocess
 from sets import Set
 
 from monitor.getsshkeys import SSHKnownHosts
-
 from monitor.Rpyc import SocketConnection, Async
 from monitor.Rpyc.Utils import *
 
@@ -36,11 +33,33 @@ from pcucontrol.transports.ssh import pxssh as pxssh
 from pcucontrol.transports.ssh import fdpexpect as fdpexpect
 from pcucontrol.transports.ssh import pexpect as pexpect
 
-
-
 api = plc.getAuthAPI()
 fb = None
 
+def bootmanager_log_name(hostname):
+	t_stamp = time.strftime("%Y-%m-%d-%H:%M")
+	base_filename = "%s-bm.%s.log" % (t_stamp, hostname)
+	short_target_filename = os.path.join('history', base_filename)
+	return short_target_filename
+
+def bootmanager_log_action(hostname, short_log_path, logtype="bm.log"):
+	try:
+		node = FindbadNodeRecord.get_latest_by(hostname=hostname)
+		loginbase = PlcSite.query.get(node.plc_node_stats['site_id']).plc_site_stats['login_base']
+		err = ""
+	except:
+		loginbase = "unknown"
+		err = traceback.format_exc()
+
+	act = ActionRecord(loginbase=loginbase,
+						hostname=hostname,
+						action='log',
+						action_type=logtype,
+						log_path=short_log_path,
+						error_string=err)
+	session.flush(); session.clear()
+	return
+	
 
 class ExceptionDoubleSSHError(Exception): pass
 
@@ -76,9 +95,10 @@ class NodeConnection:
 		return log
 
 	def get_bootmanager_log(self):
-		t_stamp = time.strftime("%Y-%m-%d-%H:%M")
-		download(self.c, "/tmp/bm.log", "%s/history/%s-bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node))
-		os.system("cp %s/history/%s-bm.%s.log %s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, t_stamp, self.node, config.MONITOR_BOOTMANAGER_LOG, self.node))
+		bm_name = bootmanager_log_name(self.node)
+		download(self.c, "/tmp/bm.log", "%s/%s" % (config.MONITOR_BOOTMANAGER_LOG, bm_name))
+		bootmanager_log_action(self.node, bm_name, "collected_bm.log")
+		os.system("cp %s/%s %s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, bm_name, config.MONITOR_BOOTMANAGER_LOG, self.node))
 		log = open("%s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, self.node), 'r')
 		return log
 
@@ -255,13 +275,12 @@ class PlanetLabSession:
 		self.setup_host()
 
 	def get_connection(self, config):
-		conn = NodeConnection(SocketConnection("localhost", self.port), self.node, config)
-		#i = 0
-		#while i < 3: 
-		#	print i, conn.c.modules.sys.path
-		#	print conn.c.modules.os.path.exists('/tmp/source')
-		#	i+=1
-		#	time.sleep(1)
+		try:
+			conn = NodeConnection(SocketConnection("localhost", self.port), self.node, config)
+		except:
+			# NOTE: try twice since this can sometimes fail the first time. If
+			# 		it fails again, let it go.
+			conn = NodeConnection(SocketConnection("localhost", self.port), self.node, config)
 		return conn
 	
 	def setup_host(self):
@@ -438,12 +457,14 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-exception-protoerror-protoerror-debug-validate-done",
 				"bminit-cfg-auth-protoerror-exception-update-debug-validate-exception-done",
 				"bminit-cfg-auth-getplc-update-debug-done",
+				"bminit-cfg-auth-protoerror2-debug-done",
 				"bminit-cfg-auth-getplc-exception-protoerror-update-protoerror-debug-done",
 				"bminit-cfg-auth-protoerror-exception-update-protoerror-debug-done",
 				"bminit-cfg-auth-protoerror-exception-update-bootupdatefail-authfail-debug-done",
 				"bminit-cfg-auth-protoerror-exception-update-debug-done",
 				"bminit-cfg-auth-getplc-exception-protoerror-update-debug-done",
 				"bminit-cfg-auth-getplc-implementerror-update-debug-done",
+				"bminit-cfg-auth-authfail2-protoerror2-debug-done",
 				]:
 			sequences.update({n : "restart_bootmanager_boot"})
 
@@ -474,6 +495,7 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-noinstall-update-debug-validate-done",
 				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-update-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-debug-validate-bmexceptvgscan-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-debug-validate-bmexceptvgscan-done",
 				]:
 			sequences.update({n : "restart_bootmanager_rins"})
 
@@ -482,6 +504,8 @@ class DebugInterface:
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-bootupdatefail-authfail-debug-done",
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-update-debug-validate-exception-done",
 					"bminit-cfg-auth-bootcheckfail-authfail-exception-authfail-debug-validate-exception-done",
+					"bminit-cfg-auth-authfail-debug-done",
+					"bminit-cfg-auth-authfail2-authfail-debug-done",
 				]:
 			sequences.update({n: "repair_node_keys"})
 
@@ -554,6 +578,8 @@ class DebugInterface:
 				"bminit-cfg-auth-getplc-hardware-exception-noblockdev-hardwarerequirefail-update-debug-done",
 				"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
 				"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-update-debug-done",
+				"bminit-cfg-auth-getplc-hardware-noblockdev-exception-hardwarerequirefail-debug-validate-bmexceptvgscan-done",
+				"bminit-cfg-auth-getplc-update-hardware-noblockdev-exception-hardwarerequirefail-debug-validate-bmexceptvgscan-done",
 				]:
 			sequences.update({n : "noblockdevice_notice"})
 
@@ -586,7 +612,7 @@ class DebugInterface:
 		steps = [
 			('scsierror'  , 'SCSI error : <\d+ \d+ \d+ \d+> return code = 0x\d+'),
 			('ioerror'    , 'end_request: I/O error, dev sd\w+, sector \d+'),
-			('ccisserror' , 'cciss: cmd \w+ has CHECK CONDITION  byte \w+ = \w+'),
+			('ccisserror' , 'cciss: cmd \w+ has CHECK CONDITION'),
 
 			('buffererror', 'Buffer I/O error on device dm-\d, logical block \d+'),
 
@@ -657,6 +683,7 @@ class DebugInterface:
 			('bmexceptrmfail', 'Unable to remove directory tree: /tmp/mnt'),
 			('exception'	, 'Exception'),
 			('nocfg'        , 'Found configuration file planet.cnf on floppy, but was unable to parse it.'),
+			('protoerror2'  , '500 Internal Server Error'),
 			('protoerror'   , 'XML RPC protocol error'),
 			('nodehostname' , 'Configured node hostname does not resolve'),
 			('implementerror', 'Implementation Error'),
@@ -682,8 +709,9 @@ class DebugInterface:
 			('nospace'      , "No space left on device"),
 			('nonode'       , 'Failed to authenticate call: No such node'),
 			('authfail'     , 'Failed to authenticate call: Call could not be authenticated'),
-			('bootcheckfail'     , 'BootCheckAuthentication'),
-			('bootupdatefail'   , 'BootUpdateNode'),
+			('authfail2'    , 'Authentication Failed'),
+			('bootcheckfail'  , 'BootCheckAuthentication'),
+			('bootupdatefail' , 'BootUpdateNode'),
 		]
 		return steps
 
@@ -732,7 +760,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 	debugnode = DebugInterface(hostname)
 	conn = debugnode.getConnection()
-	if type(conn) == type(False): return "error"
+	if type(conn) == type(False): return "connect_failed"
 
 	boot_state = conn.get_boot_state()
 	if boot_state != "debug":
@@ -838,10 +866,17 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				# the keys either are in sync or were forced in sync.
 				# so try to start BM again.
 				conn.restart_bootmanager(conn.get_nodestate())
-				pass
 			else:
 				# there was some failure to synchronize the keys.
 				print "...Unable to repair node keys on %s" %hostname 
+				if not found_within(recent_actions, 'nodeconfig_notice', 3.5):
+					args = {}
+					args['hostname'] = hostname
+					sitehist.sendMessage('nodeconfig_notice', **args)
+					conn.dump_plconf_file()
+				else:
+					# NOTE: do not add a new action record
+					return ""
 
 		elif sequences[s] == "unknownsequence_notice":
 			args = {}
@@ -862,6 +897,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['hostname'] = hostname
 				sitehist.sendMessage('nodeconfig_notice', **args)
 				conn.dump_plconf_file()
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 		elif sequences[s] == "nodenetwork_email":
 
@@ -871,6 +909,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['bmlog'] = conn.get_bootmanager_log().read()
 				sitehist.sendMessage('nodeconfig_notice', **args)
 				conn.dump_plconf_file()
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 		elif sequences[s] == "noblockdevice_notice":
 
@@ -880,6 +921,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['hostname'] = hostname
 			
 				sitehist.sendMessage('noblockdevice_notice', **args)
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 		elif sequences[s] == "baddisk_notice":
 			# MAKE An ACTION record that this host has failed hardware.  May
@@ -894,6 +938,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 				sitehist.sendMessage('baddisk_notice', **args)
 				#conn.set_nodestate('disabled')
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 		elif sequences[s] == "minimalhardware_notice":
 			if not found_within(recent_actions, 'minimalhardware_notice', 7):
@@ -902,6 +949,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['hostname'] = hostname
 				args['bmlog'] = conn.get_bootmanager_log().read()
 				sitehist.sendMessage('minimalhardware_notice', **args)
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 		elif sequences[s] == "baddns_notice":
 			if not found_within(recent_actions, 'baddns_notice', 1):
@@ -923,6 +973,9 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				args['interface_id'] = net['interface_id']
 
 				sitehist.sendMessage('baddns_notice', **args)
+			else:
+				# NOTE: do not add a new action record
+				return ""
 
 	return bootman_action
 	

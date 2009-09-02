@@ -112,6 +112,8 @@ class ActionRecord(Entity):
 	# NOTE: in case an exception is thrown while trying to perform an action.
 	error_string = Field(String, default=None)
 
+	log_path = Field(String, default=None)
+
 	#issue = ManyToOne('IssueRecord')
 	# NOTE: this is the parent relation to fb records.  first create the
 	# action record, then append to this value all of the findbad records we

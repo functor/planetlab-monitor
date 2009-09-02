@@ -24,7 +24,7 @@ def loadFile(file):
 	return buf
 
 def dumpFile(file, buf):
-	f = open(file, 'w')
+	f = open(file, 'wb')
 	f.write(buf)
 	f.close()
 	return

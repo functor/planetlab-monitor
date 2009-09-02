@@ -3,6 +3,9 @@ __all__=["writepid","removepid","daemonize"]
 import time
 import math
 
+# import local file.py
+import file
+
 def diff_time(timestamp, abstime=True):
 	now = time.time()
 	if timestamp == None:

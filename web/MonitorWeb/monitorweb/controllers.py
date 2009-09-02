@@ -12,8 +12,11 @@ from monitor.database.info.model import *
 #from monitor.database.zabbixapi.model import *
 from monitor_xmlrpc import MonitorXmlrpcServer
 
+from monitor import util
 from monitor import reboot
+from monitor import bootman
 from monitor import scanapi
+from monitor import config
 import time
 
 from monitor.wrapper.plccache import plcdb_hn2lb as site_hn2lb
@@ -173,6 +176,9 @@ def prep_pcu_for_display(pcu):
 	elif pcu.dns_status == "DNS-MISMATCH":
 		agg.dns_short_status = 'Mismatch'
 	return agg
+
+class ActionListWidget(widgets.Widget):
+	pass
 
 class NodeWidget(widgets.Widget):
 	pass
@@ -578,7 +584,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				for pcuid_key in pcus:
 					pcuquery += [pcus[pcuid_key]]
 
-		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions_list, since=since, exceptions=exceptions)
+		actionlist_widget = ActionListWidget(template='monitorweb.templates.actionlist_template')
+		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions_list, actionlist_widget=actionlist_widget, since=since, exceptions=exceptions)
 
 
 	# TODO: add form validation
@@ -829,40 +836,46 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		return dict(results=results)
 
 	@expose(template="monitorweb.templates.actionlist")
-	def actionlist(self, action_type='down_notice', since=7, loginbase=None):
+	def actionlist(self, since=7, action_type=None, loginbase=None):
 
 		try: since = int(since)
 		except: since = 7
 
+		acts_query = ActionRecord.query.filter(
+					  ActionRecord.date_created >= datetime.now() - timedelta(since)
+					 )
 		if loginbase:
-			acts = ActionRecord.query.filter_by(loginbase=loginbase
-				).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
-				).order_by(ActionRecord.date_created.desc())
-		else:
-			acts = ActionRecord.query.filter(ActionRecord.action_type==action_type
-				).filter(ActionRecord.date_created >= datetime.now() - timedelta(since)
-				).order_by(ActionRecord.date_created.desc())
+			acts_query = acts_query.filter_by(loginbase=loginbase)
+
+		if action_type:
+			acts_query = acts_query.filter(ActionRecord.action_type==action_type)
+
+		acts = acts_query.order_by(ActionRecord.date_created.desc())
+
 		query = [ a for a in acts ]
 		
 		return dict(actions=query, action_type=action_type, since=since)
 
 	@cherrypy.expose()
 	def upload(self, log, **keywords):
-		print "got data"
-		data = log.file.read()
-		target_file_name = os.path.join(os.getcwd(), log.filename)
-		# open file in binary mode for writing
+		hostname = None
+		logtype = None
+		logtype_list = ['bm.log', ]
 
-		f = open(target_file_name, 'wb')
-		print "write data"
-		f.write(data)
-		f.close()
+		if 'hostname' in keywords:
+			hostname = keywords['hostname']
+		if 'type' in keywords and keywords['type'] in logtype_list:
+			logtype = keywords['type']
 
-		#flash("File uploaded successfully: %s saved as: %s" \
-		#  		% (upload_file.filename, target_file_name))
-		#u = UploadedFile(filename=upload_file.filename,
-		#  abspath=target_file_name, size=0)
-		print "redirecting "
+		if not hostname: return ""
+		if not logtype: return "unknown logtype: %s" % logtype 
 
-		#redirect("monitor")
+		short_target_filename = bootman.bootmanager_log_name(hostname)
+		abs_target_filename = os.path.join(config.MONITOR_BOOTMANAGER_LOG, short_target_filename)
+		print "write data: %s" % abs_target_filename
+		util.file.dumpFile(abs_target_filename, log.file.read())
+		bootman.bootmanager_log_action(hostname, short_target_filename, logtype)
+
+		print "redirecting 3"
+
 		return dict()

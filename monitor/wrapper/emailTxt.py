@@ -66,6 +66,10 @@ You can learn more details about the problem by visiting the link below.
 
     https://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
 
+If you need to change the PCU configuration in the PLC database:
+
+    https://%(plc_hostname)s/db/sites/pcu.php?id=%(plc_pcuid)s
+
 We would like to save you time by taking care of as many administrative situations for your site's machines as possible without disturbing you.  Errors like these prevent us from being able to remotely administer your machines, and so we must solicit your help using messages like these.
 
 So, any help and time that you can offer now to help us remotely administer your machines will pay off for you in the future.
@@ -193,9 +197,9 @@ Thank you very much for your help,
 
 Legend:
 
-  0  - no penalties applied
-  1  - site is disabled.  no new slices can be created.
-  2+ - all existing slices will be disabled.
+   0 - no penalties applied
+  -1 - site is disabled.  no new slices can be created.
+  -2 - all existing slices will be disabled.
 	""")
 
 	increase_penalty=("""Privilege reduced for site %(loginbase)s""",
@@ -214,10 +218,10 @@ Thank you very much for your help,
   
 Legend:
 
-  0  - no penalty applied
-  1  - site is disabled.  no new slices can be created.
-  2+ - all existing slices will be disabled.
-	""")
+   0 - no penalties applied
+  -1 - site is disabled.  no new slices can be created.
+  -2 - all existing slices will be disabled.
+""")
 
 	newbootcd_notice=("""Host %(hostname)s needs a new BootImage""", """
 We noticed the following node has an out-dated BootImage: 
@@ -248,7 +252,7 @@ This may be the case for a number of reasons:
     * the hard disk was physically removed, 
     * the hard disk cable is loose or disconnected,
 
-Please help us investigate and let us know if there's anything that we can do to assist in getting your machine up and running again.
+Please help us investigate and let us know if there is anything that we can do to assist in getting your machine up and running again.
 
 Thank you for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -265,11 +269,11 @@ The only step that you need to take is to choose which media you prefer, either 
 
 %(url_list)s
 
-Instructions to burn or copy these All-in-One images to the appropriate media are available in the Technical Contact's Guide.
+Instructions to burn or copy these All-in-One images to the appropriate media are available in the Technical Contacts Guide.
 
     https://%(plc_hostname)s/doc/guides/bootcdsetup
 
-If your node returns to normal operation after following these directions, then there's no need to respond to this message.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you've taken.  
+If your node returns to normal operation after following these directions, then there is no need to respond to this message.  However, if there are any console messages relating to the nodes failure, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue.  Including this message in your reply will help us coordinate our records with the actions you have taken.  
 
 Thank you for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -341,7 +345,7 @@ The output of `dmesg` follows:
 
 
 	nodeconfig_notice=(""" Please Update Configuration file for PlanetLab node %(hostname)s""", 
-"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated plnode.txt file.  
+"""As part of PlanetLab node monitoring, we noticed %(hostname)s has an out-dated configuration.
 
 Either our boot scripts cannot find it because the boot media is corrupted, or it has no NODE_ID or a mis-matched HOSTNAME.  This can happen either due to a configuration mistake at your site, with bad information entered into our database, or after a necessary software upgrade.  To resolve the issue we require your assistance.  All that is needed is to visit:
 

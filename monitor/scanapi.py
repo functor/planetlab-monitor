@@ -277,7 +277,7 @@ EOF			""")
 
 			continue_slice_check = True
 			oval = values['princeton_comon_dir']
-			if "princeton_comon_dir" in oval:
+			if "princeton_comon" in oval:
 				values['princeton_comon_dir'] = True
 			else:
 				values['princeton_comon_dir'] = False

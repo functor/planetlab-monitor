@@ -110,9 +110,11 @@ def main(hostnames, sitenames):
 					if fbpcu:
 						args['pcu_name'] = fbpcu.pcu_name()
 						args['pcu_errors'] = fbpcu.pcu_errors()
+						args['plc_pcuid'] = fbpcu.plc_pcuid
 					else:
 						args['pcu_name'] = "error looking up pcu name"
 						args['pcu_errors'] = ""
+						args['plc_pcuid'] = 0
 
 					args['hostname'] = host
 					sitehist.sendMessage('pcuerror_notice', **args)

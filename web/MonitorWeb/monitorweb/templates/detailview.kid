@@ -197,47 +197,7 @@ from links import *
 		<div id="status_block" class="flash"
             py:if="value_of('tg_flash', None)" py:content="tg_flash"></div>
 
-	<h4>Actions Over the Last ${since} Days</h4>
-		<p py:if="actions and len(actions) == 0">
-			There are no recent actions taken for this site.
-		</p>
-		<table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%">
-			<thead>
-				<tr>
-					<th mochi:format="int"></th>
-					<th>Date</th>
-					<th>Action taken on</th>
-					<th>Action Type</th>
-					<th>Message ID</th>
-					<th>Errors</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr py:for="i,act in enumerate(actions)" class="${i%2 and 'odd' or 'even'}" >
-					<td></td>
-					<td py:content="act.date_created"></td>
-					<td py:if="act.hostname is not None" nowrap="true" >
-						<a class="ext-link" href="${plc_node_uri(act.hostname)}">
-							<span class="icon">${act.hostname}</span></a>
-					</td>
-					<td py:if="act.hostname is None" nowrap="true">
-						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
-							<span class="icon">${act.loginbase}</span></a>
-					</td>
-					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
-					<td py:content="act.action_type"></td>
-					<td>
-						<span py:if="act.message_id != 0">
-							<a class="ext-link" href="${plc_mail_uri(act.message_id)}"><span class="icon">${act.message_id}</span></a>
-						</span>
-						<span py:if="act.message_id == 0">
-							<a py:if="'bootmanager' in act.action_type or 'unknown' in act.action_type" href="/monitorlog/bm.${act.hostname}.log">latest bm log</a>
-						</span>
-					</td>
-					<td><pre py:content="act.error_string"></pre></td>
-				</tr>
-			</tbody>
-		</table>
+	${actionlist_widget.display(since=since, actions=actions)}
 
 	<!-- TODO: figure out how to make this conditional by model rather than port;
 				it is convenient to have links to ilo, drac, amt, etc.

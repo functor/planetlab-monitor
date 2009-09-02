@@ -3,7 +3,6 @@ import time
 import struct
 from monitor import reboot
 from monitor import util
-from monitor import database
 from monitor.wrapper import plc
 
 from datetime import datetime, timedelta

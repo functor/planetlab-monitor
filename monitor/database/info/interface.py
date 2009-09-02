@@ -114,7 +114,7 @@ class SiteInterface(HistorySiteRecord):
 		#       those errors.
 		
 		args = {'loginbase' : self.db.loginbase, 
-				'penalty_level' : self.db.penalty_level,
+				'penalty_level' : -self.db.penalty_level,
 				'monitor_hostname' : config.MONITOR_HOSTNAME,
 				'support_email'   : config.support_email,
 				'plc_name' : config.PLC_NAME,
@@ -201,7 +201,8 @@ class SiteInterface(HistorySiteRecord):
 							action_type='bootmanager_restore',
 							error_string="")
 
-		act = ActionRecord(loginbase=self.db.loginbase,
+		if ret:
+			act = ActionRecord(loginbase=self.db.loginbase,
 							hostname=hostname,
 							action='reboot',
 							action_type='bootmanager_' + ret,
