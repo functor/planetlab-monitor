@@ -40,6 +40,7 @@ class FindbadNodeRecord(Entity):
 	bootcd_version = Field(String,default=None)
 	nm_status = Field(String,default=None)
 	fs_status = Field(String,default=None)
+	iptables_status = Field(String,default=None)
 	dns_status = Field(String,default=None)
 	external_dns_status = Field(Boolean,default=True)
 	uptime = Field(String,default=None)	

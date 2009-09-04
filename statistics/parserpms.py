@@ -36,16 +36,16 @@ def main():
     parser.set_defaults( select=None,
                          input=None,
                          frequency=False,
-                         package=False,
+                         package=True,
                         )
 
     parser.add_option("", "--input", dest="input", 
                         help="the input file")
-    parser.add_option("", "--select", dest="select", 
+    parser.add_option("", "--pattern", dest="select", 
                         help="the pattern to pull out from rpm list")
     parser.add_option("", "--frequency", dest="frequency", action="store_true",
                         help="print the frequency of packages matched by select")
-    parser.add_option("", "--package", dest="package", action="store_true",
+    parser.add_option("", "--disablepackage", dest="package", action="store_false",
                         help="print the frequency of each pl package")
     (config, args) = parser.parse_args()
     if len(sys.argv) == 1 or config.input is None:
@@ -100,14 +100,18 @@ def main():
                 return_sums[sum]['diff'] = set(rpms) - set(current_packages) 
 
         if config.frequency:
-            print "Frequency for packages that matched: %s" % pattern
+            #print "Frequency for packages that matched: %s" % pattern
             sum_list = []
             for sum in return_sums:
                 sum_list.append((len(return_sums[sum]['hosts']), sum))
 
             sum_list.sort(lambda a,b: cmp(b[0], a[0]))
             for sum in sum_list:
-                print sum[0], sum[1], map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff'])
+                #print sum[0], sum[1], map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff'])
+                print sum[0], sum[1], len(map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff']))
 
 if __name__ == "__main__":
-    main()
+	try:
+		main()
+	except IOError:
+		pass

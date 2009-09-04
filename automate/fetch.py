@@ -7,6 +7,7 @@ from glob import glob
 
 import vxargs
 from monitor import parser as parsermodule
+from monitor import common
 from automate import *
 
 def build_vx_args(shell_cmd):
@@ -47,16 +48,17 @@ if __name__ == "__main__":
 	if not os.path.exists(outdir):
 		os.system('mkdir -p %s' % outdir)
 
-	if config.site is not None or \
-	   config.nodeselect is not None or \
-	   config.nodegroup is not None:
-		print "TODO: implement support for nodeselect and site queries."
-		print "%s %s %s" % (config.site, config.nodeselect, config.nodegroup)
-		sys.exit(1)
+	#if config.site is not None or \
+	#   config.nodeselect is not None or \
+	#   config.nodegroup is not None:
+	#	print "TODO: implement support for nodeselect and site queries."
+	#	print "%s %s %s" % (config.site, config.nodeselect, config.nodegroup)
+	#	sys.exit(1)
 
-	if config.nodelist == None and config.node == None:
-		filelist="nocomon.txt"
-		filelist = vxargs.getListFromFile(open(filelist,'r'))
+	nodelist = common.get_nodeset(config)
+
+	if len(nodelist) > 0:
+		filelist = [ (x, '') for x in nodelist ]
 	elif os.path.exists(str(config.nodelist)) and os.path.isfile(config.nodelist):
 		filelist = vxargs.getListFromFile(open(config.nodelist,'r'))
 	elif os.path.exists(str(config.nodelist)) and os.path.isdir(config.nodelist):

@@ -239,6 +239,7 @@ class ScanNodeInternal(ScanInterface):
 					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
 					echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
 					echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
+					echo '  "iptables_status":"'`iptables -t mangle -nL | awk '$1~/^[A-Z]+$/ {modules[$1]=1;}END{for (k in modules) {if (k) printf "%s ",k;}}'`'",'
 					echo '  "princeton_comon_dir":"'`ls -d /vservers/princeton_comon`'",'
 					echo '  "uptime":"'`cat /proc/uptime`'",'
 

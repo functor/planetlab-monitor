@@ -3,6 +3,7 @@ import time
 import struct
 from monitor import reboot
 from monitor import util
+from monitor import query
 from monitor.wrapper import plc
 
 from datetime import datetime, timedelta
@@ -208,9 +209,9 @@ def get_nodeset(config):
 	# perform this query after the above options, so that the filter above
 	# does not break.
 	if config.nodeselect:
-		fbquery = FindbadNodeRecord.get_all_latest()
+		fbquery = HistoryNodeRecord.query.all()
 		node_list = [ n.hostname for n in fbquery ]
-		l_nodes = node_select(config.nodeselect, node_list, None)
+		l_nodes = query.node_select(config.nodeselect, node_list, None)
 
 	return l_nodes
 

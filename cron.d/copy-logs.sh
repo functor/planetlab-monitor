@@ -14,3 +14,4 @@ rsync -qv -az -e ssh root@amber.cs.princeton.edu:/vservers/db-current/var/log/*-
 
 rsync -qv -az -e ssh root@janine.cs.princeton.edu:/vservers/boot-current/var/log/*-filesystem* /var/lib/monitor/filesystem
 rsync -qv -az -e ssh root@janine.cs.princeton.edu:/vservers/boot-current/var/log/*-checkrpm* /var/lib/monitor/checkrpm
+rsync -qv -az -e ssh root@janine.cs.princeton.edu:/vservers/boot-current/var/log/bm/ /var/lib/monitor/bmlogs/

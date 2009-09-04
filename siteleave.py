@@ -24,8 +24,9 @@ for loginbase in sys.argv[1:]:
 			name = "%s %s %s (%s)" % (person['title'], person['first_name'], person['last_name'], person['email'])
 
 	if not name:
-		print "no pis at %s" % loginbase
-		sys.exit(1)
+		print "no PIs at %s" % loginbase
+		name = "no PIs"
+		#sys.exit(1)
 
 	date = time.strftime("%Y/%m/%d", time.gmtime(time.time()))
 

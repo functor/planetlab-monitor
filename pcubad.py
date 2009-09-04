@@ -17,7 +17,7 @@ from monitor.wrapper import plc,plccache
 from monitor.const import MINUP
 
 from monitor.common import *
-from nodequery import verify,query_to_dict,node_select
+from monitor.query import verify,query_to_dict,node_select
 from monitor.model import *
 
 api = plc.getAuthAPI()

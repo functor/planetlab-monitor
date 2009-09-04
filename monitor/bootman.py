@@ -57,7 +57,6 @@ def bootmanager_log_action(hostname, short_log_path, logtype="bm.log"):
 						action_type=logtype,
 						log_path=short_log_path,
 						error_string=err)
-	session.flush(); session.clear()
 	return
 	
 
@@ -97,24 +96,11 @@ class NodeConnection:
 	def get_bootmanager_log(self):
 		bm_name = bootmanager_log_name(self.node)
 		download(self.c, "/tmp/bm.log", "%s/%s" % (config.MONITOR_BOOTMANAGER_LOG, bm_name))
+		#email_exception(self.node, "collected BM log for %s" % self.node)
 		bootmanager_log_action(self.node, bm_name, "collected_bm.log")
 		os.system("cp %s/%s %s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, bm_name, config.MONITOR_BOOTMANAGER_LOG, self.node))
 		log = open("%s/bm.%s.log" % (config.MONITOR_BOOTMANAGER_LOG, self.node), 'r')
 		return log
-
-
-#	def get_dmesg(self):
-#		self.c.modules.os.system("dmesg > /var/log/dmesg.bm.log")
-#		download(self.c, "/var/log/dmesg.bm.log", "log/dmesg.%s.log" % self.node)
-#		log = open("log/dmesg.%s.log" % self.node, 'r')
-#		return log
-#
-#	def get_bootmanager_log(self):
-#		download(self.c, "/tmp/bm.log", "log/bm.%s.log.gz" % self.node)
-#		#os.system("zcat log/bm.%s.log.gz > log/bm.%s.log" % (self.node, self.node))
-#		os.system("cp log/bm.%s.log.gz log/bm.%s.log" % (self.node, self.node))
-#		log = open("log/bm.%s.log" % self.node, 'r')
-#		return log
 
 	def dump_plconf_file(self):
 		c = self.c
@@ -802,6 +788,8 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 	print "...Downloading bm.log from %s" %hostname 
 	log = conn.get_bootmanager_log()
+	bm_log_data = log.read() # get data
+	log.seek(0)	# reset fd pointer for fdspawn
 	child = fdpexpect.fdspawn(log)
 
 	if hasattr(config, 'collect') and config.collect: return "collect"
@@ -831,7 +819,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 		args = {}
 		args['hostname'] = hostname
 		args['sequence'] = s
-		args['bmlog'] = conn.get_bootmanager_log().read()
+		args['bmlog'] = bm_log_data
 		args['viart'] = False
 		args['saveact'] = True
 		args['ccemail'] = True
@@ -882,7 +870,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			args = {}
 			args['hostname'] = hostname
 			args['sequence'] = s
-			args['bmlog'] = conn.get_bootmanager_log().read()
+			args['bmlog'] = bm_log_data
 			args['viart'] = False
 			args['saveact'] = True
 			args['ccemail'] = True
@@ -906,7 +894,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 			if not found_within(recent_actions, 'nodeconfig_notice', 3.5):
 				args = {}
 				args['hostname'] = hostname
-				args['bmlog'] = conn.get_bootmanager_log().read()
+				args['bmlog'] = bm_log_data
 				sitehist.sendMessage('nodeconfig_notice', **args)
 				conn.dump_plconf_file()
 			else:
@@ -947,7 +935,7 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 				print "...NOTIFYING OWNERS OF MINIMAL HARDWARE FAILURE on %s!!!" % hostname
 				args = {}
 				args['hostname'] = hostname
-				args['bmlog'] = conn.get_bootmanager_log().read()
+				args['bmlog'] = bm_log_data
 				sitehist.sendMessage('minimalhardware_notice', **args)
 			else:
 				# NOTE: do not add a new action record

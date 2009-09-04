@@ -6,7 +6,7 @@ import string
 import time
 from datetime import datetime,timedelta
 
-from nodequery import verify,query_to_dict,node_select
+from monitor.query import verify,query_to_dict,node_select
 
 from monitor.common import *
 

@@ -41,9 +41,11 @@ class NodeQueryFields(widgets.WidgetsList):
 
 	hostname = widgets.CheckBox(label="Hostname")
 	firewall = widgets.CheckBox(label="Firewall?")
+	fs_status = widgets.CheckBox(label="Filesystem Status")
 	ssh_status = widgets.CheckBox(label="SSH Status")
 	ssh_error = widgets.CheckBox(label="SSH Errors")
 	dns_status = widgets.CheckBox(label="DNS Status")
+	iptables_status = widgets.CheckBox(label="IP Tables Status")
 	nm_status = widgets.CheckBox(label="NM Status")
 	princeton_comon_dir = widgets.CheckBox(label="CoMon Dir")
 	princeton_comon_running = widgets.CheckBox(label="CoMon Running")
@@ -52,6 +54,7 @@ class NodeQueryFields(widgets.WidgetsList):
 	kernel_version = widgets.CheckBox(label="Kernel")
 	bootcd_version = widgets.CheckBox(label="BootCD")
 	observed_status = widgets.CheckBox(label="Observed Status")
+	uptime = widgets.CheckBox(label="Uptime")
 	port_status = widgets.CheckBox(label="Port Status")
 	rpms = widgets.CheckBox(label="RPM")
 	rpmvalue = widgets.TextField(label="RPM Pattern")
@@ -875,6 +878,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		print "write data: %s" % abs_target_filename
 		util.file.dumpFile(abs_target_filename, log.file.read())
 		bootman.bootmanager_log_action(hostname, short_target_filename, logtype)
+		session.flush()
 
 		print "redirecting 3"
 

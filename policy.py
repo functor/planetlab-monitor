@@ -27,7 +27,7 @@ from monitor.wrapper import plccache
 from monitor.database.info.model import *
 from monitor.database.info.interface import *
 
-from nodequery import verify,query_to_dict,node_select
+from monitor.query import verify,query_to_dict,node_select
 
 api = plc.getAuthAPI()
 

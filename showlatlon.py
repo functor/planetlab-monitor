@@ -4,10 +4,10 @@ from monitor.wrapper import plc, plccache
 api = plc.getAuthAPI()
 
 import sys
-import reboot
+#import reboot
 from datetime import datetime, timedelta
 
-import database
+from monitor.database.info.model import *
 import comon
 from monitor.common import color_pcu_state, datetime_fromstr, email_exception
 from nodehistory import get_filefromglob

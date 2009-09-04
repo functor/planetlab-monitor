@@ -18,7 +18,7 @@ from monitor.sources import comon
 from monitor.wrapper import plc, plccache
 from monitor.scanapi import *
 
-from nodequery import verify,query_to_dict,node_select
+from monitor.query import verify,query_to_dict,node_select
 import traceback
 from monitor.common import nmap_port_status
 

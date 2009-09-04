@@ -46,7 +46,12 @@ from links import *
 		<!-- for keys show each th -->
 		<tr>
 			<span py:for="key in sorted(fields.keys())" >
-				<th class="sortable plekit_table">${key}</th>
+				<span py:if="key == 'uptime'">
+					<th class="sortable-numeric plekit_table">${key}</th>
+				</span>
+				<span py:if="key != 'uptime'">
+					<th class="sortable plekit_table">${key}</th>
+				</span>
 			</span>
 		</tr>
 	</thead>

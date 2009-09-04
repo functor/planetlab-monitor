@@ -21,7 +21,7 @@ from monitor import parser as parsermodule
 
 api = plc.getAuthAPI()
 
-from nodequery import verify,query_to_dict,node_select
+from monitor.query import verify,query_to_dict,node_select
 from monitor.common import *
 from sets import Set
 
