@@ -290,6 +290,18 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri Sep 04 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-20
+- Major Features:
+- added bm log collection and optional integration with BootManager's log Upload()
+- added iptables_status
+- expanded advanced query
+- added differentiated bootmanager_restore actions so that actionsummary displays
+- counts for each kind of bootmanager action
+- added pcuerror notices (for mis-configurations) in addition to pcufailed notices
+- added plain-text options for query page by adding tg_format=plain to URL
+- fixed cross-module reference that prevented pcucontrol for working with RebootNodeWithPCU() api call.
+- fixed a bug in determining whether comon's dir was running on a node
+
 * Mon Aug 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-19
 - Major increment -
 - adds multiple features and web changes
@@ -425,6 +437,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 19
+%define taglevel 20
 
 %define version 3.0

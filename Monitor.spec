@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 19
+%define taglevel 20
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -303,6 +303,18 @@ fi
 
 
 %changelog
+* Fri Sep 04 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-20
+- Major Features:
+- added bm log collection and optional integration with BootManager's log Upload()
+- added iptables_status
+- expanded advanced query
+- added differentiated bootmanager_restore actions so that actionsummary displays
+- counts for each kind of bootmanager action
+- added pcuerror notices (for mis-configurations) in addition to pcufailed notices
+- added plain-text options for query page by adding tg_format=plain to URL
+- fixed cross-module reference that prevented pcucontrol for working with RebootNodeWithPCU() api call.
+- fixed a bug in determining whether comon's dir was running on a node
+
 * Mon Aug 17 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-19
 - Major increment -
 - adds multiple features and web changes
