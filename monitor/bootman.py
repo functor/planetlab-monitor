@@ -782,9 +782,11 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 
 				log=conn.get_dmesg().read()
 				sitehist.sendMessage('baddisk_notice', hostname=hostname, log=log)
-				#conn.set_nodestate('disabled')
+				return "skipping_baddisk"
+			else:
+				# NOTE: "" does not add a new action record
+				return ""
 
-			return "skipping_baddisk"
 
 	print "...Downloading bm.log from %s" %hostname 
 	log = conn.get_bootmanager_log()
