@@ -240,6 +240,9 @@ def changed_lessthan(last_changed, days):
 		return False
 
 def changed_greaterthan(last_changed, days):
+	if last_changed is None:
+		return False
+
 	if datetime.now() - last_changed > timedelta(days):
 		#print "last changed more than %s" % timedelta(days)
 		return True

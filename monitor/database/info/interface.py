@@ -62,7 +62,9 @@ class SiteInterface(HistorySiteRecord):
 
 		return
 
-	def pausePenalty(self):
+	def setPenaltyPause(self):
+		self.db.penalty_pause = True
+		self.db.penalty_pause_time = datetime.now()
 		act = ActionRecord(loginbase=self.db.loginbase,
 							action='penalty',
 							action_type='pause_penalty',)
@@ -71,6 +73,11 @@ class SiteInterface(HistorySiteRecord):
 		#act = ActionRecord(loginbase=self.db.loginbase, action='penalty', action_type='clear_penalty',)
 		self.db.penalty_level = 0
 		self.db.penalty_applied = False
+		self.clearPenaltyPause()
+
+	def clearPenaltyPause(self):
+		self.db.penalty_pause = False
+		self.db.penalty_pause_time = None
 	
 	def getTicketStatus(self):
 		if self.db.message_id != 0:
@@ -78,6 +85,7 @@ class SiteInterface(HistorySiteRecord):
 			self.db.message_status = rtstatus['Status']
 			self.db.message_queue = rtstatus['Queue']
 			self.db.message_created = datetime.fromtimestamp(rtstatus['Created'])
+			#self.db.message_last_reply = datetime.fromtimestamp(rtstatus['Told'])
 
 	def setTicketStatus(self, status):
 		print 'SETTING status %s' % status

@@ -52,7 +52,7 @@ def getTicketStatus(ticket_id):
 	if ticket_id == None or ticket_id == "":
 		return {}
 
-	cmd = "rt show -t ticket -f id,subject,status,queue,created %s" % (ticket_id)
+	cmd = "rt show -t ticket -f id,subject,status,queue,created,told %s" % (ticket_id)
 	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
@@ -66,6 +66,7 @@ def getTicketStatus(ticket_id):
 		r_values[key] = r_values[key].strip()
 
 	r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
+	r_values['Told'] = calendar.timegm(time.strptime(r_values['Told']))
 	return r_values
 
 def setAdminCCViaRT(ticket_id, to):

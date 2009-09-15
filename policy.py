@@ -191,40 +191,46 @@ def main(hostnames, sitenames):
 
 		print "%s %s %s" % (i, sitehist.db.loginbase, sitehist.db.status)
 
-		# determine if there are penalties within the last 30 days?
-		# if so, add a 'pause_penalty' action.
-		if sitehist.db.message_id != 0 and sitehist.db.message_status == 'open' and \
-			sitehist.db.penalty_level > 0 and not found_within(recent_actions, 'pause_penalty', 30):
-			#	pause escalation
-			print "Pausing penalties for %s" % site
-			sitehist.pausePenalty()
-		else:
+		if sitehist.db.status == 'down':
+			if sitehist.db.penalty_pause and \
+				changed_greaterthan(sitehist.db.penalty_pause_time, 30):
 
-			if sitehist.db.status == 'down':
-				if  not found_within(recent_actions, 'pause_penalty', 30) and \
-					not found_within(recent_actions, 'increase_penalty', 7) and \
-					changed_greaterthan(sitehist.db.last_changed, 7):
+				email_exception("", "clear pause penalty for site: %s" % sitehist.db.loginbase)
+				sitehist.closeTicket()
+				# NOTE: but preserve the penalty status.
+				sitehist.clearPenaltyPause()
 
-					# TODO: catch errors
-					sitehist.increasePenalty()
-					sitehist.applyPenalty()
-					sitehist.sendMessage('increase_penalty')
+			if sitehist.db.message_id != 0 and \
+				sitehist.db.message_status == 'open' and \
+				not sitehist.db.penalty_pause:
 
-					print "send message for site %s penalty increase" % site
+				email_exception("", "pause penalty for site: %s" % sitehist.db.loginbase)
+				sitehist.setPenaltyPause()
 
-			if sitehist.db.status == 'good':
-				# clear penalty
-				# NOTE: because 'all clear' should have an indefinite status, we
-				# 		have a boolean value rather than a 'recent action'
-				if sitehist.db.penalty_applied:
-					# send message that penalties are cleared.
+			if  not sitehist.db.penalty_pause and \
+				not found_within(recent_actions, 'increase_penalty', 7) and \
+				changed_greaterthan(sitehist.db.last_changed, 7):
 
-					sitehist.clearPenalty()
-					sitehist.applyPenalty()
-					sitehist.sendMessage('clear_penalty')
-					sitehist.closeTicket()
+				# TODO: catch errors
+				sitehist.increasePenalty()
+				sitehist.applyPenalty()
+				sitehist.sendMessage('increase_penalty')
 
-					print "send message for site %s penalty cleared" % site
+				print "send message for site %s penalty increase" % site
+
+		if sitehist.db.status == 'good':
+			# clear penalty
+			# NOTE: because 'all clear' should have an indefinite status, we
+			# 		have a boolean value rather than a 'recent action'
+			if sitehist.db.penalty_applied or sitehist.db.penalty_pause:
+				# send message that penalties are cleared.
+
+				sitehist.clearPenalty()
+				sitehist.applyPenalty()
+				sitehist.sendMessage('clear_penalty')
+				sitehist.closeTicket()
+
+				print "send message for site %s penalty cleared" % site
 
 
 		site_count = site_count + 1

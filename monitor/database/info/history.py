@@ -66,10 +66,14 @@ class HistorySiteRecord(Entity):
 	message_status = Field(String, default=None)
 	message_queue = Field(String, default=None) 
 	message_created = Field(DateTime, default=None)
+	#message_last_reply = Field(DateTime, default=None)
 
 	penalty_level   = Field(Int, default=0)
 	penalty_applied = Field(Boolean, default=False)
-	acts_as_versioned(ignore=['last_changed', 'last_checked', 'message_status'])
+	penalty_pause   = Field(Boolean, default=False)
+	penalty_pause_time   = Field(DateTime, default=None)
+
+	acts_as_versioned(ignore=['last_changed', 'last_checked', 'message_status', 'penalty_pause_time'])
 
 	@classmethod
 	def by_loginbase(cls, loginbase):
