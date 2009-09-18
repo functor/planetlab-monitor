@@ -49,13 +49,14 @@ class IPAL(PCUControl):
 		self.transport.open(self.host)
 		## XXX Some iPals require you to hit Enter a few times first
 		self.transport.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
+		self.transport.ifThenSend("Password >", "\r\n\r\n", ExceptionNotFound)
 		# Login
 		self.transport.ifThenSend("Password >", self.password, ExceptionPassword)
 		self.transport.write("\r\n\r\n")
 		if not dryrun: # P# - Pulse relay
 			print "node_port %s" % node_port
 			self.transport.ifThenSend("Enter >", 
-							"P7", # % node_port, 
+							"P%s"%node_port, 
 							ExceptionNotFound)
 			print "send newlines"
 			self.transport.write("\r\n\r\n")
