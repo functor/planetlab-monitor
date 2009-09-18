@@ -66,7 +66,7 @@ def getTicketStatus(ticket_id):
 		r_values[key] = r_values[key].strip()
 
 	r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
-	r_values['Told'] = calendar.timegm(time.strptime(r_values['Told']))
+	#r_values['Told'] = calendar.timegm(time.strptime(r_values['Told']))
 	return r_values
 
 def setAdminCCViaRT(ticket_id, to):
