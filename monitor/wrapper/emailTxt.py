@@ -64,7 +64,7 @@ PCU is misconfigured:
 	%(pcu_errors)s
 You can learn more details about the problem by visiting the link below.
 
-    https://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    https://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 If you need to change the PCU configuration in the PLC database:
 
@@ -84,7 +84,7 @@ Thank you very much for your help,
 
     %(pcu_name)s
 
-    https://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    https://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 We need your help resolving this issue in a few ways:  
 
@@ -121,7 +121,7 @@ This notice is simply to let you know that:
 
 is online and operational.  
 
-    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    http://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 Thank you very much for your help!
   -- %(plc_name)s (%(support_email)s)
@@ -159,7 +159,7 @@ Please investigate and let us know if there's anything we can do to help get
 it back on-line.  You can see more information about the current status of
 this host here:
 
-    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    http://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 Thank you very much for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -175,7 +175,7 @@ Please investigate, and let us know if there's anything we can do to help get
 it back on-line.  You can see more information about the current status of
 this host here:
 
-    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    http://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 Thank you very much for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -190,7 +190,7 @@ All privileges are restored.  You may create slices again, and if your
 slices were disabled, please allow up to 30 minutes for them to return to 
 enabled.
 
-    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    http://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 Thank you very much for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -211,7 +211,7 @@ Your privileges will be reduced corresponding to the legend below.  To
 restore these privileges, please return at least two machines to working 
 state.
 
-    http://%(monitor_hostname)s/monitor/pcuview?loginbase=%(loginbase)s
+    http://%(monitor_hostname)s/monitor/simpleview?loginbase=%(loginbase)s
 
 Thank you very much for your help,
   -- %(plc_name)s (%(support_email)s)
@@ -294,7 +294,7 @@ Thank you for your help,
 While trying to automatically recover this machine:
 
     http://%(plc_hostname)s/db/nodes/index.php?pattern=%(hostname)s
-    https://%(monitor_hostname)s/monitor/pcuview?hostname=%(hostname)s
+    https://%(monitor_hostname)s/monitor/detailview?hostname=%(hostname)s
 
 We encountered an unknown situation.  Please re-code to handle, or manually intervene to repair this host.
 
@@ -314,7 +314,7 @@ While trying to automatically recover this machine:
 
     http://%(plc_hostname)s/db/nodes/index.php?pattern=%(hostname)s
 
-We encountered an failed hardware requirement.  Please look at the log below to determine the exact nature of the failure, either Disk, CPU, Network, or Mimial RAM was not satisfied.
+We encountered an failed hardware requirement.  Please look at the log below to determine the exact nature of the failure, either Disk, CPU, Network, or Minimal RAM was not satisfied.
 
 If your machine does not meet the current hardware specifications for a PlanetLab node (http://%(plc_hostname)s/hardware), please upgrade it to meet the current recommended configuration.  
 
