@@ -59,10 +59,14 @@ def get_rt_tickets():
 		return ""
 
 	sql = """SELECT tk.id, tk.Queue, tr.Type, tr.Field, tr.OldValue, tr.NewValue, 
-                    tr.Created, at.id, at.Subject, at.Content
-             FROM Tickets as tk, Transactions as tr 
+                    tr.Created, at.id, at.Subject, at.Content, us.Name
+             FROM Tickets as tk, Transactions as tr, Users as us
              LEFT OUTER JOIN Attachments as at ON tr.id=at.TransactionId 
-             WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>10000  """
+             WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>40800 AND 
+			 us.id=tr.Creator"""
+             #WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>39896 AND tk.id<42241 AND ## (oct15th2008) 
+             #WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>40800 AND ## (1st3months)
+             #WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>10000  """
 
 	print "run query"
 	raw = fetch_from_db(db, sql)
@@ -82,6 +86,7 @@ def get_rt_tickets():
 		attachmentid = x[7]
 		subject = x[8]
 		content = x[9]
+		creator = x[10]
 
 		if ticket_id not in tickets:
 			print "found new ticket_id", ticket_id
@@ -104,6 +109,7 @@ def get_rt_tickets():
 					'newvalue' : newvalue,
 					'datecreated' : datecreated,
 					'attachmentid' : attachmentid,
+					'creator' : creator,
 					'subject' : subject,
 					'content' : content,
 						}
@@ -112,8 +118,6 @@ def get_rt_tickets():
 
 	print "sort data"
 	list = map(parse_ticket, raw)
-
-	# map(lambda x: { "email":str(x[4]), "lastupdated":str(x[5]), "owner":str(x[7]), }, raw)
 
 	db.close()
 
@@ -212,9 +216,9 @@ def main():
 	else:
 		print "loading"
 		tickets = database.dbLoad("survey_tickets")
-	print tickets[42171]['transactions'][0]
+	#print tickets[42171]['transactions'][0]
 
-	sort_tickets(tickets, re_map)
+	#sort_tickets(tickets, re_map)
 
 	# for each ticket id
 	#	scan for known keywords and sort into classes

@@ -55,6 +55,7 @@ class NodeQueryFields(widgets.WidgetsList):
 	bootcd_version = widgets.CheckBox(label="BootCD")
 	observed_status = widgets.CheckBox(label="Observed Status")
 	uptime = widgets.CheckBox(label="Uptime")
+	traceroute = widgets.CheckBox(label="Traceroute")
 	port_status = widgets.CheckBox(label="Port Status")
 	rpms = widgets.CheckBox(label="RPM")
 	rpmvalue = widgets.TextField(label="RPM Pattern")
@@ -339,6 +340,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				agg.update(agg['plc_node_stats'])
 				if agg['kernel_version']:
 					agg['kernel_version'] = agg['kernel_version'].split()[2]
+				if 'traceroute' in data and agg['traceroute']:
+					agg['traceroute'] = "<pre>" + agg['traceroute'] + "</pre>"
 				if 'rpmvalue' in data and 'rpms' in data:
 					if agg['rpms']:
 						rpm_list = agg['rpms'].split()
@@ -489,9 +492,14 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	def simpleview(self, **data):
 		return self.pre_view(**data)
 
+	@expose(template="monitorweb.templates.simpleview")
+	def pcuview(self, **data):
+		return self.pre_view(**data)
+
 	@expose(template="monitorweb.templates.detailview")
 	def detailview(self, **data):
 		return self.pre_view(**data)
+
 
 	def pre_view(self, **data):
 		session.flush(); session.clear()
@@ -594,7 +602,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 	# TODO: add form validation
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
-	def pcuview(self, loginbase=None, pcuid=None, hostname=None, since=20, **data):
+	def pcuviewold(self, loginbase=None, pcuid=None, hostname=None, since=20, **data):
 		session.flush(); session.clear()
 		sitequery=[]
 		pcuquery=[]

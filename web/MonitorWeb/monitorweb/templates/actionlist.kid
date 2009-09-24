@@ -50,8 +50,8 @@ def zabbix_event_ack_link(eventid):
 						<a href="${link('detailview', hostname=act.hostname)}">${act.hostname}</a>
 					</td>
 					<td py:if="act.hostname is None" nowrap="true">
-						<a class="ext-link" href="${plc_site_uri(act.loginbase)}">
-							<span class="icon">${act.loginbase}</span></a>
+						<a class="ext-link" href="${link('detailview', loginbase=act.loginbase)}">
+							${act.loginbase}</a>
 					</td>
 					<!--td py : content="diff_time(mktime(node.date_checked.timetuple()))"></td-->
 					<td py:content="act.action_type"></td>

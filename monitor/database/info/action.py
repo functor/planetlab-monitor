@@ -77,6 +77,11 @@ class BlacklistRecord(Entity):
 		else:
 			return self.date_created + timedelta(0, self.expires)
 
+class BootmanSequenceRecord(Entity):
+	sequence = Field(String, primary_key=True, default=None)
+	action   = Field(String, default=None)
+	date_created = Field(DateTime,default=datetime.now)
+
 class ActionRecord(Entity):
 	@classmethod
 	def get_latest_by(cls, **kwargs):

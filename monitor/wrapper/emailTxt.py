@@ -353,7 +353,7 @@ Either our boot scripts cannot find it because the boot media is corrupted, or i
 
 Then double check the network settings for your host.
 
-Then, select, "Download -> Download ISO image for %(hostname)s" menu.  This will generate a new All-in-one BootImage file for your node.  Copy this file to the appropriate read-only media, and reboot the machine.
+If the network settings are correct, then, select, "Download -> Download image for %(hostname)s" menu.  This will generate a new All-in-one BootImage file for your node.  Copy this file to the appropriate read-only media, and reboot the machine.
 
 There is no need to respond to this message. If you're able to update the boot image without difficulty and your node returns to normal operation, please accept our thanks.  However, if there are any console messages relating to the node's failure, please report them to PlanetLab support (%(support_email)s) so we can help resolve the issue. 
 

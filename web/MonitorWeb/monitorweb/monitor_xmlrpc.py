@@ -4,6 +4,7 @@ import cherrypy
 import turbogears
 from datetime import datetime, timedelta
 import time
+from monitor.wrapper import plc
 
 try:
 	from monitor.database.info.model import *
@@ -126,6 +127,54 @@ class MonitorXmlrpcServer(object):
 		""" This call can indicate to a script whether the server is up
 		and running before trying any more sophisticated operations. """
 		return True
+
+	# BOOTMAN SEQUENCE ------------------------------------------------------------
+
+	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct"), 
+					   		Parameter(str, "The bootman sequence returned by MyOps"), 
+							Parameter(str, "The action string that identifies what to do when this sequence occurs")],
+					   returns=Parameter(bool, 'True on success.'))
+	def setBootmanSequence(self, auth, sequence, action):
+		""" Using this call, you can set a new sequence to identify an Unknown
+		Error sqeuence returned by MyOps and associate it with a pre-defined
+		action, (i.e. reboot, reinstall, or others).  Please see the
+		documentation for automated actions to see a list of supported
+		actions. """
+		api = plc.getAuthAPI()
+		api.auth = auth
+		if api.AuthCheck():
+			bms = BootmanSequenceRecord.get_by(sequence=sequence)
+			if not bms:
+				bms = BootmanSequenceRecord(sequence=sequence, action=action)
+			else:
+				bms.action = action 
+
+			bms.flush()
+			return True
+		else:
+			return False
+
+	@cherrypy.expose
+	@export_to_docbook(roles=['admin'],
+	                   accepts=[Parameter(dict, "Auth struct")], 
+					   returns=Parameter(list, 'Array of bootman sequences'))
+	def getBootmanSequences(self, auth):
+		""" Using this call, you can learn all currently defined bootman
+		sequences and their associated actions. """
+		api = plc.getAuthAPI()
+		api.auth = auth
+		if api.AuthCheck():
+			ret_list = []
+			bms = BootmanSequenceRecord.query.all()
+			for q in bms:
+				d = q.to_dict()
+				d = convert_datetime(d, ['date_created'])
+				ret_list.append(d)
+			return ret_list
+		else:
+			return []
 
 	# SITES ------------------------------------------------------------
 
