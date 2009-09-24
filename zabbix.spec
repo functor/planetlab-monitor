@@ -290,6 +290,14 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Sep 24 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-21
+- fixed pause_penalty bug.
+- fixed IPAL pcucontrol bug
+- fixed bootman tunnel setup bug (occurred in rare cases)
+- deprecated pcuview
+- added BootmanSequenceRecords to separate config data from source code
+- added get/setBootmanSequence(s) to xmlrpc API
+
 * Fri Sep 04 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-20
 - Major Features:
 - added bm log collection and optional integration with BootManager's log Upload()
@@ -437,6 +445,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 20
+%define taglevel 21
 
 %define version 3.0
