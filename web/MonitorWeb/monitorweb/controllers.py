@@ -63,6 +63,7 @@ class NodeQueryFields(widgets.WidgetsList):
 class QueryForm(widgets.TableForm):
     template = """
     <form xmlns:py="http://purl.org/kid/ns#"
+        id="queryform"
         name="${name}"
         action="${action}"
         method="${method}"

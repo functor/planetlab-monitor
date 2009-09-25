@@ -13,11 +13,18 @@ from links import *
 
   <div py:match="item.tag == 'content'">
   		<h2>Functional, but Under Development...</h2>
+
+<img id="toggle-image-visible-query" src="/plekit/icons/toggle-visible.png" style="height:18px;" onclick="plc_toggle('query')" />
+<img id="toggle-image-hidden-query" src="/plekit/icons/toggle-hidden.png" style="height:18px;display:none" onclick="plc_toggle('query')" /> <span style="font-size:2em;">Monitor Query</span>
+
+<div id="toggle-area-query">
 		<table>
 			<tr>
 				<td>${queryform.display(method="GET", value=data)}</td>
 			</tr>
 		</table>
+</div>
+
 <h4>Results</h4>
 	<table py:if="fields and len(fields.keys()) > 0" id="querylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-querylist_paginator max-pages-10 paginate-50" width="100%">
 	<thead>
@@ -64,5 +71,16 @@ from links import *
 		</tr>
       </tbody>
 	</table>
+<script type="text/javascript">
+var lst = $("querylist");
+var tbody = lst.getElementsBySelector("tbody")[0];
+var trs = tbody.getElementsBySelector("tr");
+if (trs.length > 2) {
+ plc_toggle("query");
+}
+</script>
+
   </div>
+
+
 </html>

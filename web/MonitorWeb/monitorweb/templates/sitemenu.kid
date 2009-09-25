@@ -7,11 +7,13 @@
 
     <script type="text/javascript" src="/plekit/prototype/prototype.js"></script>
 
+    <script type="text/javascript" src="/plekit/toggle/toggle.js"></script>
     <script type="text/javascript" src="/plekit/tablesort/tablesort.js"></script>
     <script type="text/javascript" src="/plekit/tablesort/customsort.js"></script>
     <script type="text/javascript" src="/plekit/tablesort/paginate.js"></script>
     <script type="text/javascript" src="/plekit/table/table.js"></script>
     <link href="/plekit/table/table.css" rel="stylesheet" type="text/css" />
+    <link href="/plekit/toggle/toggle.css" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" src="/plekit/niftycorner/niftycube.js"></script>
     <script type="text/javascript" src="/plekit/niftycorner/nifty_init.js"></script>
