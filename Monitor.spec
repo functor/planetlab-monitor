@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 21
+%define taglevel 22
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -303,6 +303,9 @@ fi
 
 
 %changelog
+* Fri Oct 09 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-22
+- show/hide advance query form.
+
 * Thu Sep 24 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-21
 - fixed pause_penalty bug.
 - fixed IPAL pcucontrol bug
