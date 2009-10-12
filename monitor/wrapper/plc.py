@@ -324,6 +324,29 @@ def getNodes(filter=None, fields=None):
 			#'last_updated', 'peer_node_id', 'ssh_rsa_key' ])
 	return nodes
 
+
+# Check if the site is a pending site that needs to be approved.
+def isPendingSite(loginbase):
+        api = xmlrpclib.Server(auth.server, verbose=False)
+        try:
+                site = api.GetSites(auth.auth, loginbase)[0]
+        except Exception, exc:
+                login.info("ERROR: No site %s" % loginbase)
+                return False
+
+        def all_disabled(person_ids):
+                persons = api.GetPersons(auth.auth, person_ids)
+                for person in persons:
+                        if person['enabled']:
+                                return False
+                return True
+
+        if not site['max_slices'] and not site['node_ids'] and all_disabled(site['person_ids']):
+                return True
+
+        return False
+
+
 '''
 Sets boot state of a node.
 '''
@@ -400,6 +423,7 @@ def enableSiteSlices(loginbase):
 
 def enableSlices(nodename):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
+
 	for slice in slices(siteId(nodename)):
 		logger.info("Enabling slices %s" % slice)
 		try:
@@ -417,6 +441,7 @@ def enableSlices(nodename):
 			logger.info("enableSlices: %s" % exc)
 			print "exception: %s" % exc
 
+
 #I'm commenting this because this really should be a manual process.  
 #'''
 #Enable suspended site slices.
@@ -428,6 +453,12 @@ def enableSlices(nodename):
 #		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
 #
 def enableSiteSliceCreation(loginbase):
+        if isPendingSite(loginbase):
+                msg = "INFO: enableSiteSliceCreation: Pending Site (%s)" % loginbase
+                print msg
+                logger.info(msg)
+                return
+
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	try:
 		logger.info("Enabling slice creation for site %s" % loginbase)
@@ -442,10 +473,7 @@ def enableSliceCreation(nodename):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	try:
 		loginbase = siteId(nodename)
-		logger.info("Enabling slice creation for site %s" % loginbase)
-		if not debug:
-			logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
-			api.UpdateSite(auth.auth, loginbase, {'enabled': True})
+                enableSiteSliceCreation(loginbase)
 	except Exception, exc:
 		print "ERROR: enableSliceCreation:  %s" % exc
 		logger.info("ERROR: enableSliceCreation:  %s" % exc)
