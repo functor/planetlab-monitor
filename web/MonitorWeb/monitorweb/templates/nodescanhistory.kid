@@ -62,6 +62,7 @@ from cherrypy import request, response
       <th class="sortable plekit_table">Stat</th>
       <th class="sortable plekit_table">kernel</th>
       <th class="sortable plekit_table">BootCD</th>
+      <th class="sortable plekit_table">Boot Server</th>
       <th class="sortable plekit_table">Last_contact</th>
   </tr>
   </thead>
@@ -76,6 +77,7 @@ from cherrypy import request, response
                 <td py:content="node.node.plc_node_stats['boot_state']">boot</td>
 		<td nowrap="true" py:content="node.kernel"></td>
 		<td nowrap="true" py:content="node.node.bootcd_version"></td>
+		<td nowrap="true" py:content="node.node.boot_server"></td>
 		<td  id="node-${node.node.observed_status}" py:content="diff_time(node.node.plc_node_stats['last_contact'])"></td>
 	</span>
     </tr>

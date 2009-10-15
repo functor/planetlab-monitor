@@ -53,6 +53,7 @@ class NodeQueryFields(widgets.WidgetsList):
 	external_dns_status = widgets.CheckBox(label="Hostname Resolves?")
 	kernel_version = widgets.CheckBox(label="Kernel")
 	bootcd_version = widgets.CheckBox(label="BootCD")
+        boot_server = widgets.CheckBox(label="Boot Server")
 	observed_status = widgets.CheckBox(label="Observed Status")
 	uptime = widgets.CheckBox(label="Uptime")
 	traceroute = widgets.CheckBox(label="Traceroute")

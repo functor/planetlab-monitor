@@ -56,6 +56,7 @@ if [ -z "$AGENT" ] ; then
         # if no agent is running, set it up.
         ssh-agent > ${MONITOR_SCRIPT_ROOT}/agent.sh
         source ${MONITOR_SCRIPT_ROOT}/agent.sh
+        ssh-add /etc/planetlab/myops_ssh_key.rsa
         ssh-add /etc/planetlab/debug_ssh_key.rsa
         ssh-add /etc/planetlab/root_ssh_key.rsa
 fi

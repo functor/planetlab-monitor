@@ -17,8 +17,8 @@ from links import *
   </script>
 
   <center>
-  <b py:content="'BOOT: %d' % len([agg for agg in query if agg.node.observed_status == 'BOOT'])"></b> | 
-  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.observed_status == 'DOWN'])"></b><br/>
+  <b py:content="'UP: %d' % len([agg for agg in query if agg.node.status in ('online', 'good')])"></b> | 
+  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/>
   </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
@@ -58,6 +58,7 @@ from links import *
       <th class="sortable plekit_table">pcu</th>
       <th class="sortable plekit_table">kernel</th>
       <th class="sortable plekit_table">BootCD</th>
+      <th class="sortable plekit_table">Boot Server</th>
       <th class="sortable-sortLastContact plekit_table">Last_contact</th>
   </tr>
   </thead>

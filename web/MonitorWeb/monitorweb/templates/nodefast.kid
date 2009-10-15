@@ -17,16 +17,16 @@ from links import *
   </script>
 
   <center>
-  <b py:content="'BOOT: %d' % len([agg for agg in query if agg.node.status == 'good'])"></b> | 
-  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status == 'down'])"></b><br/>
+  <b py:content="'UP: %d' % len([agg for agg in query if agg.node.status in ('online', 'good')])"></b> | 
+  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/>
   </center>
 
-<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-999">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='10'>
         <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>
-            <input class='pagesize_input' type='text' id="nodelist_pagesize" value='25'
+            <input class='pagesize_input' type='text' id="nodelist_pagesize" value='999'
                    onkeyup='plekit_pagesize_set("nodelist","nodelist_pagesize", 25);' 
                    size='3' maxlength='3' />                                                          
             <label class='pagesize_label'> items/page </label>                                     
