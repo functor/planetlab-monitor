@@ -1,5 +1,0 @@
-# Runs once a day at 12pm to fetch the monitor account keys in case it was
-# inaccessible previously due to a network outage.
-
-0 12 * * * root    /etc/init.d/monitor start > /dev/null 2>&1
-
