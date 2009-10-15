@@ -129,7 +129,7 @@ cd ..
 %install
 rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
-install -D -m 755 monitor-client.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
+#install -D -m 755 monitor-client.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
 install -D -m 644 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
 install -D -m 755 timeout.pl $RPM_BUILD_ROOT/usr/bin/timeout.pl
 
@@ -208,7 +208,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files client
 %defattr(-,root,root)
-%{_initrddir}/monitor
+#%{_initrddir}/monitor
 %{_sysconfdir}/cron.d/monitor
 /usr/bin/timeout.pl
 
