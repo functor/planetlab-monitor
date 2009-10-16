@@ -14,6 +14,9 @@ import time
 import traceback
 from monitor import database
 
+PENDING_CONSORTIUM_ID = 0
+APPROVED_CONSORTIUM_ID = 999999
+
 try:
 	from monitor import config
 	debug = config.debug
@@ -116,12 +119,12 @@ class CachedPLC(PLC):
 					except:
 						print "Call %s FAILED: Using old cached data" % cachename
 						load_old_cache = True
-						
+
 					if load_old_cache:
 						values = database.dbLoad(cachename)
 					else:
 						database.dbDump(cachename, values)
-						
+
 					return values
 				else:
 					values = database.dbLoad(cachename)
@@ -334,14 +337,7 @@ def isPendingSite(loginbase):
                 login.info("ERROR: No site %s" % loginbase)
                 return False
 
-        def all_disabled(person_ids):
-                persons = api.GetPersons(auth.auth, person_ids)
-                for person in persons:
-                        if person['enabled']:
-                                return False
-                return True
-
-        if not site['max_slices'] and not site['node_ids'] and all_disabled(site['person_ids']):
+        if not site['enabled'] and site['ext_consortium_id'] == PENDING_CONSORTIUM_ID:
                 return True
 
         return False
@@ -481,13 +477,20 @@ def enableSliceCreation(nodename):
 '''
 Removes site's ability to create slices. Returns previous max_slices
 '''
-def removeSiteSliceCreation(sitename):
-	print "removeSiteSliceCreation(%s)" % sitename
+def removeSiteSliceCreation(loginbase):
+        print "removeSiteSliceCreation(%s)" % loginbase
+
+        if isPendingSite(loginbase):
+                msg = "INFO: removeSiteSliceCreation: Pending Site (%s)" % loginbase
+                print msg
+                logger.info(msg)
+                return
+
 	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
-		logger.info("Removing slice creation for site %s" % sitename)
+		logger.info("Removing slice creation for site %s" % loginbase)
 		if not debug:
-			api.UpdateSite(auth.auth, sitename, {'enabled': False})
+			api.UpdateSite(auth.auth, loginbase, {'enabled': False})
 	except Exception, exc:
 		logger.info("removeSiteSliceCreation:  %s" % exc)
 
@@ -499,12 +502,7 @@ def removeSliceCreation(nodename):
 	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
 		loginbase = siteId(nodename)
-		#numslices = api.GetSites(auth.auth, {"login_base": loginbase}, 
-		#		["max_slices"])[0]['max_slices']
-		logger.info("Removing slice creation for site %s" % loginbase)
-		if not debug:
-			#api.UpdateSite(auth.auth, loginbase, {'max_slices': 0})
-			api.UpdateSite(auth.auth, loginbase, {'enabled': False})
+                removeSiteSliceCreation(loginbase)
 	except Exception, exc:
 		logger.info("removeSliceCreation:  %s" % exc)
 
