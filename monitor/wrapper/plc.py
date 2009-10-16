@@ -14,8 +14,10 @@ import time
 import traceback
 from monitor import database
 
+# note: this needs to be consistent with the value in PLEWWW/planetlab/includes/plc_functions.php
 PENDING_CONSORTIUM_ID = 0
-APPROVED_CONSORTIUM_ID = 999999
+# not used in monitor
+#APPROVED_CONSORTIUM_ID = 999999
 
 try:
 	from monitor import config
