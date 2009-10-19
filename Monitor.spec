@@ -6,7 +6,7 @@
 
 %define name monitor
 %define version 3.0
-%define taglevel 22
+%define taglevel 23
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -303,6 +303,15 @@ fi
 
 
 %changelog
+* Mon Oct 19 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-23
+- - remove monitor-client.cron
+- - remove unused monitor-client init script
+- - fix UP/DOWN summary on nodes page.
+- - make node page display all nodes by default
+- - add boot_server field
+- - add myops_ssh_key to the keychain
+- - use ext_consortium_id to distinguish pending sites.
+
 * Fri Oct 09 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-22
 - show/hide advance query form.
 
