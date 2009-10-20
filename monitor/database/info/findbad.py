@@ -39,6 +39,7 @@ class FindbadNodeRecord(Entity):
 	kernel_version = Field(String,default=None)
 	bootcd_version = Field(String,default=None)
         boot_server = Field(String,default=None)
+        install_date = Field(String,default=None)
 	nm_status = Field(String,default=None)
 	fs_status = Field(String,default=None)
 	iptables_status = Field(String,default=None)

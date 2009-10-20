@@ -238,6 +238,7 @@ class ScanNodeInternal(ScanInterface):
 					echo '  "bmlog":"'`ls /tmp/bm.log`'",'
 					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
 					echo '  "boot_server":"'`cat /mnt/cdrom/bootme/BOOTSERVER`'",'
+					echo '  "install_date":"'`python -c "import os,time,stat; print time.ctime(os.stat('/usr/boot/plnode.txt')[stat.ST_CTIME])"`'",'
 					echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
 					echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
 					echo '  "iptables_status":"'`iptables -t mangle -nL | awk '$1~/^[A-Z]+$/ {modules[$1]=1;}END{for (k in modules) {if (k) printf "%s ",k;}}'`'",'
@@ -262,6 +263,7 @@ EOF			""")
 				else:
 					values.update({'kernel_version': "", 'bmlog' : "", 'bootcd_version' : '', 
                                                                         'boot_server' : '',
+                                                                        'install_date' : '',
 									'nm_status' : '', 
 									'fs_status' : '',
 									'uptime' : '',

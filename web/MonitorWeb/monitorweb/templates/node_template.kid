@@ -16,6 +16,7 @@ from links import *
 		<th>kernel</th>
                 <th>BootCD</th>
                 <th>Boot Server</th>
+                <th>Installation Date</th>
 		<th>last_contact</th>
 	</span>
 	<span py:if="node is not None">
@@ -43,6 +44,7 @@ from links import *
 		<td nowrap="true" py:content="node.kernel"></td>
 		<td nowrap="true" py:content="node.node.bootcd_version"></td>
 		<td nowrap="true" py:content="node.node.boot_server"></td>
+		<td nowrap="true" py:content="node.node.install_date"></td>
 		<td  id="node-${node.node.observed_status}" py:content="diff_time(node.node.plc_node_stats['last_contact'])"></td>
 	</span>
 </span>

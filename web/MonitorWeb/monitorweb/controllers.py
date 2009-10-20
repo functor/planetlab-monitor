@@ -54,6 +54,7 @@ class NodeQueryFields(widgets.WidgetsList):
 	kernel_version = widgets.CheckBox(label="Kernel")
 	bootcd_version = widgets.CheckBox(label="BootCD")
         boot_server = widgets.CheckBox(label="Boot Server")
+        install_date = widgets.CheckBox(label="Installation Date")
 	observed_status = widgets.CheckBox(label="Observed Status")
 	uptime = widgets.CheckBox(label="Uptime")
 	traceroute = widgets.CheckBox(label="Traceroute")

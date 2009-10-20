@@ -38,6 +38,8 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 		fbnode['bootcd_version'] = "unknown"
         if not fbnode['boot_server']:
                 fbnode['boot_server'] = "unknown"
+        if not fbnode['install_date']:
+                fbnode['install_date'] = "unknown"
 	fbnode['pcu'] = color_pcu_state(fbnode)
 
 	if not fields:
@@ -60,7 +62,7 @@ def fb_print_nodeinfo(fbnode, hostname, fields=None):
 			#print "ERROR!!!!!!!!!!!!!!!!!!!!!"
 			pass
 
-		print "%(hostname)-45s | %(date_checked)11.11s | %(boot_state)5.5s| %(observed_status)8.8s | %(ssh_status)5.5s | %(pcu)6.6s | %(bootcd_version)6.6s | %(boot_server)s | %(kernel_version)s" % fbnode
+		print "%(hostname)-45s | %(date_checked)11.11s | %(boot_state)5.5s| %(observed_status)8.8s | %(ssh_status)5.5s | %(pcu)6.6s | %(bootcd_version)6.6s | %(boot_server)s | %(install_date)s | %(kernel_version)s" % fbnode
 	else:
 		format = ""
 		for f in fields:
