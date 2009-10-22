@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Oct 22 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-24
+- - add install_date
+
 * Mon Oct 19 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-23
 - - remove monitor-client.cron
 - - remove unused monitor-client init script
@@ -457,6 +460,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 23
+%define taglevel 24
 
 %define version 3.0
