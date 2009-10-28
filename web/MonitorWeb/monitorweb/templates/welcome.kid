@@ -14,9 +14,12 @@ from links import *
     <h2>Learn more</h2>
     Learn more about MyOps default policies, and take part in its development
     <ul class="links">
+    <!--
       <li><a href="https://svn.planet-lab.org/wiki/MyOpsDocs">Documentation</a></li>
       <li><a href="https://svn.planet-lab.org/wiki/MyOpsPolicyForPlanetLab">Policy</a></li>
       <li><a href="https://svn.planet-lab.org/svn/MyOps">Latest Source</a></li>
+    -->
+      <li><a href="http://svn.planet-lab.org/svn/Monitor">Latest Source</a></li>
     </ul>
     <span py:replace="now">now</span>
   </div>
