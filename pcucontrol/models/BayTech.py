@@ -28,7 +28,7 @@ class BayTechGeorgeTown(PCUControl):
 		return self.run_ssh(node_port, dryrun)
 	def run_ssh(self, node_port, dryrun):
 		# NOTE: The georgetown pcu always drops the first connection, 
-		self.transport.open(self.host, self.username, None, "Enter user name:")
+		self.transport.open(self.host, self.username, None, "Enter")
 		self.transport.close()
 		time.sleep(1)
 		self.transport.open(self.host, self.username, None, "Enter user name:")
