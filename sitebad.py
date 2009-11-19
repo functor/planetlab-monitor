@@ -9,7 +9,7 @@ from datetime import datetime,timedelta
 from monitor import database
 from monitor import parser as parsermodule
 from monitor import config
-from monitor.database.info.model import HistorySiteRecord, HistoryNodeRecord, session, BlacklistRecord
+from monitor.database.info.model import *
 from monitor.wrapper import plc, plccache
 from monitor.const import MINUP
 
@@ -36,9 +36,9 @@ def main2(config):
 	else:
 		l_sites = [site['login_base'] for site in l_plcsites]
 	
-	checkAndRecordState(l_sites, l_plcsites)
+	checkAndRecordState(l_sites, l_plcsites, config.checkpcu)
 
-def getnodesup(nodelist):
+def getnodesup(nodelist, checkpcu):
 	# NOTE : assume that a blacklisted node is fine, since we're told not to
 	# 		ignore it, no policy actions should be taken for it.
 	up = 0
@@ -48,9 +48,26 @@ def getnodesup(nodelist):
 			# 		in the calculation
 			nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
 			nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
-			if (nodehist is not None and nodehist.status != 'down') or \
-				(nodebl is not None and not nodebl.expired()):
-				up = up + 1
+			if checkpcu:
+				# get pcu history for node
+				if nodehist.haspcu:
+					# get node record for pcuid
+					noderec = FindbadNodeRecord.get_latest_by(hostname=node['hostname'])
+					# get pcuhistory based on pcuid
+					pcuhist = HistoryPCURecord.findby_or_create(plc_pcuid=noderec.plc_pcuid)
+					# if pcu is not down & node is not down
+					if (nodehist is not None and nodehist.status != 'down' and \
+						pcuhist is not None and pcuhist.status != 'down') or \
+						(nodebl is not None and not nodebl.expired()):
+						up = up + 1
+
+				else:
+					# todo: don't count
+					pass
+			else:
+				if (nodehist is not None and nodehist.status != 'down') or \
+					(nodebl is not None and not nodebl.expired()):
+					up = up + 1
 		except:
 			import traceback
 			email_exception(node['hostname'])
@@ -90,7 +107,7 @@ def check_site_state(rec, sitehist):
 			print "changed status from %s to down" % sitehist.status
 			sitehist.status = 'down'
 
-def checkAndRecordState(l_sites, l_plcsites):
+def checkAndRecordState(l_sites, l_plcsites, checkpcu):
 	count = 0
 	lb2hn = plccache.plcdb_lb2hn
 	for sitename in l_sites:
@@ -120,7 +137,7 @@ def checkAndRecordState(l_sites, l_plcsites):
 				sitehist.message_queue = rtstatus['Queue']
 				sitehist.message_created = datetime.fromtimestamp(rtstatus['Created'])
 
-			sitehist.nodes_up = getnodesup(lb2hn[sitename])
+			sitehist.nodes_up = getnodesup(lb2hn[sitename], checkpcu)
 			sitehist.new = changed_lessthan(datetime.fromtimestamp(d_site['date_created']), 30) # created < 30 days ago
 			sitehist.enabled = d_site['enabled']
 
@@ -140,12 +157,13 @@ if __name__ == '__main__':
 	from monitor import parser as parsermodule
 
 	parser = parsermodule.getParser()
-	parser.set_defaults(filename=None, node=None, site=None, 
-						nodeselect=False, nodegroup=None, cachenodes=False)
+	parser.set_defaults(checkpcu=False)
 
 	parser.add_option("", "--site", dest="site", metavar="login_base", 
 						help="Provide a single site to operate on")
 	parser.add_option("", "--sitelist", dest="sitelist", 
+						help="Provide a list of sites separated by ','")
+	parser.add_option("", "--checkpcu", dest="checkpcu", action="store_true",
 						help="Provide a list of sites separated by ','")
 
 	config = parsermodule.parse_args(parser)
