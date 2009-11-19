@@ -164,7 +164,7 @@ if __name__ == '__main__':
 	parser.add_option("", "--sitelist", dest="sitelist", 
 						help="Provide a list of sites separated by ','")
 	parser.add_option("", "--checkpcu", dest="checkpcu", action="store_true",
-						help="Provide a list of sites separated by ','")
+						help="whether to include PCUs in the site status")
 
 	config = parsermodule.parse_args(parser)
 

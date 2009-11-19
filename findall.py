@@ -16,7 +16,7 @@ if __name__ == '__main__':
 	parser = parsermodule.getParser(['nodesets'])
 
 	parser.set_defaults( increment=False, dbname="findbad", cachenodes=False, 
-						force=False, pcuselect=None, pcuid=None, pcu=None)
+						force=False, pcuselect=None, pcuid=None, pcu=None, checkpcu=False)
 	parser.add_option("", "--cachenodes", action="store_true",
 						help="Cache node lookup from PLC")
 	parser.add_option("", "--dbname", dest="dbname", metavar="FILE", 
@@ -25,6 +25,8 @@ if __name__ == '__main__':
 						help="Increment round number to force refresh or retry")
 	parser.add_option("", "--force", action="store_true", dest="force", 
 						help="Force probe without incrementing global 'round'.")
+	parser.add_option("", "--checkpcu", dest="checkpcu", action="store_true",
+						help="whether to include PCUs in the site status")
 
 	parser = parsermodule.getParser(['defaults'], parser)
 	
