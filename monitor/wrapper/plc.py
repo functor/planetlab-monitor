@@ -378,6 +378,12 @@ def nodePOD(nodename):
 Freeze all site slices.
 '''
 def suspendSiteSlices(loginbase):
+        if isPendingSite(loginbase):
+                msg = "INFO: enableSiteSlices: Pending Site (%s)" % loginbase
+                print msg
+                logger.info(msg)
+                return
+
 	api = xmlrpclib.Server(auth.server, verbose=False)
 	for slice in slices(loginbase):
 		logger.info("Suspending slice %s" % slice)
@@ -391,16 +397,17 @@ def suspendSiteSlices(loginbase):
 Freeze all site slices.
 '''
 def suspendSlices(nodename):
-	api = xmlrpclib.Server(auth.server, verbose=False)
-	for slice in slices(siteId(nodename)):
-		logger.info("Suspending slice %s" % slice)
-		try:
-			if not debug:
-				api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
-		except Exception, exc:
-			logger.info("suspendSlices:  %s" % exc)
+        loginbase = siteId(nodename)
+        suspendSiteSlices(loginbase)
+
 
 def enableSiteSlices(loginbase):
+        if isPendingSite(loginbase):
+                msg = "INFO: enableSiteSlices: Pending Site (%s)" % loginbase
+                print msg
+                logger.info(msg)
+                return
+
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	for slice in slices(loginbase):
 		logger.info("Enabling slices %s" % slice)
@@ -420,24 +427,8 @@ def enableSiteSlices(loginbase):
 			print "exception: %s" % exc
 
 def enableSlices(nodename):
-	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
-
-	for slice in slices(siteId(nodename)):
-		logger.info("Enabling slices %s" % slice)
-		try:
-			if not debug:
-				slice_list = api.GetSlices(auth.auth, {'name': slice}, None)
-				if len(slice_list) == 0:
-					return
-				slice_id = slice_list[0]['slice_id']
-				l_attr = api.GetSliceAttributes(auth.auth, {'slice_id': slice_id}, None)
-				for attr in l_attr:
-					if "enabled" == attr['name'] and attr['value'] == "0":
-						logger.info("Deleted enable=0 attribute from slice %s" % slice)
-						api.DeleteSliceAttribute(auth.auth, attr['slice_attribute_id'])
-		except Exception, exc:
-			logger.info("enableSlices: %s" % exc)
-			print "exception: %s" % exc
+        loginbase = siteId(nodename)
+        enableSiteSlices(loginbase)
 
 
 #I'm commenting this because this really should be a manual process.  
@@ -468,13 +459,8 @@ def enableSiteSliceCreation(loginbase):
 		logger.info("ERROR: enableSiteSliceCreation:  %s" % exc)
 
 def enableSliceCreation(nodename):
-	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
-	try:
-		loginbase = siteId(nodename)
-                enableSiteSliceCreation(loginbase)
-	except Exception, exc:
-		print "ERROR: enableSliceCreation:  %s" % exc
-		logger.info("ERROR: enableSliceCreation:  %s" % exc)
+        loginbase = siteId(nodename)
+        enableSiteSliceCreation(loginbase)
 
 '''
 Removes site's ability to create slices. Returns previous max_slices
@@ -500,13 +486,9 @@ def removeSiteSliceCreation(loginbase):
 Removes ability to create slices. Returns previous max_slices
 '''
 def removeSliceCreation(nodename):
-	print "removeSliceCreation(%s)" % nodename
-	api = xmlrpclib.Server(auth.server, verbose=False)
-	try:
-		loginbase = siteId(nodename)
-                removeSiteSliceCreation(loginbase)
-	except Exception, exc:
-		logger.info("removeSliceCreation:  %s" % exc)
+        loginbase = siteId(nodename)
+        removeSiteSliceCreation(loginbase)
+
 
 '''
 QED
