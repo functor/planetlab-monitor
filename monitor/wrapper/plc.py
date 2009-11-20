@@ -379,7 +379,7 @@ Freeze all site slices.
 '''
 def suspendSiteSlices(loginbase):
         if isPendingSite(loginbase):
-                msg = "INFO: enableSiteSlices: Pending Site (%s)" % loginbase
+                msg = "INFO: suspendSiteSlices: Pending Site (%s)" % loginbase
                 print msg
                 logger.info(msg)
                 return
