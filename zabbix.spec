@@ -290,6 +290,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri Nov 20 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-25
+- add option for site status to include both node & pcu status
+- improve ticket handling
+- template gadget.xml for a site-specific google-gadget summary
+
 * Thu Oct 22 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-24
 - - add install_date
 
@@ -460,6 +465,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 24
+%define taglevel 25
 
 %define version 3.0
