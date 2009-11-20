@@ -65,7 +65,11 @@ def getTicketStatus(ticket_id):
 		r_values[key] = ":".join(vals[1:])
 		r_values[key] = r_values[key].strip()
 
-	r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
+	if 'Created' in r_values:
+		r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
+	else:
+		r_values['Created'] = calendar.timegm(time.localtime())
+		
 	#r_values['Told'] = calendar.timegm(time.strptime(r_values['Told']))
 	return r_values
 
@@ -339,12 +343,7 @@ def email(subject, text, to):
 		for mta in [MTA, 'golf.cs.princeton.edu']:
 			try:
 				# This is normal operation
-				#print MTA
-				#print FROM
-				#print to
-				#print msg
 				server = smtplib.SMTP(mta)
-				#server = smtplib.SMTP('golf.cs.princeton.edu')
 				server.sendmail(FROM, to,  msg)
 				if config.bcc and not config.debug:
 					server.sendmail(FROM, config.email,  msg)
@@ -361,17 +360,10 @@ def email(subject, text, to):
 			except Exception, err:
 				print "Mailer error2: failed using MTA(%s) with: %s" % (mta, err)
 	else:
-		#print "Would mail %s" %to
 		logger.debug("Would send mail to %s" % to)
 
 if __name__=="__main__":
 	import smtplib
 	import emailTxt
 	import plc 
-	#email("[spam] bcc test from golf.cs.princeton.edu", 
-	#	  "It gets to both recipients", 
-	#	  "soltesz@cs.utk.edu")
 	emailViaRT("mail via RT", "Let's see if this succeeds...", [FROM])
-	#email("Re: [PL #21323] TEST 7", 
-	#		   mailtxt.newbootcd_one[1] % {'hostname_list':"hostname list..."},
-	#		   [FROM])

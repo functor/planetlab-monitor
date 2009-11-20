@@ -43,12 +43,17 @@ def get_current_state(fbnode):
 	return l
 
 def color_pcu_state(fbnode):
+	if fbnode['plc_pcuid'] is None:
+		return 'NOPCU'
+	else:
+		return 'PCU'
 
 	if 'plcnode' in fbnode and 'pcu_ids' in fbnode['plcnode'] and len(fbnode['plcnode']['pcu_ids']) > 0 :
 		values = reboot.get_pcu_values(fbnode['plcnode']['pcu_ids'][0])
 		if values == None:
 			return fbnode['pcu']
 	else:
+		print fbnode.keys()
 		if 'pcu' not in fbnode:
 			return 'NOPCU'
 		else:

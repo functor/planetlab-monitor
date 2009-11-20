@@ -94,7 +94,7 @@ def main():
 	# lastcotop measures whether cotop is actually running.  this is a better
 	# metric than sshstatus, or other values from CoMon
 
-	COMON_COTOPURL= "http://summer.cs.princeton.edu/status/tabulator.cgi?" + \
+	COMON_COTOPURL= "http://comon.cs.princeton.edu/status/tabulator.cgi?" + \
 					"table=table_nodeview&formatcsv"
 	if config.dns:
 		config.fields = "name,dns1udp,dns1tcp,dns2udp,dns2tcp"

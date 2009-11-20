@@ -21,6 +21,7 @@ from optparse import OptionParser
 from monitor import config
 from monitor import parser as parsermodule
 from monitor.common import *
+from monitor.const import MINUP
 from monitor.model import *
 from monitor.wrapper import plc
 from monitor.wrapper import plccache
@@ -35,6 +36,41 @@ def logic():
 
 	plc.nodeBootState(host, 'reinstall')
 	node_end_record(host)
+
+def check_node_and_pcu_status_for(loginbase):
+	"""
+		this function checks whether all the nodes and associated pcus for a
+		given site are considered 'good'.  
+		
+		If so, the function returns True.
+		Otherwise, the function returns False.
+	"""
+
+	results = [] 
+	for node in plccache.plcdb_lb2hn[loginbase]:
+
+		noderec  = FindbadNodeRecord.findby_or_create(hostname=node['hostname'])
+		nodehist = HistoryNodeRecord.findby_or_create(hostname=node['hostname'])
+		nodebl   = BlacklistRecord.get_by(hostname=node['hostname'])
+		pcuhist  = HistoryPCURecord.get_by(plc_pcuid=noderec.plc_pcuid)
+
+		if (nodehist is not None and nodehist.status == 'good' and \
+			((pcuhist is not None and pcuhist.status == 'good') or (pcuhist is None)) ):
+			if nodebl is None: 			# no entry in blacklist table
+				results.append(True)
+			elif nodebl is not None and nodebl.expired():	# expired entry in blacklist table
+				results.append(True)
+			else:
+				results.append(False)	# entry that is not expired.
+		else:
+			results.append(False)
+
+	try:
+		print "test: %s" % results
+		# NOTE: incase results is empty, reduce does not work on an empty set.
+		return reduce(lambda x,y: x&y, results) and len(results) > MINUP
+	except:
+		return False
 
 def main(hostnames, sitenames):
 	# commands:
@@ -231,7 +267,17 @@ def main(hostnames, sitenames):
 				sitehist.closeTicket()
 
 				print "send message for site %s penalty cleared" % site
-
+				
+			# check all nodes and pcus for this site; if they're all ok,
+			# 		close the ticket, else leave it open.
+			# NOTE: in the case where a PCU reboots and fails, a message is
+			# 		sent, but the PCU may appear to be ok according to tests.
+			# NOTE: Also, bootmanager sends messages regarding disks,
+			# 		configuration, etc.  So, the conditions here are 'good'
+			# 		rather than 'not down' as it is in sitebad.
+			close_ticket = check_node_and_pcu_status_for(site)
+			if close_ticket:
+				sitehist.closeTicket()
 
 		site_count = site_count + 1
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Module>
-<ModulePrefs title="MyOps Summary" title_url="http://www.planet-lab.org">
+<ModulePrefs title="MyOps Summary PLC_NAME" title_url="http://PLC_WWW_HOSTNAME">
 <Require feature="dynamic-height"/>
 </ModulePrefs>
 <Content type="html"><![CDATA[
@@ -10,7 +10,7 @@ var displaycontent = function (responseText) {
 	_gel('content_div').innerHTML = responseText; 
 	_IG_AdjustIFrameHeight();
 };
-_IG_FetchContent('http://monitor.planet-lab.org/monitor/summary', displaycontent, { refreshInterval: 300 }); 
+_IG_FetchContent('http://MONITOR_HOSTNAME/monitor/summary', displaycontent, { refreshInterval: 300 }); 
 </script>
 ]]></Content>
 </Module>

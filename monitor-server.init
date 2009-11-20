@@ -18,6 +18,8 @@
 local_config=/etc/planetlab/configs/site.xml
 
 MONITORPATH=/usr/share/monitor
+WEB_ROOT_PATH=web/MonitorWeb/monitorweb
+WEB_XML_PATH=static/xml
 
 # Be verbose
 set -x
@@ -39,6 +41,39 @@ WROTE_PG_CONFIG=
 if [ -z "$PLC_MONITOR_IP" ] ; then
 	PLC_MONITOR_IP=$( gethostbyname $PLC_MONITOR_HOST )
 fi
+
+function update_config ()
+{
+	pattern=$1
+	with=$2
+	file=$3
+	sed -i -e "s/$pattern/$with/g" $file
+}
+function apply_template ()
+{
+	TEMPLATE=$1
+	DESTFILE=$2
+
+	tmp_file=$(mktemp)
+	cp $TEMPLATE $tmp_file
+
+	update_config PLC_NAME "$PLC_NAME" $tmp_file
+	update_config PLC_WWW_HOSTNAME $PLC_WWW_HOST $tmp_file
+	update_config MONITOR_HOSTNAME $PLC_MONITOR_HOST $tmp_file
+
+	cp $tmp_file $DESTFILE
+	rm -f $tmp_file
+}
+
+function check_gadget_config ()
+{
+	for input_file in $MONITORPATH/$WEB_ROOT_PATH/$WEB_XML_PATH/*.in ; do 
+		output_file=$MONITORPATH/$WEB_ROOT_PATH/$WEB_XML_PATH/`basename $input_file | sed -e 's/.in\$//'`
+		if [ $input_file -nt $output_file ] ; then 
+			apply_template $input_file $output_file
+		fi
+	done
+}
 
 function check_monitor_schema_and_data() 
 {
@@ -150,6 +185,7 @@ function create_httpd_conf ()
 
 # NOTE: redirect path without trailing '/' to path with.  Favor SSL.
 Redirect /monitor https://${PLC_MONITOR_HOST}:${PLC_WWW_SSL_PORT}/monitor/
+#RedirectMatch ^/$ https://${PLC_MONITOR_HOST}:${PLC_WWW_SSL_PORT}/monitor
 
 # NOTE: this directive strips '/monitor/' from the requested path and pastes
 #       the remaining part to the end of the ProxyPass url below.  All TG urls
@@ -200,6 +236,8 @@ case "$1" in
 		check_user_and_db $MONITOR_DB_NAME $MONITOR_DB_USER
 		# WRITE default /etc/monitor.conf
 		check_monitor_conf
+
+		check_gadget_config
 
 		if [ -n "$WROTE_PG_CONFIG" ] ; then
 			# NOTE: restart db to enable access by users granted above.

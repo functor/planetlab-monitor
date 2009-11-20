@@ -3,6 +3,7 @@
 cd /usr/share/monitor
 source agent.sh &> /dev/null
 
+rsync -qv -az -e ssh root@chloe.cs.princeton.edu:/vservers/www-current/var/log/php.log /var/lib/monitor/httpd-log
 rsync -qv -az -e ssh root@chloe.cs.princeton.edu:/vservers/www-current/var/log/httpd/*-* /var/lib/monitor/httpd-log
 rsync -qv -az -e ssh root@chloe.cs.princeton.edu:/vservers/www-current/var/log/httpd/*error* /var/lib/monitor/httpd-log
 
