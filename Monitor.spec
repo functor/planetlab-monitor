@@ -140,7 +140,7 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
-install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+#install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
 
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
@@ -152,7 +152,7 @@ rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
 	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
 
 echo " * Installing web pages"
-rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
+#rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 rsync -a log/ $RPM_BUILD_ROOT/var/www/html/monitorlog/
 
 echo " * Installing cron job for automated polling"
@@ -170,8 +170,8 @@ rsync -a monitor/ $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
 rsync -a pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 
-touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
-chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
+#touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
+#chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
 #install -D -m 755 monitor-default.conf $RPM_BUILD_ROOT/etc/monitor.conf
 #cp $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig-default.py $RPM_BUILD_ROOT/usr/share/%{name}/monitorconfig.py
@@ -196,7 +196,7 @@ rm -rf $RPM_BUILD_ROOT
 #%config /etc/monitor.conf
 /usr/share/%{name}
 /var/lib/%{name}
-/var/www/cgi-bin/monitor
+#/var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/monitor-server.cron
 %{python_sitearch}/threadpool.py
 %{python_sitearch}/threadpool.pyc
