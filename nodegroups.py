@@ -21,7 +21,6 @@ from monitor import parser as parsermodule
 
 api = plc.getAuthAPI()
 
-from monitor.query import verify,query_to_dict,node_select
 from monitor.common import *
 from sets import Set
 
@@ -74,7 +73,7 @@ def main():
 		group_str = config.site
 
 	elif config.nodeselect:
-		hostlist = node_select(config.nodeselect)
+		hostlist = query.node_select(config.nodeselect)
 		nodelist = [ plccache.GetNodeByName(h) for h in hostlist ]
 
 		group_str = "selection"

@@ -4,7 +4,6 @@ export PATH=$PATH:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # NOTE: Must be an absolute path to guarantee it is read.
 INSTALLPATH=/usr/share/monitor/
-# Generate an 'sh' style file full of variables in monitor.conf
 $INSTALLPATH/shconfig.py >  $INSTALLPATH/monitorconfig.sh
 source $INSTALLPATH/monitorconfig.sh
 cd ${MONITOR_SCRIPT_ROOT}

@@ -79,7 +79,7 @@ function check_monitor_schema_and_data()
 {
 	# NOTE: call create_all() to setup the database from the info model.
 	python -c "from monitor.database.info.model import *; from elixir import create_all; create_all()"
-	$MONITORPATH/init-bootman-sequence.py
+	$MONITORPATH/config.d/init-bootman-sequence.py
 }
 
 function check_monitor_conf ()
