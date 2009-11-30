@@ -26,7 +26,7 @@ if [ -f $MONITOR_PID ] ; then
 		PID=`cat $MONITOR_PID`
 		rm -f $MONITOR_PID
 		if [ -z $PID ] ; then
-			${MONITOR_SCRIPT_ROOT}/kill.cmd.sh $PID
+			${MONITOR_SCRIPT_ROOT}/tools/kill.cmd.sh $PID
 			echo "done."
 		else
 			echo "No PID to be killed."
@@ -62,21 +62,19 @@ fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
-#${MONITOR_SCRIPT_ROOT}/checksync.py $DATE || :
-${MONITOR_SCRIPT_ROOT}/syncwithplc.py $DATE || :
+${MONITOR_SCRIPT_ROOT}/tools/syncwithplc.py $DATE || :
 service plc restart monitor
 
 echo "Performing FindAll Nodes"
 #########################
 # 1. FINDBAD NODES 
-${MONITOR_SCRIPT_ROOT}/findall.py $DATE || :
+${MONITOR_SCRIPT_ROOT}/commands/findall.py $DATE || :
 ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 # clean up stray 'locfg' processes that hang around inappropriately...
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 
 ${MONITOR_SCRIPT_ROOT}/policy.py $DATE || :
-${MONITOR_SCRIPT_ROOT}/statistics/add-record.py || :
 curl -s 'http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeview&formatcsv' > /var/lib/monitor/comon/$DATE.comon.csv || :
 
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log

@@ -131,7 +131,7 @@ rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
 #install -D -m 755 monitor-client.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
 #install -D -m 644 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
-install -D -m 755 timeout.pl $RPM_BUILD_ROOT/usr/bin/timeout.pl
+install -D -m 755 tools/timeout.pl $RPM_BUILD_ROOT/usr/bin/timeout.pl
 
 
 #################### SERVER
