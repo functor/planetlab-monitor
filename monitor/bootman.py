@@ -11,7 +11,7 @@ import traceback
 import subprocess
 from sets import Set
 
-from monitor.getsshkeys import SSHKnownHosts
+from monitor.util.sshknownhosts import SSHKnownHosts
 from monitor.Rpyc import SocketConnection, Async
 from monitor.Rpyc.Utils import *
 

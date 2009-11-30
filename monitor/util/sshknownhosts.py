@@ -175,15 +175,3 @@ class SSHKnownHosts:
 		#return rec
 		return (host, ip, key, "PlanetLab_%s" % s_date) 
 
-
-def main(hosts):
-	k = SSHKnownHosts()
-	if len (hosts) > 0:
-		for host in hosts:
-			k.updateDirect(host)
-	else:
-		k.updateAll()
-	k.write()
-
-if __name__ == '__main__':
-	main(sys.argv[1:])
