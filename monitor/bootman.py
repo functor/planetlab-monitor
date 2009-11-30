@@ -826,4 +826,4 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 	
 
 if __name__ == "__main__":
-	print "ERROR: Can not execute module as a command! Please use commands/%s." % __file__
+	print "ERROR: Can not execute module as a command! Please use commands/%s.py" % os.path.splitext(__file__)[0]

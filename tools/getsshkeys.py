@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
 import sys
-from monitor.util.sshknownhosts import SSHKnownHosts
+sys.path.append('.')
+sys.path.append('..')
+
+from monitor.util.file import *
 
 def main(hosts):
 	k = SSHKnownHosts()

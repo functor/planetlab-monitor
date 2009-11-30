@@ -108,37 +108,6 @@ def reboot_policy(nodename, continue_probe, dryrun):
 		print "return true"
 		return True
 
-def main():
-	logger.setLevel(logging.DEBUG)
-	ch = logging.StreamHandler()
-	ch.setLevel(logging.DEBUG)
-	formatter = logging.Formatter('LOGGER - %(message)s')
-	ch.setFormatter(formatter)
-	logger.addHandler(ch)
+if __name__ == "__main__":
+	print "ERROR: Can not execute module as a command! Please use commands/%s.py" % os.path.splitext(__file__)[0]
 
-	try:
-		if "test" in sys.argv:
-			dryrun = True
-		else:
-			dryrun = False
-
-		for node in sys.argv[1:]:
-			if node == "test": continue
-
-			print "Rebooting %s" % node
-			if reboot_policy(node, True, dryrun):
-				print "success"
-			else:
-				print "failed"
-	except Exception, err:
-		import traceback; traceback.print_exc()
-		from monitor.common import email_exception
-		email_exception(node)
-		print err
-
-if __name__ == '__main__':
-	logger = logging.getLogger("monitor")
-	main()
-	f = open("/tmp/rebootlog", 'a')
-	f.write("reboot %s\n" % sys.argv)
-	f.close()
