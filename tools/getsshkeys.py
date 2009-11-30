@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys
-from monitor.util.sshkeys import SSHKnownHosts
+from monitor.util.sshknownhosts import SSHKnownHosts
 
 def main(hosts):
 	k = SSHKnownHosts()
