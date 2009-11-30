@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from monitor.reboot import *
 
 def main():
