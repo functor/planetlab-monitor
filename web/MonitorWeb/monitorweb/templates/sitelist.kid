@@ -49,7 +49,7 @@ from links import *
       <th class="sortable plekit_table">Penalty</th>    
       <th class="sortable plekit_table">Slices/Max</th>      
       <th class="sortable plekit_table">Nodes/Total</th>
-      <th class="sortable plekit_table">Last Change</th>
+      <th class="sortable-sortLastContact plekit_table">Last Changed</th>
     </tr>
   </thead>
   <tbody>
