@@ -175,3 +175,5 @@ class SSHKnownHosts:
 		#return rec
 		return (host, ip, key, "PlanetLab_%s" % s_date) 
 
+if __name__ == "__main__":
+	print "ERROR: Can not execute module as a command! Please use tools/getsshkey.py"
