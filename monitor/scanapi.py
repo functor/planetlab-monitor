@@ -236,9 +236,9 @@ class ScanNodeInternal(ScanInterface):
 					echo "{"
 					echo '  "kernel_version":"'`uname -a`'",'
 					echo '  "bmlog":"'`ls /tmp/bm.log`'",'
-					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID`'",'
+					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID || cat /usr/bootme/ID`'",'
 					echo '  "boot_server":"'`cat /mnt/cdrom/bootme/BOOTSERVER`'",'
-					echo '  "install_date":"'`python -c "import os,time,stat; print time.ctime(os.stat('/usr/boot/plnode.txt')[stat.ST_CTIME])"`'",'
+					echo '  "install_date":"'`python -c "import os,time,stat; print time.ctime(os.stat('/usr/boot/plnode.txt')[stat.ST_CTIME])" || python -c "import os,time,stat; print  time.ctime(os.stat('/usr/boot/cacert.pem')[stat.ST_CTIME])"`'",'
 					echo '  "nm_status":"'`ps ax | grep nm.py | grep -v grep`'",'
 					echo '  "dns_status":"'`host boot.planet-lab.org 2>&1`'",'
 					echo '  "iptables_status":"'`iptables -t mangle -nL | awk '$1~/^[A-Z]+$/ {modules[$1]=1;}END{for (k in modules) {if (k) printf "%s ",k;}}'`'",'

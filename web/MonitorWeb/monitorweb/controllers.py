@@ -53,8 +53,8 @@ class NodeQueryFields(widgets.WidgetsList):
 	external_dns_status = widgets.CheckBox(label="Hostname Resolves?")
 	kernel_version = widgets.CheckBox(label="Kernel")
 	bootcd_version = widgets.CheckBox(label="BootCD")
-        boot_server = widgets.CheckBox(label="Boot Server")
-        install_date = widgets.CheckBox(label="Installation Date")
+	boot_server = widgets.CheckBox(label="Boot Server")
+	install_date = widgets.CheckBox(label="Installation Date")
 	observed_status = widgets.CheckBox(label="Observed Status")
 	uptime = widgets.CheckBox(label="Uptime")
 	traceroute = widgets.CheckBox(label="Traceroute")
@@ -341,6 +341,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				else:
 					agg = node.to_dict()
 				agg.update(agg['plc_node_stats'])
+				if agg['install_date']:
+					agg['install_date'] = time.mktime(time.strptime(agg['install_date'], "%a %b %d %H:%M:%S %Y"))
 				if agg['kernel_version']:
 					agg['kernel_version'] = agg['kernel_version'].split()[2]
 				if 'traceroute' in data and agg['traceroute']:
