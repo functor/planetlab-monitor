@@ -54,7 +54,6 @@ Group: Applications/System
 Requires: python
 Requires: python-setuptools-devel
 Requires: python-peak-util-extremes
-Requires: TurboGears
 
 Requires: compat-libstdc++-296
 Requires: openssh-clients
@@ -142,6 +141,14 @@ install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 #install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
+install -d $RPM_BUILD_ROOT/%{python_sitearch}/
+
+export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
+# pack monitor's dependencies in RPM to make it easier to deploy.
+easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install --build-directory /var/tmp -UZ Elixir
+rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
 
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
@@ -202,6 +209,11 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
+%{python_sitearch}/Turbo*
+%{python_sitearch}/SQLAlchemy*
+%{python_sitearch}/Elixir*
+%{python_sitearch}/easy-install.pth
+%{python_sitearch}/tg-admin
 %{_sysconfdir}/plc.d/monitor
 %{_sysconfdir}/plc.d/monitor.functions
 %{_sysconfdir}/plc.d/zabbix
@@ -222,14 +234,6 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
-#easy_install --build-directory /var/tmp -UZ ElementTree
-##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
-
-
-## TODO: something is bad wrong with this approach.
-easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install --build-directory /var/tmp -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
