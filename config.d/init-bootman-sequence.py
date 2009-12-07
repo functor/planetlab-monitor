@@ -61,6 +61,8 @@ def getSequences():
 				"bminit-cfg-auth-getplc-installinit-validate-bmexceptvgscan-exception-noinstall-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-bmexceptvgscan-exception-noinstall-debug-validate-bmexceptvgscan-done",
 				"bminit-cfg-auth-getplc-update-installinit-validate-exception-missingkernel-debug-validate-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-implementerror-nospace-debug-validate-done",
+				"bminit-cfg-auth-getplc-update-installinit-validate-rebuildinitrd-netcfg-disk-update4-update3-update3-nospace-nospace-nospace-nospace-nospace-nospace-nospace-nospace-implementerror-nospace-debug-validate-done",
 				]:
 			sequences.update({n : "restart_bootmanager_rins"})
 
