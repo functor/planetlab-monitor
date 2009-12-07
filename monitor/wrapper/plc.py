@@ -402,11 +402,11 @@ def suspendSlices(nodename):
 
 
 def enableSiteSlices(loginbase):
-        if isPendingSite(loginbase):
-                msg = "INFO: enableSiteSlices: Pending Site (%s)" % loginbase
-                print msg
-                logger.info(msg)
-                return
+	if isPendingSite(loginbase):
+		msg = "INFO: enableSiteSlices: Pending Site (%s)" % loginbase
+		print msg
+		logger.info(msg)
+		return
 
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	for slice in slices(loginbase):
@@ -442,18 +442,20 @@ def enableSlices(nodename):
 #		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
 #
 def enableSiteSliceCreation(loginbase):
-        if isPendingSite(loginbase):
-                msg = "INFO: enableSiteSliceCreation: Pending Site (%s)" % loginbase
-                print msg
-                logger.info(msg)
-                return
+	if isPendingSite(loginbase):
+		msg = "INFO: enableSiteSliceCreation: Pending Site (%s)" % loginbase
+		print msg
+		logger.info(msg)
+		return
 
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	try:
 		logger.info("Enabling slice creation for site %s" % loginbase)
 		if not debug:
-			logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
-			api.UpdateSite(auth.auth, loginbase, {'enabled': True})
+			site = api.GetSites(auth.auth, loginbase)[0]
+			if site['enabled'] == False:
+				logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
+				api.UpdateSite(auth.auth, loginbase, {'enabled': True})
 	except Exception, exc:
 		print "ERROR: enableSiteSliceCreation:  %s" % exc
 		logger.info("ERROR: enableSiteSliceCreation:  %s" % exc)
@@ -466,13 +468,13 @@ def enableSliceCreation(nodename):
 Removes site's ability to create slices. Returns previous max_slices
 '''
 def removeSiteSliceCreation(loginbase):
-        print "removeSiteSliceCreation(%s)" % loginbase
+	print "removeSiteSliceCreation(%s)" % loginbase
 
-        if isPendingSite(loginbase):
-                msg = "INFO: removeSiteSliceCreation: Pending Site (%s)" % loginbase
-                print msg
-                logger.info(msg)
-                return
+	if isPendingSite(loginbase):
+		msg = "INFO: removeSiteSliceCreation: Pending Site (%s)" % loginbase
+		print msg
+		logger.info(msg)
+		return
 
 	api = xmlrpclib.Server(auth.server, verbose=False)
 	try:
