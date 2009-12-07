@@ -43,8 +43,9 @@ def main():
 	loginbases_q = BlacklistRecord.getLoginbaseBlacklist()
 	hostnames  = [ h.hostname for h in hostnames_q ]
 	loginbases = [ h.loginbase for h in loginbases_q ]
-	hostnames_exp  = [ (h.hostname,h.date_created+timedelta(0,h.expires)) for h in hostnames_q ]
-	loginbases_exp = [ (h.loginbase,h.date_created+timedelta(0,h.expires)) for h in loginbases_q ]
+	hostnames_exp  = [ (h.hostname,h.date_created+timedelta(0,h.expires),h.date_created+timedelta(0,h.expires) < datetime.now() and h.expires != 0) for h in hostnames_q ]
+	#loginbases_exp = [ (h.loginbase,h.date_created+timedelta(0,h.expires)) for h in loginbases_q ]
+	loginbases_exp = [ (h.loginbase,h.date_created+timedelta(0,h.expires),h.date_created+timedelta(0,h.expires) < datetime.now() and h.expires != 0) for h in loginbases_q ]
 
 	if config.add:
 		print "Blacklisting nodes: ", l_nodes
@@ -78,7 +79,9 @@ def main():
 			objlist = hostnames_exp
 
 		for i in objlist:
-			if i[1] > datetime.now():
+			if i[2]:
+				print i[0], i[1], "<-- expired"
+			elif i[1] > datetime.now():
 				print i[0], i[1]
 			else:
 				print i[0]
