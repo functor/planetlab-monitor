@@ -1,6 +1,7 @@
 from pcucontrol.reboot import *
 
 class ePowerSwitchNew(PCUControl):
+	supported_ports = [80]
 	# NOTE:
 	# 		The old code used Python's HTTPPasswordMgrWithDefaultRealm()
 	#		For some reason this both doesn't work and in some cases, actually
@@ -50,14 +51,15 @@ class ePowerSwitchNew(PCUControl):
 				req.add_header("Authorization", authheader)
 				# add data to handler,
 				f = urllib2.urlopen(req, data)
-				if self.transport.verbose: print f.read()
+				#if self.transport.verbose: print f.read()
 			except:
 				import traceback; traceback.print_exc()
 
 				# fetch url one more time on cmd.html, econtrol.html or whatever.
 				# pass
 		else:
-			if self.transport.verbose: print f.read()
+			#if self.transport.verbose: print f.read()
+			pass
 
 		return 0
 
