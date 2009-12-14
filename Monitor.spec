@@ -5,8 +5,9 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version %(python -c "import sys; sys.path.append('$RPM_SOURCE_DIR');from monitor.monitor_version import *; print monitor_version")
-%define taglevel 25
+# keep this version in sync with monitor/monitor_version.py
+%define version 3.0
+%Define Taglevel 25
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -154,11 +155,12 @@ install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
 
-install -D -m 644 monitor_version.py $RPM_BUILD_ROOT/usr/share/%{name}/
-
 echo " * Installing core scripts"
 rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
 	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
+
+install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
+
 
 echo " * Installing web pages"
 #rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
