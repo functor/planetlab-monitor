@@ -25,6 +25,9 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %(echo %{url} | cut -d ' ' -f 2)
 
+BuildRequires: python-setuptools-devel
+
+
 Summary: Monitor account initialization for the root image.
 Group: Applications/System
 
@@ -53,7 +56,6 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
-Requires: python-setuptools-devel
 Requires: python-peak-util-extremes
 
 Requires: compat-libstdc++-296
