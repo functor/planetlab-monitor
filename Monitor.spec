@@ -5,7 +5,7 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version 3.0
+%define version %(python -c "import sys; sys.path.append('$RPM_SOURCE_DIR')import setup; print setup.monitor_version")
 %define taglevel 25
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
@@ -145,14 +145,16 @@ install -d $RPM_BUILD_ROOT/%{python_sitearch}/
 
 export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
 # pack monitor's dependencies in RPM to make it easier to deploy.
-easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install --build-directory /var/tmp -UZ Elixir
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
 rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
 
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
+
+install -D -m 644 monitor_version.py $RPM_BUILD_ROOT/usr/share/%{name}/
 
 echo " * Installing core scripts"
 rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
