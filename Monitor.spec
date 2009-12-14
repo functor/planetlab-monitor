@@ -140,46 +140,41 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
-#install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
-install -d $RPM_BUILD_ROOT/%{python_sitearch}/
+install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 
-export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
 # pack monitor's dependencies in RPM to make it easier to deploy.
+export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
 easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
 easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
 rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
 
+# plc.d scripts
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
 
-echo " * Installing core scripts"
-rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
-	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
+# cron job for automated polling
+install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
 
+# apache configuration
 install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 
+# install everything to /usr/share/monitor
+rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
-echo " * Installing web pages"
-#rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
-rsync -a log/ $RPM_BUILD_ROOT/var/www/html/monitorlog/
+# link site-packages/monitor to /usr/share/monitor/monitor
+ln -s $RPM_BUILD_ROOT/usr/share/%{name}/%{name} $RPM_BUILD_ROOT/%{python_sitearch}/%{name}/
 
-echo " * Installing cron job for automated polling"
-install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
-echo " * TODO: Setting up Monitor account in local MyPLC"
-# TODO: 
+# and site-packages/pcucontrol to /usr/share/monitor/pcucontrol
+ln -s $RPM_BUILD_ROOT/%{name}/pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
 
-install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
-install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
-# TODO: need a much better way to do this.
-rsync -a monitor/ $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
-#for file in __init__.py database.py config.py ; do 
-#	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
-#done
-rsync -a pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
+# install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
+
+# TODO: 
+echo " * TODO: Setting up Monitor account in local MyPLC"
 
 #touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 #chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
