@@ -165,15 +165,15 @@ install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 # we'll install monitor and pcucontrol in site-packages
 # install rest to /usr/share/monitor
 rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  \
-    --exclude monitor \
-    --exclude pcucontol \
+    --exclude monitor/ \
+    --exclude pcucontol/ \
     ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
 # install monitor python package
-install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
+rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
 
 # and pcucontrol
-install -d -D -m 755 pcucontrol $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol
+rsync -a --exclude .svn  ./pcucontrol/    $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
 
 # install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
