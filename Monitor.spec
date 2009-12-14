@@ -5,7 +5,7 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
-%define version %(python -c "import sys; sys.path.append('$RPM_SOURCE_DIR')import setup; print setup.monitor_version")
+%define version %(python -c "import sys; sys.path.append('$RPM_SOURCE_DIR');from monitor.monitor_version import *; print monitor_version")
 %define taglevel 25
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
