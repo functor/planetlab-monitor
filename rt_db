@@ -1,4 +1,0 @@
-RT_DB_HOST=rt.planet-lab.org
-RT_DB_USER=rt_ro
-RT_DB_PASSWORD=rtropassword
-RT_DB_NAME=rt3

@@ -5,6 +5,7 @@
 %define url $URL: svn+ssh://svn.planet-lab.org/svn/monitor/trunk/monitor.spec $
 
 %define name monitor
+# keep this version in sync with monitor/monitor_version.py
 %define version 3.0
 %define taglevel 25
 
@@ -54,7 +55,6 @@ Group: Applications/System
 Requires: python
 Requires: python-setuptools-devel
 Requires: python-peak-util-extremes
-Requires: TurboGears
 
 Requires: compat-libstdc++-296
 Requires: openssh-clients
@@ -131,7 +131,7 @@ rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
 #install -D -m 755 monitor-client.init $RPM_BUILD_ROOT/%{_initrddir}/monitor
 #install -D -m 644 monitor.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor
-install -D -m 755 timeout.pl $RPM_BUILD_ROOT/usr/bin/timeout.pl
+install -D -m 755 tools/timeout.pl $RPM_BUILD_ROOT/usr/bin/timeout.pl
 
 
 #################### SERVER
@@ -140,35 +140,46 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
-#install -d $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
+install -d $RPM_BUILD_ROOT/etc/httpd/conf.d/
+install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 
+# pack monitor's dependencies in RPM to make it easier to deploy.
+export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
+rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
+
+# plc.d scripts
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
 
-echo " * Installing core scripts"
-rsync -a --exclude www --exclude archive-pdb --exclude .svn --exclude CVS \
-	  ./ $RPM_BUILD_ROOT/usr/share/%{name}/
-
-echo " * Installing web pages"
-#rsync -a www/ $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/
-rsync -a log/ $RPM_BUILD_ROOT/var/www/html/monitorlog/
-
-echo " * Installing cron job for automated polling"
+# cron job for automated polling
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
-echo " * TODO: Setting up Monitor account in local MyPLC"
-# TODO: 
 
-install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
-install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
-# TODO: need a much better way to do this.
-rsync -a monitor/ $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
-#for file in __init__.py database.py config.py ; do 
-#	install -D -m 644 monitor/$file $RPM_BUILD_ROOT/%{python_sitearch}/monitor/$file
-#done
-rsync -a pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
+# apache configuration
+install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
+
+# we'll install monitor and pcucontrol in site-packages
+# install rest to /usr/share/monitor
+rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  \
+    --exclude monitor/ \
+    --exclude pcucontol/ \
+    ./  $RPM_BUILD_ROOT/usr/share/%{name}/
+
+# install monitor python package
+rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
+
+# and pcucontrol
+rsync -a --exclude .svn  ./pcucontrol/    $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
+
+# install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
+
+# TODO: 
+echo " * TODO: Setting up Monitor account in local MyPLC"
 
 #touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 #chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
@@ -202,9 +213,15 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/threadpool.pyc
 %{python_sitearch}/threadpool.pyo
 %{python_sitearch}/monitor
+%{python_sitearch}/Turbo*
+%{python_sitearch}/SQLAlchemy*
+%{python_sitearch}/Elixir*
+%{python_sitearch}/easy-install.pth
+%{python_sitearch}/tg-admin
 %{_sysconfdir}/plc.d/monitor
 %{_sysconfdir}/plc.d/monitor.functions
 %{_sysconfdir}/plc.d/zabbix
+%{_sysconfdir}/httpd/conf.d
 
 %files client
 %defattr(-,root,root)
@@ -222,14 +239,6 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
-#easy_install --build-directory /var/tmp -UZ ElementTree
-##easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/2.5/E/Extremes/Extremes-1.1-py2.5.egg
-
-
-## TODO: something is bad wrong with this approach.
-easy_install --build-directory /var/tmp -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install --build-directory /var/tmp -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install --build-directory /var/tmp -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2

@@ -75,10 +75,11 @@ function check_gadget_config ()
 	done
 }
 
-function check_monitor_schema_and_data() 
+function check_monitor_schema_and_data_init() 
 {
-	# NOTE: call create_all() to setup the database from the info model.
-	python -c "from monitor.database.info.model import *; from elixir import create_all; create_all()"
+	# from monitor.functions
+        check_monitor_schema_and_data
+
 	$MONITORPATH/config.d/init-bootman-sequence.py
 }
 
@@ -247,7 +248,7 @@ case "$1" in
 			dialog "$MESSAGE"
 		fi
 
-		check_monitor_schema_and_data
+		check_monitor_schema_and_data_init
 
 		# create /etc/httpd/conf.d/monitorweb.conf
 		create_httpd_conf
