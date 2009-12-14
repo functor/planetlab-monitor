@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define Taglevel 25
+%define taglevel 25
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -162,14 +162,18 @@ install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/moni
 # apache configuration
 install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 
-# install everything to /usr/share/monitor
-rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  ./  $RPM_BUILD_ROOT/usr/share/%{name}/
+# we'll install monitor and pcucontrol in site-packages
+# install rest to /usr/share/monitor
+rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  \
+    --exclude monitor \
+    --exclude pcucontol \
+    ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
-# link site-packages/monitor to /usr/share/monitor/monitor
-ln -s $RPM_BUILD_ROOT/usr/share/%{name}/%{name} $RPM_BUILD_ROOT/%{python_sitearch}/%{name}/
+# install monitor python package
+install -d -D -m 755 monitor $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 
-# and site-packages/pcucontrol to /usr/share/monitor/pcucontrol
-ln -s $RPM_BUILD_ROOT/%{name}/pcucontrol/ $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
+# and pcucontrol
+install -d -D -m 755 pcucontrol $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol
 
 # install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
@@ -217,6 +221,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/plc.d/monitor
 %{_sysconfdir}/plc.d/monitor.functions
 %{_sysconfdir}/plc.d/zabbix
+%{_sysconfdir}/httpd/conf.d
 
 %files client
 %defattr(-,root,root)
