@@ -141,6 +141,7 @@ install -d $RPM_BUILD_ROOT/data/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/lib/%{name}
 install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
+install -d $RPM_BUILD_ROOT/etc/httpd/conf.d/
 install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 
 # pack monitor's dependencies in RPM to make it easier to deploy.
