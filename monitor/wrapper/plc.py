@@ -248,7 +248,11 @@ Returns dict of PCU info of a given node.
 def getpcu(nodename):
 	api = xmlrpclib.Server(auth.server, verbose=False, allow_none=True)
 	anon = {'AuthMethod': "anonymous"}
-	nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
+        try:
+                nodeinfo = api.GetNodes(auth.auth, {"hostname": nodename}, ["pcu_ids", "ports"])[0]
+        except IndexError:
+                logger.info("Can not find node: %s" % nodename)
+                return False
 	if nodeinfo['pcu_ids']:
 		print nodeinfo
 		sitepcu = api.GetPCUs(auth.auth, nodeinfo['pcu_ids'])[0]
