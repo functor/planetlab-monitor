@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed Dec 16 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-26
+- to many changes, but mostly moved stuff around. there are some small fixes here and there.
+
 * Fri Nov 20 2009 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-25
 - add option for site status to include both node & pcu status
 - improve ticket handling
@@ -465,6 +468,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 25
+%define taglevel 26
 
 %define version 3.0
