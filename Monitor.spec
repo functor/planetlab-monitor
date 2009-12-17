@@ -147,10 +147,11 @@ install -d $RPM_BUILD_ROOT/etc/httpd/conf.d/
 install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 
 # pack monitor's dependencies in RPM to make it easier to deploy.
+export TMPDIR=/var/tmp/
 export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
-easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install --build-directory /var/tmp -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
+easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
 rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
 
 # plc.d scripts
