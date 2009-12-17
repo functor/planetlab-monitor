@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-27
+- fix rpm build issues
+
 * Wed Dec 16 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-26
 - to many changes, but mostly moved stuff around. there are some small fixes here and there.
 
@@ -468,6 +471,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 26
+%define taglevel 27
 
 %define version 3.0

@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define taglevel 26
+%define taglevel 27
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -310,6 +310,9 @@ fi
 
 
 %changelog
+* Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-27
+- fix rpm build issues
+
 * Wed Dec 16 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-26
 - to many changes, but mostly moved stuff around. there are some small fixes here and there.
 
