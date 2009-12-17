@@ -211,13 +211,9 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/%{name}
 #/var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/monitor-server.cron
-%{python_sitearch}/threadpool.py
-%{python_sitearch}/threadpool.pyc
-%{python_sitearch}/threadpool.pyo
+%{python_sitearch}/threadpool.py*
 %{python_sitearch}/monitor
-%{python_sitearch}/Turbo*
-%{python_sitearch}/SQLAlchemy*
-%{python_sitearch}/Elixir*
+%{python_sitearch}/*.egg/
 %{python_sitearch}/easy-install.pth
 %{python_sitearch}/tg-admin
 %{_sysconfdir}/plc.d/monitor
