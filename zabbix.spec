@@ -290,6 +290,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-28
+- do not need buildrequires. a new tag to fix centos builds
+
 * Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-27
 - fix rpm build issues
 
@@ -471,6 +474,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 27
+%define taglevel 28
 
 %define version 3.0
