@@ -25,7 +25,9 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %(echo %{url} | cut -d ' ' -f 2)
 
-BuildRequires: python-setuptools-devel
+# this is only required for fedora and we have this in devel.pkgs for
+# all fedora builds.
+# BuildRequires: python-setuptools-devel
 
 
 Summary: Monitor account initialization for the root image.
