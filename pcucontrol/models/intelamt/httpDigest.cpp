@@ -477,7 +477,7 @@ static int http_digest_fposthdr(struct soap *soap, const char *key, const char *
         else
             return soap->error = SOAP_EOM;
 
-        s1 = strstr(key, " ");
+        s1 = const_cast<char*>(strstr(key, " "));
         if (!s1) {
             return soap->error = SOAP_EOM;
         }
