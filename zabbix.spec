@@ -78,7 +78,12 @@ mkdir server
 cp -r client/* server
 
 pushd client
+# quick and dirty fix for f12; loader would fail b/c of the lack of /lib/libm.a
+%if "%{distro}" == "Fedora" && %{distrorelease} >= 12
+./configure --enable-agent
+%else
 ./configure --enable-static --enable-agent
+%endif
 make
 popd
 
