@@ -86,7 +86,6 @@ Group: Applications/System
 Requires: python
 
 Requires: monitor-server-deps
-Requires: monitor-pcucontrol
 Requires: PLCWWW >= 4.2
 Requires: bootcd-%{pldistro}-%{_arch} >= 4.2
 
@@ -94,19 +93,6 @@ Requires: bootcd-%{pldistro}-%{_arch} >= 4.2
 The server side include all python modules and scripts needed to fully
 operation, track, and interact with any third-party monitoring software, such
 as Zabbix DB.
-
-######################################## PCU Control
-
-%package pcucontrol
-summary: pcu controls for monitor and plcapi
-group: applications/system
-requires: python
-requires: OpenIPMI-tools
-
-%description pcucontrol
-both monitor and the plcapi use a set of common commands to reboot machines
-using their external or internal pcus.  this package is a library of several
-supported models.
 
 ####################################### RunlevelAgent
 %package runlevelagent
@@ -214,15 +200,11 @@ rm -rf $RPM_BUILD_ROOT
 /var/lib/%{name}
 #/var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/monitor-server.cron
-%{python_sitearch}/threadpool.py*
-%{python_sitearch}/monitor
-%{python_sitearch}/*.egg/
-%{python_sitearch}/easy-install.pth
-%{python_sitearch}/tg-admin
 %{_sysconfdir}/plc.d/monitor
 %{_sysconfdir}/plc.d/monitor.functions
 %{_sysconfdir}/plc.d/zabbix
 %{_sysconfdir}/httpd/conf.d
+%{python_sitearch}
 
 %files client
 %defattr(-,root,root)
@@ -230,13 +212,8 @@ rm -rf $RPM_BUILD_ROOT
 #%{_sysconfdir}/cron.d/monitor
 /usr/bin/timeout.pl
 
-%files pcucontrol
-%{python_sitearch}/pcucontrol
-
 %files runlevelagent
-/usr/bin/RunlevelAgent.py
-/usr/bin/RunlevelAgent.pyo
-/usr/bin/RunlevelAgent.pyc
+/usr/bin/RunlevelAgent.py*
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
