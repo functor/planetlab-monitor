@@ -17,8 +17,9 @@ from links import *
   </script>
 
   <center>
-  <b py:content="'UP: %d' % len([agg for agg in query if agg.node.status in ('online', 'good')])"></b> | 
-  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/>
+  <!-- NOTE: agg.node is a FindbadNodeRecord not a HistoryNodeRecord, so there is not 'status' attribute -->
+  <!--b py:content="'UP: %d' % len([agg for agg in query if agg.node.status in ('online', 'good')])"></b> | 
+  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/-->
   </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
@@ -49,17 +50,7 @@ from links import *
     </fieldset></div></td></tr>
     
     <tr>
-      <th class="sortable plekit_table">ID</th>
-      <th class="sortable plekit_table">Hostname</th>
-      <th class="sortable plekit_table">Site</th>
-      <th class="sortable plekit_table">Ping</th>
-      <th class="sortable plekit_table">SSH</th>
-      <th class="sortable plekit_table">Stat</th>
-      <th class="sortable plekit_table">pcu</th>
-      <th class="sortable plekit_table">kernel</th>
-      <th class="sortable plekit_table">BootCD</th>
-      <th class="sortable plekit_table">Boot Server</th>
-      <th class="sortable-sortLastContact plekit_table">Last_contact</th>
+      ${nodewidget.display(node=None, header=True)}
   </tr>
   </thead>
   <tbody>

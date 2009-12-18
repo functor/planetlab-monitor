@@ -6,18 +6,18 @@ from links import *
 ?>
 <span xmlns:py="http://purl.org/kid/ns#">
 	<span py:if="header is not None">
-                <th>ID</th>
-		<th>Hostname</th>
-		<th>Site</th>
-                <th>Ping</th>
-                <th>SSH</th>
-                <th>Boot Status</th>
-		<th>pcu</th>
-		<th>kernel</th>
-                <th>BootCD</th>
-                <th>Boot Server</th>
-                <th>Installation Date</th>
-		<th>last_contact</th>
+      <th class="sortable plekit_table">ID</th>
+      <th class="sortable plekit_table">Hostname</th>
+      <th class="sortable plekit_table">Site</th>
+      <th class="sortable plekit_table">Ping</th>
+      <th class="sortable plekit_table">SSH</th>
+      <th class="sortable plekit_table">Stat</th>
+      <th class="sortable plekit_table">pcu</th>
+      <th class="sortable plekit_table">kernel</th>
+      <th class="sortable plekit_table">BootCD</th>
+      <th class="sortable plekit_table">Boot Server</th>
+      <th class="sortable plekit_table">Installation Date</th>
+      <th class="sortable-sortLastContact plekit_table">Last_contact</th>
 	</span>
 	<span py:if="node is not None">
         <td py:content="node.node.plc_node_stats['node_id']">node_id</td>
