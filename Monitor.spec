@@ -108,14 +108,6 @@ mode to actively report the observed runlevel to PLC and update the
 %prep
 %setup -q
 
-%build
-# NOTE: the build uses g++ cmdamt/
-# NOTE: TMPDIR is needed here b/c the tmpfs of the build vserver is too small.
-cd pcucontrol/models/intelamt
-export TMPDIR=$PWD/tmp
-make
-cd ..
-
 %install
 rm -rf $RPM_BUILD_ROOT
 #################### CLIENT 
@@ -153,18 +145,14 @@ install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/moni
 # apache configuration
 install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 
-# we'll install monitor and pcucontrol in site-packages
-# install rest to /usr/share/monitor
+# we'll install monitor in site-packages install rest to
+# /usr/share/monitor
 rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  \
     --exclude monitor/ \
-    --exclude pcucontol/ \
     ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
 # install monitor python package
 rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
-
-# and pcucontrol
-rsync -a --exclude .svn  ./pcucontrol/    $RPM_BUILD_ROOT/%{python_sitearch}/pcucontrol/
 
 # install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
