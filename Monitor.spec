@@ -25,10 +25,6 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %(echo %{url} | cut -d ' ' -f 2)
 
-# this is only required for fedora and we have this in devel.pkgs for
-# all fedora builds.
-# BuildRequires: python-setuptools-devel
-
 
 Summary: Monitor account initialization for the root image.
 Group: Applications/System
@@ -58,6 +54,7 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
+Requires: python-setuptools-devel
 Requires: python-peak-util-extremes
 
 Requires: compat-libstdc++-296
@@ -126,14 +123,6 @@ install -d $RPM_BUILD_ROOT/var/lib/%{name}/archive-pdb
 install -d $RPM_BUILD_ROOT/var/www/html/monitorlog/
 install -d $RPM_BUILD_ROOT/etc/httpd/conf.d/
 install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
-
-# pack monitor's dependencies in RPM to make it easier to deploy.
-export TMPDIR=/var/tmp/
-export PYTHONPATH=$PYTHONPATH:$RPM_BUILD_ROOT/%{python_sitearch}/
-easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install -d $RPM_BUILD_ROOT/%{python_sitearch}/ -UZ Elixir
-rm -rf $RPM_BUILD_ROOT/%{python_sitearch}/site.py*
 
 # plc.d scripts
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
@@ -206,6 +195,17 @@ rm -rf $RPM_BUILD_ROOT
 /%{_initrddir}/monitor-runlevelagent
 
 %post server-deps
+#
+# TODO: depend on distribution packages where feasible.
+#
+#  it would be better to be able to depend on the distribution's
+# packages for these additional python modules, but packages provided
+# by fedora 8 (our current deployment) doesn't match the version
+# requirements.
+export TMPDIR=/var/tmp/
+easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+easy_install -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
