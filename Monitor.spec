@@ -88,6 +88,7 @@ Requires: python
 Requires: monitor-server-deps
 Requires: PLCWWW >= 4.2
 Requires: bootcd-%{pldistro}-%{_arch} >= 4.2
+Requires: pcucontrol
 
 %description server
 The server side include all python modules and scripts needed to fully
