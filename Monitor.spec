@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define taglevel 28
+%define taglevel 29
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -278,6 +278,11 @@ fi
 
 
 %changelog
+* Tue Dec 22 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-29
+- - separate pcucontrol as an svn module
+- - restore easy_instal back into post install stage of server-deps
+- - template imporovements for web interface
+
 * Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-28
 - do not need buildrequires. a new tag to fix centos builds
 

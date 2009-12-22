@@ -295,6 +295,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue Dec 22 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-29
+- - separate pcucontrol as an svn module
+- - restore easy_instal back into post install stage of server-deps
+- - template imporovements for web interface
+
 * Thu Dec 17 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-28
 - do not need buildrequires. a new tag to fix centos builds
 
@@ -479,6 +484,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 28
+%define taglevel 29
 
 %define version 3.0
