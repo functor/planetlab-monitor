@@ -4,7 +4,7 @@ export PATH=$PATH:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # NOTE: Must be an absolute path to guarantee it is read.
 INSTALLPATH=/usr/share/monitor/
-$INSTALLPATH/shconfig.py >  $INSTALLPATH/monitorconfig.sh
+$INSTALLPATH/commands/shconfig.py >  $INSTALLPATH/monitorconfig.sh
 source $INSTALLPATH/monitorconfig.sh
 cd ${MONITOR_SCRIPT_ROOT}
 set -e
@@ -13,7 +13,7 @@ MONITOR_PID="${MONITOR_SCRIPT_ROOT}/SKIP"
 
 echo "#######################################"; echo "Running Monitor at $DATE"; echo "######################################"
 echo "Performing API test"
-API=$(./testapi.py)
+API=$(${MONITOR_SCRIPT_ROOT}/tools/testapi.py)
 if [ "$API" != "ok" ] ; then 
 	# NOTE: Do not try to run any commands if the API is obviously broken.
 	echo "API IS DOWN : "`date`
