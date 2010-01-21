@@ -278,3 +278,14 @@ def found_within(recent_actions, action_type, within):
 	print "%s NOT found_within %s in recent_actions" % (action_type, timedelta(within) )
 	return False
 	
+
+class Time:
+    @classmethod
+    def dt_to_ts(cls, dt):
+        t = time.mktime(dt.timetuple())
+        return t
+
+    @classmethod
+    def ts_to_dt(cls, ts):
+        d = datetime.fromtimestamp(ts)
+        return d

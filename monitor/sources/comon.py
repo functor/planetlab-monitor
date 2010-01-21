@@ -135,8 +135,8 @@ class Comon(Thread):
 				else:
 					i_ignored += 1
 
-			print "Retrieved %s hosts" % len(hash.keys())
-			print "Ignoring %d hosts" % i_ignored
+			#print "Retrieved %s hosts" % len(hash.keys())
+			#print "Ignoring %d hosts" % i_ignored
 
 			logger.debug("Retrieved %s hosts" % len(hash.keys()))
 			logger.debug("Ignoring %d hosts" % i_ignored)
@@ -161,7 +161,7 @@ class Comon(Thread):
 
 	def coget(self,url):
 		rawdata = None
-		print "Getting: %s" % url
+		#print "Getting: %s" % url
 		try:
 			coserv = urllib2.Request(url)
 			coserv.add_header('User-Agent',

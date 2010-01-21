@@ -235,7 +235,7 @@ class ScanNodeInternal(ScanInterface):
 				(oval, errval) = ssh.run_noexcept2(""" <<\EOF
 					echo "{"
 					echo '  "kernel_version":"'`uname -a`'",'
-					echo '  "bmlog":"'`ls /tmp/bm.log`'",'
+					echo '  "bmlog":"'`ls /tmp/bm.log || ls /tmp/source/BootManager.py`'",'
 					echo '  "bootcd_version":"'`cat /mnt/cdrom/bootme/ID || cat /usr/bootme/ID`'",'
 					echo '  "boot_server":"'`cat /mnt/cdrom/bootme/BOOTSERVER`'",'
 					echo '  "install_date":"'`python -c "import os,time,stat; print time.ctime(os.stat('/usr/boot/plnode.txt')[stat.ST_CTIME])" || python -c "import os,time,stat; print  time.ctime(os.stat('/usr/boot/cacert.pem')[stat.ST_CTIME])"`'",'
@@ -251,6 +251,9 @@ class ScanNodeInternal(ScanInterface):
 					echo '  "fs_status":"'`grep proc /proc/mounts | grep ro, ; if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 20 touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then timeout.pl 20 touch /vservers/monitor.log 2>&1  ; fi ; fi`'",'
 					echo '  "rpm_version":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 30 rpm -q NodeManager ; fi`'",'
 					echo '  "rpm_versions":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 45 rpm -q -a ; fi`'",'
+					echo '  "md5sums":"'`md5sum /etc/yum.conf /etc/yum.myplc.d/myplc.repo /etc/yum.myplc.d/stock.repo  | awk '{print $1}'`'",'
+					echo '  "md5sum_yum":"'`grep -v -E "^#" /etc/yum.myplc.d/myplc.repo | md5sum`'",'
+					echo '  "nada":"'``'",'
 					echo "}"
 EOF			""")
 
@@ -268,6 +271,8 @@ EOF			""")
 									'fs_status' : '',
 									'uptime' : '',
 									'dns_status' : '',
+									'md5sums' : '',
+									'md5sum_yum' : '',
 									'rpm_version' : '',
 									'rpm_versions' : '',
 									'princeton_comon_dir' : "", 
@@ -346,7 +351,7 @@ EOF			""")
 		values['ssh_status'] = True
 		if "2.6.17" in oval or "2.6.2" in oval:
 			values['observed_category'] = 'PROD'
-			if "bm.log" in values['bmlog']:
+			if "bm.log" in values['bmlog'] or "BootManager" in values['bmlog']:
 				values['observed_status'] = 'DEBUG'
 			else:
 				values['observed_status'] = 'BOOT'
@@ -379,6 +384,7 @@ EOF			""")
 
 		values['firewall'] = False
 
+		#print "BEFORE:%s" % values
 		# NOTE: A node is down if some of the public ports are not open
 		if values['observed_status'] == "BOOT":
 			# verify that all ports are open.  Else, report node as down.
@@ -461,8 +467,11 @@ EOF			""")
 			print "ALLVERSIONS: %s %s" % (nodename, values['rpm_versions'])
 			print "RPMVERSION: %s %s" % (nodename, values['rpm_version'])
 			print "UPTIME: %s %s" % (nodename, values['uptime'])
+			print "MD5SUMS: %s %s" % (nodename, values['md5sums'])
+			print "MD5SUM_YUM: %s %s" % (nodename, values['md5sum_yum'])
 
 			values = self.evaluate(nodename, values)
+			#print "%s %s" % (nodename, values)
 			values['date_checked'] = datetime.now()
 
 		except:

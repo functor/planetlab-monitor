@@ -31,7 +31,7 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 		if node['site_id'] in id2lb.keys():
 			login_base = id2lb[node['site_id']]
 		else:
-			print "%s has a foreign site_id %s" % (node['hostname'], 
+			print >>sys.stderr, "%s has a foreign site_id %s" % (node['hostname'], 
 													node['site_id'])
 			continue
 			for i in id2lb:
@@ -71,17 +71,17 @@ def init():
 	global plcdb_hn2lb
 	global plcdb_lb2hn
 	global plcdb_id2lb
-	print "initing plccache"
+	print >>sys.stderr, "initing plccache"
 
-	print "collecting plcsites"
+	print >>sys.stderr, "collecting plcsites"
 	dbsites = PlcSite.query.all()
 	l_sites = [ s.plc_site_stats for s in dbsites ]
 
-	print "collecting plcnodes"
+	print >>sys.stderr, "collecting plcnodes"
 	dbnodes = PlcNode.query.all()
 	l_nodes = [ s.plc_node_stats for s in dbnodes ]
 
-	print "collecting plcpcus"
+	print >>sys.stderr, "collecting plcpcus"
 	dbpcus = PlcPCU2.query.all()
 	l_pcus = []
 	for s in dbpcus:
@@ -92,9 +92,9 @@ def init():
 			pcu[k] = getattr(s, k)
 		l_pcus.append(pcu)
 
-	print "building id2lb"
+	print >>sys.stderr, "building id2lb"
 	(d_sites,id2lb) = dsites_from_lsites(l_sites)
-	print "building lb2hn"
+	print >>sys.stderr, "building lb2hn"
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
 
 	plcdb_hn2lb = hn2lb
@@ -138,7 +138,7 @@ def deleteExtra(l_plc, objectClass=PlcSite, dbKey='loginbase', plcKey='login_bas
 	plcobj_key = [ s[plcKey] for s in l_plc ]
 	extra_key = set(dbobj_key) - set(plcobj_key)
 	for obj in extra_key:
-		print "deleting %s" % obj
+		print >>sys.stderr, "deleting %s" % obj
 		dbobj = objectClass.get_by(**{dbKey : obj})
 		dbobj.delete()
 
@@ -153,7 +153,7 @@ def sync():
 						 'last_contact', 'pcu_ids', 'interface_ids'])
 	l_pcus = plc.api.GetPCUs()
 
-	print "sync sites"
+	print >>sys.stderr, "sync sites"
 	for site in l_sites:
 		dbsite = PlcSite.findby_or_create(site_id=site['site_id'])
 		dbsite.loginbase = site['login_base']
@@ -163,12 +163,12 @@ def sync():
 	deleteExtra(l_sites, HistorySiteRecord, 'loginbase', 'login_base')
 	session.flush()
 
-	print "sync pcus"
+	print >>sys.stderr, "sync pcus"
 	for pcu in l_pcus:
 		dbpcu = PlcPCU2.findby_or_create(pcu_id=pcu['pcu_id'])
 		dbpcu.date_checked = datetime.now()
 		for key in pcu.keys():
-			print "setting %s  = %s" % (key, pcu[key])
+			print >>sys.stderr, "setting %s  = %s" % (key, pcu[key])
 			setattr(dbpcu, key, pcu[key])
 
 	deleteExtra(l_pcus, PlcPCU2, 'pcu_id', 'pcu_id')
@@ -176,7 +176,7 @@ def sync():
 	deleteExtra(l_pcus, FindbadPCURecord, 'plc_pcuid', 'pcu_id')
 	session.flush()
 
-	print "sync nodes"
+	print >>sys.stderr, "sync nodes"
 	for node in l_nodes:
 		dbnode = PlcNode.findby_or_create(node_id=node['node_id'])
 		dbnode.hostname = node['hostname']

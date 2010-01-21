@@ -22,11 +22,19 @@ def lastModified(name, type=None):
 	t = SPickle().mtime("production.%s" % name, type)
 	return t
 
+def escapeName(name):
+	"""
+		automatically escape names passed to the db to make sensible-filenames without
+		exposing this to users.
+	"""
+	return name.replace("/", "_")
+
 def cachedRecently(name, length=int(config.cachetime), type=None):
 	"""
 		return true or false based on whether the modified time of the cached
 		file is within 'length' minutes.
 	"""
+	name = name.replace("/", "_")
 	if hasattr(config, 'cachecalls') and not config.cachecalls:
 		# don't use cached calls if cachecalls is false
 		return False
@@ -44,14 +52,15 @@ def cachedRecently(name, length=int(config.cachetime), type=None):
 		return True
 
 def dbLoad(name, type=None):
+	name = escapeName(name)
 	return SPickle().load(name, type)
 
 def dbExists(name, type=None):
-	#if self.config.debug:
-	#	name = "debug.%s" % name
+	name = escapeName(name)
 	return SPickle().exists(name, type)
 
 def dbDump(name, obj=None, type=None):
+	name = escapeName(name)
 	# depth of the dump is 2 now, since we're redirecting to '.dump'
 	return SPickle().dump(name, obj, type, 2)
 

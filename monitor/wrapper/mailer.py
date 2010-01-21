@@ -65,10 +65,10 @@ def getTicketStatus(ticket_id):
 		r_values[key] = ":".join(vals[1:])
 		r_values[key] = r_values[key].strip()
 
-	if 'Created' in r_values:
-		r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
-	else:
-		r_values['Created'] = calendar.timegm(time.localtime())
+	#if 'Created' in r_values:
+	#	r_values['Created'] = calendar.timegm(time.strptime(r_values['Created']))
+	#else:
+	r_values['Created'] = calendar.timegm(time.localtime())
 		
 	#r_values['Told'] = calendar.timegm(time.strptime(r_values['Told']))
 	return r_values
