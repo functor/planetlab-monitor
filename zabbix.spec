@@ -295,6 +295,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Thu Jan 21 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-30
+- * fix paths for automate script
+
 * Tue Dec 22 2009 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-29
 - - separate pcucontrol as an svn module
 - - restore easy_instal back into post install stage of server-deps
@@ -484,6 +487,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 29
+%define taglevel 30
 
 %define version 3.0
