@@ -34,7 +34,6 @@ def daysdown_print_nodeinfo(co_nodeinfo, hostname):
 
 def co_print_nodeinfo(co_nodeinfo, hostname, fields=None):
 	
-	# co_nodeinfo['bootstate'] : unknown pattern
 	co_nodeinfo['name'] = hostname
 
 	if 'uptime' in co_nodeinfo and co_nodeinfo['uptime'] != "null":
@@ -49,7 +48,7 @@ def co_print_nodeinfo(co_nodeinfo, hostname, fields=None):
 	else:
 		format = ""
 		for f in fields:
-			format += "%%(%s)s " % f
+			format += "%%(%s)s," % f
 		print format % co_nodeinfo
 
 def main():
@@ -63,6 +62,7 @@ def main():
 				dns=False,
 				listkeys=False,
 				pcuselect=None, 
+				cache=False,
 				nodelist=None, 
 				daysdown=None, 
 				fields=default_fields)
@@ -79,6 +79,8 @@ def main():
 						help="A list of nodes to bring out of debug mode.")
 	parser.add_option("", "--listkeys", dest="listkeys", action="store_true",
 						help="A list of nodes to bring out of debug mode.")
+	parser.add_option("", "--cache", dest="cache", action="store_true",
+						help="Specify whether the command should perform a live query or save/use a cached values.")
 
 	parser.add_option("", "--dns", dest="dns", action="store_true",
 						help="A convenience query for dns values")
@@ -86,11 +88,6 @@ def main():
 	parser = parsermodule.getParser(['defaults'], parser)
 	config = parsermodule.parse_args(parser)
 	
-	#if config.fromtime:
-	#	fb = None
-	#else:
-	#	fb = None
-
 	# lastcotop measures whether cotop is actually running.  this is a better
 	# metric than sshstatus, or other values from CoMon
 
@@ -112,7 +109,14 @@ def main():
 		cotop_url = COMON_COTOPURL + "&limit=1"
 
 	cotop = comon.Comon()
-	cohash = cotop.coget(cotop_url)
+	if database.cachedRecently(cotop_url):
+		print >>sys.stderr, "loading cached query :%s" % cotop_url
+		cohash = database.dbLoad(cotop_url)
+	else:
+		cohash = cotop.coget(cotop_url)
+		if config.cache:
+			print >>sys.stderr, "saving query :%s" % cotop_url
+			database.dbDump(cotop_url, cohash)
 
 	if config.nodelist:
 		nodelist = file.getListFromFile(config.nodelist)
@@ -120,12 +124,11 @@ def main():
 		# NOTE: list of nodes should come from comon query.   
 		nodelist = cohash.keys()
 
-	print "%(name)-40s %(sshstatus)5.5s %(resptime)6.6s %(lastcotop)6.6s %(uptime)s" % {
-					'name' : 'hostname', 
-					'sshstatus' : 'sshstatus', 
-					'resptime' : 'resptime', 
-					'lastcotop' : 'lastcotop', 
-					'uptime' : 'uptime'}
+	fields = config.fields.split(",")
+	f_info = {}
+	for f in fields: f_info[f]=f 
+	co_print_nodeinfo(f_info, "hostname", fields)
+
 	for node in nodelist:
 		config.node = node
 
@@ -134,7 +137,7 @@ def main():
 		co_nodeinfo = cohash[node]
 
 		if config.listkeys:
-			print "Primary keys available in the comon object:"
+			print >>sys.stderr, "Primary keys available in the comon object:"
 			for key in co_nodeinfo.keys():
 				print "\t",key
 			sys.exit(0)

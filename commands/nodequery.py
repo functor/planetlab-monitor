@@ -133,7 +133,7 @@ def main():
 	#	for pcu in pculist:
 	#		print pcu
 
-	print "len: %s" % len(nodelist)
+	print >>sys.stderr, "len: %s" % len(nodelist)
 	for node in nodelist:
 		config.node = node
 
