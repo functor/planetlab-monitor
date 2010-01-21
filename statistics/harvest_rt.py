@@ -4,6 +4,7 @@ import os
 import time
 from datetime import datetime, timedelta
 import sys
+from monitor.common import Time
 
 def popen(cmdstr):
 	f = os.popen(cmdstr)
@@ -31,14 +32,14 @@ def main():
 	i = 0
 	while i < iterations:
 		d1_s = d1.strftime("%Y-%m-%d")
-		d2 = d1 + timedelta(30)
+		d2 = d1 + timedelta(1)
 		d2_s = d2.strftime("%Y-%m-%d")
 		query = "Queue='%s' and " % queue 
 		query = query + "Told > '%s' and Told < '%s'" % (d1_s, d2_s)
 		cmd = """rt ls -t ticket "%s" | grep -v "No matching" | wc -l  """ % query
-		print cmd
+		#print cmd
 		ret = popen(cmd)
-		print d1_s, ",", ret[:-1]
+		print "%s,%s,%s" % (d1_s, Time.dt_to_ts(d1), ret[:-1])
 		d1=d2
 		i += 1
 

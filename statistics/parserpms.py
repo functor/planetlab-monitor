@@ -41,7 +41,7 @@ def main():
 
     parser.add_option("", "--input", dest="input", 
                         help="the input file")
-    parser.add_option("", "--pattern", dest="select", 
+    parser.add_option("", "--select", dest="select", 
                         help="the pattern to pull out from rpm list")
     parser.add_option("", "--frequency", dest="frequency", action="store_true",
                         help="print the frequency of packages matched by select")
@@ -55,7 +55,7 @@ def main():
 
     rpmlist = fileutil.getListFromFile(config.input)
 
-    current_packages = ['NodeManager-1.8-5.planetlab',
+    current_packages_old = ['NodeManager-1.8-5.planetlab',
                 'NodeUpdate-0.5-4.planetlab', 'codemux-0.1-13.planetlab',
                 'fprobe-ulog-1.1.3-0.planetlab', 'ipod-2.2-1.planetlab',
                 'iproute-2.6.16-2.planetlab', 'iptables-1.3.8-9.planetlab',
@@ -69,12 +69,25 @@ def main():
                 'vserver-systemslices-planetlab-f8-i386-4.2-12.2009.05.27',
                 'vsys-0.9-3.planetlab', 'vsys-scripts-0.95-3.planetlab']
 
+    current_packages = ['NodeManager-1.8-12.planetlab.1',
+                'NodeUpdate-0.5-4.planetlab', 'codemux-0.1-13.planetlab',
+                'fprobe-ulog-1.1.3-0.planetlab', 'ipod-2.2-1.planetlab',
+                'iproute-2.6.16-2.planetlab', 'iptables-1.3.8-9.planetlab',
+                'kernel-2.6.22.19-vs2.3.0.34.39.planetlab',
+                'madwifi-0.9.4-2.6.22.19.3.planetlab', 'monitor-client-3.0-17.planetlab',
+                'monitor-runlevelagent-3.0-17.planetlab', 'pl_mom-2.3-1.planetlab',
+                'pl_sshd-1.0-11.planetlab', 'pyplnet-4.3-3.planetlab',
+                'util-vserver-pl-0.3-17.planetlab',
+                'vserver-planetlab-f8-i386-4.2-12.2009.06.23',
+                'vserver-systemslices-planetlab-f8-i386-4.2-12.2009.06.23',
+                'vsys-0.9-3.planetlab', 'vsys-scripts-0.95-11.planetlab']
+
     # PL RPMS
     if config.package:
         all_patterns = map(lambda x: ".*" + x + ".*", [ 'NodeManager', 
                 'NodeUpdate', 'codemux', 'fprobe', 'ipod',
                 'iproute', 'iptables', 'kernel', 'madwifi', 'monitor-client', 
-                'monitor-runlevelagent', 'monitor', 'oombailout', 'pl_mom', 
+                'monitor-runlevelagent', 'oombailout', 'pl_mom', 
                 'pl_sshd', 'pyplnet', 'util-vserver-pl', 'vserver-planetlab-f8-i386', 
                 'vserver-systemslices-planetlab-f8-i386', 'vsys-scripts', 'vsys'])
     else:
@@ -82,11 +95,12 @@ def main():
     
     for pattern in all_patterns:
         return_sums = {}
+        print "%s --------------------" % pattern
         for line in rpmlist:
             line = line.strip()
-            fields = line.split()
-            host = fields[1]
-            rpms = fields[2:]
+            fields = line.split(",")
+            host = fields[0]
+            rpms = fields[2].split()
             rpms.sort()
             rpms = pick_some_rpms(pattern, rpms)
             if len(rpms) != 0:
@@ -107,11 +121,15 @@ def main():
 
             sum_list.sort(lambda a,b: cmp(b[0], a[0]))
             for sum in sum_list:
-                #print sum[0], sum[1], map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff'])
-                print sum[0], sum[1], len(map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff']))
+                print sum[0], sum[1]
+                #if len(return_sums[sum[1]]['hosts']) < 5:
+                #    print sum[0], sum[1], map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff']) #, return_sums[sum[1]]['hosts']
+                #else:
+                #    print sum[0], sum[1], map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff'])
+                #print sum[0], sum[1], len(map(lambda x: x.replace('.planetlab', ''), return_sums[sum[1]]['diff']))
 
 if __name__ == "__main__":
-	try:
-		main()
-	except IOError:
-		pass
+    try:
+        main()
+    except IOError:
+        pass
