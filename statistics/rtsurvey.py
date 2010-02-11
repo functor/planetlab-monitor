@@ -62,11 +62,13 @@ def get_rt_tickets():
                     tr.Created, at.id, at.Subject, at.Content, us.Name
              FROM Tickets as tk, Transactions as tr, Users as us
              LEFT OUTER JOIN Attachments as at ON tr.id=at.TransactionId 
-             WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>40800 AND 
+             WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>0 AND
 			 us.id=tr.Creator"""
+             #WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>12506 AND
+             # WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>40800 AND 
              #WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>39896 AND tk.id<42241 AND ## (oct15th2008) 
              #WHERE (tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>40800 AND ## (1st3months)
-             #WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>10000  """
+             #WHERE (tk.Queue=3 OR tk.Queue=22) AND tk.id=tr.ObjectId AND tk.id>12506  # 12506 jan-1-2006
 
 	print "run query"
 	raw = fetch_from_db(db, sql)
@@ -207,8 +209,8 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 
-	for i,(name, pattern) in enumerate(re_map):
-		print i, name
+	#for i,(name, pattern) in enumerate(re_map):
+	#	print i, name
 
 	if config.runsql:
 		tickets = get_rt_tickets()
