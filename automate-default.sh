@@ -62,7 +62,7 @@ fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
 
-${MONITOR_SCRIPT_ROOT}/tools/syncwithplc.py $DATE || :
+${MONITOR_SCRIPT_ROOT}/commands/syncwithplc.py $DATE || :
 service plc restart monitor
 
 echo "Performing FindAll Nodes"
