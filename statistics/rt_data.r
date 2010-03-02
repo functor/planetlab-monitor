@@ -39,7 +39,6 @@ d <- (t2$lastreply - t2$start)/(60*60)
 #h<-hist(log(d2), plot=F, breaks=50)
 #lines(h$breaks[which(h$counts!=0)], h$counts[which(h$counts!=0)])
 
-
 # this doesn't work as I would like.  I think the bins aren't as I expect
 #h <- hist(d, plot=F, breaks=c(seq(0,max(d)+1, .1)))
 #plot(h$counts, log="x", pch=20, col="blue",
@@ -49,12 +48,12 @@ d <- (t2$lastreply - t2$start)/(60*60)
 #plot(log(d2))
 #plot(ecdf(d2))
 
-tstamp_45 <-unclass(as.POSIXct("2005-01-01", origin="1960-01-01"))[1]
-tstamp_56 <-unclass(as.POSIXct("2006-01-01", origin="1960-01-01"))[1]
-tstamp_67 <-unclass(as.POSIXct("2007-01-01", origin="1960-01-01"))[1]
-tstamp_78 <-unclass(as.POSIXct("2008-01-01", origin="1960-01-01"))[1]
-tstamp_89 <-unclass(as.POSIXct("2009-01-01", origin="1960-01-01"))[1]
-tstamp_90 <-unclass(as.POSIXct("2010-01-01", origin="1960-01-01"))[1]
+tstamp_45 <-unclass(as.POSIXct("2005-01-01", origin="1970-01-01"))[1]
+tstamp_56 <-unclass(as.POSIXct("2006-01-01", origin="1970-01-01"))[1]
+tstamp_67 <-unclass(as.POSIXct("2007-01-01", origin="1970-01-01"))[1]
+tstamp_78 <-unclass(as.POSIXct("2008-01-01", origin="1970-01-01"))[1]
+tstamp_89 <-unclass(as.POSIXct("2009-01-01", origin="1970-01-01"))[1]
+tstamp_90 <-unclass(as.POSIXct("2010-01-01", origin="1970-01-01"))[1]
 
 
 t_4 <- t2[which( t2$start <  tstamp_45 ),]
@@ -87,6 +86,81 @@ year_hist(t_8, "2008", "2007/12/30", "2009/1/7", 85)
 year_hist(t_9, "2009", "2008/12/28", "2010/1/30", 85)
 end_image()
 
+h4<-year_hist(t_4, "2004", "2003/12/28", "2005/2/7", 0, type='month', fmt="%b")
+h5<-year_hist(t_5, "2005", "2005/1/2", "2006/2/7", 0, type='month', fmt="%b")
+h6<-year_hist(t_6, "2006", "2006/1/1", "2007/2/7", 0, type='month', fmt="%b")
+h7<-year_hist(t_7, "2007", "2006/12/31", "2008/2/7", 0, type='month', fmt="%b")
+h8<-year_hist(t_8, "2008", "2007/12/30", "2009/2/7", 0, type='month', fmt="%b")
+h9<-year_hist(t_9, "2009", "2008/12/28", "2010/1/30", 0, type='month', fmt="%b")
+
+hall<-year_hist(t2, "200x", "2004/1/1", "2010/3/28", 0, type='month', fmt="%b")
+
+threshold <- function (hall, d, from, to, type, fmt="%b")
+{
+    dates <-seq(as.Date(from), as.Date(to), type)
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    x<-seq(1,length(hall$breaks))
+    a_x<-x[which(hall$counts>d)]
+    a_y<-hall$counts[which(hall$counts>d)]
+    b_x<-x[which(hall$counts<d)]
+    b_y<-hall$counts[which(hall$counts<d)]
+
+    plot(a_x, a_y, type='p', col='red', ylim=c(0,260), xlim=c(0,81), axes=F)
+    points(b_x, b_y, type='p', col='blue', ylim=c(0,260), xlim=c(0,81))
+    axis(1, labels=months, at=x)
+    axis(2)
+    abline(v=seq(13,length(months),12))
+}
+
+years <- 7
+b<- seq(1,years*12,12)
+yy<-NULL
+for (i in seq(1,years) )
+{
+    if ( i+1 > length(b) ) { 
+        yy<- rbind(yy,hall$counts[b[i]:length(hall$counts)])
+    } else {
+        yy<- rbind(yy,hall$counts[b[i]:b[i+1]-1])
+    }
+}
+yy[7,3:12]<-0   # no data for beyond feb.
+y2<-NULL ; for ( i in seq(1,12) ) { y2<-c(y2,sum(yy[,i])) }
+
+start_image('rt_aggregate_months.png', width=600, height=300)
+barplot(y2, space=.1, width=.9, col=c('blue','red', 'red', 'red', 'red', 
+    'blue', 'blue', 'red', 'red', 'red', 'blue', 'blue'),
+    xlab="Months", ylab="Sum of Tickets over 6 years")
+axis(1, labels=c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+    'Sep', 'Oct', 'Nov', 'Dec'), at=c(0,1,2,3,4,5,6,7,8,9,10,11)+.5)
+end_image()
+
+cc<-NULL ; 
+for (i in 1:length(yy)) 
+{ 
+    if ( t(yy)[i] < 80 ) 
+    { 
+        cc<- c(cc, 'blue') 
+    } else { 
+        cc<- c(cc, 'red') 
+    } 
+} 
+barplot(yy, col=cc)
+
+# skip 2007
+start_image('rt_aggregate_months_no2007.png', width=600, height=300)
+y3<-NULL ; for ( i in seq(1,12) ) { y3<-c(y3,sum(yy[1:3,i], yy[5:7,i])) }
+barplot(y3, , space=.1, width=.9, col=c('blue','blue', 'red', 'red', 'red', 
+    'blue', 'blue', 'red', 'red', 'red', 'blue', 'blue'),
+    xlab="Months", ylab="Sum of Tickets over 6 years")
+axis(1, labels=c('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+    'Sep', 'Oct', 'Nov', 'Dec'), at=c(0,1,2,3,4,5,6,7,8,9,10,11)+.5)
+end_image()
+
+
+
+
 par(mai=c(0.7,0.7,0.7,0.7))
 par(mfrow=c(1,1))
 
@@ -118,8 +192,245 @@ time_hist <- function (t, lessthan, year, log=T, breaks=30, xlim=c(-4,10), ylim=
     }
     return (h);
 }
+
+median_time_to_resolve_window <- function (t, from, to, window, fmt="%b")
+{
+    # find 'type' range of days
+    dates <-seq(as.Date(from), as.Date(to), 'week')
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    xx<-NULL;
+    yy<-NULL;
+    yy_sd_high<-NULL;
+    yy_sd_low<-NULL;
+    date_index <- NULL;
+    q_list <- NULL;
+
+    x<-seq(-20,20,0.01)
+    for ( i in seq(1,length(hbreaks)-window-1) )
+    {
+        print (sprintf("round %s of %s", i, length(hbreaks)-window-1))
+        # get range from t
+        t_sub <- t[which(t$start > hbreaks[i] & t$start<= hbreaks[i+window]),]
+        if ( length(t_sub$start) <= 1 )  { next }
+        # take log, then sn.mle -> h
+        d <- (t_sub$lastreply - t_sub$start)/(60*60)    # hours
+        d <- log(d)                                     # log(hours)
+            # sn.mle
+        print (sprintf("length: %s", length(d)))
+        q<-quantile(d)
+        print(q)
+
+        date_index <- c(date_index, round(i+window/2))
+
+        xx<- c(xx, hbreaks[round(i+window/2)])
+        q_list <- rbind(q_list, q)
+
+    }
+    m<- months[date_index]
+    return (cbind(xx,q_list, m))
+}
+mean_time_to_resolve_window <- function (t, from, to, window, fmt="%b")
+{
+    # find 'type' range of days
+    dates <-seq(as.Date(from), as.Date(to), 'week')
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    xx<-NULL;
+    yy<-NULL;
+    yy_sd_high<-NULL;
+    yy_sd_low<-NULL;
+    date_list <- NULL;
+
+    x<-seq(-20,20,0.01)
+    for ( i in seq(1,length(hbreaks)-window-1) )
+    {
+        print (sprintf("round %s of %s", i, length(hbreaks)-window-1))
+        # get range from t
+        t_sub <- t[which(t$start > hbreaks[i] & t$start<= hbreaks[i+window]),]
+        if ( length(t_sub$start) <= 1 )  { next }
+        # take log, then sn.mle -> h
+        d <- (t_sub$lastreply - t_sub$start)/(60*60)    # hours
+        d <- log(d)                                     # log(hours)
+            # sn.mle
+        print (sprintf("length: %s", length(d)))
+        avg<-mean(d)
+        s<-sd(d)
+        r<-shapiro.test(d) #, mean=avg, sd=s)
+        if ( r$statistic < 0.9 ){
+            print (r);
+        }
+
+        m<-dnorm(x, mean=avg, sd=s)
+        print(avg)
+        # find max of y
+        y_peak <- x[which(m==max(m))]
+        print(y_peak)
+        # plot point date, max(y)
+        xx<- c(xx, hbreaks[round(i+window/2)])
+        yy<- c(yy, y_peak)
+        yy_sd_high<- y_peak + s
+        yy_sd_low <- y_peak - s
+        date_list <- c(date_list, dates[i])
+        # plot whisker2(x0,y0,y0_hi,y0_lo)
+    }
+    l<-length(months)-window-1
+    m<- months[1:l]
+    return (rbind(xx,yy,yy_sd_high, yy_sd_low, m))
+}
+require(sn)
+sknorm_time_to_resolve_window <- function (t, from, to, window, fmt="%b")
+{
+    # find 'type' range of days
+    dates <-seq(as.Date(from), as.Date(to), 'week')
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    xx<-NULL;
+    yy<-NULL;
+    yy_sd_high<-NULL;
+    yy_sd_low<-NULL;
+    date_list <- NULL;
+
+    x<-seq(-20,20,0.01)
+    for ( i in seq(1,length(hbreaks)-window-1) )
+    {
+        print (sprintf("round %s of %s", i, length(hbreaks)-window-1))
+        # get range from t
+        t_sub <- t[which(t$start > hbreaks[i] & t$start<= hbreaks[i+window]),]
+        if ( length(t_sub$start) <= 1 )  { next }
+        # take log, then sn.mle -> h
+        d <- (t_sub$lastreply - t_sub$start)/(60*60)    # hours
+        d <- log(d)                                     # log(hours)
+            # sn.mle
+        print (sprintf("length: %s", length(d)))
+        h<-sn.em(y=d)
+        if ( abs(h$cp['skewness']) > 0.95 )
+        {
+            print(h)
+            next    # just skip it
+        }
+
+        # find dsn() using h parameters  -> y
+        m<-dsn(x, dp=cp.to.dp(h$cp))
+        # find max of y
+        y_peak <- x[which(m==max(m))]
+        # plot point date, max(y)
+        xx<- c(xx, hbreaks[round(i+window/2)])
+        yy<- c(yy, y_peak)
+        yy_sd_high<- y_peak + h$cp['s.d.']
+        yy_sd_low <- y_peak - h$cp['s.d.']
+        date_list <- c(date_list, dates[i])
+        # plot whisker2(x0,y0,y0_hi,y0_lo)
+    }
+    l<-length(months)-window-1
+    m<- months[1:l]
+    return (rbind(xx,yy,yy_sd_high, yy_sd_low, m))
+}
+
+# NOTE: Try something simpler, like median of the log of ttr.
+#       it's going to be a lot of work to explain lsn distributions.  something
+#       more obvious would be a lot easier.
+
+par(mfrow=c(4,1))
+par(mai=c(.3,0.3,0.3,0.3))
+for ( s in c(7)) #,14,21) )
+{
+    d<- median_time_to_resolve_window(t2, "2004/1/1", "2010/2/28", s, "%b%y")
+    plot(d[,1], exp(as.numeric(d[,5]))/24, type='l', lty=1, xlab="",
+            axes=F, ylim=c(0.01, 15), ylab="Days to Resolve", col='orange')
+    lines(d[,1], exp(as.numeric(d[,4]))/24, lty=1, col='red')
+    lines(d[,1], exp(as.numeric(d[,3]))/24, lty=1, col='black')
+    axis(1, labels=d[,7], at=d[,1])
+    axis(2, las=1)
+    m<-round(max(exp(as.numeric(d[,4]))/24), 2)
+    axis(2, labels=m, at=m, las=1)
+    abline(h=m, lty=2, col='grey40')
+}
+
+# monitor
+    d2<- median_time_to_resolve_window(m2, "2007/02/1", "2010/2/28", s, "%b%y")
+    plot(d[,1], exp(as.numeric(d[,2]))/24, type='l', lty=1, xlab="",
+            axes=F, ylim=c(0.01, 165), ylab="Days to Resolve", col='white')
+    lines(d2[,1], exp(as.numeric(d2[,5]))/24, lty=1, col='red')
+    lines(d2[,1], exp(as.numeric(d2[,4]))/24, lty=1, col='red')
+    lines(d2[,1], exp(as.numeric(d2[,3]))/24, lty=1, col='black')
+    axis(1, labels=d[,7], at=d[,1])
+    axis(2, las=1)
+    m<-round(max(exp(as.numeric(d2[,4]))/24), 2)
+    axis(2, labels=m, at=m, las=1)
+    abline(h=m, lty=2, col='grey40')
+
+
+
+mean_time_to_resolve <- function (t, from, to, type, fmt="%b")
+{
+    # find 'type' range of days
+    dates <-seq(as.Date(from), as.Date(to), type)
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    xx<-NULL;
+    yy<-NULL;
+    yy_sd_high<-NULL;
+    yy_sd_low<-NULL;
+    date_list <- NULL;
+
+    for ( i in seq(1,length(hbreaks)-1) )
+    {
+        # get range from t
+        t_sub <- t[which(t$start > hbreaks[i] & t$start<= hbreaks[i+1]),]
+        if ( length(t_sub$start) == 0 )  { next }
+        # take log, then sn.mle -> h
+        d <- (t_sub$lastreply - t_sub$start)/(60*60)    # hours
+        d <- log(d)                                     # log(hours)
+            # sn.mle
+        h<-sn.em(y=d)
+        if ( abs(h$cp['skewness']) > 0.95 )
+        {
+            print(h)
+        }
+
+        # find dsn() using h parameters  -> y
+        x<-seq(-8,10,0.01)
+        m<-dsn(x, dp=cp.to.dp(h$cp))
+        # find max of y
+        y_peak <- x[which(m==max(m))]
+        # plot point date, max(y)
+        xx<- c(xx, hbreaks[i])
+        yy<- c(yy, y_peak)
+        yy_sd_high<- y_peak + h$cp['s.d.']
+        yy_sd_low <- y_peak - h$cp['s.d.']
+        date_list <- c(date_list, dates[i])
+        # plot whisker2(x0,y0,y0_hi,y0_lo)
+    }
+    m<- months[1:length(months)-1]
+    return (rbind(xx,yy,yy_sd_high, yy_sd_low, m))
+}
+
+
+par(mfrow=c(5,1))
+par(mai=c(.3,0.3,0.3,0.3))
+for ( s in c("10 days", "2 weeks", "3 weeks", "month", "2 months"))
+#for ( s in c("month") )
+{
+    d<- mean_time_to_resolve(t2, "2004/1/1", "2010/2/28", s, "%b%y")
+    plot(d[1,], exp(as.numeric(d[2,]))/24, type='l', axes=F)
+    points(d[1,], exp(as.numeric(d[2,]))/24, pch=23) 
+    axis(1, labels=d[5,], at=d[1,])
+    axis(2)
+}
+
+
+
 tstamp <-unclass(as.POSIXct("2007-05-01", origin="1960-01-01"))
-t_7a <- t_7[which(t_7$start < tstamp),]
+t_7a <- t_7[t_rep <- read.csv('rt_replies.csv', sep=',', header=TRUE)
+t2_rep <- t_rep[which(t_rep$complete == 1),]
+t2_rep <- t_rep[which(t_rep$diff != 0),]
+
+which(t_7$start < tstamp),]
 t_7b <- t_7[which(t_7$start >= tstamp),]
 
 #end_image()
@@ -222,6 +533,7 @@ whisker2 <- function (x0,y0, y0_high, y0_low, col="black", length=0.05)
     arrows(x0, y0, x0, y0_low, code=2, angle=90, length=length, col=col)
 }
 
+# NOTE: ** monthly averages might make a more compelling case than annual averages.
 start_image("rt_aggregate_times.png")
 par(mfrow=c(1,1))
 par(mai=c(1,1,1,1))
@@ -297,10 +609,10 @@ lines(c(x_tt_resolve_list[3], x_tt_resolve_list[5:7]), c(days_tt_resolve[3], day
 lines(mx_tt_resolve_list, mdays_tt_resolve, col='blue')
 points(mx_tt_resolve_list, mdays_tt_resolve, pch=c(24))
 
-ticks<-c(0,0.01, 0.1, 0.5,1,2,4,7,21, 28, 7*8, 7*16)
+ticks<-c(0,0.01, 0.1, 0.5,1,2,4,7,14,21, 28, 60, 120)
 
 axis(1, labels=c('2004', '2005', '2006', '2007', '2008', '2009'), at=x_tick_list)
-axis(2, labels=ticks, at=ticks)
+axis(2, las=1, labels=ticks, at=ticks)
 mtext("Days to Resolve Message", 2, line=3)
 #axis(2, labels=ticks, at=ticks)
 #for (i in 1:length(days_y_sd_list) ) {
@@ -322,9 +634,12 @@ for (i in 1:length(mdays_y_sd_list) ) {
             mdays_tt_resolve_high[i], mdays_tt_resolve_low[i], col='blue')
 }
 
-abline(h=21,col='grey90')
-abline(h=2,col='grey90')
-abline(h=0.5,col='grey80')
+abline(h=120,col='grey80', lty=2)
+abline(h=21,col='grey80', lty=2)
+abline(h=7,col='grey80', lty=2)
+abline(h=2,col='grey80', lty=2)
+abline(h=0.5,col='grey80', lty=2)
+abline(h=0.1,col='grey80', lty=2)
 
 legend(1, .05, 
         cex=0.7,
@@ -413,3 +728,65 @@ for (i in 1:length(t_sd) ) {
 #plot_rt_hist(t_89)
 par(mfrow=c(1,1))
 
+
+# system("./parse_rt_replies.py 3> rt_replies.csv")
+t_rep <- read.csv('rt_replies.csv', sep=',', header=TRUE)
+t2_rep <- t_rep[which(t_rep$complete == 1),]
+t2_rep <- t_rep[which(t_rep$diff != 0),]
+
+mean_diff_time <- function (t, from, to, type, fmt="%b")
+{
+    # find 'type' range of days
+    dates <-seq(as.Date(from), as.Date(to), type)
+    months <- format(dates, fmt)
+    hbreaks<-unclass(as.POSIXct(dates))
+
+    xx<-NULL;
+    yy<-NULL;
+    yy_sd_high<-NULL;
+    yy_sd_low<-NULL;
+    date_list <- NULL;
+
+    for ( i in seq(1,length(hbreaks)-1) )
+    {
+        # get range from t
+        t_sub <- t[which(t$prev > hbreaks[i] & t$prev <= hbreaks[i+1]),]
+        if ( length(t_sub$start) == 0 )  { next }
+        # take log, then sn.mle -> h
+        d <- (abs(t_sub$diff)/(60*60))
+        d <- log(d)                                     # log(hours)
+            # sn.mle
+        h<-sn.em(y=d)
+        if ( abs(h$cp['skewness']) > 0.95 )
+        {
+            print(h)
+        }
+
+        # find dsn() using h parameters  -> y
+        x<-seq(-8,10,0.01)
+        m<-dsn(x, dp=cp.to.dp(h$cp))
+        # find max of y
+        y_peak <- x[which(m==max(m))]
+        # plot point date, max(y)
+        xx<- c(xx, hbreaks[i])
+        yy<- c(yy, y_peak)
+        yy_sd_high<- y_peak + h$cp['s.d.']
+        yy_sd_low <- y_peak - h$cp['s.d.']
+        date_list <- c(date_list, dates[i])
+        # plot whisker2(x0,y0,y0_hi,y0_lo)
+    }
+    m<- months[1:length(months)-1]
+    return (rbind(xx,yy,yy_sd_high, yy_sd_low, m))
+}
+
+par(mfrow=c(5,1))
+par(mai=c(.3,0.3,0.3,0.3))
+for ( s in c("2 weeks", "3 weeks", "month", "2 months"))
+#for ( s in c("month") )
+{
+    d<- mean_diff_time(t2_rep, "2004/1/1", "2010/2/28", s, "%b%y")
+    plot(d[1,], exp(as.numeric(d[2,]))/24, type='l', axes=F)
+    points(d[1,], exp(as.numeric(d[2,]))/24, pch=23) 
+    axis(1, labels=d[5,], at=d[1,])
+    axis(2)
+}

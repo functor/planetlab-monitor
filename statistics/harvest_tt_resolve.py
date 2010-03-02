@@ -37,9 +37,6 @@ count = 0
 for index,node in enumerate(HistoryNodeRecord.query.all()):
 	frequency[node.hostname] = 0
 
-
-	#if index > 3: sys.exit(1)
-
 	if node.hostname == 'planetlab-02.kyushu.jgn2.jp':
 		for h in node.versions:
 			print h.last_checked, h.status
@@ -57,7 +54,6 @@ for index,node in enumerate(HistoryNodeRecord.query.all()):
 		count += 1
 		pairs.append((datetime.now(), node.versions[-1].last_checked))
 	else:
-
 		while i > 0:
 			i = find_next(node.versions, i, 'down')
 			i2 = find_next(node.versions, i, 'offline')
@@ -72,7 +68,6 @@ for index,node in enumerate(HistoryNodeRecord.query.all()):
 			frequency[node.hostname] += 1
 
 	# list of all times
-
 	for p in pairs:
 		times.append(diff_time(p[0],p[1]))
 

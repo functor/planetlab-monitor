@@ -103,21 +103,37 @@ y_online_node_list <- c(330, 480,  500,    550,  575,  642)
 y<- rbind(support=s_list, monitor=m_list)
 barplot(y, space=0.5, width=1, ylim=c(0,2000), xlim=c(0,9),  
         col=c('grey35', 'grey85'),
-        legend=F, ylab="Messages with One or More Replies", xlab="Year")
+        legend=F, ylab="Tickets with One or More Replies", xlab="Year", axes=F)
 scale_by <- 1500 / 700
 lines(x_online_node_list, y_online_node_list*scale_by)
 points(x_online_node_list, y_online_node_list*scale_by, pch=c(22))
 ticks<-c(0, 100, 200, 300, 400, 500, 600, 700)
 
 axis(1, labels=c('2004', '2005', '2006', '2007', '2008', '2009'), at=x_online_node_list)
-axis(4, labels=ticks, at=ticks*scale_by)
+axis(2, las=1)
+axis(4, las=1, labels=ticks, at=ticks*scale_by)
 
 mtext("Online Node Count", 4, line=3)
 legend(6.5, 2000, 
         cex=0.7,
-        legend=c("Online Node Count", "MyOps Messages", "Support Messages"), 
+        legend=c("Online Node Count", "MyOps Tickets", "Support Tickets"), 
          fill=c(0, 'grey85', 'grey40'),
         lty=c(1,0,0), merge=T)
+end_image()
+
+start_image('rt_tickets_per_machine.png')
+t_list <- s_list + m_list
+plot(x_online_node_list, t_list / y_online_node_list, ylim=c(0,5), space=0.5, width=1, legend=F, ylab="Tickets per Online Node", xlab="Year", xlim=c(0,9), axes=F, type='l')
+points(x_online_node_list, t_list / y_online_node_list, ylim=c(0,5), xlim=c(0,9), pch=c(23))
+axis(1, labels=c('2004', '2005', '2006', '2007', '2008', '2009'), at=x_online_node_list)
+axis(2)
+legend(5.5, 1, 
+        cex=0.7,
+        legend=c("Tickets per Online Node"), 
+        pch=c(23),
+        #fill=c('grey85'),
+        lty=c(1), merge=T)
+
 end_image()
 
 

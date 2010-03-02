@@ -173,14 +173,15 @@ plot_rt_hist <- function (t, imagename=0)
     if ( imagename != 0 ) { end_image() }
 }
 
-year_hist <- function (t, year, from, to, max, type="week", title="Histogram for Tickets in")
+year_hist <- function (t, year, from, to, max, type="week", title="Histogram for Tickets in", fmt="%b-%d")
 {
     dates <-seq(as.Date(from), as.Date(to), type)
-    months <- format(dates, "%b-%d")
+    months <- format(dates, fmt)
     hbreaks<-unclass(as.POSIXct(dates))
     h<-hist(t$start, breaks=hbreaks, plot=FALSE)
     main<-sprintf(paste(title, "%s: MEAN %s\n"), year, mean(h$counts))
     print(main);
+    print(h$counts);
     if ( max == 0 ) {
         max = max(h$counts)
     }
@@ -190,6 +191,7 @@ year_hist <- function (t, year, from, to, max, type="week", title="Histogram for
     abline(mean(h$counts), 0, col='grey')
     #qqnorm(h$counts)
     #qqline(h$counts)
+    return (h);
 }
 
 year_hist_unique <- function (t, year, from, to, max, type="week", title="Histogram for Tickets in")
@@ -400,4 +402,10 @@ abline_at_date <- function (date, col='black', lty=1, format="%Y-%m-%d")
     ts <-unclass(as.POSIXct(date, format=format, origin="1970-01-01"))[1]
     abline(v=ts, col=col, lty=lty)
     return (ts);
+}
+
+tstamp <- function (date, format="%Y-%m-%d")
+{
+    ts <- unclass(as.POSIXct(date, format=format, origin="1970-01-01"))[1]
+    return (ts)
 }
