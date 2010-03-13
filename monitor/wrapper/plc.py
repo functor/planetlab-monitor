@@ -340,7 +340,7 @@ def isPendingSite(loginbase):
         try:
                 site = api.GetSites(auth.auth, loginbase)[0]
         except Exception, exc:
-                login.info("ERROR: No site %s" % loginbase)
+                logger.info("ERROR: No site %s" % loginbase)
                 return False
 
         if not site['enabled'] and site['ext_consortium_id'] == PENDING_CONSORTIUM_ID:
