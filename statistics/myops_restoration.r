@@ -1,5 +1,6 @@
 source("functions.r");
 
+
 nsh <- read.csv('node_status_history.csv', sep=',', header=TRUE)
 
 # system("./harvest_nodehistory.py > node_status_history_nopcu.csv")
@@ -112,22 +113,103 @@ node_hist_dist <- function (t, year, from, to, max=0, type="week", title="")
     return (dist);
 }
 
-# Image Stuff
-#nsh_image <- node_hist_image(nsh, '2009', '2009-06-01', '2010-02-28', 0, 'day')
-#nsh_image_m1 <- node_hist_image(nsh_m1, '2009', '2008-10-01', '2009-03-28', 0, 'day')
 
-#nsh_short <- nsh[which(nsh$start > unclass(as.POSIXct("2009-06-01", origin="1970-01-01"))[1]),]
-#nsh_short <- nsh_short[which(nsh_short$start < unclass(as.POSIXct("2009-10-31", origin="1970-01-01"))[1]),]
 
-#
-#nsh_short <- nsh_nopcu
-#nsh_dist <- node_hist_dist(nsh_short, '2009', '2009-06-01', '2010-02-28', 0, 'day')
-#d<- ecdf(nsh_dist/(60*60*24))
+# data collected from M2 pickle files
+dnc <- read.csv('daily-available-node-count.csv', sep=',', header=TRUE)
 
-#nsh_m1_short <- nsh_m1[which(nsh_m1$start > unclass(as.POSIXct("2008-10-01", origin="1970-01-01"))[1]),]
+dnc2<-add_timestamp(dnc)
 
-# M1 -- 
-# TOTAL
+tstamp_08 <-unclass(as.POSIXct("2008-05-07", origin="1970-01-01"))[1]
+dnc2 <- dnc2[which( dnc2$start >  tstamp_08 ),]
+
+
+dates <-seq(as.Date('2008-05-07'), as.Date('2009-05-07'), 'week')
+months <- format(dates, "%b")
+hbreaks<-unclass(as.POSIXct(dates))
+
+x_start<-unclass(as.POSIXct("2008-05-01", origin="1970-01-01"))[1]
+x_end  <-unclass(as.POSIXct("2009-06-1", origin="1970-01-01"))[1]
+
+start_image("myops_restore_nopcu.png")
+par(mfrow=c(2,1))
+par(mai=c(.9,.8,.1,.1))
+plot(dnc2$start[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0815 & dnc2$start <= tstamp_1015) )], 
+    dnc2$available[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0815 & dnc2$start <= tstamp_1015) )], 
+    type='l', col='red', ylim=c(0,600), xlim=c(x_start, x_end),
+    xlab="", ylab="Online Node Count", axes=F)
+
+lines(dnc2$start[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0223) )], 
+    dnc2$available[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0223) )], 
+    type='l', col='red')
+
+lines(dnc2$start[which(!is.na(dnc2$available) & dnc2$start > tstamp_1015 & dnc2$start <= tstamp_0223)], dnc2$available[which(!is.na(dnc2$available)& dnc2$start > tstamp_1015 & dnc2$start <= tstamp_0223)], lty=2, type='l', col='blue')
+
+lines(dnc2$start[which(!is.na(dnc2$available) & dnc2$start > tstamp_0510 & dnc2$start <= tstamp_0815)], dnc2$available[which(!is.na(dnc2$available)& dnc2$start > tstamp_0510 & dnc2$start <= tstamp_0815)], lty=3, type='l', col='darkgreen')
+
+#lines(dnc2$start[which(!is.na(dnc2$available))], dnc2$available[which(!is.na(dnc2$available))], 
+#type='l', col='red', ylim=c(0,1000))
+axis(2, las=1)
+axis(1, cex.axis=0.7, labels=months, at=hbreaks)
+       
+
+
+#tstamp_0510 <-abline_at_date("2008-05-10", col='grey20', lty=0, height=570)
+# dates takes from reboot_image() output for API events.
+# green
+tstamp_0610 <-abline_at_date("2008-06-10", col='grey40', lty=5, height=570)
+tstamp_0815 <-abline_at_date("2008-08-15", col='grey70', lty=1, height=570)
+
+# red
+#tstamp_0905 <-abline_at_date("2008-09-05", col='grey70', height=570)
+tstamp_0924 <-abline_at_date("2008-09-24", col='grey70', lty=1, height=570)
+tstamp_1015 <-abline_at_date("2008-10-15", col='grey40', lty=5, height=570)
+# blue
+#tstamp_1105 <-abline_at_date("2008-11-05", col='white', lty=2, height=570)
+#tstamp_1214 <-abline_at_date("2008-12-14", col='grey70', height=570)
+tstamp_0223 <-abline_at_date("2009-02-23", col='grey70', height=570)
+# red
+#tstamp_0313 <-abline_at_date("2009-03-13", col='grey70', height=570)
+
+#text(x=c(tstamp_0610+(tstamp_0815-tstamp_0610)/2,
+#         tstamp_0815+(tstamp_0905-tstamp_0815)/2,
+#         tstamp_0924+(tstamp_1015-tstamp_0924)/2, 
+#         tstamp_1015+(tstamp_1214-tstamp_1015)/2, 
+#         tstamp_1214+(tstamp_0223-tstamp_1214)/2, 
+#         tstamp_0223+(tstamp_0313-tstamp_0223)/2), 
+#     y=c(0),
+#     labels=c("bug1", 'fix1', 'fix2', 'fix3', 'bug2', 'fix4')) #, 'fix 2', 'fix 3', 'fix 4'))
+
+text(x=c( tstamp_0815,
+         tstamp_0924,
+         tstamp_0223),
+     y=c(610),
+     adj=c(1, 0.5),
+     labels=c('fix1', 'fix2', 'fix3'))
+
+
+text(x=c(tstamp_0510-(60*60*24*10), 
+        tstamp_0610,
+        tstamp_1015),
+     adj=c(0, 0.5),
+     y=c(610),
+     labels=c('Events:', 'bug1', 'bug2'))
+
+mtext("2008                                 2009", 1,2)
+legend(unclass(as.POSIXct("2009-02-23", origin="1970-01-01"))[1], 200,
+        cex=0.7,
+        legend=c("Typical MyOps", "Notice Bug", "Kernel Bug", 'Bug Added', 'Fix Added'),
+        pch=c('-', '-', '-'),
+        col=c('red', 'blue', 'darkgreen', 'grey20', 'grey70'),
+        lty=c(1, 2, 3, 5, 1), merge=T)
+
+        #legend=c("Registered", "Online", 'Kernel Update', 'MyOps Event'),
+        #pch=c('-', '-', '-', '-'),
+        #col=c('blue', 'red', 'grey20', 'grey70'),
+        #lty=c(1, 1, 2, 1), merge=T)
+
+###################################
+
 t_0815 <- unclass(as.POSIXct("2008-08-15", origin="1970-01-01"))[1]
 t_0905 <- unclass(as.POSIXct("2008-09-05", origin="1970-01-01"))[1]
 
@@ -137,20 +219,10 @@ t_1015 <- unclass(as.POSIXct("2008-10-15", origin="1970-01-01"))[1]
 t_0223 <- unclass(as.POSIXct("2009-02-23", origin="1970-01-01"))[1]
 t_0313 <- unclass(as.POSIXct("2009-03-13", origin="1970-01-01"))[1]
 
-#nsh_m1_short <- nsh_m1_nopcu_total[which( 
-#        (nsh_m1_nopcu_total$start > t_0815 & nsh_m1_nopcu_total$start <= t_0905) |
-#        (nsh_m1_nopcu_total$start > t_0924 & nsh_m1_nopcu_total$start <= t_1015) |
-#        (nsh_m1_nopcu_total$start > t_0223 & nsh_m1_nopcu_total$start <= t_0313)  ),]
-#
-#nsh_m1_short <- nsh_m1_nopcu_total[which( 
-#        (nsh_m1_nopcu_total$start > t_0815 & nsh_m1_nopcu_total$start <= t_0905) |
-#        (nsh_m1_nopcu_total$start > t_0924 & nsh_m1_nopcu_total$start <= t_1015) ),]
-
 nsh_m1_short <- nsh_m1_nopcu_total[which( 
         (nsh_m1_nopcu_total$start > t_0815 & nsh_m1_nopcu_total$start <= t_0313) ),]
 nsh_dist_m1 <- node_hist_dist(nsh_m1_short, '2008', '2008-05-01', '2009-05-22', 0, 'day')
 d_m1_total<- ecdf(nsh_dist_m1/(60*60*24))
-
 
 # NOTE: something happened betweeen 10-2 and 10-3
 # NOTICE BUG
@@ -171,23 +243,23 @@ d_m1_kernel_bug <- ecdf(nsh_dist_m1/(60*60*24))
 
 # d<-ecdf(nsh_dist[which(nsh_dist/(60*60*24) < 90 )]/(60*60*24)), 
 # 180 ~= 6 months.
-par(mfrow=c(1,1))
-par(mai=c(.9,.9,.1,.1))
-#start_image("node_history_ttr_nopcu.png")
+par(mai=c(.9,.9,.1,.3))
 #plot(d, xlim=c(0,180), ylim=c(0,1), axes=F, xlab="Days to Resolve", ylab="Percentile",
 #   col.hor='red', col.vert='red', pch='.', col.points='red', main="")
 
-plot(d_m1_total, xlim=c(0,180), ylim=c(0,1), axes=F, xlab="Days to Resolve", 
-    ylab="Percentile", col.hor='red', col.vert='red', pch='.', 
+x_lim_max <- 150
+
+plot(d_m1_total, xlim=c(0,x_lim_max), ylim=c(0,1), axes=F, xlab="Days to Resolve", 
+    ylab="Fraction of Offline Nodes Restored", col.hor='red', col.vert='red', pch='.', 
     col.points='red', main="")
 
-plot(d_m1_notice_bug, xlim=c(0,180), ylim=c(0,1), xlab="Days to Resolve", 
-    ylab="Percentile", col.hor='blue', col.vert='blue', pch='.', 
-    col.points='blue', add=TRUE)
+plot(d_m1_notice_bug, xlim=c(0,x_lim_max), ylim=c(0,1), xlab="Days to Resolve", 
+    col.hor='blue', col.vert='blue', pch='.', 
+    col.points='blue', lty=2, add=TRUE)
 
-plot(d_m1_kernel_bug, xlim=c(0,180), ylim=c(0,1), xlab="Days to Resolve", 
-    ylab="Percentile", col.hor='green', col.vert='green', pch='.', 
-    col.points='green', add=TRUE)
+plot(d_m1_kernel_bug, xlim=c(0,x_lim_max), ylim=c(0,1), xlab="Days to Resolve", 
+    col.hor='darkgreen', col.vert='darkgreen', pch='.', 
+    col.points='darkgreen', lty=3, add=TRUE)
 
 weeks <- c(0,7,14,21,28,60,90,120,150,180)
 axis(1, labels=weeks, at=weeks)
@@ -199,11 +271,11 @@ abline(h=c(0.5, 0.6, 0.75, 0.85, 0.95 ), col='grey80', lty=2)
 abline(v=c(91), col='grey80', lty=2)
 
 
-legend(100, 0.1,
+legend(92, 0.25,
        cex=0.7,
-       legend=c("Typical MyOps -- fix1 through fix4", "Notice Bug", "Kernel Bug"),
+       legend=c("Typical MyOps", "Notice Bug", "Kernel Bug"),
        pch=c('-', '-', '-'),
-       col=c('red', 'blue', 'green'),
-       lty=c(1, 1, 1), merge=T)
+       col=c('red', 'blue', 'darkgreen'),
+       lty=c(1, 2, 3), merge=T)
 
 end_image()

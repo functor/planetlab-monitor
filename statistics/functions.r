@@ -397,10 +397,15 @@ add_timestamp <- function (t)
     return (t);
 }
 
-abline_at_date <- function (date, col='black', lty=1, format="%Y-%m-%d")
+abline_at_date <- function (date, col='black', lty=1, format="%Y-%m-%d", height=0)
 {
     ts <-unclass(as.POSIXct(date, format=format, origin="1970-01-01"))[1]
-    abline(v=ts, col=col, lty=lty)
+    if ( height == 0 )
+    {
+        abline(v=ts, col=col, lty=lty)
+    } else {
+        lines(c(ts,ts),c(0,height), col=col, lty=lty)
+    }
     return (ts);
 }
 
