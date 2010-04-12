@@ -295,6 +295,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Mon Apr 12 2010 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-31
+- added fix for node delete/add causing conflicts in MyOps db.
+- added statistics scripts
+
 * Thu Jan 21 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-30
 - * fix paths for automate script
 
@@ -487,6 +491,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 30
+%define taglevel 31
 
 %define version 3.0
