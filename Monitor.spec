@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define taglevel 31
+%define taglevel 32
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -278,6 +278,10 @@ fi
 
 
 %changelog
+* Tue Apr 20 2010 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-3.0-32
+- from this version, suitable for 5.0
+- requires bootcd with the new 5.0 naming style 3-part nodefamily
+
 * Mon Apr 12 2010 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-31
 - added fix for node delete/add causing conflicts in MyOps db.
 - added statistics scripts
