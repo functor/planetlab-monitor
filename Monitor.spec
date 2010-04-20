@@ -84,7 +84,7 @@ Requires: python
 
 Requires: monitor-server-deps
 Requires: PLCWWW >= 4.2
-Requires: bootcd-%{pldistro}-%{_arch} >= 4.2
+Requires: bootcd-%{pldistro}-%{fcdistro}-%{_arch} >= 5.0
 Requires: pcucontrol
 
 %description server
