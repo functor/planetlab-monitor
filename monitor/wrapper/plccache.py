@@ -184,6 +184,8 @@ def sync():
 		dbnode.plc_node_stats = node
 	deleteExtra(l_nodes, PlcNode, 'node_id', 'node_id')
 	deleteExtra(l_nodes, HistoryNodeRecord, 'plc_nodeid', 'node_id')
+        deleteExtra(l_nodes, PlcNode, 'hostname', 'hostname')
+	deleteExtra(l_nodes, HistoryNodeRecord, 'hostname', 'hostname')
 	deleteExtra(l_nodes, FindbadNodeRecord, 'hostname', 'hostname')
 	session.flush()
 
