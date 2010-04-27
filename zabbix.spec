@@ -295,6 +295,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Tue Apr 27 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-33
+- handle hostname changes
+
 * Tue Apr 20 2010 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - Monitor-3.0-32
 - from this version, suitable for 5.0
 - requires bootcd with the new 5.0 naming style 3-part nodefamily
@@ -495,6 +498,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 32
+%define taglevel 33
 
 %define version 3.0
