@@ -26,7 +26,7 @@ def zabbix_event_ack_link(eventid):
 		<tbody>
 		<tr>
 		<td colspan="5">
-		<table id="actionsummarylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionsummarylist_paginator max-pages-10 paginate-50" >
+		<table id="actionsummarylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionsummarylist_paginator max-pages-10 paginate-999" >
 			<thead>
 				<tr>
 					<th class="sortable plekit_table">Type</th>

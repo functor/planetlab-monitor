@@ -16,7 +16,7 @@ from links import *
     function sitelist_paginator(opts) { plekit_table_paginator(opts, "sitelist"); }
   </script>
 
-<table id="sitelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-sitelist_paginator max-pages-10 paginate-25">
+<table id="sitelist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-sitelist_paginator max-pages-10 paginate-999">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='6'>

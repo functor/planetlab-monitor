@@ -17,7 +17,7 @@ from links import *
     function pculist_paginator(opts) { plekit_table_paginator(opts, "pculist"); }
   </script>
 
-<table id="pculist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-pculist_paginator max-pages-10 paginate-25">
+<table id="pculist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-pculist_paginator max-pages-10 paginate-999">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='5'>

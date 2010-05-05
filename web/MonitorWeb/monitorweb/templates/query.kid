@@ -26,7 +26,7 @@ from links import *
 </div>
 
 <h4>Results</h4>
-	<table py:if="fields and len(fields.keys()) > 0" id="querylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-querylist_paginator max-pages-10 paginate-50" width="100%">
+	<table py:if="fields and len(fields.keys()) > 0" id="querylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-querylist_paginator max-pages-10 paginate-999" width="100%">
 	<thead>
     	<tr class='pagesize_area'><td class='pagesize_area' colspan='5'>
        	 <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>

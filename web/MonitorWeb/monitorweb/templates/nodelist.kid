@@ -22,7 +22,7 @@ from links import *
   <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/-->
   </center>
 
-<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-999">
   <thead>
 
     <tr class='pagesize_area'><td class='pagesize_area' colspan='10'>

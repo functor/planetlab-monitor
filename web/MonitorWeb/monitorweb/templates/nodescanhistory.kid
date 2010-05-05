@@ -28,7 +28,7 @@ from cherrypy import request, response
 		<tr>
 		<td colspan="5">
 
-<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-25">
+<table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-999">
   <thead>
     <tr class='pagesize_area'><td class='pagesize_area' colspan='10'>
         <form class='pagesize' action='satisfy_xhtml_validator'><fieldset>

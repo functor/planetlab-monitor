@@ -30,7 +30,7 @@ def zabbix_event_ack_link(eventid):
 		<p py:if="actions and len(actions) == 0">
 			There are no recent actions taken for this site.
 		</p>
-		<table id="actionlist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionlist_paginator max-pages-10 paginate-50" py:if="actions and len(actions) > 0">
+		<table id="actionlist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-actionlist_paginator max-pages-10 paginate-999" py:if="actions and len(actions) > 0">
 		<!--table py:if="actions and len(actions) > 0" id="sortable_table" class="datagrid" border="1" width="100%"-->
 			<thead>
 				<tr>
