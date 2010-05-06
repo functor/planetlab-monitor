@@ -60,17 +60,64 @@ from links import *
 					<th class="sortable plekit_table">${key}</th>
 				</span>
 			</span>
+                        <th class="plekit_table"> C </th>
 		</tr>
 	</thead>
 	<tbody>
 		<!-- for keys show value -->
+<?python
+num = 0
+?>
 		<tr py:for="row in query"  >
+<?python
+values = []
+num += 1
+checkboxname="checkbox%d" % num
+?>
 			<span py:for="key in sorted(fields.keys())" >
 				<td>${row[key]}</td>
+<?python
+values.append(str(row[key]))
+?>
 			</span>
+<?python
+values = ",".join(values)
+?>
+
+                        <td><input type="checkbox" class="clippy_checkbox" name="${checkboxname}" value="${values}" onclick="setup_clippy()"/></td>
+
 		</tr>
-      </tbody>
+
+<tr>
+  <span py:for="key in sorted(fields.keys())" ><td></td></span>
+<td>
+  <span style="display:none" id="values_box_clippy"></span>
+    <object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
+            width="110"
+            height="14"
+            id="clippy" >
+      <param name="movie" value="static/flash/clippy.swf?v5"/>
+      <param name="allowScriptAccess" value="always" />
+      <param name="quality" value="high" />
+      <param name="scale" value="noscale" />
+      <param name="bgcolor" value="#FFFFFF" />
+      <param name="FlashVars" value="id=values_box_clippy" />
+        <embed src="static/flash/clippy.swf"
+               width="110"
+               height="14"
+               name="clippy"
+               quality="high"
+               allowScriptAccess="always"
+               type="application/x-shockwave-flash"
+               pluginspage="http://www.macromedia.com/go/getflashplayer"
+               FlashVars="id=values_box_clippy"
+               bgcolor="#FFFFFF"
+               />
+    </object>
+</td></tr>
+        </tbody>
 	</table>
+        
 <script type="text/javascript">
 var lst = $("querylist");
 var tbody = lst.getElementsBySelector("tbody")[0];
@@ -78,6 +125,14 @@ var trs = tbody.getElementsBySelector("tr");
 if (trs.length > 2) {
  plc_toggle("query");
 }
+
+
+function setup_clippy () {
+var values = "";
+var checkboxes = $$$('.clippy_checkbox').each(function(e){if (e.checked == true) {values += e.value + "\n";} });
+$$$('#values_box_clippy').each(function(e){e.innerHTML=values;});
+}
+
 </script>
 
   </div>
