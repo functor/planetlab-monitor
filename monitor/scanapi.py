@@ -534,8 +534,8 @@ class ScanPCU(ScanInterface):
 			#### RUN NMAP ###############################
 			if continue_probe:
 				nmap = command.CMD()
-				print "nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
-				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
+				print "nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
+				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
 				# NOTE: an empty / error value for oval, will still work.
 				(values['port_status'], continue_probe) = nmap_port_status(oval)
 			else:
