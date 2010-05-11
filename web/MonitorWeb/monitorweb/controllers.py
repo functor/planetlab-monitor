@@ -350,7 +350,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 				if 'rpmvalue' in data and 'rpms' in data:
 					if agg['rpms']:
 						rpm_list = agg['rpms'].split()
-						rpm_list = filter(lambda x: data['rpmvalue'] in x, rpm_list)
+						rpm_list = filter(lambda x: re.match(data['rpmvalue'], x, re.I),
+                                                                  rpm_list)
 						agg['rpms'] = " ".join(rpm_list)
 
 				query.append(agg)
