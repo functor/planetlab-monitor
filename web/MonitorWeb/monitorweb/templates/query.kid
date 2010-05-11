@@ -50,6 +50,35 @@ from links import *
             <img class='reset' src="/planetlab/icons/clear.png" alt="reset search"
                  onmousedown='plekit_table_filter_reset("querylist","querylist_search","querylist_search_and");' />
     	</fieldset></div></td></tr>
+
+<tr style="border:0px;">
+  <span py:for="key in sorted(fields.keys())" ><td></td></span>
+<td style="text-align:right;padding:0.5em;">
+  <span style="display:none" id="values_box_clippy"></span>
+    <object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
+            width="110"
+            height="14"
+            id="clippy" >
+      <param name="movie" value="static/flash/clippy.swf?v5"/>
+      <param name="allowScriptAccess" value="always" />
+      <param name="quality" value="high" />
+      <param name="scale" value="noscale" />
+      <param name="bgcolor" value="#FFFFFF" />
+      <param name="FlashVars" value="id=values_box_clippy" />
+        <embed src="static/flash/clippy.swf"
+               width="110"
+               height="14"
+               name="clippy"
+               quality="high"
+               allowScriptAccess="always"
+               type="application/x-shockwave-flash"
+               pluginspage="http://www.macromedia.com/go/getflashplayer"
+               FlashVars="id=values_box_clippy"
+               bgcolor="#FFFFFF"
+               />
+    </object>
+</td></tr>
+
 		<!-- for keys show each th -->
 		<tr>
 			<span py:for="key in sorted(fields.keys())" >
@@ -87,34 +116,6 @@ values = ",".join(values)
                         <td><input type="checkbox" class="clippy_checkbox" name="${checkboxname}" value="${values}" onclick="setup_clippy()"/></td>
 
 		</tr>
-
-<tr>
-  <span py:for="key in sorted(fields.keys())" ><td></td></span>
-<td>
-  <span style="display:none" id="values_box_clippy"></span>
-    <object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
-            width="110"
-            height="14"
-            id="clippy" >
-      <param name="movie" value="static/flash/clippy.swf?v5"/>
-      <param name="allowScriptAccess" value="always" />
-      <param name="quality" value="high" />
-      <param name="scale" value="noscale" />
-      <param name="bgcolor" value="#FFFFFF" />
-      <param name="FlashVars" value="id=values_box_clippy" />
-        <embed src="static/flash/clippy.swf"
-               width="110"
-               height="14"
-               name="clippy"
-               quality="high"
-               allowScriptAccess="always"
-               type="application/x-shockwave-flash"
-               pluginspage="http://www.macromedia.com/go/getflashplayer"
-               FlashVars="id=values_box_clippy"
-               bgcolor="#FFFFFF"
-               />
-    </object>
-</td></tr>
         </tbody>
 	</table>
         
