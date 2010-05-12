@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define taglevel 33
+%define taglevel 34
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -278,6 +278,11 @@ fi
 
 
 %changelog
+* Wed May 12 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-34
+- * copy selections to clipbord on Advanced Query page
+- * RPM Pattern as regexp
+- * scan ipmi port
+
 * Tue Apr 27 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-33
 - handle hostname changes
 

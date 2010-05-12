@@ -295,6 +295,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed May 12 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-34
+- * copy selections to clipbord on Advanced Query page
+- * RPM Pattern as regexp
+- * scan ipmi port
+
 * Tue Apr 27 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-33
 - handle hostname changes
 
@@ -498,6 +503,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 33
+%define taglevel 34
 
 %define version 3.0
