@@ -6,13 +6,14 @@ from monitor import config
 from time import mktime
 from pcucontrol.reboot import pcu_name, model_to_object
 from links import *
+import cherrypy
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
 	  xmlns:mochi="http://www.mochi.org">
 
   <div py:match="item.tag == 'content'">
-  		<h2>Functional, but Under Development...</h2>
+  		<h2>Advanced Search</h2>
 
 <img id="toggle-image-visible-query" src="/plekit/icons/toggle-visible.png" style="height:18px;" onclick="plc_toggle('query')" />
 <img id="toggle-image-hidden-query" src="/plekit/icons/toggle-hidden.png" style="height:18px;display:none" onclick="plc_toggle('query')" /> <span style="font-size:2em;">Monitor Query</span>
@@ -26,6 +27,7 @@ from links import *
 </div>
 
 <h4>Results</h4>
+    <a href="${link('query', tg_format='plain', **cherrypy.request.params)}">CSV Format</a>
 	<table py:if="fields and len(fields.keys()) > 0" id="querylist" cellpadding="0" border="0" class="plekit_table sortable-onload-0 colstyle-alt no-arrow paginationcallback-querylist_paginator max-pages-10 paginate-999" width="100%">
 	<thead>
     	<tr class='pagesize_area'><td class='pagesize_area' colspan='5'>

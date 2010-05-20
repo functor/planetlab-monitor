@@ -3,7 +3,7 @@ import turbogears as tg
 import urllib
 
 def plc_myops_uri():
-	return "http://" + config.MONITOR_HOSTNAME 
+	return "https://" + config.MONITOR_HOSTNAME 
 def plc_mail_uri(ticketid):
 	return config.RT_WEB_SERVER + "/Ticket/Display.html?id=" + str(ticketid)
 def plc_node_uri(hostname):
