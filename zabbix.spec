@@ -505,8 +505,8 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 - initial packaging
 
 
-%define module_current_branch 2.0
+%define module_current_branch 3.0
 
-%define taglevel 35
+%define taglevel 0
 
-%define version 3.0
+%define version 3.1

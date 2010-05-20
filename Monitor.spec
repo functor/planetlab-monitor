@@ -6,8 +6,8 @@
 
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
-%define version 3.0
-%define taglevel 35
+%define version 3.1
+%define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -477,4 +477,4 @@ fi
 * Mon Apr 07 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-1.0-0
 - initial addition.
 
-%define module_current_branch 2.0
+%define module_current_branch 3.0
