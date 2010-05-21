@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.0
-%define taglevel 35
+%define taglevel 36
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -278,6 +278,9 @@ fi
 
 
 %changelog
+* Fri May 21 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-36
+- fix bootcd requirement
+
 * Thu May 20 2010 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-35
 - Add CSV link on Advanced query
 - Preparing to branch

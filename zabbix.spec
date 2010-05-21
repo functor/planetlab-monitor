@@ -295,6 +295,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri May 21 2010 Talip Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - Monitor-3.0-36
+- fix bootcd requirement
+
 * Thu May 20 2010 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-35
 - Add CSV link on Advanced query
 - Preparing to branch
@@ -507,6 +510,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 2.0
 
-%define taglevel 35
+%define taglevel 36
 
 %define version 3.0
