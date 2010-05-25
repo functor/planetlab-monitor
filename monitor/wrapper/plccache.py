@@ -5,7 +5,29 @@ from monitor.wrapper import plc
 from monitor.database.info.model import *
 import profile
 
+def d_from_l(l, key):
+	d = {}
+	for obj in l:
+		if not str(obj[key]) in d:
+			d[str(obj[key])] = obj
+		else:
+			print "Two objects have the same %s key %s!" % (key, obj[key])
+			continue
+	return d
+
+def dpcus_from_lpcus(l_pcus):
+	d_pcus = d_from_l(l_pcus, 'pcu_id')
+	return d_pcus
+
+def dnodes_from_lnodes(l_nodes):
+	d_nodes = d_from_l(l_nodes, 'hostname')
+	return d_nodes
+
 def dsites_from_lsites(l_sites):
+	d_sites = d_from_l(l_sites, 'login_base')
+	return d_sites 
+
+def dsites_from_lsites_id(l_sites):
 	d_sites = {}
 	id2lb = {}
 	for site in l_sites:
@@ -93,7 +115,7 @@ def init():
 		l_pcus.append(pcu)
 
 	print >>sys.stderr, "building id2lb"
-	(d_sites,id2lb) = dsites_from_lsites(l_sites)
+	(d_sites,id2lb) = dsites_from_lsites_id(l_sites)
 	print >>sys.stderr, "building lb2hn"
 	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
 
@@ -115,6 +137,7 @@ def GetNodesBySite(loginbase):
 	return GetNodesByIds(site.plc_site_stats['node_ids'])
 
 def GetNodeByName(hostname):
+	print "GetNodeByName %s" % hostname
 	node = PlcNode.get_by(hostname=hostname)
 	return node.plc_node_stats
 
