@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from monitor.reboot import *
+import time
 
 def main():
 	logger.setLevel(logging.DEBUG)
@@ -33,5 +34,5 @@ def main():
 if __name__ == '__main__':
 	main()
 	f = open("/tmp/rebootlog", 'a')
-	f.write("reboot %s\n" % sys.argv)
+	f.write("reboot %s %s\n" % (time.time(), " ".join(sys.argv[1:])))
 	f.close()
