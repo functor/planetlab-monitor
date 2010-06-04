@@ -1,85 +1,21 @@
 #!/usr/bin/python
+from nagiosobjects import *
 
-class NagiosObject(object):
-	trans = {'d2_coords': '2d_coords'}
+command_auto = Command(command_name="automate-host-reboot-command",
+				 	   command_line="""/usr/share/monitor/commands/reboot.py $NOTIFICATIONTYPE$ $HOSTNAME$""")
 
-	def __init__(self, id, **kwargs):
-		self.id = id
-		self.kwords = kwargs.keys()
-		for key in self.kwords:
-			self.__setattr__(key, kwargs[key])
-
-	def toString(self):
-		ret = ""
-		ret += "define %s {\n" % self.id
-		for key in self.kwords:
-			if key in self.trans:
-				ret += "    %s   %s\n" % (self.trans[key], self.__getattribute__(key))
-			else:
-				ret += "    %s   %s\n" % (key, self.__getattribute__(key))
-		ret += "}\n"
-		return ret
-
-class Host(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "host", **kwargs)
-
-class HostGroup(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "hostgroup", **kwargs)
-
-class HostEscalation(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "hostescalation", **kwargs)
-
-class Contact(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "contact", **kwargs)
-
-class ContactGroup(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "contactgroup", **kwargs)
-
-class Service(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "service", **kwargs)
-
-class ServiceDependency(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "servicedependency", **kwargs)
-
-class ServiceEscalation(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "serviceescalation", **kwargs)
-
-class ServiceGroup(NagiosObject):
-	def __init__(self, **kwargs):	
-		NagiosObject.__init__(self, "servicegroup", **kwargs)
-
-def getContactsAndContactGroupsFor(lb, type, email_list):
-
-	contact_list = []
-	for person in email_list:
-		c1 = Contact(contact_name=person,
+contact_auto = Contact(contact_name="automate-host-reboot-contact",
 						host_notifications_enabled=1,
-						service_notifications_enabled=1,
+						service_notifications_enabled=0,
 						host_notification_period="24x7",
+						host_notification_options="d,r",
+						host_notification_commands="automate-host-reboot-command",
 						service_notification_period="24x7",
-						host_notification_options="d,r,s",
-						service_notification_options="c,r",
-						host_notification_commands="notify-by-email",
-						service_notification_commands="notify-by-email",
-						email=person)
-		contact_list.append(c1)
+						service_notification_commands="monitor-notify-service-by-email",
+						email="not.an.email")
 
-	cg1 = ContactGroup(contactgroup_name="%s-%s" % (lb,type),
-						alias="%s-%s" % (lb,type),
-						members=",".join(email_list))
-
-	contact_list.append(cg1)
-
-	return contact_list
-
+print command_auto.toString()
+print contact_auto.toString()
 
 globalservices = []
 for service in [('NET', "Network Services"),
@@ -93,30 +29,45 @@ for service in [('NET', "Network Services"),
 	globalservices.append(ServiceGroup(servicegroup_name=service[0], alias=service[1]))
 
 
+# NOTE: since ping is not a reliable check in the wide area, use 'check_ssh'
+# 		to determine if the host is minimally online.  If we cannot access
+# 		port 22 it, then it is DOWN.
+
 globalhost = [Host(	name="planetlab-host",
 					use="generic-host",
 					check_period="24x7",
 					check_interval="120",
 					retry_interval="10",
 					max_check_attempts="6",
-					check_command="check-host-alive",
+					check_command="check_ssh!-t 120",
 					contact_groups="admins",
 					register="0")]
 
 for obj in globalhost + globalservices:
 	print obj.toString()
 
-from monitor.wrapper import plccache
+from monitor.wrapper import plc
+from monitor.generic import *
 
-plcdb = plccache.l_sites
-netid2ip = plccache.d_from_l(plccache.plc.api.GetInterfaces(), 'interface_id')
-lb2hn = plccache.plcdb_lb2hn
+l_sites = plc.api.GetSites({'login_base' : ['asu', 'gmu']})
+#l_sites = plc.api.GetSites([10243, 22, 10247, 138, 139, 10050, 10257, 18, 20, 
+#							21, 10134, 24, 10138, 10141, 30, 31, 33, 10279, 41, 29, 10193, 10064, 81,
+#							10194, 10067, 87, 10208, 10001, 233, 157, 10100, 10107])
 
-sites = plccache.plc.api.GetSites([10243, 22, 10247, 138, 139, 10050, 10257, 18, 20, 
-							21, 10134, 24, 10138, 10141, 30, 31, 33, 10279, 41, 29, 10193, 10064, 81,
-							10194, 10067, 87, 10208, 10001, 233, 157, 10100, 10107])
+node_ids = [ s['node_ids'] for s in l_sites ]
+node_ids = [ map(str,n) for n in node_ids ] 
+node_ids = [ ",".join(n) for n in node_ids ] 
+node_ids = ",".join(node_ids)
+node_ids = map(int, node_ids.split(","))
 
-for site in sites:
+l_nodes = plc.api.GetNodes(node_ids)
+
+(d_sites,id2lb) = dsites_from_lsites_id(l_sites)
+(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
+
+netid2ip = d_from_l(plc.api.GetInterfaces(), 'interface_id')
+
+for site in l_sites:
 	shortname = site['abbreviated_name']
 	lb = site['login_base']
 	hg = HostGroup(hostgroup_name=lb, alias=shortname)
@@ -139,16 +90,7 @@ for site in sites:
 
 	print hg.toString()
 
-	# NOTE: do duplcate groups create duplicate emails?
-	cl1 = getContactsAndContactGroupsFor(lb, "techs", plccache.plc.getTechEmails(lb))
-	cl2 = getContactsAndContactGroupsFor(lb, "pis", plccache.plc.getPIEmails(lb))
-	# NOTE: slice users will change often.
-	cl3 = getContactsAndContactGroupsFor(lb, "sliceusers", plccache.plc.getSliceUserEmails(lb))
-
-	for c in [cl1,cl2,cl3]:
-		for i in c:
-			print i.toString()
-
+	hostname_list = []
 	for node in nodes:
 		hn = node['hostname']
 		if len(node['interface_ids']) == 0:
@@ -171,73 +113,89 @@ for site in sites:
 
 		print h.toString()
 
+		hostname_list.append(hn)
+	
+	# NOTE: use all hostnames at site to create HostEscalations for down-notices
+	if len(hostname_list) > 0:
+
+		hn_list = ",".join(hostname_list)
+		# NOTE: always send notices to techs
+		he1 = HostEscalation( host_name=hn_list,
+						first_notification=3,
+						last_notification=0,
+						notification_interval=24*60*1,
+						escalation_options="r,d",
+						contact_groups="%s-techs" % lb)
+
+		# NOTE: only send notices to PIs after a week. (2 prior notices) 
+		he2 = HostEscalation( host_name=hn_list,
+						first_notification=5,
+						last_notification=0,
+						notification_interval=24*60*1,
+						escalation_options="r,d",
+						contact_groups="%s-pis" % lb)
+
+		# NOTE: send notices to Slice users after two weeks. (4 prior notices) 
+		he3 = HostEscalation( host_name=hn_list,
+						first_notification=7,
+						last_notification=0,
+						notification_interval=24*60*1,
+						escalation_options="r,d",
+						contact_groups="%s-sliceusers" % lb)
+
+		for he in [he1, he2, he3]:
+			print he.toString()
+
+		he_reboot = HostEscalation(host_name=hn_list,
+						first_notification=2,
+						last_notification=2,
+						notification_interval=24*60*0.5,
+						escalation_options="d",
+						contacts="automate-host-reboot-contact")
+
+		print he_reboot.toString()
+
+
+if len(hostname_list) > 0:
+		hn = ",".join(hostname_list)
+
 		s1 = Service(use="generic-service",
-					host_name=hn,
+					host_name="*",
 					service_description="aSSH",
 					display_name="aSSH",
 					servicegroups="NET,SSH",
+					notifications_enabled="0",
 					check_command="check_ssh!-t 120")
 		s2 = Service(use="generic-service",
-					host_name=hn,
+					host_name="*",
 					service_description="bSSH806",
 					display_name="bSSH806",
 					servicegroups="NET,SSH806",
+					notifications_enabled="0",
 					check_command="check_ssh!-p 806 -t 120")
 		s3 = Service(use="generic-service",
-					host_name=hn,
+					host_name="*",
 					service_description="cHTTP",
 					display_name="cHTTP",
 					servicegroups="NET,HTTP",
+					notifications_enabled="0",
 					check_command="check_http!-t 120")
 		s4 = Service(use="generic-service",
-					host_name=hn,
+					host_name="*",
 					service_description="dCOTOP",
 					display_name="dCOTOP",
 					servicegroups="NET,COTOP",
+					notifications_enabled="0",
 					check_command="check_http!-p 3120 -t 120")
 
-		se1 = ServiceEscalation( host_name=hn,
-						service_description='aSSH',
-						first_notification=0,
-						last_notification=2,
-						notification_interval=24*60*3.5,
-						escalation_options="r,c",
-						contact_groups="%s-techs" % lb)
 
-		se2 = ServiceEscalation( host_name=hn,
-						service_description='aSSH',
-						first_notification=2,
-						last_notification=4,
-						notification_interval=24*60*3.5,
-						escalation_options="r,c",
-						contact_groups="%s-techs,%s-pis" % (lb,lb))
 
-		se3 = ServiceEscalation( host_name=hn,
-						service_description='aSSH',
-						first_notification=4,
-						last_notification=0,
-						notification_interval=24*60*3.5,
-						escalation_options="r,c",
-						contact_groups="%s-techs,%s-pis,%s-sliceusers" % (lb,lb,lb))
 
-		sd1 = ServiceDependency(host_name=hn,
+		sd1 = ServiceDependency(host_name="*",
 								service_description="aSSH",
-								dependent_host_name=hn,
-								dependent_service_description="bSSH806",
+								dependent_service_description="bSSH806,cHTTP,dCOTOP",
 								execution_failure_criteria="w,u,c,p",)
 
-		sd2 = ServiceDependency(host_name=hn,
-								service_description="aSSH",
-								dependent_host_name=hn,
-								dependent_service_description="cHTTP",
-								execution_failure_criteria="w,u,c,p",)
-
-		sd3 = ServiceDependency(host_name=hn,
-								service_description="aSSH",
-								dependent_host_name=hn,
-								dependent_service_description="dCOTOP",
-								execution_failure_criteria="w,u,c,p",)
-
-		for service in [s1,s2,s3,s4,se1,se2,se3,sd1,sd2,sd3]:
+		for service in [s1,s2,s3,s4,sd1]:
 			print service.toString()
 
