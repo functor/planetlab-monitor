@@ -50,7 +50,7 @@ def check_node_state(rec, node):
 	if boot_state == 'disable': boot_state = 'disabled'
 	if boot_state == 'diag' or boot_state == 'diagnose': boot_state = 'safeboot'
 
-	if len(rec.plc_node_stats['pcu_ids']) > 0:
+	if rec.plc_node_stats is not None and len(rec.plc_node_stats['pcu_ids']) > 0:
 		node.haspcu = True
 	else:
 		node.haspcu = False
