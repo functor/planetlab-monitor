@@ -43,20 +43,21 @@ def check_node_state(rec, node):
 		run_level = rec.plc_node_stats['run_level']
 		last_contact = rec.plc_node_stats['last_contact']
 		node.plc_nodeid = rec.plc_node_stats['node_id']
+		node.plc_siteid = rec.plc_node_stats['site_id']
+		if len(rec.plc_node_stats['pcu_ids']) > 0:
+			node.haspcu = True
+		else:
+			node.haspcu = False
 	else:
 		boot_state = "unknown"
 		last_contact = None
+		node.haspcu = False
 
 	if boot_state == 'disable': boot_state = 'disabled'
 	if boot_state == 'diag' or boot_state == 'diagnose': boot_state = 'safeboot'
 
-	if rec.plc_node_stats is not None and len(rec.plc_node_stats['pcu_ids']) > 0:
-		node.haspcu = True
-	else:
-		node.haspcu = False
 
 	node.firewall = rec.firewall
-	node.plc_siteid = rec.plc_node_stats['site_id']
 
 	# NOTE: 'DOWN' and 'DEBUG'  are temporary states, so only need
 	# 			'translations' into the node.status state
