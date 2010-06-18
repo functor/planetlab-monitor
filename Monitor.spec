@@ -224,6 +224,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}/monitor.functions
 /usr/share/%{name}/setup.py*
 /usr/share/%{name}/threadpool.py*
+/usr/share/%{name}/zabbix.spec
 
 /usr/share/%{name}/bootcd
 /usr/share/%{name}/commands
@@ -236,7 +237,6 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}/tests
 /usr/share/%{name}/tools
 /usr/share/%{name}/upgrade
-/usr/share/%{name}/web
 /usr/share/%{name}/web
 /usr/share/%{name}/zabbix
 
