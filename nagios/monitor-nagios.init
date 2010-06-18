@@ -1,0 +1,88 @@
+#!/bin/bash
+# 
+# chkconfig: - 65 35
+#
+# Provides: monitor-nagios
+# Required-Start: mysqld sendmail
+# Defalt-Start: 3 4 5
+# Default-Stop: 0 1 2 6
+# Description: Setup requirements for monitor to work with nagios
+# 
+# Stephen Soltesz <soltesz@cs.princeton.edu>
+# Copyright (C) 2010 The Trustees of Princeton University
+#
+# $Id$
+#
+
+. /etc/plc.d/functions
+. /etc/plc.d/monitor.functions
+. /etc/planetlab/plc_config
+
+# NOTE: expect that mysqld is already started.
+
+start () {
+
+	# if it's a fresh install, there is no root passwd.
+	if $( mysqladmin -u root create nagios ) ; then
+		cat <<EOF > /tmp/nagios.priv
+   GRANT ALL PRIVILEGES ON nagios.* TO ndouser@localhost IDENTIFIED BY 'ndopassword';
+EOF
+		cat /tmp/nagios.priv | mysql -u root
+
+		cd /usr/share/doc/ndoutils-mysql-*/db
+		perl ./installdb -u ndouser -p ndopassword -d nagios
+	fi
+
+	if ! $( grep -q /usr/lib/nagios/brokers/ndomod.so  /etc/nagios/nagios.cfg ) ; then 
+		echo "broker_module=/usr/lib/nagios/brokers/ndomod.so config_file=/etc/nagios/ndomod.cfg" >> /etc/nagios/nagios.cfg
+		echo "foo"
+	fi
+
+	/sbin/chkconfig ndo2db on
+	#/sbin/service ndo2db start
+	#/sbin/service nagios restart
+
+	## set passwd for /etc/nagios/passwd
+	htpasswd -b -c /etc/nagios/passwd nagiosadmin nagiospassword
+
+	# disable /etc/httpd/conf.d/nagios.conf restriction to only 127.0.0.1
+	if $( grep -q -E "^   deny from all" /etc/httpd/conf.d/nagios.conf ) ; then
+		sed -i -e 's/   deny from all/   allow from all/g' /etc/httpd/conf.d/nagios.conf 
+		sed -i -e 's/   order deny,allow/   order allow,deny/g' /etc/httpd/conf.d/nagios.conf 
+		sed -i -e 's/   allow from 127.0.0.1/   /g' /etc/httpd/conf.d/nagios.conf 
+	fi
+
+	touch /etc/nagios/objects/plc.cfg
+	touch /etc/nagios/objects/plcusers.cfg
+	echo "cfg_file=/etc/nagios/objects/plc.cfg" >> /etc/nagios/nagios.cfg
+	echo "cfg_file=/etc/nagios/objects/plcusers.cfg" >> /etc/nagios/nagios.cfg
+
+	/sbin/chkconfig sendmail on
+	/sbin/service sendmail start
+
+	# change /etc/nagios/objects/contacts.cfg to some real email addr
+	# change /etc/nagios/nagios.cfg admin_email to some real email addr
+
+}
+
+
+# See how we were called.
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    echo "not implemented"
+    ;;
+  status)
+    echo "not implemented"
+    ;;
+  restart)
+    echo "not implemented"
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|status|condrestart|restart}"
+    exit 1
+esac
+
+exit $?

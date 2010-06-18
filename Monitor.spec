@@ -156,8 +156,7 @@ install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
-# TODO: update with a real init file
-install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
+install -D -m 755 nagios/monitor-nagios.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
 
 # cron job for automated polling
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
@@ -204,7 +203,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_sysconfdir}/plc.d/monitor-nagios
 /usr/share/%{name}/nagios 
-# TODO: not sure how this will impact the server files
 
 %files server
 %defattr(-,root,root)
@@ -316,6 +314,9 @@ fi
 
 %post nagios
 # TODO: do as much as possible to get the host setup and running.
+chkconfig --add monitor-nagios
+chkconfig monitor-nagios on
+chkconfig mysqld on
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
