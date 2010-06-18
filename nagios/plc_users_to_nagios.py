@@ -40,7 +40,7 @@ def getContactsAndContactGroupsFor(lb, type, email_list):
 
 
 host_email_command = Command(command_name="monitor-notify-host-by-email",
-    						 command_line="""/usr/share/monitor/commands/mail.py --hostnotificationnumber $HOSTNOTIFICATIONNUMBER$ --notificationtype $NOTIFICATIONTYPE$ --hostname $HOSTNAME$ --hoststate $HOSTSTATE$ --hostaddress $HOSTADDRESS$ --hostoutput "$HOSTOUTPUT$" --longdatetime "$LONGDATETIME$" --notificationitype $NOTIFICATIONTYPE$ --contactemail $CONTACTEMAIL$""")
+    						 command_line="""/usr/share/monitor/nagios/actions/mail.py --hostnotificationnumber $HOSTNOTIFICATIONNUMBER$ --notificationtype $NOTIFICATIONTYPE$ --hostname $HOSTNAME$ --hoststate $HOSTSTATE$ --hostaddress $HOSTADDRESS$ --hostoutput "$HOSTOUTPUT$" --longdatetime "$LONGDATETIME$" --notificationitype $NOTIFICATIONTYPE$ --contactemail $CONTACTEMAIL$""")
 
 service_email_command = Command(command_name="monitor-notify-service-by-email",
     							command_line="""/usr/bin/printf "%b" "***** MyOpsNagios $HOSTNOTIFICATIONNUMBER$ *****\\n\\nNotification Type: $NOTIFICATIONTYPE$\\n\\nService: $SERVICEDESC$\\nHost: $HOSTALIAS$\\nAddress: $HOSTADDRESS$\\nState: $SERVICESTATE$\\n\\nDate/Time: $LONGDATETIME$\\n\\nAdditional Info:\\n\\n$SERVICEOUTPUT$" | /bin/mail -S replyto=monitor@planet-lab.org -s "** $NOTIFICATIONTYPE$ Service Alert: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$ **" $CONTACTEMAIL$""")

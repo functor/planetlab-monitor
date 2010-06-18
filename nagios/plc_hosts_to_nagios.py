@@ -2,16 +2,16 @@
 from nagiosobjects import *
 
 command_auto = Command(command_name="check_mode",
-				 	   command_line="""/usr/share/monitor/commands/checkmode.py -H $HOSTNAME$ --sn $SERVICENOTIFICATIONNUMBER$ """)
+				 	   command_line="""/usr/share/monitor/nagios/plugins/checkmode.py -H $HOSTNAME$ --sn $SERVICENOTIFICATIONNUMBER$ """)
 print command_auto.toString()
 
 command_auto = Command(command_name="check_pcu",
-				 	   command_line="""/usr/share/monitor/commands/checkpcu.py -H $HOSTNAME$ """)
+				 	   command_line="""/usr/share/monitor/nagios/plugins/checkpcu.py -H $HOSTNAME$ """)
 print command_auto.toString()
 
 
 command_auto = Command(command_name="automate-policy-escalation-command",
-				 	   command_line="""/usr/share/monitor/commands/escalation.py $HOSTNAME$ $HOSTNOTIFICATIONNUMBER$ $HOSTDURATIONSEC$ $NOTIFICATIONTYPE$ """)
+				 	   command_line="""/usr/share/monitor/nagios/actions/escalation.py $HOSTNAME$ $HOSTNOTIFICATIONNUMBER$ $HOSTDURATIONSEC$ $NOTIFICATIONTYPE$ """)
 contact_auto = Contact(contact_name="automate-policy-escalation-contact",
 						host_notifications_enabled=1,
 						service_notifications_enabled=0,
@@ -27,7 +27,7 @@ print contact_auto.toString()
 
 
 command_auto = Command(command_name="automate-service-repair-command",
-				 	   command_line="""/usr/share/monitor/commands/repair.py $SERVICENOTIFICATIONNUMBER$ $HOSTNOTIFICATIONNUMBER$ $NOTIFICATIONTYPE$ $HOSTNAME$ $SERVICEDESC$""")
+				 	   command_line="""/usr/share/monitor/nagios/actions/repair.py $SERVICENOTIFICATIONNUMBER$ $HOSTNOTIFICATIONNUMBER$ $NOTIFICATIONTYPE$ $HOSTNAME$ $SERVICEDESC$""")
 
 contact_auto = Contact(contact_name="automate-service-repair-contact",
 						host_notifications_enabled=1,
@@ -53,7 +53,7 @@ print command_cluster.toString()
 
 
 command_auto = Command(command_name="automate-host-reboot-command",
-				 	   command_line="""/usr/share/monitor/commands/reboot.py $NOTIFICATIONTYPE$ $HOSTNAME$""")
+				 	   command_line="""/usr/share/monitor/nagios/actions/reboot.py $NOTIFICATIONTYPE$ $HOSTNAME$""")
 
 contact_auto = Contact(contact_name="automate-host-reboot-contact",
 						host_notifications_enabled=1,

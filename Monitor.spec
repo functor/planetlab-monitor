@@ -35,6 +35,34 @@ system, syncing the PLC db with the monitoring database, notifying users,
 interacting with PCU hardware, applying penalties to sites that violate
 acceptable use.
 
+######################################## NAGIOS
+
+%package nagios
+Summary: Monitor integration with Nagios
+Group: Applications/System
+
+Requires: coreutils
+Requires: passwd
+Requires: gd
+Requires: gd-devel
+Requires: mysql
+Requires: mysql-server
+Requires: mysql-devel
+Requires: mysql-libs
+Requires: mailx
+
+Requires: nagios
+Requires: nagios-common
+Requires: nagios-devel
+Requires: nagios-plugins-all
+Requires: ndoutils
+Requires: ndoutils-mysql
+
+
+%description nagios
+Scripts and setup necessary to integrate and monitor PLC with Nagios.
+Best suited to F12 or above.
+
 ######################################## CLIENT
 
 %package client
@@ -128,6 +156,8 @@ install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
+# TODO: update with a real init file
+install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
 
 # cron job for automated polling
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
@@ -170,6 +200,11 @@ rm -rf $RPM_BUILD_ROOT
 %files server-deps
 /var/log/server-deps.log
 
+%files nagios
+%defattr(-,root,root)
+%{_sysconfdir}/plc.d/monitor-nagios
+#/usr/share/%{name}/nagios # TODO: not sure how this will impact the server files
+
 %files server
 %defattr(-,root,root)
 #%config /usr/share/%{name}/monitorconfig.py
@@ -184,6 +219,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/httpd/conf.d
 %{python_sitearch}
 
+
 %files client
 %defattr(-,root,root)
 #%{_initrddir}/monitor
@@ -193,6 +229,7 @@ rm -rf $RPM_BUILD_ROOT
 %files runlevelagent
 /usr/bin/RunlevelAgent.py*
 /%{_initrddir}/monitor-runlevelagent
+
 
 %post server-deps
 #
@@ -247,6 +284,9 @@ if ! plc-config --category plc_zabbix --variable ip ; then
 	plc-config --category plc_zabbix --variable ip --value "" \ 
 			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
 fi
+
+%post nagios
+# TODO: do as much as possible to get the host setup and running.
 
 %post server
 # TODO: this will be nice when we have a web-based service running., such as
