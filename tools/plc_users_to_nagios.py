@@ -40,10 +40,10 @@ def getContactsAndContactGroupsFor(lb, type, email_list):
 
 
 host_email_command = Command(command_name="monitor-notify-host-by-email",
-    						 command_line="""/usr/bin/printf "%b" "***** Nagios *****\\n\\nNotification Type: $NOTIFICATIONTYPE$\\nHost: $HOSTNAME$\\nState: $HOSTSTATE$\\nAddress: $HOSTADDRESS$\\nInfo: $HOSTOUTPUT$\\n\\nDate/Time: $LONGDATETIME$\\n" | /bin/mail -S replyto=monitor@planet-lab.org -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$""")
+    						 command_line="""/usr/share/monitor/commands/mail.py --hostnotificationnumber $HOSTNOTIFICATIONNUMBER$ --notificationtype $NOTIFICATIONTYPE$ --hostname $HOSTNAME$ --hoststate $HOSTSTATE$ --hostaddress $HOSTADDRESS$ --hostoutput "$HOSTOUTPUT$" --longdatetime "$LONGDATETIME$" --notificationitype $NOTIFICATIONTYPE$ --contactemail $CONTACTEMAIL$""")
 
 service_email_command = Command(command_name="monitor-notify-service-by-email",
-    							command_line="""/usr/bin/printf "%b" "***** Nagios *****\\n\\nNotification Type: $NOTIFICATIONTYPE$\\n\\nService: $SERVICEDESC$\\nHost: $HOSTALIAS$\\nAddress: $HOSTADDRESS$\\nState: $SERVICESTATE$\\n\\nDate/Time: $LONGDATETIME$\\n\\nAdditional Info:\\n\\n$SERVICEOUTPUT$" | /bin/mail -S replyto=monitor@planet-lab.org -s "** $NOTIFICATIONTYPE$ Service Alert: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$ **" $CONTACTEMAIL$""")
+    							command_line="""/usr/bin/printf "%b" "***** MyOpsNagios $HOSTNOTIFICATIONNUMBER$ *****\\n\\nNotification Type: $NOTIFICATIONTYPE$\\n\\nService: $SERVICEDESC$\\nHost: $HOSTALIAS$\\nAddress: $HOSTADDRESS$\\nState: $SERVICESTATE$\\n\\nDate/Time: $LONGDATETIME$\\n\\nAdditional Info:\\n\\n$SERVICEOUTPUT$" | /bin/mail -S replyto=monitor@planet-lab.org -s "** $NOTIFICATIONTYPE$ Service Alert: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$ **" $CONTACTEMAIL$""")
 
 
 print host_email_command.toString()
@@ -54,7 +54,7 @@ from monitor.wrapper import plc
 from monitor.generic import *
 
 
-l_sites = plc.api.GetSites({'login_base' : ['asu', 'gmu']})
+l_sites = plc.api.GetSites({'login_base' : ['asu', 'gmu', 'gt']})
 #l_sites = plc.api.GetSites([10243, 22, 10247, 138, 139, 10050, 10257, 18, 20, 
 #							21, 10134, 24, 10138, 10141, 30, 31, 33, 10279, 41, 29, 10193, 10064, 81,
 #							10194, 10067, 87, 10208, 10001, 233, 157, 10100, 10107])
