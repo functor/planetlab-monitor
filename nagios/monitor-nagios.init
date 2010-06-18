@@ -21,6 +21,11 @@
 # NOTE: expect that mysqld is already started.
 
 start () {
+	
+	if ! $( mysqladmin ping 2> /dev/null ) ; then
+		echo "mysqld is not running; cannot continue; exit..."
+		exit
+	fi
 
 	# if it's a fresh install, there is no root passwd.
 	if $( mysqladmin -u root create nagios ) ; then

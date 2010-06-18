@@ -177,8 +177,6 @@ rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
 
 # TODO: 
-echo " * TODO: Setting up Monitor account in local MyPLC"
-
 #touch $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 #chmod 777 $RPM_BUILD_ROOT/var/www/cgi-bin/monitor/monitorconfig.php
 
@@ -314,8 +312,8 @@ fi
 
 %post nagios
 # TODO: do as much as possible to get the host setup and running.
-chkconfig --add monitor-nagios
-chkconfig monitor-nagios on
+#chkconfig --add monitor-nagios
+#chkconfig monitor-nagios on
 chkconfig mysqld on
 
 %post server
