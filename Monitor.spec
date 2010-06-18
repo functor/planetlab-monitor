@@ -167,7 +167,7 @@ install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 
 # we'll install monitor in site-packages install rest to
 # /usr/share/monitor
-rsync -a --exclude archive-pdb --exclude .svn --exclude CVS  \
+rsync -a --exclude archive-pdb --exclude .cvsignore --exclude .svn --exclude CVS  \
     --exclude monitor/ \
     ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
@@ -203,14 +203,43 @@ rm -rf $RPM_BUILD_ROOT
 %files nagios
 %defattr(-,root,root)
 %{_sysconfdir}/plc.d/monitor-nagios
-#/usr/share/%{name}/nagios # TODO: not sure how this will impact the server files
+/usr/share/%{name}/nagios 
+# TODO: not sure how this will impact the server files
 
 %files server
 %defattr(-,root,root)
 #%config /usr/share/%{name}/monitorconfig.py
 #%config /etc/monitor.conf
-/usr/share/%{name}
 /var/lib/%{name}
+/usr/share/%{name}/MANIFEST.in
+/usr/share/%{name}/Makefile
+/usr/share/%{name}/Monitor.spec
+/usr/share/%{name}/README.txt
+/usr/share/%{name}/RunlevelAgent.py*
+/usr/share/%{name}/automate-default.sh
+/usr/share/%{name}/monitor-default.conf
+/usr/share/%{name}/monitor-runlevelagent.init
+/usr/share/%{name}/monitor-server.cron
+/usr/share/%{name}/monitor-server.init
+/usr/share/%{name}/monitor.functions
+/usr/share/%{name}/setup.py*
+/usr/share/%{name}/threadpool.py*
+
+/usr/share/%{name}/bootcd
+/usr/share/%{name}/commands
+/usr/share/%{name}/config.d
+/usr/share/%{name}/cron.d
+/usr/share/%{name}/docs
+/usr/share/%{name}/keys
+/usr/share/%{name}/log
+/usr/share/%{name}/statistics
+/usr/share/%{name}/tests
+/usr/share/%{name}/tools
+/usr/share/%{name}/upgrade
+/usr/share/%{name}/web
+/usr/share/%{name}/web
+/usr/share/%{name}/zabbix
+
 #/var/www/cgi-bin/monitor
 %{_sysconfdir}/cron.d/monitor-server.cron
 %{_sysconfdir}/plc.d/monitor
