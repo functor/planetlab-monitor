@@ -32,7 +32,7 @@ def main():
 		print err
 
 if __name__ == '__main__':
-	main()
+	#main()
 	f = open("/tmp/rebootlog", 'a')
 	f.write("reboot %s %s\n" % (time.time(), " ".join(sys.argv[1:])))
 	f.close()
