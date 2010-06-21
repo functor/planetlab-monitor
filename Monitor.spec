@@ -162,7 +162,7 @@ install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monit
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
 
 install -D -m 755 nagios/monitor-nagios.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
-install -D -m 644 nagios/monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-nagios.cron
+install -D -m 644 nagios/monitor-nagios.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-nagios.cron
 
 # cron job for automated polling
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
