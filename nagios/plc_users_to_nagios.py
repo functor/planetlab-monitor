@@ -50,8 +50,8 @@ print host_email_command.toString()
 print service_email_command.toString()
 
 
-from monitor.wrapper import plc
-from monitor.generic import *
+import plc
+from generic import *
 
 
 l_sites = plc.api.GetSites({'login_base' : ['asu', 'gmu', 'gt']})
