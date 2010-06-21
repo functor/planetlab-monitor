@@ -302,16 +302,8 @@ for site in l_sites:
 					servicegroups="NET,PCU",
 					notifications_enabled="0",
 					check_command="check_pcu")
-		#s4 = Service(use="planetlab-service",
-		#			host_name=hn_list,
-		#			service_description="dCOTOP",
-		#			display_name="dCOTOP",
-		#			servicegroups="NET,COTOP",
-		#			notifications_enabled="0",
-		#			check_command="check_http!-p 3120 -t 120")
 
-		# NOTE: if the http service is broken, then try to repair the node.
-		# TODO: how to check that this only triggers if aSSH is ok?
+		# NOTE: try to repair the host, if it is online and 'mode' indicates a problem
 		se1 = ServiceEscalation(host_name=hn_list,
 								service_description="bMODE",
 								first_notification=1,
@@ -320,11 +312,20 @@ for site in l_sites:
 								notification_interval=20,
 								contacts="automate-service-repair-contact")
 
+		se2 = ServiceEscalation( host_name=hn_list,
+								service_description="cPCU",
+								first_notification=1,
+								last_notification=0,
+								notification_interval=40, # 24*60*.5,
+								escalation_options="w,c,r",
+								contact_groups="%s-techs" % lb)
+
+
 		#sd1 = ServiceDependency(host_name=hn_list,
 		#						service_description="aSSH",
 		#						dependent_service_description="bSSH806,cHTTP,dCOTOP",
 		#						execution_failure_criteria="w,u,c,p",)
 
-		for service in [s1,s2,s3,se1]:
+		for service in [s1,s2,s3,se1,se2]:
 			print service.toString()
 
