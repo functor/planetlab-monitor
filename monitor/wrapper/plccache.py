@@ -4,6 +4,7 @@ import sys
 from monitor.wrapper import plc
 from monitor.generic import *
 from monitor.database.info.model import *
+from monitor import database
 import profile
 
 
@@ -14,6 +15,54 @@ l_pcus = None
 plcdb_hn2lb = None
 plcdb_lb2hn = None
 plcdb_id2lb = None
+
+class CachedPLC(PLC):
+
+	def _param_to_str(self, name, *params):
+		fields = len(params)
+		retstr = ""
+		retstr += "%s-" % name
+		for x in params:
+			retstr += "%s-" % x
+		return retstr[:-1]
+
+	def __getattr__(self, name):
+		method = getattr(self.api, name)
+		if method is None:
+			raise AssertionError("method does not exist")
+
+		def run_or_returncached(*params):
+			cachename = self._param_to_str(name, *params)
+			#print "cachename is %s" % cachename
+			if hasattr(config, 'refresh'):
+				refresh = config.refresh
+			else:
+				refresh = False
+
+			if 'Get' in name:
+				if not database.cachedRecently(cachename):
+					load_old_cache = False
+					try:
+						values = method(self.auth, *params)
+					except:
+						print "Call %s FAILED: Using old cached data" % cachename
+						load_old_cache = True
+
+					if load_old_cache:
+						values = database.dbLoad(cachename)
+					else:
+						database.dbDump(cachename, values)
+
+					return values
+				else:
+					values = database.dbLoad(cachename)
+					return values
+			else:
+				return method(self.auth, *params)
+
+		return run_or_returncached
+
+cacheapi = CachedPLC(plc.auth.auth, plc.auth.server)
 
 def init():
 	import traceback

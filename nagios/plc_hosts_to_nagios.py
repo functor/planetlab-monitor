@@ -1,5 +1,8 @@
 #!/usr/bin/python
+
+import plc
 from nagiosobjects import *
+from generic import *
 
 command_auto = Command(command_name="check_mode",
 				 	   command_line="""/usr/share/monitor/nagios/plugins/checkmode.py -H $HOSTNAME$ --sn $SERVICENOTIFICATIONNUMBER$ """)
@@ -123,8 +126,6 @@ globalhost = [Host(	name="planetlab-host",
 for obj in globalhost + globalservices:
 	print obj.toString()
 
-from monitor.wrapper import plc
-from monitor.generic import *
 
 l_sites = plc.api.GetSites({'login_base' : ['asu', 'gmu', 'gt']})
 #l_sites = plc.api.GetSites([10243, 22, 10247, 138, 139, 10050, 10257, 18, 20, 
@@ -300,7 +301,7 @@ for site in l_sites:
 					service_description="cPCU",
 					display_name="cPCU",
 					servicegroups="NET,PCU",
-					notifications_enabled="0",
+					notifications_enabled="1",
 					check_command="check_pcu")
 
 		# NOTE: try to repair the host, if it is online and 'mode' indicates a problem

@@ -14,21 +14,23 @@
 # $Id$
 #
 
-. /etc/plc.d/functions
-. /etc/plc.d/monitor.functions
-. /etc/planetlab/plc_config
+for f in /etc/plc.d/functions /etc/plc.d/monitor.functions /etc/planetlab/plc_config ; do
+	if [ -f /etc/plc.d/functions ] ; then 
+		source $f
+	fi
+done
 
 # NOTE: expect that mysqld is already started.
 
 start () {
 	
-	if ! $( mysqladmin ping 2> /dev/null ) ; then
+	if ! ( mysqladmin ping &> /dev/null ) ; then
 		echo "mysqld is not running; cannot continue; exit..."
 		exit
 	fi
 
 	# if it's a fresh install, there is no root passwd.
-	if $( mysqladmin -u root create nagios ) ; then
+	if ( mysqladmin -u root create nagios &> /dev/null ) ; then
 		cat <<EOF > /tmp/nagios.priv
    GRANT ALL PRIVILEGES ON nagios.* TO ndouser@localhost IDENTIFIED BY 'ndopassword';
 EOF
@@ -38,32 +40,46 @@ EOF
 		perl ./installdb -u ndouser -p ndopassword -d nagios
 	fi
 
-	if ! $( grep -q /usr/lib/nagios/brokers/ndomod.so  /etc/nagios/nagios.cfg ) ; then 
+	if ! ( grep -q /usr/lib/nagios/brokers/ndomod.so  /etc/nagios/nagios.cfg ) ; then 
 		echo "broker_module=/usr/lib/nagios/brokers/ndomod.so config_file=/etc/nagios/ndomod.cfg" >> /etc/nagios/nagios.cfg
-		echo "foo"
 	fi
 
-	/sbin/chkconfig ndo2db on
-	#/sbin/service ndo2db start
+	if ( chkconfig --list ndo2db | grep -q 3:off ) ; then
+		/sbin/chkconfig ndo2db on
+		/sbin/service ndo2db start
+	fi
 	#/sbin/service nagios restart
 
 	## set passwd for /etc/nagios/passwd
-	htpasswd -b -c /etc/nagios/passwd nagiosadmin nagiospassword
+	if ! ( grep nagiosadmin /etc/nagios/passwd &> /dev/null ) ; then
+		htpasswd -b -c /etc/nagios/passwd nagiosadmin nagiospassword
+	fi
 
 	# disable /etc/httpd/conf.d/nagios.conf restriction to only 127.0.0.1
-	if $( grep -q -E "^   deny from all" /etc/httpd/conf.d/nagios.conf ) ; then
-		sed -i -e 's/   deny from all/   allow from all/g' /etc/httpd/conf.d/nagios.conf 
-		sed -i -e 's/   order deny,allow/   order allow,deny/g' /etc/httpd/conf.d/nagios.conf 
+	if ( grep -q -E "^   deny from all" /etc/httpd/conf.d/nagios.conf ) ; then
+		sed -i -e 's/   deny from all/   #allow from all/g' /etc/httpd/conf.d/nagios.conf 
+		sed -i -e 's/   order deny,allow/   #order allow,deny/g' /etc/httpd/conf.d/nagios.conf 
 		sed -i -e 's/   allow from 127.0.0.1/   /g' /etc/httpd/conf.d/nagios.conf 
 	fi
 
-	touch /etc/nagios/objects/plc.cfg
-	touch /etc/nagios/objects/plcusers.cfg
-	echo "cfg_file=/etc/nagios/objects/plc.cfg" >> /etc/nagios/nagios.cfg
-	echo "cfg_file=/etc/nagios/objects/plcusers.cfg" >> /etc/nagios/nagios.cfg
+	if [ ! -f /etc/nagios/objects/plc.cfg ] ; then 
+		/usr/share/monitor/nagios/plc_hosts_to_nagios.py > /etc/nagios/objects/plc.cfg
+	fi
 
-	/sbin/chkconfig sendmail on
-	/sbin/service sendmail start
+	if [ ! -f /etc/nagios/objects/plcusers.cfg ] ; then 
+		/usr/share/monitor/nagios/plc_users_to_nagios.py > /etc/nagios/objects/plcusers.cfg
+	fi
+
+
+	if ! ( grep -q "cfg_file=/etc/nagios/objects/plc.cfg" /etc/nagios/nagios.cfg) ; then
+		echo "cfg_file=/etc/nagios/objects/plc.cfg" >> /etc/nagios/nagios.cfg
+		echo "cfg_file=/etc/nagios/objects/plcusers.cfg" >> /etc/nagios/nagios.cfg
+	fi
+
+	if ( chkconfig --list sendmail | grep -q 3:off ) ; then
+		/sbin/chkconfig sendmail on
+		/sbin/service sendmail start
+	fi
 
 	# change /etc/nagios/objects/contacts.cfg to some real email addr
 	# change /etc/nagios/nagios.cfg admin_email to some real email addr

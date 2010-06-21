@@ -43,7 +43,7 @@ def main():
 	t1 = 0
 	t2 = time.time()
 
-	if True:
+	if False:
 		print "FAKE-OK: PCU test successful"
 		sys.exit(0)
 	elif False:

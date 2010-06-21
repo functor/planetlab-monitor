@@ -50,7 +50,11 @@ Requires: mysql-server
 Requires: mysql-devel
 Requires: mysql-libs
 Requires: mailx
+Requires: sendmail
+Requires: php
+Requires: httpd
 
+Requires: cronie
 Requires: nagios
 Requires: nagios-common
 Requires: nagios-devel
@@ -156,7 +160,9 @@ install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
 install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
+
 install -D -m 755 nagios/monitor-nagios.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
+install -D -m 644 nagios/monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-nagios.cron
 
 # cron job for automated polling
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
@@ -172,6 +178,9 @@ rsync -a --exclude archive-pdb --exclude .cvsignore --exclude .svn --exclude CVS
 
 # install monitor python package
 rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
+
+install -D -m 644 monitor/wrapper/plc.py $RPM_BUILD_ROOT/usr/share/%{name}/nagios/
+install -D -m 644 monitor/generic.py $RPM_BUILD_ROOT/usr/share/%{name}/nagios/
 
 # install third-party module to site-packages
 install -D -m 755 threadpool.py $RPM_BUILD_ROOT/%{python_sitearch}/threadpool.py
@@ -201,6 +210,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_sysconfdir}/plc.d/monitor-nagios
 /usr/share/%{name}/nagios 
+%{_sysconfdir}/cron.d/monitor-nagios.cron
 
 %files server
 %defattr(-,root,root)
