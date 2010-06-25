@@ -414,3 +414,9 @@ tstamp <- function (date, format="%Y-%m-%d")
     ts <- unclass(as.POSIXct(date, format=format, origin="1970-01-01"))[1]
     return (ts)
 }
+
+lowess_smooth <- function (x, y, delta=(60*60*24), f=0.02)
+{
+    a<-lowess(x, y, delta=delta, f=f)
+    return (a);
+}

@@ -121,12 +121,6 @@ online_nodes <- function (fb)
     return (rbind(x,n,o))
 }
 
-lowess_smooth <- function (x, y, delta=(60*60*24), f=0.02)
-{
-    a<-lowess(x, y, delta=delta, f=f)
-    return (a);
-}
-
 #####
 
 # system("parse_rt_data.py 3 > rt_data.csv");
@@ -134,7 +128,7 @@ t <- read.csv('rt_data_2004-2010.csv', sep=',', header=TRUE)
 t2 <- t[which(t$complete == 1),]
 ot <- open_tickets(t2, '2004/1/1', '2010/2/28', 'day', "%b")
 
-start_image("rt_operator_overhead.png")
+#start_image("rt_operator_overhead.png")
 par(mfrow=c(2,1))
 par(mai=c(0,1,0.3,0.1))
 
@@ -276,4 +270,4 @@ text(x=c(tstamp_20040412,
 #     y=c(15),
 #     labels=c('3.0', '3.1', '3.1S', '3.2', '4.0', '4.2', '4.3')) 
 
-end_image()
+#end_image()

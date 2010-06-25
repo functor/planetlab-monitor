@@ -87,5 +87,5 @@ legend(unclass(as.POSIXct("2009-02-23", origin="1970-01-01"))[1], 200,
         #col=c('blue', 'red', 'grey20', 'grey70'),
         #lty=c(1, 1, 2, 1), merge=T)
 
-end_image()
+#end_image()
 

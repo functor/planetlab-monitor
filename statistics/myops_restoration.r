@@ -131,6 +131,24 @@ hbreaks<-unclass(as.POSIXct(dates))
 x_start<-unclass(as.POSIXct("2008-05-01", origin="1970-01-01"))[1]
 x_end  <-unclass(as.POSIXct("2009-06-1", origin="1970-01-01"))[1]
 
+
+tstamp_0510 <-abline_at_date("2008-05-10", col='grey20', lty=0, height=570)
+# dates takes from reboot_image() output for API events.
+# green
+tstamp_0610 <-abline_at_date("2008-06-10", col='grey40', lty=5, height=570)
+tstamp_0815 <-abline_at_date("2008-08-15", col='grey70', lty=1, height=570)
+
+# red
+#tstamp_0905 <-abline_at_date("2008-09-05", col='grey70', height=570)
+tstamp_0924 <-abline_at_date("2008-09-24", col='grey70', lty=1, height=570)
+tstamp_1015 <-abline_at_date("2008-10-15", col='grey40', lty=5, height=570)
+# blue
+#tstamp_1105 <-abline_at_date("2008-11-05", col='white', lty=2, height=570)
+#tstamp_1214 <-abline_at_date("2008-12-14", col='grey70', height=570)
+tstamp_0223 <-abline_at_date("2009-02-23", col='grey70', height=570)
+# red
+#tstamp_0313 <-abline_at_date("2009-03-13", col='grey70', height=570)
+
 start_image("myops_restore_nopcu.png")
 par(mfrow=c(2,1))
 par(mai=c(.9,.8,.1,.1))
@@ -154,7 +172,7 @@ axis(1, cex.axis=0.7, labels=months, at=hbreaks)
        
 
 
-#tstamp_0510 <-abline_at_date("2008-05-10", col='grey20', lty=0, height=570)
+tstamp_0510 <-abline_at_date("2008-05-10", col='grey20', lty=0, height=570)
 # dates takes from reboot_image() output for API events.
 # green
 tstamp_0610 <-abline_at_date("2008-06-10", col='grey40', lty=5, height=570)
@@ -198,10 +216,10 @@ text(x=c(tstamp_0510-(60*60*24*10),
 mtext("2008                                 2009", 1,2)
 legend(unclass(as.POSIXct("2009-02-23", origin="1970-01-01"))[1], 200,
         cex=0.7,
-        legend=c("Typical MyOps", "Notice Bug", "Kernel Bug", 'Bug Added', 'Fix Added'),
+        legend=c("Typical MyOps", "Bug1", "Bug2", 'Bug Added', 'Fix Added'),
         pch=c('-', '-', '-'),
-        col=c('red', 'blue', 'darkgreen', 'grey20', 'grey70'),
-        lty=c(1, 2, 3, 5, 1), merge=T)
+        col=c('red', 'darkgreen', 'blue', 'grey20', 'grey70'),
+        lty=c(1, 3, 2, 5, 1), merge=T)
 
         #legend=c("Registered", "Online", 'Kernel Update', 'MyOps Event'),
         #pch=c('-', '-', '-', '-'),
@@ -273,7 +291,7 @@ abline(v=c(91), col='grey80', lty=2)
 
 legend(92, 0.25,
        cex=0.7,
-       legend=c("Typical MyOps", "Notice Bug", "Kernel Bug"),
+       legend=c("Typical MyOps", "Only Notices", "No Notices"),
        pch=c('-', '-', '-'),
        col=c('red', 'blue', 'darkgreen'),
        lty=c(1, 2, 3), merge=T)
