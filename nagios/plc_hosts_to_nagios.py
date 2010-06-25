@@ -299,6 +299,7 @@ for site in l_sites:
 		s3 = Service(use="planetlab-service",
 					host_name=hn_list,
 					service_description="cPCU",
+					notes_url="http://www.planet-lab.org/db/sites/index.php?id=%s" % site['site_id'],
 					display_name="cPCU",
 					servicegroups="NET,PCU",
 					notifications_enabled="1",
