@@ -207,7 +207,11 @@ def get_nodeset(config):
 		l_nodes = api.GetNodes(ng[0]['node_ids'], ['hostname'])
 	elif config.site:
 		site = api.GetSites(config.site)
-		l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
+		if len(site) > 0:
+			l_nodes = api.GetNodes(site[0]['node_ids'], ['hostname'])
+		else:
+			print "No site returned for : %s" % config.site
+			return []
 		
 	l_nodes = [node['hostname'] for node in l_nodes]
 
@@ -290,4 +294,12 @@ class Time:
         d = datetime.fromtimestamp(ts)
         return d
 
+    @classmethod
+    def str_to_dt(cls, date_str, format="%Y-%m-%d %H:%M:%S"):
+        dt = datetime.strptime(date_str[:date_str.find('.')], format)
+        return dt
 
+    @classmethod
+    def str_to_ts(cls, date_str, format="%Y-%m-%d %H:%M:%S"):
+        ts = time.mktime(time.strptime(date_str[:date_str.find('.')], format))
+        return ts 
