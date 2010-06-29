@@ -436,6 +436,35 @@ def enableSliceCreation(nodename):
         loginbase = siteId(nodename)
         enableSiteSliceCreation(loginbase)
 
+def areSlicesEnabled(site):
+
+	try:
+		slice_list = api.GetSlices(slices(site))
+		if len(slice_list) == 0:
+			return None
+		for slice in slice_list:
+			slice_id = slice['slice_id']
+			l_attr = api.GetSliceAttributes({'slice_id': slice_id})
+			for attr in l_attr:
+				if "enabled" == attr['name'] and attr['value'] == "0":
+					return False
+
+	except Exception, exc:
+		pass
+
+	return True
+	
+
+def isSiteEnabled(site):
+    try:
+        site = api.GetSites(site)[0]
+        return site['enabled']
+    except:
+        pass
+
+    return True
+    
+
 def isTagCurrent(tags):
     if len(tags) > 0:
         for tag in tags:
