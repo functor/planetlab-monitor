@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime, timedelta
 
 def d_from_l(l, key, using=None, key_as=str, using_as=None):
 	d = {}
@@ -66,3 +67,25 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 
 		hn2lb[hostname] = login_base
 	return (dsn, hn2lb, lb2hn)
+
+
+class Time:
+    @classmethod
+    def dt_to_ts(cls, dt):
+        t = time.mktime(dt.timetuple())
+        return t
+
+    @classmethod
+    def ts_to_dt(cls, ts):
+        d = datetime.fromtimestamp(ts)
+        return d
+
+    @classmethod
+    def str_to_dt(cls, date_str, format="%Y-%m-%d %H:%M:%S"):
+        dt = datetime.strptime(date_str[:date_str.find('.')], format)
+        return dt
+
+    @classmethod
+    def str_to_ts(cls, date_str, format="%Y-%m-%d %H:%M:%S"):
+        ts = time.mktime(time.strptime(date_str[:date_str.find('.')], format))
+        return ts 
