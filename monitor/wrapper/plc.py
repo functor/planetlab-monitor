@@ -12,6 +12,7 @@ import xml, xmlrpclib
 import logging
 import time
 import traceback
+from datetime import datetime
 
 # note: this needs to be consistent with the value in PLEWWW/planetlab/includes/plc_functions.php
 PENDING_CONSORTIUM_ID = 0
@@ -125,7 +126,11 @@ def getTechEmails(loginbase):
 	# get people at site
 	p = api.GetPersons(s['person_ids'])
 	# pull out those with the right role.
-	emails = [ person['email'] for person in filter(lambda x: 'tech' in x['roles'], p) ]
+	emails = []
+	for person in filter(lambda x: 'tech' in x['roles'], p):
+		if not isPersonExempt(person['email']):
+			emails.append(person['email'])
+	#emails = [ person['email'] for person in filter(lambda x: 'tech' in x['roles'], p) ]
 	return emails
 
 def getPIEmails(loginbase):
@@ -138,7 +143,11 @@ def getPIEmails(loginbase):
 	# get people at site
 	p = api.GetPersons(s['person_ids'])
 	# pull out those with the right role.
-	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], p) ]
+	#emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], p) ]
+	emails = []
+	for person in filter(lambda x: 'pi' in x['roles'], p):
+		if not isPersonExempt(person['email']):
+			emails.append(person['email'])
 	return emails
 
 def getSliceUserEmails(loginbase):
@@ -154,7 +163,13 @@ def getSliceUserEmails(loginbase):
 	for slice in slices:
 		people += api.GetPersons(slice['person_ids'])
 	# pull out those with the right role.
-	emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], people) ]
+	#emails = [ person['email'] for person in filter(lambda x: 'pi' in x['roles'], people) ]
+
+	emails = []
+	for person in people:
+		if not isPersonExempt(person['email']):
+			emails.append(person['email'])
+
 	unique_emails = [ x for x in set(emails) ]
 	return unique_emails
 
@@ -345,7 +360,8 @@ def suspendSiteSlices(loginbase):
 		logger.info("Suspending slice %s" % slice)
 		try:
 			if not debug:
-				api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
+			    if not isSliceExempt(slice):
+				    api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
 		except Exception, exc:
 			logger.info("suspendSlices:  %s" % exc)
 
@@ -420,11 +436,36 @@ def enableSliceCreation(nodename):
         loginbase = siteId(nodename)
         enableSiteSliceCreation(loginbase)
 
+def isTagCurrent(tags):
+    if len(tags) > 0:
+        for tag in tags:
+            until = tag['value']
+            if datetime.strptime(until, "%Y%m%d") > datetime.now():
+                # NOTE: the 'exempt_until' time is beyond current time
+                return True
+    return False
+
+def isPersonExempt(email):
+    tags = api.GetPersonTags({'email' : email, 'tagname' : 'exempt_person_until'})
+    return isTagCurrent(tags)
+
+def isNodeExempt(hostname):
+    tags = api.GetNodeTags({'hostname' : hostname, 'tagname' : 'exempt_node_until'})
+    return isTagCurrent(tags)
+
+def isSliceExempt(slicename):
+    tags = api.GetSliceTags({'name' : slicename, 'tagname' : 'exempt_slice_until'})
+    return isTagCurrent(tags)
+
+def isSiteExempt(loginbase):
+    tags = api.GetSiteTags({'login_base' : loginbase, 'tagname' : 'exempt_site_until'})
+    return isTagCurrent(tags)
+
 '''
 Removes site's ability to create slices. Returns previous max_slices
 '''
 def removeSiteSliceCreation(loginbase):
-	print "removeSiteSliceCreation(%s)" % loginbase
+	#print "removeSiteSliceCreation(%s)" % loginbase
 
 	if isPendingSite(loginbase):
 		msg = "INFO: removeSiteSliceCreation: Pending Site (%s)" % loginbase
@@ -436,7 +477,8 @@ def removeSiteSliceCreation(loginbase):
 	try:
 		logger.info("Removing slice creation for site %s" % loginbase)
 		if not debug:
-			api.UpdateSite(auth.auth, loginbase, {'enabled': False})
+			if not isSiteExempt(loginbase):
+			    api.UpdateSite(auth.auth, loginbase, {'enabled': False})
 	except Exception, exc:
 		logger.info("removeSiteSliceCreation:  %s" % exc)
 
