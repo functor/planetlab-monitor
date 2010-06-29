@@ -3,6 +3,7 @@
 import plc
 from nagiosobjects import *
 from generic import *
+import auth
 
 command_auto = Command(command_name="check_mode",
 				 	   command_line="""/usr/share/monitor/nagios/plugins/checkmode.py -H $HOSTNAME$ --sn $SERVICENOTIFICATIONNUMBER$ """)
@@ -12,9 +13,17 @@ command_auto = Command(command_name="check_pcu",
 				 	   command_line="""/usr/share/monitor/nagios/plugins/checkpcu.py -H $HOSTNAME$ """)
 print command_auto.toString()
 
+command_auto = Command(command_name="check_rt",
+				 	   command_line="""/usr/share/monitor/nagios/plugins/checkrt.py -p $ARG1$ """)
+print command_auto.toString()
+
+command_auto = Command(command_name="check_escalation",
+				 command_line="""/usr/share/monitor/nagios/plugins/checkescalation.py --site $ARG1$ """)
+print command_auto.toString()
+
 
 command_auto = Command(command_name="automate-policy-escalation-command",
-				 	   command_line="""/usr/share/monitor/nagios/actions/escalation.py $HOSTNAME$ $HOSTNOTIFICATIONNUMBER$ $HOSTDURATIONSEC$ $NOTIFICATIONTYPE$ """)
+				 	   command_line="""/usr/share/monitor/nagios/actions/escalation.py --site $HOSTNAME$ --notificationnumber $SERVICENOTIFICATIONNUMBER$ --notificationtype $NOTIFICATIONTYPE$ $SERVICEDURATIONSEC$ """)
 contact_auto = Contact(contact_name="automate-policy-escalation-contact",
 						host_notifications_enabled=1,
 						service_notifications_enabled=0,
@@ -74,14 +83,10 @@ print contact_auto.toString()
 globalservices = []
 for service in [('NET', "Network Services"),
 				('SSH', "SSH Service"),
-				#('SSH806', "Auxiliary SSH Service"),
-				('MODE', "PLC Node Mode"),
-				('PCU', "PLC PCU status"),
-				#('HTTP', "PlanetFlow HTTP"),
-				#('COTOP', "HTTP based COTOP"),
+				('TICKET', "RT Ticket Status"),
+				('RUNLEVEL', "Node Runlevel"),
+				('PCU', "PCU status"),
 				]:
-				#('PLSOFT', "PlanetLab Software"),
-				#('MGMT',  "Remote Management")]:
 	globalservices.append(ServiceGroup(servicegroup_name=service[0], alias=service[1]))
 
 
@@ -225,18 +230,6 @@ for site in l_sites:
 
 						hostgroups="allsites")
 
-		# NOTE: without a dummy site service that checks basically the same
-		# 		thing, there is nothing to display for the service-status-details
-		# 		page for 'allsites'
-		print dummy_site_host.toString()
-		dummy_site_service = Service(use="planetlab-service",
-							host_name="site-cluster-for-%s" % lb,
-							service_description="LoginSSH",
-							display_name="LoginSSH",
-							notifications_enabled="0",
-							check_command="""check_service_cluster!"site-%s"!%s!%s!%s""" % (lb, w, c, ss))
-		print dummy_site_service.toString()
-
 
 		# NOTE: before sending any notices, attempt to reboot host twice
 		he_reboot = HostEscalation(host_name=hn_list,
@@ -247,37 +240,79 @@ for site in l_sites:
 						contacts="automate-host-reboot-contact")
 		print he_reboot.toString()
 
+
+		# NOTE: without a dummy site service that checks basically the same
+		# 		thing, there is nothing to display for the service-status-details
+		# 		page for 'allsites'
+		print dummy_site_host.toString()
+		dummy_site_service = Service(use="planetlab-service",
+							host_name="site-cluster-for-%s" % lb,
+							service_description="SiteOnline",
+							display_name="SiteOnline",
+							notifications_enabled="0",
+							check_command="""check_service_cluster!"site-%s"!%s!%s!%s""" % (lb, w, c, ss))
+		print dummy_site_service.toString()
+		dummy_site_service = Service(use="planetlab-service",
+							host_name="site-cluster-for-%s" % lb,
+							service_description="RtTickets",
+							display_name="RtTickets",
+					        servicegroups="NET,TICKET",
+							notifications_enabled="0",
+							check_command="""check_rt!"site-cluster-for-%s" """ % lb)
+		print dummy_site_service.toString()
+		dummy_site_service = Service(use="planetlab-service",
+							host_name="site-cluster-for-%s" % lb,
+							service_description="PolicyLevel",
+							display_name="PolicyLevel",
+							notifications_enabled="0",
+							check_command="""check_escalation!"site-cluster-for-%s" """ % lb)
+		print dummy_site_service.toString()
+
+
+        # NOTE: set dependency between open tickets and loginssh service.
+        #       if there are open tickets, then don't bother with loginssh escalations
+		print ServiceDependency(
+                        host_name="site-cluster-for-%s" % lb,
+                        service_description="RtTickets",
+                        dependent_host_name="site-cluster-for-%s" % lb,
+                        dependent_service_description="SiteOnline",
+						execution_failure_criteria='n',
+                        notification_failure_criteria="c,w").toString()
+
 		# NOTE: as long as the site-cluster is down, run the escalation
-		he_escalate = HostEscalation(host_name="site-cluster-for-%s" % lb,
+		print ServiceEscalation(host_name="site-cluster-for-%s" % lb,
+                        service_description="SiteOnline",
 						first_notification=1,
 						last_notification=0,
 						notification_interval=20, # 24*60*.25,
-						escalation_options="d,r",
-						contacts="automate-policy-escalation-contact",)
-		print he_escalate.toString()
+						escalation_options="c,r",
+						contacts="automate-policy-escalation-contact",).toString()
 
 		# NOTE: always send notices to techs
-		he1 = HostEscalation( host_name="site-cluster-for-%s" % lb,
+		he1 = ServiceEscalation( host_name="site-cluster-for-%s" % lb,
+                        service_description="SiteOnline",
 						first_notification=1,
 						last_notification=0,
 						notification_interval=40, # 24*60*.5,
-						escalation_options="r,d",
+						escalation_options="c,r",
 						contact_groups="%s-techs" % lb)
 
 		# NOTE: only send notices to PIs after a week. (2 prior notices) 
-		he2 = HostEscalation( host_name="site-cluster-for-%s" % lb,
+		he2 = ServiceEscalation( host_name="site-cluster-for-%s" % lb,
+                        service_description="SiteOnline",
 						first_notification=4,
 						last_notification=0,
 						notification_interval=40, # 24*60*.5,
-						escalation_options="r,d",
+						escalation_options="c,r",
 						contact_groups="%s-pis" % lb)
 
 		# NOTE: send notices to Slice users after two weeks. (4 prior notices) 
-		he3 = HostEscalation( host_name="site-cluster-for-%s" % lb,
+		he3 = ServiceEscalation( host_name="site-cluster-for-%s" % lb,
+                        service_description="SiteOnline",
 						first_notification=7,
 						last_notification=0,
 						notification_interval=40, # 24*60*.5,
-						escalation_options="r,d",
+						escalation_options="c,r",
 						contact_groups="%s-sliceusers" % lb)
 
 		for he in [he1, he2, he3]:
@@ -291,29 +326,31 @@ for site in l_sites:
 					check_command="check_ssh!-t 120")
 		s2 = Service(use="planetlab-service",
 					host_name=hn_list,
-					service_description="bMODE",
-					display_name="bMODE",
-					servicegroups="NET,MODE",
+					service_description="bRUNLEVEL",
+					display_name="bRUNLEVEL",
+					servicegroups="NET,RUNLEVEL",
 					notifications_enabled="1",
 					check_command="check_mode")
 		s3 = Service(use="planetlab-service",
 					host_name=hn_list,
 					service_description="cPCU",
-					notes_url="http://www.planet-lab.org/db/sites/index.php?id=%s" % site['site_id'],
+					notes_url="%s/db/sites/index.php?id=%s" % (auth.www, site['site_id']),
 					display_name="cPCU",
 					servicegroups="NET,PCU",
-					notifications_enabled="1",
+					notifications_enabled="0",
 					check_command="check_pcu")
 
 		# NOTE: try to repair the host, if it is online and 'mode' indicates a problem
 		se1 = ServiceEscalation(host_name=hn_list,
-								service_description="bMODE",
+								service_description="bRUNLEVEL",
 								first_notification=1,
 								last_notification=0,
 								escalation_options="w,c,r",
 								notification_interval=20,
 								contacts="automate-service-repair-contact")
 
+        # TOOD: decide what status is worthy of reporting, since the steps to
+        #       repair a PCU are very hard to list
 		se2 = ServiceEscalation( host_name=hn_list,
 								service_description="cPCU",
 								first_notification=1,
@@ -322,11 +359,6 @@ for site in l_sites:
 								escalation_options="w,c,r",
 								contact_groups="%s-techs" % lb)
 
-
-		#sd1 = ServiceDependency(host_name=hn_list,
-		#						service_description="aSSH",
-		#						dependent_service_description="bSSH806,cHTTP,dCOTOP",
-		#						execution_failure_criteria="w,u,c,p",)
 
 		for service in [s1,s2,s3,se1,se2]:
 			print service.toString()
