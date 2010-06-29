@@ -62,6 +62,8 @@ Requires: nagios-plugins-all
 Requires: ndoutils
 Requires: ndoutils-mysql
 
+Requires: rt3
+
 
 %description nagios
 Scripts and setup necessary to integrate and monitor PLC with Nagios.
