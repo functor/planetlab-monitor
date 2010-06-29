@@ -4,4 +4,11 @@
 #auth = {'Username' : '', 'AuthMethod' : 'password', 'AuthString' : ''}
 auth = {'AuthMethod' : "anonymous"}
 plc = "https://boot.planet-lab.org/PLCAPI/"
+www = "https://www.planet-lab.org"
+
+RTSERVER="https://rt.planet-lab.org/"
+RTUSER="monitor"
+RTPASSWD=""
+RTDEBUG="0"
+
 
