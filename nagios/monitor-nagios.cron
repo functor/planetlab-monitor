@@ -1,4 +1,5 @@
 # run daily to regenerate the nagios configuration files
 0 0 * * * root /usr/share/monitor/nagios/plc_hosts_to_nagios.py > /etc/nagios/objects/plc.cfg
 5 0 * * * root /usr/share/monitor/nagios/plc_users_to_nagios.py > /etc/nagios/objects/plcusers.cfg
+8 0 * * * root /usr/share/monitor/nagios/plc_to_nagios.py > /etc/nagios/objects/plcservers.cfg
 10 0 * * * root /sbin/service nagios restart

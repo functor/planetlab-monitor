@@ -56,6 +56,15 @@ EOF
 	fi
 
 	# disable /etc/httpd/conf.d/nagios.conf restriction to only 127.0.0.1
+	if ( grep -q -E "^service_check_timeout=60" /etc/nagios/nagios.cfg ) ; then
+        # NOTE: PCU checks can take several minutes due to timeouts and internal delays
+		sed -i -e 's/service_check_timeout=.*/service_check_timeout=150/g' /etc/nagios/nagios.cfg 
+        # NOTE: All 'action' commands are in the notification category.
+        #       Complex actions such as 'repair.py' may take several minutes.
+		sed -i -e 's/notification_timeout=.*/notification_timeout=240/g' /etc/nagios/nagios.cfg 
+	fi
+
+	# disable /etc/httpd/conf.d/nagios.conf restriction to only 127.0.0.1
 	if ( grep -q -E "^   deny from all" /etc/httpd/conf.d/nagios.conf ) ; then
 		sed -i -e 's/   deny from all/   #allow from all/g' /etc/httpd/conf.d/nagios.conf 
 		sed -i -e 's/   order deny,allow/   #order allow,deny/g' /etc/httpd/conf.d/nagios.conf 

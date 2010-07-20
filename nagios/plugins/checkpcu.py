@@ -47,11 +47,18 @@ def main():
     t1 = 0
     t2 = time.time()
 
+    try:
+        pcu_id = api.GetNodes(hostname)[0]['pcu_ids'][0]
+        pcu = api.GetPCUs({'pcu_id' : pcu_id})[0]
+    except Exception, e:
+        print "UNKNOWN: API Error: %s" % str(e)
+        sys.exit(3)
+
     if n == 0:
-        print "OK: PCU test successful"
+        print "%s: PCU test successful" % pcu['model']
         sys.exit(0)
     elif n != 0:
-        print "WARNING: PCU configuration incomplete: %s" % n
+        print "%s: PCU test failure: %s" % (pcu['model'], n)
         sys.exit(1)
     else:
         print "FAKE-CRITICAL: PCU test failed"

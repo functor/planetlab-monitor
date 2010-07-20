@@ -249,7 +249,7 @@ for site in l_sites:
 							host_name="site-cluster-for-%s" % lb,
 							service_description="SiteOnline",
 							display_name="SiteOnline",
-							notifications_enabled="0",
+							notifications_enabled="1",
 							check_command="""check_service_cluster!"site-%s"!%s!%s!%s""" % (lb, w, c, ss))
 		print dummy_site_service.toString()
 		dummy_site_service = Service(use="planetlab-service",
