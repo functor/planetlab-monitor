@@ -1,5 +1,6 @@
 source("functions.r");
 
+print ("fuckyou 0");
 
 nsh <- read.csv('node_status_history.csv', sep=',', header=TRUE)
 
@@ -11,7 +12,9 @@ nsh_m1 <- read.csv('node_status_history_m1.csv', sep=',', header=TRUE)
 nsh_m1_nopcu_total <- read.csv('node_status_history_m1_nopcu_total.csv', sep=',', header=TRUE)
 nsh_m1_nopcu_notice <- read.csv('node_status_history_m1_nopcu.csv', sep=',', header=TRUE)
 nsh_m1_nopcu_kernel <- read.csv('node_status_history_m1_nopcu_may08sep08.csv', sep=',', header=TRUE)
+nsh_m1_pcu <- read.csv('node_status_history_m1_pcu.csv', sep=',', header=TRUE)
 
+print ("fuckyou 0a");
 node_hist_image <- function (t, year, from, to, max=0, type="week", title="")
 {
     dates <-seq(as.Date(from), as.Date(to), type)
@@ -131,6 +134,7 @@ hbreaks<-unclass(as.POSIXct(dates))
 x_start<-unclass(as.POSIXct("2008-05-01", origin="1970-01-01"))[1]
 x_end  <-unclass(as.POSIXct("2009-06-1", origin="1970-01-01"))[1]
 
+print ("fuckyou 0b");
 
 tstamp_0510 <-abline_at_date("2008-05-10", col='grey20', lty=0, height=570)
 # dates takes from reboot_image() output for API events.
@@ -149,19 +153,24 @@ tstamp_0223 <-abline_at_date("2009-02-23", col='grey70', height=570)
 # red
 #tstamp_0313 <-abline_at_date("2009-03-13", col='grey70', height=570)
 
-start_image("myops_restore_nopcu.png")
+print ("fuckyou 0c");
+start_image("myops_restore_nopcu.eps")
 par(mfrow=c(2,1))
 par(mai=c(.9,.8,.1,.1))
+print ("fuckyou 1");
 plot(dnc2$start[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0815 & dnc2$start <= tstamp_1015) )], 
     dnc2$available[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0815 & dnc2$start <= tstamp_1015) )], 
     type='l', col='red', ylim=c(0,600), xlim=c(x_start, x_end),
-    xlab="", ylab="Online Node Count", axes=F)
+    xlab="", ylab="a) Online Node Count", axes=F)
 
+print ("fuckyou 2");
 lines(dnc2$start[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0223) )], 
     dnc2$available[which(!is.na(dnc2$available) & (dnc2$start > tstamp_0223) )], 
     type='l', col='red')
 
 lines(dnc2$start[which(!is.na(dnc2$available) & dnc2$start > tstamp_1015 & dnc2$start <= tstamp_0223)], dnc2$available[which(!is.na(dnc2$available)& dnc2$start > tstamp_1015 & dnc2$start <= tstamp_0223)], lty=2, type='l', col='blue')
+
+print ("fuckyou 4");
 
 lines(dnc2$start[which(!is.na(dnc2$available) & dnc2$start > tstamp_0510 & dnc2$start <= tstamp_0815)], dnc2$available[which(!is.na(dnc2$available)& dnc2$start > tstamp_0510 & dnc2$start <= tstamp_0815)], lty=3, type='l', col='darkgreen')
 
@@ -259,6 +268,12 @@ nsh_dist_m1 <- node_hist_dist(nsh_m1_short, '2008', '2008-05-10', '2008-08-15', 
 d_m1_kernel_bug <- ecdf(nsh_dist_m1/(60*60*24))
 
 
+nsh_m1_short <- nsh_m1_pcu[which(nsh_m1_pcu$start > t_0815 & nsh_m1_pcu$start <= t_0224),]
+nsh_dist_m1 <- node_hist_dist(nsh_m1_short, '2008', '2008-05-10', '2009-03-22', 0, 'day')
+d_m1_pcu <- ecdf(nsh_dist_m1/(60*60*24))
+
+
+
 # d<-ecdf(nsh_dist[which(nsh_dist/(60*60*24) < 90 )]/(60*60*24)), 
 # 180 ~= 6 months.
 par(mai=c(.9,.9,.1,.3))
@@ -267,17 +282,24 @@ par(mai=c(.9,.9,.1,.3))
 
 x_lim_max <- 150
 
+print ("fuckyou 4a");
 plot(d_m1_total, xlim=c(0,x_lim_max), ylim=c(0,1), axes=F, xlab="Days to Resolve", 
-    ylab="Fraction of Offline Nodes Restored", col.hor='red', col.vert='red', pch='.', 
+    ylab="b) Fraction of Offline Nodes Restored", col.hor='red', col.vert='red', pch='.', 
     col.points='red', main="")
+print ("fuckyou 5");
 
 plot(d_m1_notice_bug, xlim=c(0,x_lim_max), ylim=c(0,1), xlab="Days to Resolve", 
     col.hor='blue', col.vert='blue', pch='.', 
     col.points='blue', lty=2, add=TRUE)
+print ("fuckyou 6");
 
 plot(d_m1_kernel_bug, xlim=c(0,x_lim_max), ylim=c(0,1), xlab="Days to Resolve", 
     col.hor='darkgreen', col.vert='darkgreen', pch='.', 
     col.points='darkgreen', lty=3, add=TRUE)
+
+#plot(d_m1_pcu, xlim=c(0,x_lim_max), ylim=c(0,1), xlab="Days to Resolve", 
+#    col.hor='purple', col.vert='purple', pch='.', 
+#    col.points='purple', lty=4, add=TRUE)
 
 weeks <- c(0,7,14,21,28,60,90,120,150,180)
 axis(1, labels=weeks, at=weeks)

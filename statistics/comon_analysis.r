@@ -59,25 +59,26 @@ time_graph_setup <- function (from, to)
 
 tg <- time_graph_setup('2004/1/1', '2010/6/28')
 
-start_image("platform_availability.png")
-par(mfrow=c(2,1))
+#start_image("platform_availability.png")
+par(mfrow=c(3,1))
 # bottom, left, top, right margins
 par(mai=c(0.2, 1, 0.3, 0.1))
 
 
 
-plot(cm$ts, cm$online, type='l', col='black', 
+plot(cm$ts, cm$total, type='l', col='grey60', 
         axes=F,
         xlab="",
         xlim=tg$xlim,
-        ylim=c(0,900),
+        ylim=c(0,1000),
         ylab="a) Online Node Count")
+lines(cm$ts, cm$online, type='l', col='black' )
 
 #axis(1, labels=tg$month_str, at=tg$month_ts, cex.axis=0.7)
 #axis(1, tick=F, labels=tg$year_str, at=tg$year_ts, cex.axis=0.7, line=1)
 axis(1, labels=c("","","","","","",""), at=tg$year_ts, cex.axis=0.7, line=-0.5)
 axis(2, las=1)
-planetlab_releases(800)
+planetlab_releases(1000)
 
 
 par(mai=c(1, 1, 0.2, 0.1))
@@ -107,4 +108,4 @@ abline(h=log(7*60*60*24), col='grey80', lty=2)
 
 planetlab_releases(18)
 
-end_image()
+#end_image()
