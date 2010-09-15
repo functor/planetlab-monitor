@@ -65,7 +65,7 @@ for obj in globalhost + globalservices:
 #plc_hosts = [ PLC_MONITOR_HOST, PLC_WWW_HOST, PLC_BOOT_HOST, PLC_PLANETFLOW_HOST, ]
 plc_hosts = [ PLC_WWW_HOST, PLC_BOOT_HOST, ]
 
-print HostGroup(hostgroup_name="plcservers", alias="plcservers").toString()
+print HostGroup(hostgroup_name="allplcservers", alias="allplcservers").toString()
 
 hostname_list = []
 for host in plc_hosts:
@@ -76,7 +76,7 @@ for host in plc_hosts:
                 host_name="%s" % host,
                 alias=host,
                 address=ip,
-                hostgroups="plcservers")
+                hostgroups="allplcservers")
 
     print h.toString()
 

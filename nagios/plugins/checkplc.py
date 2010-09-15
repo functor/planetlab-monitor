@@ -26,7 +26,7 @@ try:
     t2 = time.time()
 
     if t2-t1 > options.seconds:
-        print "WARNING: API returned responses in less than %s seconds" % options.seconds
+        print "WARNING: API returned responses after %s seconds" % options.seconds
         sys.exit(1)
             
     print "API test successful"

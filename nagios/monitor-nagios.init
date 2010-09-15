@@ -80,8 +80,8 @@ EOF
 	fi
 
 
-	if ! ( grep -q "cfg_file=/etc/nagios/objects/plc.cfg" /etc/nagios/nagios.cfg ) ; then
-		echo "cfg_file=/etc/nagios/objects/plc.cfg" >> /etc/nagios/nagios.cfg
+	if ! ( grep -q "cfg_file=/etc/nagios/objects/plcnodes.cfg" /etc/nagios/nagios.cfg ) ; then
+		echo "cfg_file=/etc/nagios/objects/plcnodes.cfg" >> /etc/nagios/nagios.cfg
 		echo "cfg_file=/etc/nagios/objects/plcusers.cfg" >> /etc/nagios/nagios.cfg
 	fi
 
