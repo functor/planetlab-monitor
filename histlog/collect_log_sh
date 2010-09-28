@@ -1,0 +1,20 @@
+#!/bin/bash
+function upload_log ()
+{
+    file=$1
+    path=$2
+    old=/tmp/$( basename $file ).old
+    new=/tmp/$( basename $file ).new
+    log=/tmp/$( basename $file ).log
+    touch $old
+    cp $file $new
+    comm -1 -3 $old $new > $log
+    cp $new $old
+    if [ $( stat -c %s $log ) -ne 0 ] ; then 
+        curl --insecure https://monitor.planet-lab.org/monitor/uploadlogs --form "dir=$path" --form "log=@$log"
+    fi
+}
+
+upload_log ~/.bash_eternal_history hist
+#upload_log /var/log/secure hist
+
