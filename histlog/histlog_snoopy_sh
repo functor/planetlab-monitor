@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# NOTE: OMG - evidently 'read' can't be part of a pipeline if you want to export the variables
+function child_of_sshd ()
+{
+    unset pid2ppid
+    unset pid2cmd
+    while read xPID xPPID xO ; do 
+        
+        pid2ppid[$xPID]="$xPPID"
+        pid2cmd[$xPID]="$xO"
+        
+    done < <( ps ax -opid,ppid,cmd | grep -E "sshd|bash" )
+
+    pid=$$
+    while /bin/true ; do 
+        # is the working PID part of the pid2ppid mapping?
+        if echo ${!pid2ppid[@]} | grep -q $pid ; then
+            pid=${pid2ppid[$pid]}
+        else
+            break
+        fi
+        # is the working PID command sshd?
+        if echo "${pid2cmd[$pid]}" | grep -q 'sshd' ; then
+            # then success; we're a child or sshd
+            return 0
+        fi
+    done
+    
+    # we are not a child of sshd
+    return 1
+}
+
+if child_of_sshd ; then 
+    export LD_PRELOAD=/usr/lib/snoopy.so
+fi
+

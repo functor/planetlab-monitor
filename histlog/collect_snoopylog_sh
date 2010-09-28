@@ -1,0 +1,8 @@
+#!/bin/bash
+grep snoopy /var/log/secure > /tmp/secure.new
+# report lines unique to secure.new 
+comm -1 -3 /tmp/secure.old /tmp/secure.new > /tmp/secure.log
+cp /tmp/secure.new /tmp/secure.old
+# upload log
+curl --insecure https://monitor.planet-lab.org/monitor/uploadlogs --form "dir=snoopy" --form "log=@/tmp/secure.log"
+
