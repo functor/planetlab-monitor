@@ -35,3 +35,5 @@ if child_of_sshd ; then
     export LD_PRELOAD=/usr/lib/snoopy.so
 fi
 
+unset pid2ppid
+unset pid2cmd
