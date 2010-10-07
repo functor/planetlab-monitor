@@ -6,14 +6,22 @@ function upload_log ()
     old=/tmp/$( basename $file ).old
     new=/tmp/$( basename $file ).new
     log=/tmp/$( basename $file ).log
-    touch $old
+    if [ -f $new ] ; then
+        cp $new $old
+    else
+        touch $old
+    fi
     cp $file $new
     comm -1 -3 $old $new > $log
-    cp $new $old
-    if [ $( stat -c %s $log ) -ne 0 ] ; then 
+    if [ $( stat -c %s $log ) -ne 0 ] ; then
         curl --insecure https://monitor.planet-lab.org/monitor/uploadlogs --form "dir=$path" --form "log=@$log"
+        if [ $? -ne 0 ] ; then
+            # the upload has failed, so remove new file so no data is lost
+            rm -f /tmp/$( basename $file ).new
+        fi
     fi
 }
+
 
 upload_log ~/.bash_eternal_history hist
 #upload_log /var/log/secure hist
