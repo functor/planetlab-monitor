@@ -340,7 +340,8 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 					agg = node.__dict__.copy()
 				else:
 					agg = node.to_dict()
-				agg.update(agg['plc_node_stats'])
+                                if agg['plc_node_stats']:
+                                        agg.update(agg['plc_node_stats'])
 				if agg['install_date']:
 					agg['install_date'] = time.mktime(time.strptime(agg['install_date'], "%a %b %d %H:%M:%S %Y"))
 				if agg['kernel_version']:
