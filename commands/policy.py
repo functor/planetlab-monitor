@@ -78,12 +78,13 @@ def main(hostnames, sitenames):
 	node_count = 1
 	site_count = 1
 	#print "hosts: %s" % hostnames
+	print "apply-policy"
 	for i,host in enumerate(hostnames):
 		try:
 			lb = plccache.plcdb_hn2lb[host]
 		except:
 			print "unknown host in plcdb_hn2lb %s" % host
-			email_exception(host)
+			email_exception("%s %s" % (i,host))
 			continue
 
 		nodeblack = BlacklistRecord.get_by(hostname=host)
@@ -105,7 +106,7 @@ def main(hostnames, sitenames):
 			not found_within(recent_actions, 'online_notice', 0.5):
 				# NOTE: chronicly flapping nodes will not get 'online' notices
 				# 		since, they are never up long enough to be 'good'.
-			    # NOTE: searching for down_notice proves that the node has
+				# NOTE: searching for down_notice proves that the node has
 				# 		gone through a 'down' state first, rather than just
 				# 		flapping through: good, offline, online, ...
 				# 	
@@ -139,7 +140,7 @@ def main(hostnames, sitenames):
 
 				sitehist.attemptReboot(host)
 				print "send message for host %s try_reboot" % host
-				if not fbpcu.test_is_ok() and \
+				if False and not fbpcu.test_is_ok() and \
 					not found_within(recent_actions, 'pcuerror_notice', 3.0):
 
 					args = {}
@@ -159,7 +160,7 @@ def main(hostnames, sitenames):
 
 		# NOTE: non-intuitive is that found_between(try_reboot, 3.5, 1)
 		# 		will be false for a day after the above condition is satisfied
-		if nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
+		if False and nodehist.haspcu and nodehist.status in ['offline', 'down'] and \
 			changed_greaterthan(nodehist.last_changed,1.5) and \
 			not nodehist.firewall and \
 			found_between(recent_actions, 'try_reboot', 3.5, 1) and \
@@ -198,11 +199,11 @@ def main(hostnames, sitenames):
 					sitehist.sendMessage('down_notice', hostname=host)
 					print "send message for host %s down" % host
 
-				if nodehist.firewall and not found_within(recent_actions, 'firewall_notice', 3.5):
+				#if nodehist.firewall and not found_within(recent_actions, 'firewall_notice', 3.5):
 					# send down node notice
 					#email_exception(host, "firewall_notice")
-					sitehist.sendMessage('firewall_notice', hostname=host)
-					print "send message for host %s down" % host
+				#	sitehist.sendMessage('firewall_notice', hostname=host)
+				#	print "send message for host %s down" % host
 
 		node_count = node_count + 1
 		print "time: ", time.strftime('%Y-%m-%d %H:%M:%S')

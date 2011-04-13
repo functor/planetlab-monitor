@@ -291,7 +291,7 @@ class PlanetLabSession:
 
 		# COPY Rpyc files to host
 		#cmd = "rsync -vvv -az -e ssh %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc 2> /dev/null" % args
-		cmd = """rsync -vvv -az -e "ssh -o BatchMode=yes" %(monitordir)s/Rpyc/ %(user)s@%(hostname)s:Rpyc""" % args
+		cmd = """rsync -vvv -az -e "ssh -o BatchMode=yes" %(monitordir)s/monitor/Rpyc/ %(user)s@%(hostname)s:Rpyc""" % args
 		if self.verbose: print cmd
 		print cmd
 		# TODO: Add timeout
@@ -449,6 +449,7 @@ class DebugInterface:
 
 	def getDiskSteps(self):
 		steps = [
+			('scsierror2' , 'sd \d:\d:\d:\d: ioctl_internal_command return code = \d+'),
 			('scsierror'  , 'SCSI error : <\d+ \d+ \d+ \d+> return code = 0x\d+'),
 			('ioerror'    , 'end_request: I/O error, dev sd\w+, sector \d+'),
 			('ccisserror' , 'cciss: cmd \w+ has CHECK CONDITION'),

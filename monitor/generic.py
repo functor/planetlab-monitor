@@ -38,6 +38,7 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 	lb2hn = {}
 	dsn = {}
 	hn2lb = {}
+	exclude = []
 	for id in id2lb:
 		if id2lb[id] not in lb2hn:
 			lb2hn[id2lb[id]] = []
@@ -48,6 +49,7 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 			login_base = id2lb[node['site_id']]
 		else:
 			print >>sys.stderr, "%s has a foreign site_id %s" % (node['hostname'], node['site_id'])
+			exclude.append(node['hostname'])
 			continue
 			for i in id2lb:
 				print i, " ", id2lb[i]
@@ -66,7 +68,7 @@ def dsn_from_dsln(d_sites, id2lb, l_nodes):
 		dsn[login_base][hostname]['monitor'] = {}
 
 		hn2lb[hostname] = login_base
-	return (dsn, hn2lb, lb2hn)
+	return (dsn, hn2lb, lb2hn, exclude)
 
 
 class Time:

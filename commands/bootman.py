@@ -13,6 +13,7 @@ import traceback
 import subprocess
 from sets import Set
 from monitor.bootman import *
+from monitor.util import file 
 
 # MAIN -------------------------------------------------------------------
 
@@ -41,7 +42,7 @@ def main():
 	config = parsermodule.parse_args(parser)
 
 	if config.nodelist:
-		nodes = config.getListFromFile(config.nodelist)
+		nodes = file.getListFromFile(config.nodelist)
 	elif config.node:
 		nodes = [ config.node ]
 	else:

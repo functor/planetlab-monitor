@@ -350,10 +350,12 @@ chkconfig --add monitor
 chkconfig monitor on
 
 %post runlevelagent
-chkconfig --add monitor-runlevelagent
-chkconfig monitor-runlevelagent on
-if [ "$PL_BOOTCD" != "1" ] ; then
-	service monitor-runlevelagent restart
+if [ -f /etc/planetlab/node_id ] ; then
+    chkconfig --add monitor-runlevelagent
+    chkconfig monitor-runlevelagent on
+    if [ "$PL_BOOTCD" != "1" ] ; then
+        service monitor-runlevelagent restart
+    fi
 fi
 
 

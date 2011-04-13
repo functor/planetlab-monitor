@@ -20,7 +20,7 @@ if True:
 
 
 
-if True:
+if False:
     fbquery = HistoryNodeRecord.query.all()
     hostnames = [ n.hostname for n in fbquery ]
 
@@ -35,7 +35,7 @@ if True:
     session.flush()
 
 
-if True:
+if False:
     fbquery = HistoryPCURecord.query.all()
     pcus = [ n.plc_pcuid for n in fbquery ]
 

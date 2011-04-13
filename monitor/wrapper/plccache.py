@@ -5,8 +5,8 @@ from monitor.wrapper import plc
 from monitor.generic import *
 from monitor.database.info.model import *
 from monitor import database
+from monitor import config
 import profile
-
 
 l_sites = None
 l_nodes = None
@@ -16,7 +16,7 @@ plcdb_hn2lb = None
 plcdb_lb2hn = None
 plcdb_id2lb = None
 
-class CachedPLC(PLC):
+class CachedPLC(plc.PLC):
 
 	def _param_to_str(self, name, *params):
 		fields = len(params)
@@ -98,11 +98,13 @@ def init():
 	print >>sys.stderr, "building id2lb"
 	(d_sites,id2lb) = dsites_from_lsites_id(l_sites)
 	print >>sys.stderr, "building lb2hn"
-	(plcdb, hn2lb, lb2hn) = dsn_from_dsln(d_sites, id2lb, l_nodes)
+	(plcdb, hn2lb, lb2hn, exclude) = dsn_from_dsln(d_sites, id2lb, l_nodes)
 
 	plcdb_hn2lb = hn2lb
 	plcdb_lb2hn = lb2hn
 	plcdb_id2lb = id2lb
+
+	l_nodes = filter(lambda x: x['hostname'] not in exclude, l_nodes)
 	
 	return
 
@@ -146,6 +148,13 @@ def deleteExtra(l_plc, objectClass=PlcSite, dbKey='loginbase', plcKey='login_bas
 		dbobj = objectClass.get_by(**{dbKey : obj})
 		dbobj.delete()
 
+def conv(s):
+    # strip non-ascii characters to prvent errors
+    r = s
+    if type(s) in (str,unicode):
+        r = "".join([x for x in s if ord(x) < 128])
+    return r
+
 def sync():
 	l_sites = plc.api.GetSites({'peer_id':None}, 
 						['login_base', 'site_id', 'abbreviated_name', 'latitude', 
@@ -172,8 +181,8 @@ def sync():
 		dbpcu = PlcPCU2.findby_or_create(pcu_id=pcu['pcu_id'])
 		dbpcu.date_checked = datetime.now()
 		for key in pcu.keys():
-			print >>sys.stderr, "setting %s  = %s" % (key, pcu[key])
-			setattr(dbpcu, key, pcu[key])
+			print >>sys.stderr, "setting %s  = %s" % (key, conv(pcu[key]))
+			setattr(dbpcu, key, conv(pcu[key]))
 
 	deleteExtra(l_pcus, PlcPCU2, 'pcu_id', 'pcu_id')
 	deleteExtra(l_pcus, HistoryPCURecord, 'plc_pcuid', 'pcu_id')

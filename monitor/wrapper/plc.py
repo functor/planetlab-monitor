@@ -28,6 +28,21 @@ except:
 	# NOTE: this host is used by default when there are no auth files.
 	XMLRPC_SERVER="https://boot.planet-lab.org/PLCAPI/"
 
+global_log_api = True
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(name)s : %(message)s',
+                    datefmt='%s %Y-%m-%dT%H:%M:%S',
+                    filename='/usr/share/monitor/myops-api-log.log',
+                    filemode='a')
+apilog = logging.getLogger("api")
+
+def log_api_call(name, *params):
+    logstr = "%s(" %name
+    for x in params:
+        logstr += "%s," % x
+    logstr = logstr[:-1] + ")"
+    if global_log_api: apilog.debug(logstr)
+
 logger = logging.getLogger("monitor")
 	
 class Auth:
@@ -75,7 +90,11 @@ class PLC:
 			raise AssertionError("method does not exist")
 
 		try:
-			return lambda *params : method(self.auth, *params)
+			def call_method(aut, *params):
+				if global_log_api: log_api_call(name, *params)
+				return method(aut, *params)
+			return lambda *params : call_method(self.auth, *params)
+			#return lambda *params : method(self.auth, *params)
 		except xmlrpclib.ProtocolError:
 			traceback.print_exc()
 			global_error_count += 1
@@ -361,7 +380,7 @@ def suspendSiteSlices(loginbase):
 		try:
 			if not debug:
 			    if not isSliceExempt(slice):
-				    api.AddSliceAttribute(auth.auth, slice, "enabled", "0")
+				    api.AddSliceTag(auth.auth, slice, "enabled", "0")
 		except Exception, exc:
 			logger.info("suspendSlices:  %s" % exc)
 
@@ -389,11 +408,11 @@ def enableSiteSlices(loginbase):
 				if len(slice_list) == 0:
 					return
 				slice_id = slice_list[0]['slice_id']
-				l_attr = api.GetSliceAttributes(auth.auth, {'slice_id': slice_id}, None)
+				l_attr = api.GetSliceTags(auth.auth, {'slice_id': slice_id}, None)
 				for attr in l_attr:
-					if "enabled" == attr['name'] and attr['value'] == "0":
+					if "enabled" == attr['tagname'] and attr['value'] == "0":
 						logger.info("Deleted enable=0 attribute from slice %s" % slice)
-						api.DeleteSliceAttribute(auth.auth, attr['slice_attribute_id'])
+						api.DeleteSliceTag(auth.auth, attr['slice_tag_id'])
 		except Exception, exc:
 			logger.info("enableSiteSlices: %s" % exc)
 			print "exception: %s" % exc
@@ -411,7 +430,7 @@ def enableSlices(nodename):
 #	api = xmlrpclib.Server(auth.server, verbose=False)
 #	for slice in  slices(siteId(nodename)):
 #		logger.info("Suspending slice %s" % slice)
-#		api.SliceAttributeAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
+#		api.SliceTagAdd(auth.auth, slice, "plc_slice_state", {"state" : "suspended"})
 #
 def enableSiteSliceCreation(loginbase):
 	if isPendingSite(loginbase):
@@ -427,7 +446,8 @@ def enableSiteSliceCreation(loginbase):
 			site = api.GetSites(auth.auth, loginbase)[0]
 			if site['enabled'] == False:
 				logger.info("\tcalling UpdateSite(%s, enabled=True)" % loginbase)
-				api.UpdateSite(auth.auth, loginbase, {'enabled': True})
+				if not isSiteExempt(loginbase):
+					api.UpdateSite(auth.auth, loginbase, {'enabled': True})
 	except Exception, exc:
 		print "ERROR: enableSiteSliceCreation:  %s" % exc
 		logger.info("ERROR: enableSiteSliceCreation:  %s" % exc)
@@ -444,9 +464,9 @@ def areSlicesEnabled(site):
 			return None
 		for slice in slice_list:
 			slice_id = slice['slice_id']
-			l_attr = api.GetSliceAttributes({'slice_id': slice_id})
+			l_attr = api.GetSliceTags({'slice_id': slice_id})
 			for attr in l_attr:
-				if "enabled" == attr['name'] and attr['value'] == "0":
+				if "enabled" == attr['tagname'] and attr['value'] == "0":
 					return False
 
 	except Exception, exc:
