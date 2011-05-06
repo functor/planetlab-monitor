@@ -99,8 +99,11 @@ Requires: MySQL-python
 Requires: nmap
 Requires: nc
 Requires: rt3
+Requires: traceroute
 
 Requires: plewww-plekit
+Requires: pcucontrol
+Requires: TurboGears
 
 #Requires: zabbix-client
 #Requires: zabbix-gui
@@ -118,8 +121,8 @@ Requires: python
 
 Requires: monitor-server-deps
 Requires: PLCWWW >= 4.2
-Requires: bootcd-%{pldistro}-%{distroname}-%{_arch} >= 5.0
-Requires: pcucontrol
+# NOTE: removed b/c 'distroname' gets corrupted during build process.
+# Requires: bootcd-%{pldistro}-%{distroname}-%{_arch} >= 5.0
 
 %description server
 The server side include all python modules and scripts needed to fully
@@ -277,9 +280,9 @@ rm -rf $RPM_BUILD_ROOT
 # by fedora 8 (our current deployment) doesn't match the version
 # requirements.
 export TMPDIR=/var/tmp/
-easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
-easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
-easy_install -UZ Elixir
+#easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
+#easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
+#easy_install -UZ Elixir
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
@@ -305,20 +308,6 @@ if ! plc-config --category plc_monitor --variable cc_email ; then
 fi
 if ! plc-config --category plc_monitor --variable rt_queue ; then
 	plc-config --category plc_monitor --variable rt_queue --value support \
-			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
-fi
-
-# zabbix:
-if ! plc-config --category plc_zabbix --variable enabled ; then
-	plc-config --category plc_zabbix --variable enabled --value false \
-			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
-fi
-if ! plc-config --category plc_zabbix --variable host ; then
-	plc-config --category plc_zabbix --variable host --value localhost.localdomain \
-			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
-fi
-if ! plc-config --category plc_zabbix --variable ip ; then
-	plc-config --category plc_zabbix --variable ip --value "" \ 
 			--save /etc/planetlab/configs/site.xml /etc/planetlab/configs/site.xml 
 fi
 

@@ -41,7 +41,7 @@
         <!--img src="${tg.url('/static/images/under_the_hood_blue.png')}"
             alt="TurboGears under the hood" /-->
         <p>MyOps is an open source monitoring and management framework for MyPLC </p>
-        <p>Copyright &#169; 2007-2009 Princeton</p>
+        <p>Copyright &#169; 2007-2011 Princeton</p>
     </div>
 </body>
 

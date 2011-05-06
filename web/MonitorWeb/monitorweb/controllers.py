@@ -11,6 +11,7 @@ import os
 from monitor.database.info.model import *
 #from monitor.database.zabbixapi.model import *
 from monitor_xmlrpc import MonitorXmlrpcServer
+from controllers_local import LocalExtensions
 
 from monitor import util
 from monitor import reboot
@@ -59,6 +60,7 @@ class NodeQueryFields(widgets.WidgetsList):
 	uptime = widgets.CheckBox(label="Uptime")
 	traceroute = widgets.CheckBox(label="Traceroute")
 	port_status = widgets.CheckBox(label="Port Status")
+	plc_pcuid = widgets.CheckBox(label="PCU ID")
 	rpms = widgets.CheckBox(label="RPM")
 	rpmvalue = widgets.TextField(label="RPM Pattern")
 
@@ -264,7 +266,7 @@ def prep_node_for_display(node, pcuhash=None, preppcu=True, asofdate=None):
 	return agg
 
 
-class Root(controllers.RootController, MonitorXmlrpcServer):
+class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 	@expose(template="monitorweb.templates.welcome")
 	def index(self):
 		# log.debug("Happy TurboGears Controller Responding For Duty")
@@ -669,7 +671,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		query = []
 		if pcu_id:
 			fbnode = HistoryPCURecord.get_by(plc_pcuid=pcu_id)
-			l = fbnode.versions[-100:]
+			l = fbnode.versions[-1000:]
 			l.reverse()
 			for pcu in l:
 				#prep_node_for_display(node)
@@ -714,13 +716,15 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		if loginbase:
 			fbsite = HistorySiteRecord.get_by(loginbase=loginbase)
 			# TODO: add links for earlier history if desired.
-			l = fbsite.versions[-100:]
+			l = fbsite.versions[-1000:]
 			l.reverse()
 			for site in l:
 				query.append(site)
 		return dict(query=query, loginbase=loginbase)
 
 
+	@expose("cheetah:monitorweb.templates.pculist_plain", as_format="plain", 
+		accept_format="text/plain", content_type="text/plain")
 	@expose(template="monitorweb.templates.pculist")
 	def pcu(self, filter='all'):
 		print "PCUVIEW------------------"
@@ -898,3 +902,4 @@ class Root(controllers.RootController, MonitorXmlrpcServer):
 		print "redirecting 3"
 
 		return dict()
+

@@ -117,7 +117,7 @@ def main():
 		for s in sites:
 			node_ids += s['node_ids']
 
-		l_nodes = plccache.GetNodeByIds(node_ids)
+		l_nodes = plccache.GetNodesByIds(node_ids)
 		pcus = []
 		for node in l_nodes:
 			pcus += node['pcu_ids']

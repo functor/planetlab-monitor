@@ -84,7 +84,7 @@ def setAdminCCViaRT(ticket_id, to):
 
 	# create a comma-separated list
 	s_to = ",".join(to)
-	cmd = "rt edit ticket/%s set admincc='%s'" % (ticket_id, s_to)
+	cmd = "rt edit ticket/%s set cc='%s'" % (ticket_id, s_to)
 	print cmd
 	(f_in, f_out, f_err) = os.popen3(cmd)
 	value = f_out.read()
@@ -95,7 +95,7 @@ def setAdminCCViaRT(ticket_id, to):
 		pass
 	else:
 		print "VALUE:", value
-		print "ERROR: RT failed to update AdminCC for ticket %s" % ticket_id
+		print "ERROR: RT failed to update CC for ticket %s" % ticket_id
 
 	return
 
@@ -229,15 +229,15 @@ def emailViaRT_NoTicket(subject, text, to):
 	# Set ENV Variables/PATH
 	_setupRTenvironment()
 
-	# NOTE: AdminCc: (in PLC's RT configuration) gets an email sent.
+	# NOTE: Cc: (in PLC's RT configuration) gets an email sent.
 	# This is not the case (surprisingly) for Cc:
 	input_text  = "Subject: %s\n"
 	input_text += "Requestor: %s\n"% FROM
 	input_text += "id: ticket/new\n"
 	input_text += "Queue: %s\n" % config.RT_QUEUE
 	for recipient in to:
-		input_text += "AdminCc: %s\n" % recipient
-	#input_text += "AdminCc: %s\n" % config.cc_email
+		input_text += "Cc: %s\n" % recipient
+	#input_text += "Cc: %s\n" % config.cc_email
 	input_text += "Text: %s"
 
 	# Add a space for each new line to get RT to accept the file.
@@ -366,4 +366,4 @@ if __name__=="__main__":
 	import smtplib
 	import emailTxt
 	import plc 
-	emailViaRT("mail via RT", "Let's see if this succeeds...", [FROM])
+	emailViaRT("test monitor mail 9", "Let's see if this succeeds...", ["stephen.soltesz@gmail.com"])

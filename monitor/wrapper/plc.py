@@ -412,7 +412,8 @@ def enableSiteSlices(loginbase):
 				for attr in l_attr:
 					if "enabled" == attr['tagname'] and attr['value'] == "0":
 						logger.info("Deleted enable=0 attribute from slice %s" % slice)
-						api.DeleteSliceTag(auth.auth, attr['slice_tag_id'])
+						if not isSliceExempt(slice):
+							api.DeleteSliceTag(auth.auth, attr['slice_tag_id'])
 		except Exception, exc:
 			logger.info("enableSiteSlices: %s" % exc)
 			print "exception: %s" % exc

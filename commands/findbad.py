@@ -48,7 +48,7 @@ def checkAndRecordState(l_nodes, cohash):
 	global global_round
 	global count
 
-	tp = threadpool.ThreadPool(20)
+	tp = threadpool.ThreadPool(10)
 	scannode = ScanNodeInternal(global_round)
 
 	# CREATE all the work requests

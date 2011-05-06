@@ -66,6 +66,16 @@
 	</tr>
 	<tr> <td> <div id="footer">Copyright © 2007-2008 The Trustees of Princeton University</div> </td> </tr>
   	</table>
-
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." :
+"http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost +
+"google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10677320-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
   </body>
 </html>
