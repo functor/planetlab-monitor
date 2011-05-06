@@ -295,6 +295,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri May 06 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-1
+- last tag before some more major changes
+
 * Thu May 20 2010 Stephen Soltesz <soltesz@cs.princeton.edu> - Monitor-3.0-35
 - Add CSV link on Advanced query
 - Preparing to branch
@@ -507,6 +510,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 3.0
 
-%define taglevel 0
+%define taglevel 1
 
 %define version 3.1
