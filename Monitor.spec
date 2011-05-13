@@ -103,6 +103,8 @@ Requires: nc
 Requires: rt3
 Requires: traceroute
 Requires: sendmail
+# 5.0-18 is when the extra monitor plc-config values were added to myplc default_config.xml
+Requires: myplc >= 5.0-18
 
 Requires: plewww-plekit
 Requires: pcucontrol
@@ -121,9 +123,8 @@ Summary: Monitor hooks for the PLC server.
 Group: Applications/System
 
 Requires: python
-
 Requires: monitor-server-deps
-Requires: PLCWWW >= 4.2
+
 # NOTE: removed b/c 'distroname' gets corrupted during build process.
 # Requires: bootcd-%{pldistro}-%{distroname}-%{_arch} >= 5.0
 
