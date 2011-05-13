@@ -2,7 +2,7 @@
 
 # NOTE: Must be an absolute path to guarantee it is read.
 INSTALLPATH=/usr/share/monitor/
-$INSTALLPATH/shconfig.py >  $INSTALLPATH/monitorconfig.sh
+$INSTALLPATH/commands/shconfig.py >  $INSTALLPATH/monitorconfig.sh
 source $INSTALLPATH/monitorconfig.sh
 cd ${MONITOR_SCRIPT_ROOT}
 set -e

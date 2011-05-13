@@ -4,7 +4,7 @@ import sys
 sys.path.append('.')
 sys.path.append('..')
 
-from monitor.util.file import *
+from monitor.util.sshknownhosts import *
 
 def main(hosts):
 	k = SSHKnownHosts()

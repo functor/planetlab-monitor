@@ -33,8 +33,8 @@ pghba_conf=$PGDATA/pg_hba.conf
 export PGPORT=$PLC_DB_PORT
 
 
-MONITOR_DB_USER="monitoruser"
-MONITOR_DB_NAME="monitor"
+MONITOR_DB_USER=$PLC_MONITOR_DBUSER
+MONITOR_DB_NAME=$PLC_MONITOR_DBNAME
 
 WROTE_PG_CONFIG=
 
@@ -123,14 +123,14 @@ MONITOR_IP=${PLC_MONITOR_IP}
 PLC_WWW_HOSTNAME=${PLC_WWW_HOST}
 PLC_NAME=${PLC_NAME}
 
-# used for debug mode
-email=${PLC_MONITOR_CC_EMAIL}
+email=${PLC_MONITOR_EMAIL}
 # all messages will appear to be from this address
 from_email=${PLC_MONITOR_EMAIL}
 # a separate address for support messages
 support_email=${PLC_MAIL_SUPPORT_ADDRESS}
 # mailing list copied on all out-going messages
 cc_email=${PLC_MONITOR_CC_EMAIL}
+exception_email=${PLC_MONITOR_CC_EMAIL}
 
 # these are reserved values
 RT_DB_HOST=${PLC_RT_HOST}
@@ -139,8 +139,7 @@ RT_DB_PASSWORD=
 RT_DB_NAME=
 
 [monitordatabase]
-monitor_dburi=postgres://${MONITOR_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${MONITOR_DB_NAME}
-zabbix_dburi=postgres://${ZABBIX_DB_USER}:${PLC_MONITOR_DBPASSWORD}@localhost:5432/${ZABBIX_DB_NAME}
+monitor_dburi=postgres://${MONITOR_DB_USER}:${PLC_MONITOR_DBPASSWORD}@${PLC_MONITOR_DBHOST}:5432/${MONITOR_DB_NAME}
 
 cachetime=60
 
@@ -209,7 +208,7 @@ function start_tg_server ()
 {
 	stop_tg_server
 	pushd ${MONITORPATH}/web/MonitorWeb/
-	mkdir -p /var/log/monitor/monitorweb/
+	mkdir -p /var/lib/monitor/monitorweb/
 	cp /var/log/monitorweb.log /var/lib/monitor/monitorweb/`date +%Y-%m-%d-%H-%M`-monitorweb.log
 	./start-monitorweb.py ${MONITORPATH}/web/MonitorWeb/prod.cfg &> /var/log/monitorweb.log &
 	popd

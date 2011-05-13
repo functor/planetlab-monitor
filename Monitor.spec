@@ -96,10 +96,13 @@ Requires: openssh-clients
 Requires: perl-libwww-perl
 Requires: perl-IO-Socket-SSL 
 Requires: MySQL-python
+Requires: perl-DBD-mysql
 Requires: nmap
+Requires: mailx
 Requires: nc
 Requires: rt3
 Requires: traceroute
+Requires: sendmail
 
 Requires: plewww-plekit
 Requires: pcucontrol
@@ -173,7 +176,7 @@ install -D -m 644 nagios/monitor-nagios.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron
 install -D -m 644 monitor-server.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-server.cron
 
 # apache configuration
-install -D -m 644 web/monitorweb-httpd.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
+install -D -m 644 web/monitorweb.conf $RPM_BUILD_ROOT/etc/httpd/conf.d/
 
 # we'll install monitor in site-packages install rest to
 # /usr/share/monitor
@@ -283,6 +286,8 @@ export TMPDIR=/var/tmp/
 #easy_install -UZ http://files.turbogears.org/eggs/TurboGears-1.0.7-py2.5.egg
 #easy_install -UZ http://pypi.python.org/packages/source/S/SQLAlchemy/SQLAlchemy-0.5.3.tar.gz
 #easy_install -UZ Elixir
+chkconfig sendmail on
+chkconfig crond on
 
 # crazy openssl libs for racadm binary
 ln -s /lib/libssl.so.0.9.8b /usr/lib/libssl.so.2
