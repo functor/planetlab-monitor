@@ -184,10 +184,10 @@ class ScanNodeInternal(ScanInterface):
 		# 		commands at once.
 		values = {}
 		nmap = command.CMD()
-		print "nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename
-		(oval1,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
-		(oval2,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
-		(oval3,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep Host:" % nodename)
+		print "nmap -oG - -P0 -p22,80,806 %s | grep -v Down | grep Ports:" % nodename
+		(oval1,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep -v Down | grep Ports:" % nodename)
+		(oval2,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep -v Down | grep Ports:" % nodename)
+		(oval3,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,80,806 %s | grep -v Down | grep Ports:" % nodename)
 		# NOTE: an empty / error value for oval, will still work.
 		values['port_status'] = {}
 		(o1,continue_probe) = nmap_port_status(oval1)
@@ -249,8 +249,8 @@ class ScanNodeInternal(ScanInterface):
 					echo '  "princeton_comon_running":"'`ls -d /proc/virtual/$ID`'",'
 					echo '  "princeton_comon_procs":"'`vps ax | grep $ID | grep -v grep | wc -l`'",'
 					echo '  "fs_status":"'`grep proc /proc/mounts | grep ro, ; if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 20 touch /var/log/monitor 2>&1 ; if [ -d /vservers/ ] ; then timeout.pl 20 touch /vservers/monitor.log 2>&1  ; fi ; fi`'",'
-					echo '  "rpm_version":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 30 rpm -q NodeManager ; fi`'",'
-					echo '  "rpm_versions":"'`if [ -x /usr/bin/timeout.pl ] ; then timeout.pl 45 rpm -q -a ; fi`'",'
+					echo '  "rpm_version":"''",'
+					echo '  "rpm_versions":"''",'
 					echo '  "md5sums":"'`md5sum /etc/yum.conf /etc/yum.myplc.d/myplc.repo /etc/yum.myplc.d/stock.repo  | awk '{print $1}'`'",'
 					echo '  "md5sum_yum":"'`grep -v -E "^#" /etc/yum.myplc.d/myplc.repo | md5sum`'",'
 					echo '  "nada":"'``'",'
@@ -529,13 +529,13 @@ class ScanPCU(ScanInterface):
 				traceback.print_exc()
 				continue_probe = False
 
-			if b_except or not continue_probe: return (None, None, None)
+			if b_except or not continue_probe: return (None, None)
 
 			#### RUN NMAP ###############################
 			if continue_probe:
 				nmap = command.CMD()
-				print "nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats'])
-				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep Host:" % reboot.pcu_name(values['plc_pcu_stats']))
+				print "nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep -v Down | grep Ports:" % reboot.pcu_name(values['plc_pcu_stats'])
+				(oval,eval) = nmap.run_noexcept("nmap -oG - -P0 -p22,23,80,443,623,5869,9100,16992 %s | grep -v Down | grep Ports:" % reboot.pcu_name(values['plc_pcu_stats']))
 				# NOTE: an empty / error value for oval, will still work.
 				(values['port_status'], continue_probe) = nmap_port_status(oval)
 			else:

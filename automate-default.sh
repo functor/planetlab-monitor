@@ -11,6 +11,16 @@ set -e
 DATE=`date +%Y-%m-%d-%T`
 MONITOR_PID="${MONITOR_SCRIPT_ROOT}/SKIP"
 
+function send_mail ()
+{
+    subject=$1
+    body=$2
+    mail -s "$subject" $exception_email <<EOF
+$body
+EOF
+}
+
+
 echo "#######################################"; echo "Running Monitor at $DATE"; echo "######################################"
 echo "Performing API test"
 API=$(${MONITOR_SCRIPT_ROOT}/tools/testapi.py)
@@ -61,6 +71,13 @@ if [ -z "$AGENT" ] ; then
 fi
 #TODO: should add a call to ssh-add -l to check if the keys are loaded or not.
 source ${MONITOR_SCRIPT_ROOT}/agent.sh
+
+# CHECK AGENT IS UP AND RUNNING
+count=$( ssh-add -l | wc -l ) 
+if [ $count -lt 3 ] ; then
+    send_mail "ssh-agent is not up and running." "Add keys before monitoring can continue"
+	exit
+fi
 
 ${MONITOR_SCRIPT_ROOT}/commands/syncwithplc.py $DATE || :
 service plc restart monitor

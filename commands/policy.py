@@ -182,16 +182,6 @@ def main(hostnames, sitenames):
                 sitehist.sendMessage('pcufailed_notice', hostname=host, pcu_name=pcu_name)
                 print "send message for host %s PCU Failure" % host
 
-        if nodehist.status == 'failboot' and \
-            changed_greaterthan(nodehist.last_changed, 0.25) and \
-            not found_between(recent_actions, 'bootmanager_restore', 0.5, 0):
-                # send down node notice
-                # delay 0.5 days before retrying...
-
-                print "send message for host %s bootmanager_restore" % host
-                sitehist.runBootManager(host)
-            #    sitehist.sendMessage('retry_bootman', hostname=host)
-
         if nodehist.status == 'down' and \
             changed_greaterthan(nodehist.last_changed, 2):
                 if not nodehist.firewall and not found_within(recent_actions, 'down_notice', 3.5):
