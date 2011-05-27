@@ -295,6 +295,11 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-2
+- Add better requirements list, work with TurboGears packaged by fedora,
+- Remove some zabbix files
+- Add a controllers_local.py for custom extensions
+
 * Fri May 06 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-1
 - last tag before some more major changes
 
@@ -510,6 +515,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 3.0
 
-%define taglevel 1
+%define taglevel 2
 
 %define version 3.1
