@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.1
-%define taglevel 2
+%define taglevel 3
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -354,6 +354,9 @@ fi
 
 
 %changelog
+* Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-3
+- fixing syntax errors
+
 * Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-2
 - Add better requirements list, work with TurboGears packaged by fedora,
 - Remove some zabbix files
