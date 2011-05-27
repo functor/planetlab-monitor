@@ -9,7 +9,7 @@ import xml, xmlrpclib
 import errno, time, traceback
 import urllib2
 import urllib
-import threading, popen2
+import threading
 import array, struct
 import base64
 from subprocess import PIPE, Popen

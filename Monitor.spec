@@ -133,7 +133,7 @@ The server side include all python modules and scripts needed to fully
 operation, track, and interact with any third-party monitoring software, such
 as Zabbix DB.
 
-####################################### RunlevelAgent
+######################################## RunlevelAgent
 %package runlevelagent
 summary: the RunlevelAgent that reports node runlevels
 group: applications/system
@@ -168,7 +168,7 @@ install -d $RPM_BUILD_ROOT/%{python_sitearch}/monitor
 # plc.d scripts
 install -D -m 644 monitor.functions $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor.functions
 install -D -m 755 monitor-server.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor
-install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
+#install -D -m 755 zabbix/monitor-zabbix.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/zabbix
 
 install -D -m 755 nagios/monitor-nagios.init $RPM_BUILD_ROOT/%{_sysconfdir}/plc.d/monitor-nagios
 install -D -m 644 nagios/monitor-nagios.cron $RPM_BUILD_ROOT/%{_sysconfdir}/cron.d/monitor-nagios.cron
@@ -233,13 +233,12 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}/RunlevelAgent.py*
 /usr/share/%{name}/automate-default.sh
 /usr/share/%{name}/monitor-default.conf
-/usr/share/%{name}/monitor-runlevelagent.init
 /usr/share/%{name}/monitor-server.cron
 /usr/share/%{name}/monitor-server.init
 /usr/share/%{name}/monitor.functions
 /usr/share/%{name}/setup.py*
 /usr/share/%{name}/threadpool.py*
-/usr/share/%{name}/zabbix.spec
+#/usr/share/%{name}/zabbix.spec
 
 /usr/share/%{name}/bootcd
 /usr/share/%{name}/commands
@@ -259,7 +258,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/cron.d/monitor-server.cron
 %{_sysconfdir}/plc.d/monitor
 %{_sysconfdir}/plc.d/monitor.functions
-%{_sysconfdir}/plc.d/zabbix
+#%{_sysconfdir}/plc.d/zabbix
 %{_sysconfdir}/httpd/conf.d
 %{python_sitearch}
 

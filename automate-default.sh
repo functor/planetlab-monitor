@@ -27,6 +27,7 @@ API=$(${MONITOR_SCRIPT_ROOT}/tools/testapi.py)
 if [ "$API" != "ok" ] ; then 
 	# NOTE: Do not try to run any commands if the API is obviously broken.
 	echo "API IS DOWN : "`date`
+    send_mail "API IS DOWN: canceled monitor run for `date`" "have a nice day..."
 	exit 1
 fi
 
@@ -91,9 +92,25 @@ ps ax | grep BatchMode | grep -v grep | awk '{print $1}' | xargs -r kill || :
 ps ax | grep locfg | grep -v grep | awk '{print $1}' | xargs -r kill || :
 
 
+${MONITOR_SCRIPT_ROOT}/commands/repair.py $DATE || :
 ${MONITOR_SCRIPT_ROOT}/commands/policy.py $DATE || :
 curl -s 'http://summer.cs.princeton.edu/status/tabulator.cgi?table=table_nodeview&formatcsv' > /var/lib/monitor/comon/$DATE.comon.csv || :
+
+#${MONITOR_SCRIPT_ROOT}/statistics/add-google-record.py --email email  --password password --database MonitorStats --sheet NodeHistory `${MONITOR_SCRIPT_ROOT}/statistics/get-records.py nodes`
+#${MONITOR_SCRIPT_ROOT}/statistics/add-google-record.py --email email --password password --database MonitorStats --sheet SiteHistory `${MONITOR_SCRIPT_ROOT}/statistics/get-records.py sites`
 
 cp ${MONITOR_SCRIPT_ROOT}/monitor.log ${MONITOR_ARCHIVE_ROOT}/`date +%F-%H:%M`.monitor.log
 service plc restart monitor || :
 rm -f $MONITOR_PID
+
+D=`date +%F-%H:%M`
+
+# NOTE: check log for major sections.
+wc=`grep -E "^(findbad|findbadpcu|nodebad|pcubad|sitebad|apply-policy)$" ${MONITOR_SCRIPT_ROOT}/monitor.log | wc -l`
+if [[ $wc -ge 6 ]] ; then 
+    send_mail "A:finished monitor run for $SD at $D" "Thank you..."
+else
+    send_mail "ERROR finished monitor run for $SD at $D" "Missing some sections:
+        $(grep -E "findbad|findbadpcu|nodebad|pcubad|sitebad|apply-policy" ${MONITOR_SCRIPT_ROOT}/monitor.log)"
+fi
+

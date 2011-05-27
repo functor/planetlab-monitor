@@ -32,6 +32,16 @@ def main2(config):
     
     checkAndRecordState(l_nodes, l_plcnodes)
 
+def get_uptime(uptime_str):
+    up = 0
+    if len(uptime_str) > 0:
+        try:
+            up = float(uptime_str.split()[0])
+            print "uptime: %s" % up
+        except:
+            up = 0
+    return up
+
 # Node states:
 
 def check_node_state(rec, node):
@@ -95,9 +105,15 @@ def check_node_state(rec, node):
             node.last_changed = datetime.now()
 
     if node_state == 'BOOT' and node.status != 'online' and node.status != 'good':
-        print "changed status from %s to online" % node.status
-        node.status = 'online'
-        node.last_changed = datetime.now()
+        old_status = node.status
+        uptime = get_uptime(rec.uptime)
+        if uptime > (60*60*24):
+            node.status = 'good'
+            node.last_changed = datetime.now() - timedelta(0,uptime)
+        else:
+            node.status = 'online'
+            node.last_changed = datetime.now()
+        print "changed status from %s to %s" % (old_status, node.status)
 
     #################################################################
     # Switch temporary hystersis states into their 'firm' states.

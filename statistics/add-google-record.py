@@ -76,9 +76,9 @@ def main():
                         values=None,
                         valuelist=None,
                         update=None,
-						email=None,
-						password=None,
-						prefix="",
+                        email=None,
+                        password=None,
+                        prefix="",
                         create=False)
     parser.add_option("", "--email", dest="email", help="")
     parser.add_option("", "--password", dest="password", help="")
@@ -92,9 +92,9 @@ def main():
     parser.add_option("", "--prefix", dest="prefix", help="add a prefix to numeric headers")
 
     (config, args) = parser.parse_args()
-    #if len(sys.argv) == 1:
-    #    parser.print_help()
-    #    sys.exit(1)
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
 
     email = config.email
     password = config.password
@@ -107,10 +107,11 @@ def main():
 
     if config.labels:
         config.labels = config.labels.split(',')
-	config.labels = [config.labels[0] ] + [ config.prefix + l for l in config.labels[1:] ]
+    config.labels = [config.labels[0] ] + [ config.prefix + l for l in config.labels[1:] ]
 
     data_list = []
     if config.values:
+        config.values = config.values.replace("+", " ")
         config.values = config.values.split(',')
         data_list = [dict(zip(config.labels, config.values))]
         print data_list
