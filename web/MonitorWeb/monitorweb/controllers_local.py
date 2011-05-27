@@ -9,6 +9,6 @@ import os, errno
 
 class LocalExtensions(object):
 
-	@cherrypy.expose()
-	def example(self, **keywords):
+    @cherrypy.expose()
+    def example(self, **keywords):
         pass

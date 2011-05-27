@@ -6,7 +6,7 @@ import sys
 
 start = datetime.datetime(int(sys.argv[1]),int(sys.argv[2]), int(sys.argv[3]))
 #end = datetime.datetime(2010,06,10)
-end = datetime.datetime(2004,08,31)
+end = datetime.datetime(2011,8,31)
 
 while start < end:
 	file = "dump_comon_%s.bz2" % ( start.strftime("%Y%m%d") )
