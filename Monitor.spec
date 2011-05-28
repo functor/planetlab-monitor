@@ -185,6 +185,8 @@ rsync -a --exclude archive-pdb --exclude .cvsignore --exclude .svn --exclude CVS
     --exclude monitor/ \
     ./  $RPM_BUILD_ROOT/usr/share/%{name}/
 
+#rm -f $RPM_BUILD_ROOT/usr/share/%{name}/zabbix.spec
+
 # install monitor python package
 rsync -a --exclude .svn  ./monitor/   $RPM_BUILD_ROOT/%{python_sitearch}/monitor/
 
@@ -233,18 +235,20 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}/RunlevelAgent.py*
 /usr/share/%{name}/automate-default.sh
 /usr/share/%{name}/monitor-default.conf
+/usr/share/%{name}/monitor-runlevelagent.init
 /usr/share/%{name}/monitor-server.cron
 /usr/share/%{name}/monitor-server.init
 /usr/share/%{name}/monitor.functions
 /usr/share/%{name}/setup.py*
 /usr/share/%{name}/threadpool.py*
-#/usr/share/%{name}/zabbix.spec
+/usr/share/%{name}/zabbix.spec
 
 /usr/share/%{name}/bootcd
 /usr/share/%{name}/commands
 /usr/share/%{name}/config.d
 #/usr/share/%{name}/cron.d
 /usr/share/%{name}/docs
+/usr/share/%{name}/histlog
 /usr/share/%{name}/keys
 #/usr/share/%{name}/log
 /usr/share/%{name}/statistics
@@ -272,7 +276,6 @@ rm -rf $RPM_BUILD_ROOT
 %files runlevelagent
 /usr/bin/RunlevelAgent.py*
 /%{_initrddir}/monitor-runlevelagent
-
 
 %post server-deps
 #
