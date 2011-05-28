@@ -243,10 +243,10 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/%{name}/bootcd
 /usr/share/%{name}/commands
 /usr/share/%{name}/config.d
-/usr/share/%{name}/cron.d
+#/usr/share/%{name}/cron.d
 /usr/share/%{name}/docs
 /usr/share/%{name}/keys
-/usr/share/%{name}/log
+#/usr/share/%{name}/log
 /usr/share/%{name}/statistics
 /usr/share/%{name}/tests
 /usr/share/%{name}/tools
