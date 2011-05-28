@@ -295,6 +295,9 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-4
+- Fixes to spec file for monitor building
+
 * Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-3
 - fixing syntax errors
 
@@ -518,6 +521,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 3.0
 
-%define taglevel 3
+%define taglevel 4
 
 %define version 3.1
