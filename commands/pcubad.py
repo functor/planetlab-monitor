@@ -63,15 +63,17 @@ hn2lb = plccache.plcdb_hn2lb
 def check_pcu_state(rec, pcu):
 
 	pcu_state = rec.reboot_trial_status
+	print pcu_state
+	good_list = [0, "0", "Test: No error"]
 
 	# DOWN
-	if pcu_state not in [0, "0"] and pcu.status not in ['offline', 'down']:
+	if pcu_state not in good_list and pcu.status not in ['offline', 'down']:
 			print "changed status from %s to offline" % pcu.status
 			pcu.status = 'offline'
 			pcu.last_changed = datetime.now()
 
 	# ONLINE
-	if pcu_state in [0, "0"] and pcu.status not in [ 'online', 'good' ]:
+	if pcu_state in good_list and pcu.status not in [ 'online', 'good' ]:
 		print "changed status from %s to online" % pcu.status
 		pcu.status = 'online'
 		pcu.last_changed = datetime.now()
