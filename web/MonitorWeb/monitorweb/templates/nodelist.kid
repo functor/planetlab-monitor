@@ -5,6 +5,15 @@ from monitor.util import diff_time
 from time import mktime
 from links import *
 
+def up_label (query):
+   up=len([agg for agg in query if agg.node.status in ('online', 'good')])
+   total=len(query)
+   return "%d (%d %%)" %(up,100*up/total)
+def down_label (query):
+   down=len([agg for agg in query if agg.node.status not in ('online', 'good')])
+   total=len(query)
+   return "%d (%d %%)" %(down,100*down/total)
+
 ?>
 <html py:layout="'sitemenu.kid'"
       xmlns:py="http://purl.org/kid/ns#"
@@ -18,8 +27,8 @@ from links import *
 
   <center>
   <!-- NOTE: agg.node is a FindbadNodeRecord not a HistoryNodeRecord, so there is not 'status' attribute -->
-  <!--b py:content="'UP: %d' % len([agg for agg in query if agg.node.status in ('online', 'good')])"></b> | 
-  <b py:content="'DOWN: %d' % len([agg for agg in query if agg.node.status not in ('online', 'good')])"></b><br/-->
+  <!--b py:content="'UP: %s' % up_label(query)"></b> | 
+  <b py:content="'DOWN: %s' % down_label(query)"></b><br/-->
   </center>
 
 <table id="nodelist" cellpadding="0" border="0" class="plekit_table sortable-onload-2 colstyle-alt no-arrow paginationcallback-nodelist_paginator max-pages-10 paginate-999">
