@@ -63,7 +63,6 @@ hn2lb = plccache.plcdb_hn2lb
 def check_pcu_state(rec, pcu):
 
 	pcu_state = rec.reboot_trial_status
-	print pcu_state
 	good_list = [0, "0", "Test: No error"]
 
 	# DOWN
