@@ -12,6 +12,7 @@ from monitor.database.info.model import *
 #from monitor.database.zabbixapi.model import *
 from monitor_xmlrpc import MonitorXmlrpcServer
 from controllers_local import LocalExtensions
+from pcucontrol.reboot import pcu_name
 
 from monitor import util
 from monitor import reboot
@@ -148,7 +149,7 @@ def format_ports(data, pcumodel=None):
 def format_pcu_shortstatus(pcu):
 	status = "error"
 	if pcu:
-		if pcu.reboot_trial_status == str(0):
+		if pcu.reboot_trial_status == str(0) or pcu.reboot_trial_status == "Test: No error":
 			status = "Ok"
 		elif pcu.reboot_trial_status == "NetDown" or pcu.reboot_trial_status == "Not_Run":
 			status = pcu.reboot_trial_status
@@ -170,6 +171,7 @@ def prep_pcu_for_display(pcu):
 
 	agg.ports = format_ports(pcu.port_status, pcu.plc_pcu_stats['model'])
 	agg.status = format_pcu_shortstatus(pcu)
+	agg.pcu_name = pcu_name(pcu.plc_pcu_stats)
 
 	#print pcu.entry_complete
 	agg.entry_complete_str = pcu.entry_complete
@@ -603,6 +605,12 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 
 				for pcuid_key in pcus:
 					pcuquery += [pcus[pcuid_key]]
+
+		#for a in nodequery:
+		#	print type(a.node)
+		#	print type(a.node.hostname)
+		nodequery.sort(lambda a,b: cmp(a.node.hostname,b.node.hostname))
+		pcuquery.sort(lambda a,b: cmp(a.pcu_name,b.pcu_name))
 
 		actionlist_widget = ActionListWidget(template='monitorweb.templates.actionlist_template')
 		return dict(sitequery=sitequery, pcuquery=pcuquery, nodequery=nodequery, actions=actions_list, actionlist_widget=actionlist_widget, since=since, exceptions=exceptions)

@@ -43,7 +43,7 @@ verbose = 1
 
 def get_pcu_values(pcu_id):
 	from monitor.database.info.model import FindbadPCURecord
-	print "pcuid: %s" % pcu_id
+	#print "pcuid: %s" % pcu_id
 	try:
 		pcurec = FindbadPCURecord.get_latest_by(plc_pcuid=pcu_id)
 		if pcurec:
