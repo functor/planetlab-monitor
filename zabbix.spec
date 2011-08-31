@@ -295,6 +295,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed Aug 31 2011 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-3.1-5
+- account for new ok status type in PCUs
+- include a percentage of nodes up as well as raw node-count
+
 * Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-4
 - Fixes to spec file for monitor building
 
@@ -521,6 +525,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 3.0
 
-%define taglevel 4
+%define taglevel 5
 
 %define version 3.1

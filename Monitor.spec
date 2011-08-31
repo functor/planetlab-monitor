@@ -7,7 +7,7 @@
 %define name monitor
 # keep this version in sync with monitor/monitor_version.py
 %define version 3.1
-%define taglevel 4
+%define taglevel 5
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 %global python_sitearch	%( python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)" )
@@ -357,6 +357,10 @@ fi
 
 
 %changelog
+* Wed Aug 31 2011 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-3.1-5
+- account for new ok status type in PCUs
+- include a percentage of nodes up as well as raw node-count
+
 * Fri May 27 2011 s s <soltesz@cs.princeton.edu> - monitor-3.1-4
 - Fixes to spec file for monitor building
 
