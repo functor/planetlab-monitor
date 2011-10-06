@@ -129,6 +129,21 @@ class NodeConnection:
 				print key, " == ", bm.VARS[key]
 		else:
 			print "   Unable to read Node Configuration"
+
+	def fprobe_repair_node(self):
+		# When fprobe data gets too much, it fills the root partition and
+		# fails to boot
+		c = self.c
+		self.c.modules.sys.path.append("/tmp/source/")
+
+		# NOTE: assume that the root fs is already mounted...
+		if self.c.modules.os.path.exists('/tmp/mnt/sysimg/var/local/fprobe'):
+			print "CLEARING FPROBE DATA on %s" % self.node
+			self.c.modules.os.chdir('/tmp/mnt/sysimg/var/local/fprobe')
+			cmd = """ ls -lrt . | awk '{if (i<NR/2 && $9) {print "rm "$9;i=i+1;}}' | sh """
+			self.c.modules.os.system(cmd)
+		else:
+			print "COULD NOT CLEAR FPROBE DATA on %s" % self.node
 		
 	def fsck_repair_node(self):
 		c = self.c
@@ -682,10 +697,13 @@ def restore_basic(sitehist, hostname, config=None, forced_action=None):
 		args['saveact'] = True
 		args['ccemail'] = True
 
+		if 'nospace' in s:
+			# NOTE: sequence is unknown and contains nospace, so try the
+			# fprobe repair trick first.
+			conn.fprobe_repair_node()
+
 		sitehist.sendMessage('unknownsequence_notice', **args)
-
 		conn.restart_bootmanager('boot')
-
 		bootman_action = "restart_bootmanager"
 
 		# NOTE: Do not set the pflags value for this sequence if it's unknown.
