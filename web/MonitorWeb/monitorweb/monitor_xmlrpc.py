@@ -98,7 +98,7 @@ class MonitorXmlrpcServer(object):
 			if method is None or not getattr(method, "exposed", False):
 				raise AssertionError("method does not exist")
 
-			session.clear()
+			session.expunge_all()
 			# Call the method, convert it into a 1-element tuple
 			# as expected by dumps					   
 			response = method(*params)

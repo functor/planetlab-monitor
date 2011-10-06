@@ -387,7 +387,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 	def nodeslow(self, filter='boot'):
 		print "NODE------------------"
 		print "befor-len: ", len( [ i for i in session] )
-		session.flush(); session.clear()
+		session.flush(); session.expunge_all()
 		print "after-len: ", len( [ i for i in session] )
 		fbquery = FindbadNodeRecord.get_all_latest()
 		query = []
@@ -511,7 +511,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 
 
 	def pre_view(self, **data):
-		session.flush(); session.clear()
+		session.flush(); session.expunge_all()
 
 		loginbase=None
 		loginbase_list=[]
@@ -612,7 +612,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 	@expose(template="monitorweb.templates.pcuview")
 	@exception_handler(nodeaction_handler,"isinstance(tg_exceptions,RuntimeError)")
 	def pcuviewold(self, loginbase=None, pcuid=None, hostname=None, since=20, **data):
-		session.flush(); session.clear()
+		session.flush(); session.expunge_all()
 		sitequery=[]
 		pcuquery=[]
 		nodequery=[]
@@ -729,7 +729,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 	def pcu(self, filter='all'):
 		print "PCUVIEW------------------"
 		print "befor-len: ", len( [ i for i in session] )
-		session.flush(); session.clear()
+		session.flush(); session.expunge_all()
 		print "after-len: ", len( [ i for i in session] )
 		fbquery = FindbadPCURecord.get_all_latest()
 		query = []
@@ -767,7 +767,7 @@ class Root(controllers.RootController, MonitorXmlrpcServer, LocalExtensions):
 	def site(self, filter='all'):
 		print "SITE------------------"
 		print "befor-len: ", len( [ i for i in session] )
-		session.flush(); session.clear()
+		session.flush(); session.expunge_all()
 		print "after-len: ", len( [ i for i in session] )
 		filtercount = {'good' : 0, 'down': 0, 'online':0, 'offline' : 0, 'new' : 0, 'pending' : 0, 'all' : 0}
 		fbquery = HistorySiteRecord.query.all()
