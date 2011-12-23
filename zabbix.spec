@@ -295,6 +295,10 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 %{zabbix_webdir}
 
 %changelog
+* Wed Aug 31 2011 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-3.1-6
+- Minor updates to work with pcucontrol.
+- Added action for some fprobe no-space errors.
+
 * Wed Aug 31 2011 Stephen Soltesz <soltesz@cs.princeton.edu> - monitor-3.1-5
 - account for new ok status type in PCUs
 - include a percentage of nodes up as well as raw node-count
@@ -525,6 +529,6 @@ rm -f %{zabbix_logdir}/zabbix_agentd.log
 
 %define module_current_branch 3.0
 
-%define taglevel 5
+%define taglevel 6
 
 %define version 3.1
