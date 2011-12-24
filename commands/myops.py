@@ -59,11 +59,11 @@ def usage(parser):
     print """
 myops.py <TARGET> <ACTION> [<object>] [args]
     MYOPS CLI uses sessions to avoid storing passwords.
-    You choose the session expiration via --expires days.
+    You choose the session expiration via --expires <days>.
 
 TARGET:
     When your session is saved it is identified by your given 'target'
-    name.  This is a unique string you chose to identify the --url. 
+    name.  This is a unique string you chose to identify the --apiurl. 
     For example, one might use:
         plc
         vicci
@@ -73,20 +73,24 @@ TARGET:
 ACTION:
     Connect to TARGET and perform ACTION. The current actions are:
         enabled   --  Manage site, node, and slice 'enabled' states.
+                      Object may be sitename, hostname, or slicename.
         
         exempt    --  Manage site, node, and slice exemptions from 
-                     myops policy actions.
+                      myops policy actions.  Object may be sitename, 
+                      hostname, or slicename.
 
-        removeall --  Remove all exemptions at site from site, nodes, slices 
-        addall    --  Add exemptions at site to site, nodes, slices 
+        removeall --  Remove all exemptions at site & from nodes, slices 
 
-        freeze    --  Clamp down everything at a site: 
+        exemptall --  Add exemptions at site & to nodes, slices 
+
+        disableall--  Disable everything at a site: 
                         disable site, 
                         disable slices,
 
-        release   --  Release everything at a site: 
+        enableall --  Release everything at a site: 
                         re-enable site, 
                         re-enable slices,
+
 EXAMPLES:
     # setup session and save target name 'plc' for future calls
     myops.py plc --apiurl https://boot.planet-lab.org/PLCAPI/ \\
@@ -98,23 +102,33 @@ EXAMPLES:
     # to list only one site (nothing will show if no exemption is present)
     myops.py plc exempt princeton
 
-    # add a new exemption to site 'princeton' for a day
-    myops.py plc exempt princeton -a
+    # add an exemption until a specific date
+    myops.py plc exempt princeton --expires 20120131
 
-    # add a new exemption to a specific date
-    myops.py plc exempt princeton -a --expires 20120131
+    # remove this exemption
+    myops.py plc exempt princeton -r
+
+    # exempt just a slice, not the whole site.
+    myops.py plc exempt princeton_comon --expires 20120131
+
+    # re-enable a site & slices then, exempt site & slices for 7 days
+    myops.py plc enableall princeton 
+    myops.py plc exemptall princeton --expires 7
 
 """ 
     parser.print_help()
 
 def unparse_expire_str(value):
-    expires = time.mktime(time.strptime(value, "%Y%m%d")) - time.time()
+    if value == None:
+        expires = 60*60*24*30   # 30 days default
+    else:
+        expires = time.mktime(time.strptime(value, "%Y%m%d")) - time.time()
     return int(expires)
 
 def parse_expire_str(value):
     import optparse
-    if value == "0":
-        value = "20990101"
+    if value == None:
+        return None
     elif len(value) <= 3:
         # days from now
         value = time.strftime("%Y%m%d", time.localtime(time.time()+int(value)*60*60*24))
@@ -148,7 +162,7 @@ class PlcObj(object):
         if action == "enabled":
             print ("\t%s %s %s" % (sys.argv[0],target,action)) + (" %-20s --disable" % self.name)
         elif action == "exempt":
-            print ("\t%s %s %s" % (sys.argv[0],target,action)) + (" %-20s -a --expires %s" % ((self.name,)+ vals))
+            print ("\t%s %s %s" % (sys.argv[0],target,action)) + (" %-20s --expires %s" % ((self.name,)+ vals))
 
     def enable(self,api,state):
         if self.kind == 'Slice':
@@ -207,11 +221,10 @@ def main():
     parser.add_option("-u", "--apiurl", dest="url", default="https://www.planet-lab.org/PLCAPI/", help="Set PLC URL for action")
     parser.add_option("-U", "--username", dest="username", default=None, help="Login as username")
     parser.add_option("-P", "--password", dest="password", default=None, help="Use provided password; otherwise prompt for password")
-    parser.add_option("-e", "--expires", dest="expires", default="1", help="Set expiration date YYYYMMDD; default is 1 day from now.")
+    parser.add_option("-e", "--expires", dest="expires", default=None, help="Set expiration date YYYYMMDD (or <days>); default is None (i.e. removed)")
     parser.add_option("", "--disable", dest="disable", default=False, action="store_true", help="Disable object.")
     parser.add_option("-r", "--remove", dest="remove", action="store_true", default=False, help="Remove object from exemption" )
     parser.add_option("-l", "--list", dest="list", action="store_true", default=False, help="List objects with command used to generate them")
-    parser.add_option("-a", "--add", dest="add", action="store_true", default=False, help="Add exempt object")
     parser.add_option("-S", "--site", dest="login_base", default=None, help="Act on this site")
     parser.add_option("-H", "--host", dest="hostname", default=None, help="Act on this node")
     parser.add_option("-s", "--slice", dest="slicename", default=None, help="Act on this site")
@@ -226,7 +239,7 @@ def main():
     target = args[0]; 
     api = get_plc_api(target, opt.url, opt.username, opt.password, unparse_expire_str(opt.expires), opt.debug)
 
-    action_list = ['enabled', 'exempt', 'removeall', 'addall', 'release', 'freeze']
+    action_list = ['enabled', 'exempt', 'removeall', 'exemptall', 'enableall', 'disableall']
 
     for i,action in enumerate(args[1:]):
         if action in action_list:
@@ -252,12 +265,17 @@ def main():
                         o.list(target, action)
 
         if action == "exempt":
-            if not opt.list and not opt.remove and not opt.add:
+            if not opt.list and not opt.remove and opt.expires == None:
                 opt.list = True
 
             if opt.list:
                 if objname == None:
+                    # NOTE: this works around a bug as of 2011/12/23 that
+                    #    deleted sites do not also delete all associated site tags.
+                    site_lb = [ l['login_base'] for l in api.GetSites({'peer_id' : None}, ['login_base']) ]
                     sites = api.GetSiteTags({'tagname' : 'exempt_site_until'})
+                    sites = filter(lambda x: x['login_base'] in site_lb, sites)
+
                     nodes = api.GetNodeTags({'tagname' : 'exempt_node_until'})
                     slices = api.GetSliceTags({'tagname' : 'exempt_slice_until'})
                 else:
@@ -274,18 +292,13 @@ def main():
                         o = PlcObj(t)
                         o.list(target, action, t['value'])
 
-            if opt.remove:
-                if objname == None: raise Exception("provide an object name to remove exemption")
+            if opt.remove or opt.expires:
                 obj = PlcObj(objname)
-                obj.exempt(api,None)
-
-            if opt.add:
-                if objname == None: raise Exception("provide an object name to add exemption")
-                obj = PlcObj(objname)
+                # if opt.expires == None, the exemption will be removed.
                 obj.exempt(api,opt.expires)
 
-        if action == "freeze":
-            if objname == None: raise Exception("Provide a site name to freeze")
+        if action == "disableall":
+            if objname == None: raise Exception("Provide a site name to disable")
             #  disable site, disable slices,
             try:
                 slices = api.GetSlices(api.GetSites(objname, ['slice_ids'])[0]['slice_ids'])
@@ -297,9 +310,9 @@ def main():
                 obj = PlcObj(sl['name'])
                 obj.enable(api,False)
                 
-        if action == "release":
+        if action == "enableall":
             #  enable site, enable slices,
-            if objname == None: raise Exception("Provide a site name to release")
+            if objname == None: raise Exception("Provide a site name to enableall")
             try:
                 slices = api.GetSlices(api.GetSites(objname, ['slice_ids'])[0]['slice_ids'])
             except:
@@ -312,7 +325,7 @@ def main():
 
         if action == "removeall":
             #  remove enable site, enable slices,
-            if objname == None: raise Exception("Provide a site name to release")
+            if objname == None: raise Exception("Provide a site name to remove")
             try:
                 slices = api.GetSlices(api.GetSites(objname, ['slice_ids'])[0]['slice_ids'])
             except:
@@ -323,8 +336,8 @@ def main():
                 obj = PlcObj(sl['name'])
                 obj.exempt(api,None)
 
-        if action == "addall":
-            if objname == None: raise Exception("Provide a site name to release")
+        if action == "exemptall":
+            if objname == None: raise Exception("Provide a site name to exempt")
             try:
                 slices = api.GetSlices(api.GetSites(objname, ['slice_ids'])[0]['slice_ids'])
             except:
