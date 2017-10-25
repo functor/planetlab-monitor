@@ -214,6 +214,8 @@ touch $RPM_BUILD_ROOT/var/log/server-deps.log
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%files
+
 %files server-deps
 /var/log/server-deps.log
 
